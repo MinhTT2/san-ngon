@@ -1,0 +1,131 @@
+'use client';
+
+import { useEffect } from 'react';
+import { SlotCell } from './slot-cell';
+import { useAvailability } from '@/lib/use-availability';
+import { hhmm, vnd } from '@/lib/format';
+import { MAX_SLOTS } from '@/lib/constants';
+import type { Selection } from '@/lib/types';
+
+/** Điện thoại: giờ theo hàng dọc, sân là cột. Dùng cho màn hình dưới 768px. */
+export function SlotPickerMobile({
+  venueId,
+  date,
+  depositPct,
+  onSelectionChange,
+  onConfirm,
+}: {
+  venueId: string;
+  date: Date;
+  depositPct: number;
+  onSelectionChange?: (s: Selection | null) => void;
+  onConfirm?: () => void;
+}) {
+  const a = useAvailability(venueId, date);
+
+  useEffect(() => { onSelectionChange?.(a.selection); }, [a.selection, onSelectionChange]);
+
+  if (a.loading) return <div className="h-96 animate-pulse rounded-card bg-sunk" aria-busy="true" />;
+
+  if (a.failed) {
+    return (
+      <div className="rounded-card border border-hairline p-6 text-center">
+        <p className="text-sm text-ink-secondary">Không tải được lịch sân.</p>
+        <button onClick={a.reload} className="mt-3 h-11 rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">
+          Tải lại
+        </button>
+      </div>
+    );
+  }
+
+  if (!a.times.length) {
+    return (
+      <div className="rounded-card border border-hairline p-8 text-center text-sm text-ink-secondary">
+        Sân chưa mở lịch cho ngày này. Chọn ngày khác giúp bạn nhé.
+      </div>
+    );
+  }
+
+  const deposit = a.selection ? Math.ceil((a.selection.total * depositPct) / 100 / 1000) * 1000 : 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Legend />
+
+      <div className="overflow-x-auto rounded-card border border-hairline bg-card">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 w-11 bg-card px-2 py-3 text-left text-xs font-medium text-ink-secondary">Giờ</th>
+              {a.courts.map((c) => (
+                <th key={c.id} className="min-w-[80px] border-l border-hairline px-1 py-3 text-xs font-semibold text-pitch">
+                  {c.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {a.times.map((t) => (
+              <tr key={t} className="border-t border-hairline">
+                <th className="sticky left-0 z-10 bg-card px-2 py-1 text-left align-middle text-xs font-medium tabular-nums text-ink-secondary">
+                  {hhmm(t)}
+                </th>
+                {a.courts.map((c) => {
+                  const key = `${c.id}|${t}`;
+                  const slot = a.byKey.get(key);
+                  return (
+                    <td key={key} className="border-l border-hairline p-1">
+                      {slot ? (
+                        <SlotCell slot={slot} selected={a.pickedKeys.has(key)} onClick={() => a.toggle(slot)} />
+                      ) : null}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {a.selection ? (
+        <div className="sticky bottom-0 -mx-4 border-t border-hairline bg-card px-4 pb-5 pt-3">
+          <div className="mb-3 flex items-baseline justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold">
+                {a.selection.courtName} · {hhmm(a.selection.startsAt)}–{hhmm(a.selection.endsAt)}
+              </span>
+              <span className="text-xs text-ink-secondary">Cọc trước {vnd(deposit)}</span>
+            </div>
+            <span className="font-display text-xl font-bold text-pitch">{vnd(a.selection.total)}</span>
+          </div>
+          <button onClick={onConfirm} className="h-13 w-full rounded-control bg-pitch text-base font-semibold text-pitch-ink">
+            Tiếp tục
+          </button>
+        </div>
+      ) : (
+        <p className="text-xs text-ink-secondary">
+          Chọn tối đa {MAX_SLOTS} khung giờ liền nhau trên cùng một sân.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-ink-secondary">
+      <Item className="bg-free-fill border-free-line" label="Còn trống" />
+      <Item className="bg-peak-fill border-peak-line" label="Giờ vàng" />
+      <Item className="bg-taken-fill border-hairline" label="Đã đặt" />
+    </div>
+  );
+}
+
+function Item({ className, label }: { className: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={`inline-block h-3 w-3 rounded-[3px] border ${className}`} />
+      {label}
+    </span>
+  );
+}
