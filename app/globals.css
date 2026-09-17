@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,700..800&display=swap');
 @import 'tailwindcss';
 
 /*
@@ -5,8 +6,6 @@
   Xanh mặt cỏ ban đêm dưới đèn cao áp, không phải xanh lá mặc định của framework.
   Vàng hổ phách CHỈ dành cho giờ vàng — nó mang thông tin, không trang trí.
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,700..800&display=swap');
 
 @theme {
   --color-page: #FBFDFB;

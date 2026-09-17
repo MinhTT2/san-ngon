@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ymd } from '@/lib/format';
 import { MAX_SLOTS } from '@/lib/constants';
@@ -13,6 +13,9 @@ import type { Slot, Selection } from '@/lib/types';
  */
 export function useAvailability(venueId: string, date: Date, live = true) {
   const supabase = useMemo(() => createClient(), []);
+  // Bản mobile và bản desktop cùng mount (một cái bị CSS ẩn), nên tên channel
+  // phải khác nhau — hai subscription trùng topic thì removeChannel gỡ nhầm.
+  const instanceId = useId();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -41,11 +44,11 @@ export function useAvailability(venueId: string, date: Date, live = true) {
   useEffect(() => {
     if (!live) return;
     const channel = supabase
-      .channel(`bookings:${venueId}`)
+      .channel(`bookings:${venueId}:${instanceId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [supabase, venueId, live, load]);
+  }, [supabase, venueId, live, load, instanceId]);
 
   const courts = useMemo(() => {
     const seen = new Map<string, string>();

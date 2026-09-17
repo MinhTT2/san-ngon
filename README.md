@@ -12,6 +12,15 @@ cp .env.example .env.local   # điền giá trị thật
 npm run dev
 ```
 
+Kiểm tra trước khi đẩy code:
+
+```bash
+npm run lint       # eslint
+npm run typecheck  # tsc --noEmit
+npm run build      # next build
+npm run ci         # cả ba
+```
+
 ## Supabase
 
 Chạy lần lượt trong SQL Editor, không gộp:
@@ -60,6 +69,8 @@ Hệ thống phải chạy được cả khi chưa có `chat_id`: `sendTelegram`
 
 **`SUPABASE_SERVICE_ROLE_KEY` chỉ xuất hiện trong route webhook.** Không bao giờ import vào component.
 
+**Người đặt không update thẳng bảng `bookings`.** Policy update chỉ dành cho chủ sân và có `with check`. Hủy đơn đi qua `cancel_booking()`. Nới chỗ này ra là khách tự xác nhận đơn được mà không cần trả tiền.
+
 ## Màn hình đã có
 
 | Đường dẫn | Màn |
@@ -71,7 +82,16 @@ Hệ thống phải chạy được cả khi chưa có `chat_id`: `sendTelegram`
 | `/don-cua-toi` | Bảng trên desktop, thẻ trên điện thoại |
 | `/chu-san` | Lưới 7 ngày và đơn hôm nay |
 | `/dang-nhap` | Google và email OTP |
+| `/dang-ky-san` | Form đăng sân; đã gửi rồi thì hiện bốn bước duyệt |
+| `/chinh-sach-huy` | Điều kiện hoàn cọc |
+| `/lien-he` | |
 
-Luồng người chơi đi được từ đầu tới cuối: vào landing, tìm sân, chọn giờ, nhập thông tin, quét QR, nhận xác nhận, xem lại đơn.
+Luồng người chơi đi được từ đầu tới cuối: vào landing, tìm sân, chọn giờ, nhập thông tin, quét QR, nhận xác nhận, xem lại đơn, hủy đơn.
+
+Hồ sơ đăng sân vào thẳng trạng thái `pending`. Duyệt bằng SQL cho tới khi có trang admin:
+
+```sql
+update venues set status = 'active' where slug = '<slug>';
+```
 
 Đây là sản phẩm **web**, không phải app. Bố cục desktop là chính, điện thoại là bản rút gọn.

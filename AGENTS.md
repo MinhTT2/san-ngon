@@ -24,6 +24,11 @@ Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể h�
 
 5. **`SUPABASE_SERVICE_ROLE_KEY` chỉ dùng trong `app/api/webhooks/sepay/route.ts`.** Nó bỏ qua toàn bộ RLS.
 
+6. **Người đặt không được `update` thẳng bảng `bookings`.** Policy chỉ cho chủ
+   sân sửa, và có cả `with check`. Thiếu `with check` thì từ trình duyệt khách
+   tự đổi `status` thành `confirmed` và hạ `total_amount` về 0 — đặt sân không
+   mất đồng nào. Mọi đường hủy đi qua `cancel_booking()`.
+
 ## Cấu trúc route
 
 ```
@@ -80,6 +85,17 @@ Một đơn đặt **đúng một sân**. Nhóm muốn hai sân cùng giờ ph�
 
 `open_time` và `close_time` có ở cả `venues` và `courts`. Bản ở `courts` nullable — luôn dùng `coalesce(c.open_time, v.open_time)`.
 
+## Hàm SQL
+
+| Hàm | Ai gọi được | Việc |
+| --- | --- | --- |
+| `get_venue_availability` | anon, authenticated | lịch trống cả cụm sân một ngày |
+| `create_booking` | authenticated | tạo đơn, tự tính giá |
+| `cancel_booking` | authenticated | hủy đơn, tự quyết cọc có được hoàn |
+| `register_venue` | authenticated | đăng hồ sơ cụm sân + sân con + giá khởi điểm |
+| `confirm_payment` | chỉ service role | webhook xác nhận tiền vào |
+| `expire_pending_bookings`, `complete_past_bookings` | chỉ pg_cron | tác vụ nền |
+
 ## Luồng thanh toán
 
 Mã đơn dạng `SANxxxxxx` (6 ký tự, bỏ O I 0 1) nằm trong nội dung chuyển khoản. **Đó là toàn bộ cơ chế đối soát** — không có callback URL, không có chữ ký.
@@ -122,16 +138,17 @@ Không đổ bóng ở đâu cả. Viền 1px và nền phẳng.
 
 ## Còn thiếu, theo thứ tự ưu tiên
 
-- [ ] Trang `/dang-ky-san`: form đăng ký cụm sân, có ô tài khoản nhận cọc
-- [ ] Trang trạng thái hồ sơ chờ duyệt, bốn bước
-- [ ] Nút hủy đơn trong `/don-cua-toi`
+- [x] Trang `/dang-ky-san`: form đăng ký cụm sân, có ô tài khoản nhận cọc
+- [x] Trang trạng thái hồ sơ chờ duyệt, bốn bước
+- [x] Nút hủy đơn trong `/don-cua-toi`
 - [ ] Bảng thông báo: badge chưa đọc trên header, trang danh sách
 - [ ] Danh sách cần hoàn cọc cho chủ sân, lọc `refund_status = 'needed'`
 - [ ] Nút chủ sân xác nhận tay khi webhook hỏng
-- [ ] Bộ lọc thật ở `/tim-san` — hiện `?sport=` và `?q=` chỉ hiển thị lại, chưa lọc
+- [x] Bộ lọc thật ở `/tim-san`
 - [ ] Badge số khung còn trống trên thẻ sân
 - [ ] CRUD bảng giá cho chủ sân, hoặc nhập tay bằng SQL nếu hụt giờ
-- [ ] `confirm_payment` nên trả thêm `owner_id` để ghi đúng dòng notification thất bại
+- [x] `confirm_payment` trả thêm `owner_id` và `booking_id`
+- [ ] Trang duyệt hồ sơ cho admin — hiện phải `update venues set status='active'` bằng SQL
 
 ## Đã cố tình cắt
 

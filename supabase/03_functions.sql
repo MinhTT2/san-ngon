@@ -215,6 +215,8 @@ begin
   return jsonb_build_object(
     'ok', true, 'reason', 'CONFIRMED',
     'code', v_booking.code,
+    'booking_id', v_booking.id,
+    'owner_id', v_venue.owner_id,
     'court_name', v_court.name,
     'venue_name', v_venue.name,
     'starts_at', v_booking.starts_at,
@@ -225,6 +227,134 @@ begin
     'customer_phone', v_booking.customer_phone,
     'owner_telegram_chat_id', v_owner.telegram_chat_id
   );
+end $$;
+
+-- ------------------------------------------------------------
+-- Hủy đơn. Người đặt không được update thẳng bảng bookings (xem 02_rls.sql),
+-- nên mọi đường hủy đi qua đây.
+--
+-- Hủy trước giờ đá >= c_window tiếng thì cọc được đánh dấu cần hoàn; muộn hơn
+-- thì mất cọc. Mốc 2 tiếng CHƯA CHỐT với chủ sân — đổi hằng số ở đây và ở
+-- CANCEL_WINDOW_HOURS trong lib/constants.ts cùng lúc.
+-- ------------------------------------------------------------
+create or replace function cancel_booking(p_code text)
+returns bookings
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_booking bookings%rowtype;
+  v_is_owner boolean;
+  v_row bookings%rowtype;
+  c_window constant interval := interval '2 hours';
+begin
+  if v_uid is null then raise exception 'AUTH_REQUIRED'; end if;
+
+  select * into v_booking from bookings where code = p_code for update;
+  if v_booking.id is null then raise exception 'BOOKING_NOT_FOUND'; end if;
+
+  v_is_owner := owns_court(v_booking.court_id);
+  if v_booking.user_id <> v_uid and not v_is_owner then
+    raise exception 'BOOKING_NOT_FOUND';   -- không tiết lộ đơn của người khác có tồn tại
+  end if;
+
+  if v_booking.status not in ('pending','confirmed') then
+    raise exception 'NOT_CANCELLABLE';
+  end if;
+
+  update bookings set
+    status = 'cancelled',
+    cancelled_at = now(),
+    refund_status = case
+      -- Chưa trả cọc thì không có gì để hoàn.
+      when v_booking.status = 'pending' then 'none'::refund_status
+      -- Chủ sân hủy thì khách luôn được hoàn, bất kể còn bao lâu.
+      when v_is_owner and v_booking.user_id <> v_uid then 'needed'::refund_status
+      when v_booking.starts_at - now() >= c_window then 'needed'::refund_status
+      else 'none'::refund_status
+    end
+  where id = v_booking.id
+  returning * into v_row;
+
+  return v_row;
+end $$;
+
+-- ------------------------------------------------------------
+-- Đăng ký cụm sân. Chạy trong một transaction: hồ sơ + các sân con + bảng giá
+-- khởi điểm, cộng slug không trùng. Hồ sơ vào trạng thái 'pending' chờ duyệt,
+-- chưa hiện ở /tim-san.
+-- ------------------------------------------------------------
+-- Bỏ dấu tiếng Việt không cần extension unaccent — giữ hàm tự viết để deploy
+-- chỗ khác không phải bật thêm extension.
+create or replace function unaccent_vi(p_text text)
+returns text language sql immutable as $$
+  select translate(p_text,
+    'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ',
+    'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyydAAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD');
+$$;
+
+create or replace function slugify(p_text text)
+returns text language sql immutable as $$
+  select trim(both '-' from regexp_replace(
+    lower(unaccent_vi(p_text)), '[^a-z0-9]+', '-', 'g'));
+$$;
+
+create or replace function register_venue(
+  p_name text, p_address text, p_district text, p_phone text,
+  p_description text, p_open_time time, p_close_time time,
+  p_sport sport_type, p_court_count int, p_price_per_hour int,
+  p_payout_bank text, p_payout_account text
+) returns venues
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_slug text; v_base text; v_try int := 0;
+  v_venue venues%rowtype; v_court uuid; v_i int;
+begin
+  if v_uid is null then raise exception 'AUTH_REQUIRED'; end if;
+  if coalesce(trim(p_name),'') = '' then raise exception 'NAME_REQUIRED'; end if;
+  if coalesce(trim(p_address),'') = '' then raise exception 'ADDRESS_REQUIRED'; end if;
+  if coalesce(trim(p_phone),'') = '' then raise exception 'PHONE_REQUIRED'; end if;
+  if p_court_count < 1 or p_court_count > 20 then raise exception 'COURT_COUNT_RANGE'; end if;
+  if p_price_per_hour <= 0 then raise exception 'PRICE_REQUIRED'; end if;
+  if p_close_time <= p_open_time then raise exception 'INVALID_HOURS'; end if;
+
+  -- Một tài khoản một cụm sân trong MVP. Cụm thứ hai chờ bản sau.
+  if exists (select 1 from venues where owner_id = v_uid) then
+    raise exception 'VENUE_EXISTS';
+  end if;
+
+  v_base := left(coalesce(nullif(slugify(p_name), ''), 'san'), 40);
+  v_slug := v_base;
+  while exists (select 1 from venues where slug = v_slug) loop
+    v_try := v_try + 1;
+    if v_try > 50 then raise exception 'SLUG_COLLISION'; end if;
+    v_slug := v_base || '-' || v_try;
+  end loop;
+
+  insert into venues (owner_id, slug, name, address, district, phone, description,
+                      open_time, close_time, status)
+  values (v_uid, v_slug, trim(p_name), trim(p_address), trim(p_district), trim(p_phone),
+          nullif(trim(coalesce(p_description,'')),''), p_open_time, p_close_time, 'pending')
+  returning * into v_venue;
+
+  for v_i in 1..p_court_count loop
+    insert into courts (venue_id, name, sport, slot_minutes, sort_order)
+    values (v_venue.id, 'Sân ' || v_i, p_sport, 60, v_i)
+    returning id into v_court;
+
+    -- Bảng giá khởi điểm: một mức cho cả tuần. Chủ sân tách giờ vàng sau.
+    insert into price_rules (court_id, label, days, start_time, end_time, price_per_hour, priority)
+    values (v_court, 'Giá chung', '{0,1,2,3,4,5,6}', p_open_time, p_close_time, p_price_per_hour, 0);
+  end loop;
+
+  update profiles set
+    role = 'owner',
+    phone = coalesce(phone, trim(p_phone)),
+    payout_bank = nullif(trim(coalesce(p_payout_bank,'')),''),
+    payout_account = nullif(trim(coalesce(p_payout_account,'')),'')
+  where id = v_uid;
+
+  return v_venue;
 end $$;
 
 -- ------------------------------------------------------------
@@ -257,6 +387,8 @@ end $$;
 -- ------------------------------------------------------------
 grant execute on function get_venue_availability(uuid, date) to anon, authenticated;
 grant execute on function create_booking(uuid, timestamptz, timestamptz, text, text, text) to authenticated;
+grant execute on function cancel_booking(text) to authenticated;
+grant execute on function register_venue(text, text, text, text, text, time, time, sport_type, int, int, text, text) to authenticated;
 revoke execute on function confirm_payment(text, int, text, jsonb) from anon, authenticated;
 revoke execute on function expire_pending_bookings() from anon, authenticated;
 revoke execute on function complete_past_bookings() from anon, authenticated;

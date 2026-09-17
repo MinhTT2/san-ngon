@@ -74,6 +74,8 @@ export type ConfirmPaymentResult = {
   ok: boolean;
   reason: string;
   code?: string;
+  booking_id?: string;
+  owner_id?: string;
   court_name?: string;
   venue_name?: string;
   starts_at?: string;
@@ -94,3 +96,9 @@ export type Selection = {
   total: number;
   slots: Slot[];
 };
+
+/** Hồ sơ cụm sân của chủ sân, dùng ở /dang-ky-san. */
+export type OwnerVenue = Pick<
+  Venue,
+  'id' | 'slug' | 'name' | 'address' | 'district' | 'phone' | 'status'
+>;

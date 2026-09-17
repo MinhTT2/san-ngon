@@ -52,8 +52,55 @@ export const BOOKING_ERRORS: Record<string, string> = {
   CODE_COLLISION: 'Hệ thống đang bận. Thử lại sau vài giây.',
 };
 
-export function bookingErrorMessage(raw?: string) {
-  if (!raw) return 'Không đặt được sân. Thử lại sau vài giây.';
-  const key = Object.keys(BOOKING_ERRORS).find((k) => raw.includes(k));
-  return key ? BOOKING_ERRORS[key] : 'Không đặt được sân. Thử lại sau vài giây.';
+/** Lỗi từ cancel_booking. */
+export const CANCEL_ERRORS: Record<string, string> = {
+  AUTH_REQUIRED: 'Bạn cần đăng nhập.',
+  BOOKING_NOT_FOUND: 'Không tìm thấy đơn này.',
+  NOT_CANCELLABLE: 'Đơn này không hủy được nữa.',
+};
+
+/** Lỗi từ register_venue. */
+export const VENUE_ERRORS: Record<string, string> = {
+  AUTH_REQUIRED: 'Bạn cần đăng nhập để đăng sân.',
+  NAME_REQUIRED: 'Nhập tên cụm sân.',
+  ADDRESS_REQUIRED: 'Nhập địa chỉ sân.',
+  PHONE_REQUIRED: 'Nhập số điện thoại để khách liên hệ.',
+  COURT_COUNT_RANGE: 'Số sân con phải từ 1 đến 20.',
+  PRICE_REQUIRED: 'Nhập giá thuê một giờ.',
+  INVALID_HOURS: 'Giờ đóng cửa phải sau giờ mở cửa.',
+  VENUE_EXISTS: 'Tài khoản này đã đăng một cụm sân rồi.',
+  SLUG_COLLISION: 'Tên sân bị trùng quá nhiều. Đổi tên khác giúp bạn nhé.',
+};
+
+/** Dò mã lỗi Postgres trong chuỗi message rồi đổi sang câu tiếng Việt. */
+function translate(table: Record<string, string>, raw: string | undefined, fallback: string) {
+  if (!raw) return fallback;
+  const key = Object.keys(table).find((k) => raw.includes(k));
+  return key ? table[key] : fallback;
 }
+
+export function cancelErrorMessage(raw?: string) {
+  return translate(CANCEL_ERRORS, raw, 'Không hủy được đơn. Thử lại sau vài giây.');
+}
+
+export function venueErrorMessage(raw?: string) {
+  return translate(VENUE_ERRORS, raw, 'Không gửi được hồ sơ. Thử lại sau vài giây.');
+}
+
+export function bookingErrorMessage(raw?: string) {
+  return translate(BOOKING_ERRORS, raw, 'Không đặt được sân. Thử lại sau vài giây.');
+}
+
+export const VENUE_STATUS_LABELS: Record<string, string> = {
+  draft: 'Nháp',
+  pending: 'Chờ duyệt',
+  active: 'Đang nhận đặt',
+  rejected: 'Bị từ chối',
+};
+
+/** Quận/huyện nội thành, dùng cho ô chọn ở /dang-ky-san và bộ lọc /tim-san. */
+export const DISTRICTS = [
+  'Ba Đình', 'Hoàn Kiếm', 'Tây Hồ', 'Long Biên', 'Cầu Giấy', 'Đống Đa',
+  'Hai Bà Trưng', 'Hoàng Mai', 'Thanh Xuân', 'Nam Từ Liêm', 'Bắc Từ Liêm',
+  'Hà Đông', 'Thanh Trì', 'Gia Lâm', 'Đông Anh', 'Hoài Đức',
+];

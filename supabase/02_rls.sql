@@ -56,6 +56,7 @@ create policy price_rules_owner_write on price_rules for all
   using (owns_court(court_id)) with check (owns_court(court_id));
 
 -- bookings
+drop policy if exists bookings_update_owner on bookings;
 drop policy if exists bookings_select on bookings;
 create policy bookings_select on bookings for select
   using (user_id = auth.uid() or owns_court(court_id));
@@ -64,10 +65,13 @@ drop policy if exists bookings_insert_own on bookings;
 create policy bookings_insert_own on bookings for insert
   with check (user_id = auth.uid());
 
+-- Người đặt KHÔNG được update thẳng dòng đơn của mình. Chính sách cũ chỉ có
+-- USING mà không có WITH CHECK, nghĩa là từ trình duyệt họ tự đổi được
+-- status thành 'confirmed' hoặc hạ total_amount mà không cần trả đồng nào.
+-- Hủy đơn đi qua hàm cancel_booking(), sửa trạng thái đi qua webhook.
 drop policy if exists bookings_update on bookings;
-create policy bookings_update on bookings for update using (
-  (user_id = auth.uid() and status in ('pending','confirmed')) or owns_court(court_id)
-);
+create policy bookings_update_owner on bookings for update
+  using (owns_court(court_id)) with check (owns_court(court_id));
 
 -- payments: chỉ đọc, ghi hoàn toàn bằng service role trong webhook
 drop policy if exists payments_select on payments;

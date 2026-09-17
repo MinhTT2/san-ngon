@@ -57,16 +57,19 @@ export async function POST(req: NextRequest) {
   // Báo chủ sân. Gửi hỏng cũng không ảnh hưởng: tiền đã vào, đơn đã xác nhận.
   if (result.ok && result.reason === 'CONFIRMED') {
     const sent = await sendTelegram(result.owner_telegram_chat_id, ownerBookingMessage(result));
-    if (!sent.ok) {
-      await supabase.from('notifications').insert({
-        user_id: null, // TODO: confirm_payment nên trả owner_id để ghi đúng dòng thất bại
-        booking_id: null,
+    // notifications.user_id là NOT NULL — phải ghi đúng chủ sân, nếu không dòng
+    // báo-lỗi-gửi-tin bị chặn và không ai biết Telegram đã hỏng.
+    if (!sent.ok && result.owner_id) {
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: result.owner_id,
+        booking_id: result.booking_id ?? null,
         kind: 'new_booking',
         channel: 'telegram',
         title: `Không gửi được Telegram cho đơn ${result.code}`,
         body: sent.reason,
         failed_reason: sent.reason,
-      }).select().single().then(undefined, () => {});
+      });
+      if (notifError) console.error('[sepay] không ghi được notification', notifError.message);
     }
   }
 

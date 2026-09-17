@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { NavLink } from './site-nav-link';
 
 /**
  * Header dùng chung cho mọi trang TRỪ trang thanh toán.
  * Trang checkout cố ý không có nav: bớt đường thoát càng tốt.
  */
-export async function SiteHeader({ active }: { active?: 'tim-san' | 'don-cua-toi' | 'chu-san' }) {
+export async function SiteHeader() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -21,9 +22,9 @@ export async function SiteHeader({ active }: { active?: 'tim-san' | 'don-cua-toi
           </Link>
 
           <nav className="hidden gap-8 md:flex">
-            <NavLink href="/tim-san" label="Tìm sân" on={active === 'tim-san'} />
-            <NavLink href="/don-cua-toi" label="Đơn của tôi" on={active === 'don-cua-toi'} />
-            <NavLink href="/chu-san" label="Chủ sân" on={active === 'chu-san'} />
+            <NavLink href="/tim-san" label="Tìm sân" />
+            <NavLink href="/don-cua-toi" label="Đơn của tôi" />
+            <NavLink href="/chu-san" label="Chủ sân" />
           </nav>
         </div>
 
@@ -50,19 +51,6 @@ export async function SiteHeader({ active }: { active?: 'tim-san' | 'don-cua-toi
         </div>
       </div>
     </header>
-  );
-}
-
-function NavLink({ href, label, on }: { href: string; label: string; on?: boolean }) {
-  return (
-    <Link
-      href={href}
-      className={`flex h-19 items-center text-[15px] ${
-        on ? 'font-semibold text-ink shadow-[inset_0_-2px_0_var(--color-pitch)]' : 'font-medium text-ink-secondary'
-      }`}
-    >
-      {label}
-    </Link>
   );
 }
 

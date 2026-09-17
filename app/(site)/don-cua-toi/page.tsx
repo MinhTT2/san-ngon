@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/status-badge';
+import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { hhmm, dayLabel, vnd } from '@/lib/format';
+import { CANCEL_WINDOW_HOURS } from '@/lib/constants';
 import type { BookingStatus } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +28,11 @@ export default async function Page() {
       venueName: court?.venues?.name ?? '',
       district: court?.venues?.district ?? '',
       left: Math.max(0, Math.floor((new Date(b.expires_at).getTime() - Date.now()) / 1000)),
+      cancellable: b.status === 'pending' || b.status === 'confirmed',
+      // Khớp với mốc trong cancel_booking(): đổi một chỗ thì đổi cả hai.
+      refundable:
+        b.status === 'confirmed' &&
+        new Date(b.starts_at).getTime() - Date.now() >= CANCEL_WINDOW_HOURS * 3600_000,
     };
   });
 
@@ -49,6 +56,7 @@ export default async function Page() {
                   <th className="px-5 py-3 text-right font-medium">Đã cọc</th>
                   <th className="px-5 py-3 text-right font-medium">Trả tại sân</th>
                   <th className="px-5 py-3 font-medium">Trạng thái</th>
+                  <th className="px-5 py-3 font-medium"><span className="sr-only">Hành động</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -75,6 +83,11 @@ export default async function Page() {
                         secondsLeft={b.status === 'pending' ? b.left : undefined}
                       />
                     </td>
+                    <td className="px-5 py-4 text-right">
+                      {b.cancellable && (
+                        <CancelBookingButton code={b.code} refundable={b.refundable} />
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -83,8 +96,8 @@ export default async function Page() {
 
           <ul className="mt-6 flex flex-col gap-3 md:hidden">
             {rows.map((b) => (
-              <li key={b.id}>
-                <Link href={`/dat-san/${b.code}`} className="flex flex-col gap-2.5 rounded-card border border-hairline bg-card p-4">
+              <li key={b.id} className="flex flex-col rounded-card border border-hairline bg-card">
+                <Link href={`/dat-san/${b.code}`} className="flex flex-col gap-2.5 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <StatusBadge
                       status={b.status as BookingStatus}
@@ -103,6 +116,11 @@ export default async function Page() {
                     <span className="font-semibold">Còn {vnd(b.total_amount - b.deposit_amount)}</span>
                   </div>
                 </Link>
+                {b.cancellable && (
+                  <div className="border-t border-hairline px-4 py-3">
+                    <CancelBookingButton code={b.code} refundable={b.refundable} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>

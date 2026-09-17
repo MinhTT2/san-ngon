@@ -75,7 +75,9 @@ function SearchBar() {
     <form action="/tim-san" className="flex flex-col gap-2.5 rounded-card bg-card p-4 sm:flex-row sm:items-end">
       <div className="flex flex-grow flex-col gap-1.5">
         <label htmlFor="sport" className="text-xs font-semibold text-ink-secondary">Môn</label>
-        <select id="sport" name="sport" className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]">
+        <select id="sport" name="sport" defaultValue="" className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]">
+          {/* Rỗng = mọi môn. Bỏ mục này thì ai bấm luôn cũng bị lọc về bóng đá 5. */}
+          <option value="">Tất cả các môn</option>
           {Object.entries(SPORT_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
