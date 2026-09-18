@@ -11,11 +11,21 @@ const Body = z.object({
   district: z.string().trim().min(2).max(60),
   phone: z.string().trim().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0'),
   description: z.string().trim().max(500).optional(),
-  open_time: z.string().regex(/^\d{2}:\d{2}$/),
-  close_time: z.string().regex(/^\d{2}:\d{2}$/),
-  sport: z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball', 'tennis']),
-  court_count: z.number().int().min(1).max(20),
-  price_per_hour: z.number().int().min(1000).max(10_000_000),
+  open_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ mở cửa không hợp lệ'),
+  close_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ đóng cửa không hợp lệ'),
+  sports: z.array(z.object({
+    sport: z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball', 'tennis']),
+    court_count: z.number().int().min(1).max(20),
+    price_per_hour: z.number().int().min(1000).max(10_000_000),
+  })).min(1, 'Chọn ít nhất một môn thể thao.').max(6)
+    .superRefine((sports, ctx) => {
+      if (new Set(sports.map((item) => item.sport)).size !== sports.length) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Mỗi môn thể thao chỉ chọn một lần.' });
+      }
+      if (sports.reduce((total, item) => total + item.court_count, 0) > 20) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tổng số sân con không được quá 20 sân.' });
+      }
+    }),
   payout_bank: z.string().trim().max(60).optional(),
   payout_account: z.string().trim().max(40).optional(),
 });
@@ -48,18 +58,18 @@ export async function POST(req: NextRequest) {
     p_description: v.description ?? null,
     p_open_time: v.open_time,
     p_close_time: v.close_time,
-    p_sport: v.sport,
-    p_court_count: v.court_count,
-    p_price_per_hour: v.price_per_hour,
+    p_sports: v.sports,
     p_payout_bank: v.payout_bank ?? null,
     p_payout_account: v.payout_account ?? null,
   }).single();
 
   if (error) {
+    const alreadyExists = error.message.includes('VENUE_EXISTS')
+      || error.message.includes('venues_one_per_owner_idx');
     const status = error.message.includes('AUTH_REQUIRED') ? 401
-      : error.message.includes('VENUE_EXISTS') ? 409
+      : alreadyExists ? 409
       : 400;
-    return NextResponse.json({ error: venueErrorMessage(error.message) }, { status });
+    return NextResponse.json({ error: venueErrorMessage(alreadyExists ? 'VENUE_EXISTS' : error.message) }, { status });
   }
 
   return NextResponse.json({ venue: data }, { status: 201 });

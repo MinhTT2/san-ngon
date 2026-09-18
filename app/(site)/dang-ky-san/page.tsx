@@ -2,79 +2,88 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { RegisterForm } from './register-form';
 import { VenueStatusSteps } from './venue-status-steps';
+import { BrandMark } from '@/components/brand-mark';
 import type { OwnerVenue } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Đăng ký chủ sân · Sân Ngon' };
 
-/**
- * Một trang, hai trạng thái: chưa có hồ sơ thì hiện form, có rồi thì hiện
- * bốn bước duyệt. Chủ sân bấm lại link "Đăng sân" trong header sẽ thấy hồ sơ
- * của mình chứ không phải form trắng — đó là câu hỏi họ thực sự có.
- */
 export default async function Page() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   let venue: OwnerVenue | null = null;
-  let profile: { full_name: string | null; phone: string | null } | null = null;
+  let phone: string | null = null;
+  let loadFailed = false;
 
   if (user) {
-    const [{ data: v }, { data: p }] = await Promise.all([
-      supabase
-        .from('venues')
-        .select('id, slug, name, address, district, phone, status')
-        .eq('owner_id', user.id)
-        .maybeSingle(),
-      supabase.from('profiles').select('full_name, phone').eq('id', user.id).maybeSingle(),
+    const [venues, profile] = await Promise.all([
+      supabase.from('venues').select('id, slug, name, address, district, phone, status')
+        .eq('owner_id', user.id).order('created_at').limit(1).maybeSingle(),
+      supabase.from('profiles').select('phone').eq('id', user.id).maybeSingle(),
     ]);
-    venue = v as OwnerVenue | null;
-    profile = p;
-  }
-
-  if (venue) {
-    return (
-      <main className="mx-auto max-w-3xl px-5 py-12 lg:px-16">
-        <VenueStatusSteps venue={venue} />
-      </main>
-    );
+    venue = venues.data as OwnerVenue | null;
+    phone = profile.data?.phone ?? null;
+    loadFailed = Boolean(venues.error);
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-12 lg:px-16">
-      <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch lg:text-4xl">
-        Đăng sân của bạn
-      </h1>
-      <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-secondary">
-        Điền một lần, chúng tôi gọi lại trong vòng một ngày làm việc để xác minh rồi mở lịch.
-        Miễn phí, không ràng buộc, gỡ sân bất cứ lúc nào.
-      </p>
-
-      {!user ? (
-        <div className="mt-8 flex flex-col items-start gap-4 rounded-card border border-strong bg-free-fill p-6">
-          <p className="text-[15px] leading-relaxed">
-            Đăng nhập trước đã — hồ sơ cần gắn với một tài khoản để bạn quản lý lịch sau này.
-          </p>
-          <Link
-            href="/dang-nhap?next=/dang-ky-san"
-            className="flex h-13 items-center rounded-control bg-pitch px-7 font-semibold text-pitch-ink"
-          >
-            Đăng nhập rồi đăng sân
-          </Link>
+    <main className="mx-auto max-w-7xl px-5 py-8 lg:px-16 lg:py-12">
+      <div className="mb-8 flex items-center gap-2 text-xs text-ink-secondary">
+        <Link href="/" className="hover:text-pitch">Trang chủ</Link>
+        <span aria-hidden="true">/</span><span>Dành cho chủ sân</span>
+      </div>
+      {loadFailed ? (
+        <div role="alert" className="rounded-card border border-hairline bg-card p-8">
+          <h1 className="font-display text-2xl font-bold text-pitch">Chưa tải được hồ sơ của bạn</h1>
+          <p className="mt-3 text-ink-secondary">Hãy tải lại trang để kiểm tra hồ sơ trước khi đăng ký.</p>
+          <Link href="/dang-ky-san" className="mt-5 inline-block font-semibold text-pitch underline">Thử lại</Link>
         </div>
-      ) : (
-        <div className="mt-8">
-          <RegisterForm defaultPhone={profile?.phone} />
-        </div>
+      ) : venue ? <VenueStatusSteps venue={venue} /> : (
+        <>
+          <header className="mb-10 max-w-2xl">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Đồng hành cùng Sân Ngon</p>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.12] tracking-tight text-pitch sm:text-5xl">Sân của bạn.<br />Sẵn sàng đón người chơi.</h1>
+            <p className="mt-5 max-w-xl text-[15px] leading-7 text-ink-secondary">Đưa sân lên Sân Ngon để người chơi tìm thấy, xem lịch trống và đặt sân. Bắt đầu bằng vài thông tin về cụm sân của bạn.</p>
+          </header>
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+            {user ? <RegisterForm defaultPhone={phone} /> : (
+              <section className="rounded-card border border-hairline bg-card p-6 sm:p-10">
+                <BrandMark size={44} />
+                <h2 className="mt-6 font-display text-2xl font-bold text-pitch">Một tài khoản, quản lý cả cụm sân</h2>
+                <p className="mt-3 text-sm leading-7 text-ink-secondary">Đăng nhập để gửi hồ sơ và theo dõi kết quả xác minh. Tài khoản này cũng sẽ dùng để quản lý lịch và đơn đặt sân.</p>
+                <Link href="/dang-nhap?next=/dang-ky-san" className="mt-7 inline-flex min-h-13 items-center justify-center gap-6 rounded-control bg-pitch px-6 font-semibold text-pitch-ink">Đăng nhập để bắt đầu <span aria-hidden="true">→</span></Link>
+                <p className="mt-4 text-xs text-ink-secondary">Có thể dùng tài khoản Google hoặc email của bạn.</p>
+                <div className="mt-8 border-t border-hairline pt-6">
+                  <h3 className="text-sm font-semibold">Chuẩn bị trước khi đăng ký</h3>
+                  <p className="mt-2 text-sm leading-7 text-ink-secondary">Địa chỉ và số liên hệ · Số sân và môn thể thao · Giờ mở cửa và giá thuê.</p>
+                </div>
+              </section>
+            )}
+            <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
+              <section className="overflow-hidden rounded-card bg-pitch p-7 text-pitch-ink">
+                <span className="text-xs font-medium uppercase tracking-[0.16em] text-free-line">Từ sân trống đến lịch kín</span>
+                <h2 className="mt-4 font-display text-2xl font-bold leading-tight">Bớt cuộc gọi.<br />Thêm thời gian cho sân.</h2>
+                <ul className="mt-6 space-y-5 text-sm leading-6">
+                  <li className="flex gap-3"><span aria-hidden="true" className="text-free-line">✓</span>Người chơi tự xem khung giờ còn trống.</li>
+                  <li className="flex gap-3"><span aria-hidden="true" className="text-free-line">✓</span>Lịch và đơn đặt tập trung một nơi.</li>
+                  <li className="flex gap-3"><span aria-hidden="true" className="text-free-line">✓</span>Giữ chỗ bằng tiền cọc chuyển khoản.</li>
+                </ul>
+              </section>
+              <section className="rounded-card border border-hairline bg-card p-6">
+                <h2 className="text-sm font-semibold">Sau khi gửi hồ sơ</h2>
+                <ol className="mt-5 space-y-5">
+                  {[
+                    ['Tiếp nhận thông tin', 'Bạn theo dõi hồ sơ ngay trên trang này.'],
+                    ['Liên hệ xác minh', 'Sân Ngon kiểm tra thông tin cùng bạn.'],
+                    ['Mở lịch nhận khách', 'Chỉ khi được duyệt, sân mới xuất hiện công khai.'],
+                  ].map(([title, body], i) => <li key={title} className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-free-fill text-xs font-semibold text-pitch">{i + 1}</span><div><h3 className="text-sm font-medium">{title}</h3><p className="mt-1 text-xs leading-5 text-ink-secondary">{body}</p></div></li>)}
+                </ol>
+              </section>
+              <p className="px-1 text-xs leading-6 text-ink-secondary">Cần trao đổi trước? <Link href="/lien-he" className="font-semibold text-pitch underline underline-offset-4">Liên hệ Sân Ngon</Link></p>
+            </aside>
+          </div>
+        </>
       )}
-
-      <section className="mt-12 border-t border-hairline pt-8">
-        <h2 className="text-[15px] font-semibold">Chúng tôi cần gì ở bạn</h2>
-        <ul className="mt-3 flex flex-col gap-2 text-[15px] leading-relaxed text-ink-secondary">
-          <li>· Một số điện thoại có người nghe, để khách gọi khi tới nơi.</li>
-          <li>· Tài khoản ngân hàng nhận cọc — chúng tôi chuyển thẳng, không giữ tiền của bạn.</li>
-          <li>· Giá thuê một giờ. Tách giờ vàng, giờ đêm, cuối tuần sau khi hồ sơ được duyệt.</li>
-        </ul>
-      </section>
     </main>
   );
 }

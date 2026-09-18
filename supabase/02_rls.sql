@@ -32,8 +32,11 @@ create policy venues_read on venues for select
   using (status = 'active' or owner_id = auth.uid());
 
 drop policy if exists venues_owner_write on venues;
-create policy venues_owner_write on venues for all
-  using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+-- Hồ sơ được tạo bởi register_venue() (security definer). Chủ sân chỉ được
+-- sửa thông tin khi còn chờ duyệt và không thể tự đổi status thành active.
+create policy venues_owner_update_pending on venues for update
+  using (owner_id = auth.uid() and status = 'pending')
+  with check (owner_id = auth.uid() and status = 'pending');
 
 -- courts
 drop policy if exists courts_read on courts;
