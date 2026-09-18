@@ -11,7 +11,7 @@ type NotificationRow = {
   body: string | null;
   created_at: string;
   read_at: string | null;
-  booking: { code: string } | null;
+  booking: { code: string } | { code: string }[] | null;
 };
 
 export default async function Page() {
@@ -23,7 +23,10 @@ export default async function Page() {
     .from('notifications')
     .select('id, title, body, created_at, read_at, booking:bookings(code)')
     .order('created_at', { ascending: false });
-  const notifications = (data ?? []) as unknown as NotificationRow[];
+  const notifications = ((data ?? []) as unknown as NotificationRow[]).map((notification) => ({
+    ...notification,
+    booking: Array.isArray(notification.booking) ? notification.booking[0] ?? null : notification.booking,
+  }));
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10 lg:px-16">
@@ -38,16 +41,20 @@ export default async function Page() {
           {notifications.map((notification) => (
             <li
               key={notification.id}
-              className={`rounded-card border p-4 ${notification.read_at ? 'border-hairline bg-card' : 'border-strong bg-free-fill'}`}
+              className={`group rounded-card border p-4 ${notification.read_at ? 'border-hairline bg-card' : 'border-strong bg-free-fill'}`}
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="font-semibold">{notification.title}</p>
+                <Link
+                  href={`/api/notifications/${notification.id}/open`}
+                  className="min-w-0 flex-1 rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-pitch"
+                  aria-label={`Mở thông báo: ${notification.title}`}
+                >
+                  <p className="font-semibold transition-colors group-hover:text-pitch">{notification.title}</p>
                   {notification.body && <p className="mt-1 text-sm text-ink-secondary">{notification.body}</p>}
                   <p className="mt-2 text-xs text-ink-secondary">
                     {dayLabel(new Date(notification.created_at))} · {hhmm(notification.created_at)}
                   </p>
-                </div>
+                </Link>
                 {!notification.read_at && (
                   <form action={`/api/notifications/${notification.id}/read`} method="post" className="flex-none">
                     <button type="submit" className="text-xs font-semibold text-pitch underline underline-offset-2">
