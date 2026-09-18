@@ -63,6 +63,12 @@ lib/
   use-availability.ts  một nguồn dữ liệu cho cả hai bố cục lưới
   supabase/        client, server, admin
 components/
+  brand-mark.tsx           logo: mặt sân phối cảnh, dùng chung header/loader
+  brand-loader.tsx         màn chờ, vòng cung xoay quanh mark, nền mờ
+  hero-carousel.tsx        ba cảnh sân thay nhau ở hero
+  pitch-scenes.tsx         bóng đá / cầu lông / pickleball — THAY BẰNG ẢNH THẬT
+  reveal.tsx               hiện dần khi cuộn tới (IntersectionObserver)
+  count-up.tsx             số đếm tăng dần
   slot-cell.tsx            ô khung giờ, 4 trạng thái
   slot-picker-mobile.tsx   giờ theo hàng dọc
   slot-picker-desktop.tsx  sân theo hàng ngang, cả ngày một khung hình
@@ -135,7 +141,12 @@ Hai họ chữ: Bricolage Grotesque cho tiêu đề, Be Vietnam Pro cho phần c
 
 Không đổ bóng ở đâu cả. Viền 1px và nền phẳng.
 
-`pitch-night.tsx` là hình tạm. Khi có ảnh thật của cụm sân đã onboard, chụp khoảng 18h lúc đèn đã bật, thay vào đúng chỗ đó. Không dùng ảnh stock.
+Không thêm thư viện animation. Hiệu ứng trong app chỉ cần IntersectionObserver
+và vài keyframe CSS trong `globals.css`; framer-motion nặng gần 50kb cho bấy
+nhiêu là không đáng. Mọi hiệu ứng ẩn-rồi-hiện phải mặc định ĐÃ HIỆN trong CSS,
+JS mới giấu đi — không thì JS hỏng là nội dung tàng hình.
+
+`pitch-scenes.tsx` và `pitch-night.tsx` là hình tạm. Khi có ảnh thật của cụm sân đã onboard, chụp khoảng 18h lúc đèn đã bật, thay vào đúng chỗ đó. Không dùng ảnh stock.
 
 ## Còn thiếu, theo thứ tự ưu tiên
 

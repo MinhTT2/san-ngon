@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PitchNight } from '@/components/pitch-night';
+import { HeroCarousel } from '@/components/hero-carousel';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
 import { Reveal } from '@/components/reveal';
+import { CountUp } from '@/components/count-up';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { ymd } from '@/lib/format';
@@ -140,7 +141,7 @@ function Hero({ grid }: { grid: React.ReactNode }) {
         </div>
 
         <div style={{ animationDelay: '160ms' }} className="pf-in relative w-full flex-grow">
-          <PitchNight className="h-64 w-full rounded-card object-cover lg:h-[430px]" />
+          <HeroCarousel className="h-64 w-full lg:h-[430px]" />
           {grid}
         </div>
       </div>
@@ -184,19 +185,19 @@ function SearchBar() {
 }
 
 function Stats({ venues, courts, districts }: { venues: number; courts: number; districts: number }) {
-  const items = [
-    [String(venues), 'cụm sân đang nhận đặt'],
-    [String(courts), 'sân con trong hệ thống'],
-    [String(districts), 'quận ở Hà Nội'],
-    ['15 giây', 'từ chuyển khoản tới xác nhận'],
+  const items: [number, string, string][] = [
+    [venues, '', 'cụm sân đang nhận đặt'],
+    [courts, '', 'sân con trong hệ thống'],
+    [districts, '', 'quận ở Hà Nội'],
+    [15, ' giây', 'từ chuyển khoản tới xác nhận'],
   ];
   return (
     <section className="border-b border-hairline bg-card">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-5 py-7 lg:grid-cols-4 lg:px-16">
-        {items.map(([v, l]) => (
-          <div key={l} className="flex flex-col gap-0.5">
-            <span className="font-display text-2xl font-bold text-pitch">{v}</span>
-            <span className="text-[13px] text-ink-secondary">{l}</span>
+        {items.map(([value, suffix, label]) => (
+          <div key={label} className="flex flex-col gap-0.5">
+            <CountUp to={value} suffix={suffix} className="font-display text-2xl font-bold text-pitch" />
+            <span className="text-[13px] text-ink-secondary">{label}</span>
           </div>
         ))}
       </div>

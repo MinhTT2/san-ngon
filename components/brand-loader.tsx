@@ -4,6 +4,8 @@
  * Độ mờ làm bằng backdrop-blur cộng hai quầng sáng blur-3xl — không phải đổ
  * bóng, nên không phạm quy tắc "không đổ bóng ở đâu cả" trong AGENTS.md.
  */
+import { BrandMark } from './brand-mark';
+
 export function BrandLoader({ label = 'Đang tải…' }: { label?: string }) {
   return (
     <div
@@ -20,7 +22,7 @@ export function BrandLoader({ label = 'Đang tải…' }: { label?: string }) {
       <div className="relative flex flex-col items-center gap-5">
         <div className="relative grid h-20 w-20 place-items-center">
           <Ring />
-          <Mark />
+          <BrandMark size={34} />
         </div>
         <span className="font-display text-[15px] font-bold tracking-tight text-pitch">{label}</span>
       </div>
@@ -44,19 +46,6 @@ function Ring() {
         strokeWidth="3"
         strokeLinecap="round"
       />
-    </svg>
-  );
-}
-
-function Mark() {
-  return (
-    <svg width="34" height="34" viewBox="0 0 30 30" fill="none" aria-hidden="true">
-      <rect width="30" height="30" rx="8" fill="#0F3D2E" />
-      <g stroke="#9FC6B2" strokeWidth="1.2" fill="none">
-        <rect x="5.5" y="7.5" width="19" height="15" rx="2" />
-        <line x1="15" y1="7.5" x2="15" y2="22.5" />
-        <circle cx="15" cy="15" r="3.4" />
-      </g>
     </svg>
   );
 }

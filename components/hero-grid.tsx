@@ -53,12 +53,14 @@ export function HeroGrid({
         ))}
       </Row>
 
-      {courts.map(([id, name]) => (
+      {courts.map(([id, name], row) => (
         <Row key={id} cols={times.length}>
           <span className="truncate text-xs font-semibold text-pitch">{name}</span>
-          {times.map((t) => {
+          {times.map((t, col) => {
             const slot = byKey.get(`${id}|${t}`);
             if (!slot) return <span key={t} />;
+            // Các ô sáng lên lần lượt từ trái sang, như lịch vừa tải xong.
+            const delay = 260 + (row * times.length + col) * 45;
             const hour = hourOf(slot.starts_at);
             const peak = hour >= PEAK_FROM_HOUR && hour < PEAK_TO_HOUR;
             const tone = !slot.is_available
@@ -69,7 +71,8 @@ export function HeroGrid({
             return (
               <span
                 key={t}
-                className={`flex h-8 items-center justify-center rounded-slot text-[11px] font-semibold tabular-nums ${tone}`}
+                style={{ animationDelay: `${delay}ms` }}
+                className={`pf-in flex h-8 items-center justify-center rounded-slot text-[11px] font-semibold tabular-nums ${tone}`}
               >
                 {slot.is_available ? vndShort(slot.price) : '—'}
               </span>
