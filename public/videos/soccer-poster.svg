@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 627">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#262052"/>
+      <stop offset=".56" stop-color="#D95782"/>
+      <stop offset="1" stop-color="#FFB34D"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1B9A68"/>
+      <stop offset="1" stop-color="#064B3C"/>
+    </linearGradient>
+  </defs>
+  <rect width="940" height="627" fill="url(#sky)"/>
+  <circle cx="470" cy="240" r="86" fill="#FFE09A" opacity=".85"/>
+  <path d="M0 335 130 280l90 38 120-62 130 54 125-66 125 59 120-38v100H0Z" fill="#211A43" opacity=".78"/>
+  <path d="M0 385h940v242H0z" fill="#111C2A"/>
+  <path d="M0 627h940L710 350H230Z" fill="url(#grass)"/>
+  <path d="m230 350 480 0M78 608h784L676 380H264Z" stroke="#EFFFFA" stroke-width="4" fill="none" opacity=".72"/>
+  <path d="M135 500h670M470 380v228" stroke="#EFFFFA" stroke-width="3" opacity=".55"/>
+  <g fill="#FFE09A"><circle cx="120" cy="245" r="7"/><circle cx="820" cy="245" r="7"/></g>
+</svg>

@@ -116,4 +116,5 @@ button:disabled,
   /* Tắt hiệu ứng thì phải chắc chắn nội dung vẫn hiện. */
   .pf-reveal.pf-armed { opacity: 1; }
   .pf-spin { animation: none; }
+  .pf-ambient-video { display: none; }
 }

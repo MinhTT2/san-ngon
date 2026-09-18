@@ -306,7 +306,7 @@ function ForOwners() {
     <section className="mx-auto max-w-7xl px-5 pt-16 lg:px-16 lg:pt-24">
       <div className="relative grid min-h-[620px] overflow-hidden rounded-[28px] bg-pitch lg:min-h-[560px] lg:grid-cols-2">
         {/* Nguồn: Mixkit, clip miễn phí "One on one in a soccer game". */}
-        <video className="absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline aria-hidden="true">
+        <video className="pf-ambient-video absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" poster="/videos/soccer-poster.svg" aria-hidden="true">
           <source src="/videos/soccer-one-on-one.mp4" type="video/mp4" />
         </video>
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-pitch via-pitch/80 to-pitch/30" />
