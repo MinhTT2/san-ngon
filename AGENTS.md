@@ -172,3 +172,7 @@ Bản đồ, đánh giá sao, tìm đối ghép kèo, hoàn tiền tự động,
 ## Ràng buộc môi trường
 
 Không Docker, không ORM, không thư viện quản lý state, không react-hook-form. Tailwind v4, token trong `app/globals.css`. Deploy Vercel, database Supabase region Singapore.
+
+## Quy trình giao việc
+
+Khi hoàn thành một task và các kiểm tra cần thiết đều đạt, commit thay đổi rồi push ngay lên `origin/main`. Không để task đã xong nằm lại chỉ ở máy local.
