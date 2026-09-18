@@ -42,15 +42,45 @@ export function LoginForm() {
     (typeof window === 'undefined' ? '' : window.location.origin);
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
+  /**
+   * signInWithOAuth KHÔNG gọi mạng: nó dựng URL ở phía client rồi gán thẳng
+   * window.location.href (GoTrueClient._handleProviderSignIn). Provider chưa
+   * bật thì trình duyệt đã rời trang, Supabase trả JSON thô ra màn hình và
+   * nhánh `error` của hàm này không bao giờ chạy.
+   *
+   * Nên phải tự thăm dò URL trước. Thăm dò hỏng vì mạng hay CORS thì cứ
+   * chuyển trang như cũ — không để việc kiểm tra làm hỏng đường đăng nhập.
+   */
   async function google() {
     setBusy('google');
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: { redirectTo, skipBrowserRedirect: true },
     });
-    // Thành công thì trình duyệt đã rời trang, không cần tắt busy.
-    if (error) { setError(viError(error.message)); setBusy(null); }
+
+    if (error || !data?.url) {
+      setError(viError(error?.message ?? 'Không mở được đăng nhập Google.'));
+      setBusy(null);
+      return;
+    }
+
+    try {
+      // redirect: 'manual' — provider bật thì GoTrue trả 302 sang Google và
+      // trình duyệt đưa về response rỗng kiểu opaqueredirect.
+      const probe = await fetch(data.url, { method: 'GET', redirect: 'manual' });
+      if (probe.type !== 'opaqueredirect' && probe.status >= 400) {
+        const body = await probe.json().catch(() => null);
+        setError(viError(body?.msg ?? body?.error_description ?? 'Đăng nhập Google chưa dùng được.'));
+        setBusy(null);
+        return;
+      }
+    } catch {
+      // Không thăm dò được — đi tiếp bằng đường cũ.
+    }
+
+    window.location.href = data.url;
   }
 
   async function otp(e: React.FormEvent) {
