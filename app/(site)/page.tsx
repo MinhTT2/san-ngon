@@ -119,15 +119,15 @@ function Hero({ grid }: { grid: React.ReactNode }) {
     <section className="bg-pitch">
       <h1 className="sr-only">Sân Ngon — Đặt sân thể thao ở Hà Nội</h1>
       <HeroCarousel />
-      <div className="border-t border-free-line/20">
+      <div className="border-t border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16">
           <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold text-pitch-ink">Tìm sân cho buổi chơi tiếp theo</h2>
+            <h2 className="text-sm font-semibold text-ink">Tìm sân cho buổi chơi tiếp theo</h2>
             <SearchBar />
-            <p className="text-xs leading-5 text-free-line">Miễn phí cho người đặt · Xem lịch trước, đăng nhập sau</p>
+            <p className="text-xs leading-5 text-ink-secondary">Miễn phí cho người đặt · Xem lịch trước, đăng nhập sau</p>
           </div>
           <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold text-pitch-ink">Một góc lịch sân</h2>
+            <h2 className="text-sm font-semibold text-ink">Một góc lịch sân</h2>
             {grid}
           </div>
         </div>
