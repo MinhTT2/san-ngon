@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { RegisterForm } from './register-form';
 import { VenueStatusSteps } from './venue-status-steps';
@@ -19,11 +20,12 @@ export default async function Page() {
     const [venues, profile] = await Promise.all([
       supabase.from('venues').select('id, slug, name, address, district, phone, status')
         .eq('owner_id', user.id).order('created_at').limit(1).maybeSingle(),
-      supabase.from('profiles').select('phone').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('phone, role').eq('id', user.id).maybeSingle(),
     ]);
     venue = venues.data as OwnerVenue | null;
     phone = profile.data?.phone ?? null;
     loadFailed = Boolean(venues.error);
+    if (profile.data?.role === 'owner' && !venue) redirect('/chu-san');
   }
 
   return (
