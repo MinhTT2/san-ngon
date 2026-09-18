@@ -130,6 +130,27 @@ export function HeroCarousel() {
         ))}
       </div>
 
+      <button
+        type="button"
+        onClick={() => move(-1)}
+        aria-label="Ảnh trước"
+        className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:left-6"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="rotate-180">
+          <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => move(1)}
+        aria-label="Ảnh tiếp theo"
+        className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:right-6"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
       <div className="relative z-20 mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 pb-6 pt-2 text-white lg:px-16">
         <div className="flex items-center gap-1" aria-label="Chọn môn thể thao">
           {SLIDES.map(({ key, label }, i) => (
@@ -159,19 +180,6 @@ export function HeroCarousel() {
               {autoplay ? <path d="M4 3h3v10H4zM9 3h3v10H9z" /> : <path d="m5 2 9 6-9 6z" />}
             </svg>
           </button>
-          {([-1, 1] as const).map((direction) => (
-            <button
-              key={direction}
-              type="button"
-              onClick={() => move(direction)}
-              aria-label={direction === -1 ? 'Ảnh trước' : 'Ảnh tiếp theo'}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-free-line/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className={direction === -1 ? 'rotate-180' : ''}>
-                <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          ))}
         </div>
       </div>
     </div>
