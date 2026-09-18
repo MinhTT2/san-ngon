@@ -14,22 +14,22 @@ export const dynamic = 'force-dynamic';
  * để biết khung nào đang ế mà giảm giá, thứ mà danh sách dọc không cho thấy.
  * Trên điện thoại rút về danh sách đơn trong ngày.
  *
- * RLS lo phần lọc: policy bookings_select chỉ trả về đơn thuộc sân của người
- * đang đăng nhập, nên không cần lọc theo owner ở đây.
+ * Lọc đơn theo cụm sân đang chọn; RLS còn cho đọc các đơn tự đặt ở sân khác.
  */
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ venue?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/chu-san');
 
-  // Ai cũng vào được /chu-san, nhưng RLS chỉ trả đơn thuộc sân của họ. Người
-  // chưa có sân mà thấy dashboard toàn số 0 thì tưởng hỏng — chỉ đường cho họ.
-  const [{ data: venue }, { data: profile }] = await Promise.all([
-    supabase.from('venues').select('name, status').eq('owner_id', user.id).maybeSingle(),
+  const { venue: selectedVenueId } = await searchParams;
+  const [{ data: venues, error: venuesError }, { data: profile }] = await Promise.all([
+    supabase.from('venues').select('id, name, status').eq('owner_id', user.id).order('created_at').order('id'),
     supabase.from('profiles').select('telegram_chat_id').eq('id', user.id).maybeSingle(),
   ]);
 
-  if (!venue) return <NoVenue />;
+  if (venuesError) throw new Error('Không tải được danh sách sân. Vui lòng thử lại.');
+  if (!venues?.length) return <NoVenue />;
+  const venue = venues.find((item) => item.id === selectedVenueId) ?? venues[0];
 
   const from = new Date();
   const to = new Date();
@@ -37,14 +37,16 @@ export default async function Page() {
 
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('id, code, starts_at, ends_at, status, total_amount, deposit_amount, refund_status, customer_name, customer_phone, courts(name, venues(name))')
+    .select('id, code, starts_at, ends_at, status, total_amount, deposit_amount, refund_status, customer_name, customer_phone, courts!inner(name, venue_id, venues(name))')
+    .eq('courts.venue_id', venue.id)
     .gte('starts_at', `${ymd(from)}T00:00:00+07:00`)
     .lte('starts_at', `${ymd(to)}T23:59:59+07:00`)
     .order('starts_at');
 
   const { data: refunds } = await supabase
     .from('bookings')
-    .select('id, code, starts_at, deposit_amount, customer_name, customer_phone, courts(name)')
+    .select('id, code, starts_at, deposit_amount, customer_name, customer_phone, courts!inner(name, venue_id)')
+    .eq('courts.venue_id', venue.id)
     .eq('refund_status', 'needed')
     .order('starts_at');
 
@@ -73,6 +75,21 @@ export default async function Page() {
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
         <span className="text-sm text-ink-secondary">{dayLabel(new Date())}</span>
       </div>
+
+      {venues.length > 1 && (
+        <nav aria-label="Chọn cụm sân" className="mt-5 flex flex-wrap gap-2">
+          {venues.map((item) => (
+            <Link
+              key={item.id}
+              href={`/chu-san?venue=${item.id}`}
+              aria-current={item.id === venue.id ? 'page' : undefined}
+              className={`rounded-control border px-4 py-3 text-sm font-medium ${item.id === venue.id ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-ink hover:border-strong'}`}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {venue.status !== 'active' && (
         <p className="mt-5 rounded-card border border-peak-line bg-peak-fill p-4 text-sm leading-relaxed text-peak-ink">
