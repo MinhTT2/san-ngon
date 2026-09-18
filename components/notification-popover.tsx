@@ -15,10 +15,11 @@ type Notification = {
 };
 
 /** Popover native hỗ trợ Escape, bấm bên ngoài và thứ tự focus bàn phím. */
-export function NotificationPopover({ notifications, unreadCount, loadError }: {
+export function NotificationPopover({ notifications, unreadCount, loadError, dashboard = false }: {
   notifications: Notification[];
   unreadCount: number;
   loadError: boolean;
+  dashboard?: boolean;
 }) {
   const id = useId();
   const panel = useRef<HTMLDivElement>(null);
@@ -66,7 +67,7 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
         popover="auto"
         role="region"
         aria-labelledby={`${id}-title`}
-        className="fixed inset-auto right-4 top-20 m-0 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[18px] border border-strong bg-card text-ink lg:right-[max(4rem,calc((100vw-1152px)/2))]"
+        className={`fixed inset-auto right-4 ${dashboard ? 'top-32' : 'top-20'} m-0 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[18px] border border-strong bg-card text-ink lg:right-[max(4rem,calc((100vw-1152px)/2))]`}
       >
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <div>

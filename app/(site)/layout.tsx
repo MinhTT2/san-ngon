@@ -2,7 +2,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
 /**
- * Bọc mọi trang trừ /dat-san/[code]. Trang thanh toán cố ý không có nav:
+ * Bọc mọi trang công khai trừ /dat-san/[code] và khu chủ sân. Trang thanh toán cố ý không có nav:
  * bớt đường thoát khỏi luồng trả tiền càng tốt.
  */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
