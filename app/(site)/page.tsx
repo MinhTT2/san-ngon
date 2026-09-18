@@ -200,7 +200,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-20 lg:px-16 lg:py-24">
+    <section id="cach-hoat-dong" className="mx-auto max-w-7xl px-5 py-20 lg:px-16 lg:py-24">
       <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
         <div className="max-w-2xl">
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-secondary">Bớt hẹn qua điện thoại</p>
