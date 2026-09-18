@@ -5,10 +5,18 @@ import { bookingErrorMessage } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * offset: true là bắt buộc, không phải tuỳ chọn.
+ *
+ * Giờ trong body đi thẳng từ get_venue_availability ra, mà PostgREST tuần tự
+ * hoá timestamptz thành "2026-09-18T11:00:00+00:00". z.string().datetime()
+ * mặc định chỉ nhận hậu tố "Z", nên mọi đơn đều bị chặn ở đây với thông báo
+ * "Invalid datetime" — không ai đặt được sân.
+ */
 const Body = z.object({
   court_id: z.string().uuid(),
-  starts_at: z.string().datetime(),
-  ends_at: z.string().datetime(),
+  starts_at: z.string().datetime({ offset: true }),
+  ends_at: z.string().datetime({ offset: true }),
   customer_name: z.string().trim().max(100).optional(),
   customer_phone: z.string().trim().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0'),
   note: z.string().trim().max(500).optional(),

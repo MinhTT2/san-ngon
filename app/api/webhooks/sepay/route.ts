@@ -59,7 +59,11 @@ export async function POST(req: NextRequest) {
     const sent = await sendTelegram(result.owner_telegram_chat_id, ownerBookingMessage(result));
     // notifications.user_id là NOT NULL — phải ghi đúng chủ sân, nếu không dòng
     // báo-lỗi-gửi-tin bị chặn và không ai biết Telegram đã hỏng.
-    if (!sent.ok && result.owner_id) {
+    //
+    // NOT_CONFIGURED nghĩa là chủ sân chưa nối Telegram bao giờ, không phải
+    // gửi hỏng. Ghi cả trường hợp đó thì mỗi đơn đẻ thêm một dòng cảnh báo vô
+    // nghĩa, lấp mất những lần hỏng thật.
+    if (!sent.ok && sent.reason !== 'NOT_CONFIGURED' && result.owner_id) {
       const { error: notifError } = await supabase.from('notifications').insert({
         user_id: result.owner_id,
         booking_id: result.booking_id ?? null,
