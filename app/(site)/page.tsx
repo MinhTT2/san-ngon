@@ -116,8 +116,25 @@ async function loadHeroSlots(
 
 function Hero({ grid }: { grid: React.ReactNode }) {
   return (
-    <section className="bg-pitch">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-10 px-5 py-14 lg:flex-row lg:gap-12 lg:px-16 lg:py-18">
+    <section className="relative overflow-hidden bg-pitch">
+      {/* Carousel trải hết chiều ngang hero, chữ đè lên trên. */}
+      <HeroCarousel className="absolute inset-0" />
+
+      {/*
+        Lớp phủ giữ chữ đọc được trên mọi cảnh. Trên desktop đậm bên trái nhạt
+        dần sang phải để vẫn thấy mặt sân; dưới 1024px ảnh nằm sau toàn bộ nội
+        dung nên phải phủ đều, không thì tiêu đề trắng chìm vào nền sáng.
+
+        lg:bg-transparent là bắt buộc: bg-pitch/82 đặt background-COLOR còn
+        bg-gradient-to-r chỉ đặt background-IMAGE, không ghi đè nhau. Thiếu nó
+        thì màu nền đặc vẫn nằm dưới gradient và ảnh bị che sạch.
+      */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-pitch/82 lg:bg-transparent lg:bg-gradient-to-r lg:from-pitch lg:from-30% lg:via-pitch/75 lg:to-pitch/15"
+      />
+
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-10 px-5 py-14 lg:flex-row lg:items-center lg:gap-14 lg:px-16 lg:py-20">
         <div className="flex w-full flex-col gap-6 lg:w-[520px] lg:flex-none">
           <span className="pf-in self-start rounded-pill bg-[#16543F] px-3.5 py-1.5 text-[13px] font-medium text-[#A9C9B8]">
             Bóng đá · Cầu lông · Pickleball · Tennis
@@ -140,8 +157,7 @@ function Hero({ grid }: { grid: React.ReactNode }) {
           </div>
         </div>
 
-        <div style={{ animationDelay: '160ms' }} className="pf-in relative w-full flex-grow">
-          <HeroCarousel className="h-64 w-full lg:h-[430px]" />
+        <div style={{ animationDelay: '160ms' }} className="pf-in w-full flex-grow">
           {grid}
         </div>
       </div>

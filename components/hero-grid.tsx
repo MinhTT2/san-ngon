@@ -4,7 +4,7 @@ import { PEAK_FROM_HOUR, PEAK_TO_HOUR } from '@/lib/constants';
 import type { Slot } from '@/lib/types';
 
 /**
- * Lát cắt lịch thật, đặt chồng lên minh họa hero.
+ * Lát cắt lịch thật ở cột phải hero.
  *
  * Trước đây khối này là dữ liệu tĩnh trong khi ngay cạnh nó viết "cập nhật
  * theo thời gian thực" — câu quảng cáo không khớp thứ người ta đang nhìn.
@@ -33,7 +33,7 @@ export function HeroGrid({
     <Link
       href={`/san/${venueSlug}`}
       aria-label={`Xem lịch đầy đủ của ${venueName}`}
-      className="absolute inset-x-4 bottom-4 flex flex-col gap-2.5 rounded-card bg-card p-4 lg:inset-x-6 lg:bottom-6"
+      className="flex flex-col gap-2.5 rounded-card bg-card p-4 lg:p-5"
     >
       <div className="flex items-baseline justify-between gap-3">
         <span className="truncate text-sm font-semibold">
@@ -101,7 +101,7 @@ export function HeroGridPlaceholder() {
   };
 
   return (
-    <div className="absolute inset-x-4 bottom-4 flex flex-col gap-2.5 rounded-card bg-card p-4 lg:inset-x-6 lg:bottom-6">
+    <div className="flex flex-col gap-2.5 rounded-card bg-card p-4 lg:p-5">
       <div className="flex items-baseline justify-between">
         <span className="text-sm font-semibold">Sân Mỹ Đình · thứ năm 18/09</span>
         <span className="hidden text-xs text-ink-secondary sm:inline">ví dụ minh họa</span>

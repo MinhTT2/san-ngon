@@ -39,7 +39,13 @@ export function HeroCarousel({ className = '' }: { className?: string }) {
 
   return (
     <div
-      className={`relative overflow-hidden rounded-card ${className}`}
+      data-hero-carousel=""
+      // KHÔNG hardcode `relative` ở đây: hero truyền vào `absolute inset-0`,
+      // hai class cùng đặt thuộc tính position nên đè nhau — `relative` thắng,
+      // inset-0 mất tác dụng, khối cao 0px và ảnh biến mất hoàn toàn.
+      // Vị trí do nơi gọi quyết định; các chấm bên trong vẫn neo được vì root
+      // luôn là một khối đã được định vị.
+      className={`overflow-hidden ${className}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -54,27 +60,30 @@ export function HeroCarousel({ className = '' }: { className?: string }) {
         />
       ))}
 
-      {/* Giữ chiều cao: slide đều absolute nên cần một khối chiếm chỗ. */}
+      {/* Slide đều absolute; khi carousel nằm trong luồng bình thường thì khối
+          này giữ chiều cao, khi nó absolute inset-0 thì vô hại. */}
       <div className="invisible h-full w-full" aria-hidden="true" />
 
-      <div className="absolute right-4 top-4 flex items-center gap-2 lg:right-5 lg:top-5">
-        {SLIDES.map(({ key, label }, i) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => go(i)}
-            aria-label={`Xem ảnh ${label}`}
-            aria-current={i === index}
-            className={`h-2 rounded-pill transition-all duration-300 ${
-              i === index ? 'w-7 bg-[#EAF5EF]' : 'w-2 bg-[#EAF5EF]/45 hover:bg-[#EAF5EF]/70'
-            }`}
-          />
-        ))}
+      {/* Nhãn và chấm nằm ở đáy phải, thẳng hàng với lề của khối nội dung hero. */}
+      <div className="absolute bottom-5 right-5 z-10 flex items-center gap-3 lg:bottom-7 lg:right-16">
+        <span className="rounded-pill bg-[#0B2C21]/75 px-3 py-1 text-[11px] font-medium text-[#A9C9B8] backdrop-blur-sm">
+          {SLIDES[index].label}
+        </span>
+        <span className="flex items-center gap-2">
+          {SLIDES.map(({ key, label }, i) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => go(i)}
+              aria-label={`Xem ảnh ${label}`}
+              aria-current={i === index}
+              className={`h-2 rounded-pill transition-all duration-300 ${
+                i === index ? 'w-7 bg-[#EAF5EF]' : 'w-2 bg-[#EAF5EF]/45 hover:bg-[#EAF5EF]/70'
+              }`}
+            />
+          ))}
+        </span>
       </div>
-
-      <span className="absolute left-4 top-4 rounded-pill bg-[#0B2C21]/75 px-3 py-1 text-[11px] font-medium text-[#A9C9B8] backdrop-blur-sm lg:left-5 lg:top-5">
-        {SLIDES[index].label}
-      </span>
     </div>
   );
 }
