@@ -389,6 +389,15 @@ grant execute on function get_venue_availability(uuid, date) to anon, authentica
 grant execute on function create_booking(uuid, timestamptz, timestamptz, text, text, text) to authenticated;
 grant execute on function cancel_booking(text) to authenticated;
 grant execute on function register_venue(text, text, text, text, text, time, time, sport_type, int, int, text, text) to authenticated;
-revoke execute on function confirm_payment(text, int, text, jsonb) from anon, authenticated;
-revoke execute on function expire_pending_bookings() from anon, authenticated;
-revoke execute on function complete_past_bookings() from anon, authenticated;
+-- Phải revoke khỏi PUBLIC, không chỉ anon/authenticated.
+--
+-- Postgres cấp EXECUTE cho PUBLIC trên mọi hàm mới, và anon kế thừa quyền đó.
+-- Revoke riêng anon không gỡ được grant của PUBLIC, nên confirm_payment vẫn
+-- gọi được bằng anon key: ai cũng tự xác nhận đơn của mình mà không trả đồng
+-- nào. Đã kiểm chứng bằng has_function_privilege trên project thật.
+revoke execute on function confirm_payment(text, int, text, jsonb) from public, anon, authenticated;
+revoke execute on function expire_pending_bookings() from public, anon, authenticated;
+revoke execute on function complete_past_bookings() from public, anon, authenticated;
+revoke execute on function gen_booking_code() from public, anon, authenticated;
+revoke execute on function owns_court(uuid) from public, anon;
+grant execute on function confirm_payment(text, int, text, jsonb) to service_role;
