@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/status-badge';
 import { hhmm, vnd, ymd, dayLabel } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
+import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booking-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +42,21 @@ export default async function Page() {
     .lte('starts_at', `${ymd(to)}T23:59:59+07:00`)
     .order('starts_at');
 
+  const { data: refunds } = await supabase
+    .from('bookings')
+    .select('id, code, starts_at, deposit_amount, customer_name, customer_phone, courts(name)')
+    .eq('refund_status', 'needed')
+    .order('starts_at');
+
   const rows = (bookings ?? []).map((b) => {
     const c = b.courts as unknown as { name: string; venues: { name: string } };
     return { ...b, courtName: c?.name ?? '', venueName: c?.venues?.name ?? '' };
   });
+  const refundRows = (refunds ?? []).map((b) => {
+    const c = b.courts as unknown as { name: string };
+    return { ...b, courtName: c?.name ?? '' };
+  });
+  const pendingRows = rows.filter((b) => b.status === 'pending');
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -54,7 +66,6 @@ export default async function Page() {
 
   const today = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(new Date()));
   const paidToday = today.filter((b) => b.status === 'confirmed');
-  const needRefund = rows.filter((b) => b.refund_status === 'needed');
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16">
@@ -74,8 +85,43 @@ export default async function Page() {
         <Stat value={String(paidToday.length)} label="Đơn đã chốt hôm nay" />
         <Stat value={vnd(paidToday.reduce((s, b) => s + b.deposit_amount, 0))} label="Cọc đã nhận hôm nay" />
         <Stat value={String(today.length - paidToday.length)} label="Đang chờ chuyển khoản" />
-        <Stat value={String(needRefund.length)} label="Cần hoàn cọc" tone={needRefund.length ? 'danger' : undefined} />
+        <Stat value={String(refundRows.length)} label="Cần hoàn cọc" tone={refundRows.length ? 'danger' : undefined} />
       </div>
+
+      {refundRows.length > 0 && (
+        <section className="mt-8 rounded-card border border-peak-line bg-peak-fill p-4">
+          <h2 className="font-semibold text-peak-ink">Danh sách cần hoàn cọc</h2>
+          <ul className="mt-3 flex flex-col divide-y divide-peak-line">
+            {refundRows.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{b.code} · {b.customer_name ?? 'Khách'} · {b.courtName}</p>
+                  <p className="mt-0.5 text-xs text-peak-ink">{b.customer_phone} · hoàn {vnd(b.deposit_amount)}</p>
+                </div>
+                <RefundDoneButton code={b.code} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {pendingRows.length > 0 && (
+        <section className="mt-8 rounded-card border border-hairline bg-card p-4">
+          <h2 className="font-semibold">Đơn chờ chuyển khoản</h2>
+          <p className="mt-1 text-xs text-ink-secondary">Dùng xác nhận tay khi SePay không gửi webhook.</p>
+          <ul className="mt-3 flex flex-col divide-y divide-hairline">
+            {pendingRows.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{b.code} · {b.customer_name ?? 'Khách'} · {b.courtName}</p>
+                  <p className="mt-0.5 text-xs text-ink-secondary">{b.customer_phone} · cọc {vnd(b.deposit_amount)}</p>
+                </div>
+                <ConfirmPaymentButton code={b.code} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <h2 className="mt-10 text-[15px] font-semibold">Bảy ngày tới</h2>
       <div className="mt-3 hidden overflow-x-auto rounded-card border border-hairline bg-card p-4 lg:block">

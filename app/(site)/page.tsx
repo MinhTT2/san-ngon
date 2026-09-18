@@ -116,49 +116,20 @@ async function loadHeroSlots(
 
 function Hero({ grid }: { grid: React.ReactNode }) {
   return (
-    <section className="relative overflow-hidden bg-pitch">
-      {/* Carousel trải hết chiều ngang hero, chữ đè lên trên. */}
-      <HeroCarousel className="absolute inset-0" />
-
-      {/*
-        Lớp phủ giữ chữ đọc được trên mọi cảnh. Trên desktop đậm bên trái nhạt
-        dần sang phải để vẫn thấy mặt sân; dưới 1024px ảnh nằm sau toàn bộ nội
-        dung nên phải phủ đều, không thì tiêu đề trắng chìm vào nền sáng.
-
-        lg:bg-transparent là bắt buộc: bg-pitch/82 đặt background-COLOR còn
-        bg-gradient-to-r chỉ đặt background-IMAGE, không ghi đè nhau. Thiếu nó
-        thì màu nền đặc vẫn nằm dưới gradient và ảnh bị che sạch.
-      */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-pitch/82 lg:bg-transparent lg:bg-gradient-to-r lg:from-pitch lg:from-30% lg:via-pitch/75 lg:to-pitch/15"
-      />
-
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-10 px-5 py-14 lg:flex-row lg:items-center lg:gap-14 lg:px-16 lg:py-20">
-        <div className="flex w-full flex-col gap-6 lg:w-[520px] lg:flex-none">
-          <span className="pf-in self-start rounded-pill bg-[#16543F] px-3.5 py-1.5 text-[13px] font-medium text-[#A9C9B8]">
-            Bóng đá · Cầu lông · Pickleball · Tennis
-          </span>
-
-          <h1 style={{ animationDelay: '70ms' }} className="pf-in font-display text-[38px] font-extrabold leading-[1.06] tracking-[-0.03em] text-white lg:text-[56px]">
-            Sân trống tối nay, biết ngay trong 10 giây.
-          </h1>
-
-          <p style={{ animationDelay: '140ms' }} className="pf-in text-base leading-7 text-[#A9C9B8] lg:text-lg lg:leading-8">
-            Xem lịch trống thật của từng sân, chốt bằng tiền cọc chuyển khoản. Không gọi điện,
-            không chờ chủ sân nghe máy, không sợ tới nơi mới biết hết chỗ.
-          </p>
-
-          <div style={{ animationDelay: '210ms' }} className="pf-in"><SearchBar /></div>
-
-          <div style={{ animationDelay: '280ms' }} className="pf-in flex flex-wrap gap-x-8 gap-y-2 text-sm text-[#A9C9B8]">
-            <span>Miễn phí cho người đặt</span>
-            <span>Cọc 30%, phần còn lại trả tại sân</span>
+    <section className="bg-pitch">
+      <h1 className="sr-only">Sân Ngon — Đặt sân thể thao ở Hà Nội</h1>
+      <HeroCarousel />
+      <div className="border-t border-free-line/20">
+        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16">
+          <div className="flex min-w-0 flex-col gap-3">
+            <h2 className="text-sm font-semibold text-pitch-ink">Tìm sân cho buổi chơi tiếp theo</h2>
+            <SearchBar />
+            <p className="text-xs leading-5 text-free-line">Miễn phí cho người đặt · Xem lịch trước, đăng nhập sau</p>
           </div>
-        </div>
-
-        <div style={{ animationDelay: '160ms' }} className="pf-in w-full flex-grow">
-          {grid}
+          <div className="flex min-w-0 flex-col gap-3">
+            <h2 className="text-sm font-semibold text-pitch-ink">Một góc lịch sân</h2>
+            {grid}
+          </div>
         </div>
       </div>
     </section>
@@ -170,8 +141,7 @@ function SearchBar() {
   // nên chỉ chặn mốc dưới ở đây.
   const today = ymd(new Date());
 
-  // Cột trái của hero rộng 520px, xếp bốn ô thành một hàng thì nút bấm tràn ra
-  // ngoài và chui xuống dưới ảnh — lưới hai cột, nút chiếm trọn hàng thứ hai.
+  // Hai cột trên desktop, một cột trên điện thoại để các ô nhập đủ rộng.
   return (
     <form action="/tim-san" className="grid grid-cols-1 gap-2.5 rounded-card bg-card p-4 sm:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-1.5">

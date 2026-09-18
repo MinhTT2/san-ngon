@@ -385,10 +385,95 @@ begin
 end $$;
 
 -- ------------------------------------------------------------
+-- Dự phòng khi webhook SePay hỏng. Chỉ chủ sân của đơn đó được xác nhận tay.
+-- Không nhận số tiền từ client: chủ sân chỉ xác nhận khoản cọc đã nhận.
+-- ------------------------------------------------------------
+create or replace function confirm_payment_manual(p_code text)
+returns bookings
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_booking bookings%rowtype;
+  v_court courts%rowtype;
+  v_venue venues%rowtype;
+begin
+  if v_uid is null then raise exception 'AUTH_REQUIRED'; end if;
+
+  select b.* into v_booking
+  from bookings b
+  where b.code = p_code
+    and exists (
+      select 1 from courts c join venues v on v.id = c.venue_id
+      where c.id = b.court_id and v.owner_id = v_uid
+    )
+  for update;
+
+  if v_booking.id is null then raise exception 'BOOKING_NOT_FOUND'; end if;
+  if v_booking.status <> 'pending' then raise exception 'NOT_PENDING'; end if;
+
+  update bookings
+  set status = 'confirmed', paid_at = coalesce(paid_at, now())
+  where id = v_booking.id
+  returning * into v_booking;
+
+  update payments
+  set status = 'paid', paid_at = coalesce(paid_at, now())
+  where booking_id = v_booking.id and status = 'pending';
+
+  select c.* into v_court from courts c where c.id = v_booking.court_id;
+  select v.* into v_venue from venues v where v.id = v_court.venue_id;
+
+  insert into notifications (user_id, booking_id, kind, channel, title, body)
+  values
+    (v_booking.user_id, v_booking.id, 'deposit_paid', 'app',
+     'Đã nhận cọc ' || v_booking.code,
+     v_venue.name || ' — ' || v_court.name),
+    (v_venue.owner_id, v_booking.id, 'new_booking', 'app',
+     'Đã xác nhận tay ' || v_booking.code,
+     v_court.name || ' · ' || v_booking.customer_phone);
+
+  return v_booking;
+end $$;
+
+-- Chủ sân đánh dấu đã hoàn cọc sau khi chuyển khoản cho khách.
+create or replace function mark_refund_done(p_code text)
+returns bookings
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := auth.uid();
+  v_booking bookings%rowtype;
+begin
+  if v_uid is null then raise exception 'AUTH_REQUIRED'; end if;
+
+  select b.* into v_booking
+  from bookings b
+  where b.code = p_code
+    and exists (
+      select 1 from courts c join venues v on v.id = c.venue_id
+      where c.id = b.court_id and v.owner_id = v_uid
+    )
+  for update;
+
+  if v_booking.id is null then raise exception 'BOOKING_NOT_FOUND'; end if;
+  if v_booking.refund_status is distinct from 'needed'::refund_status then
+    raise exception 'REFUND_NOT_NEEDED';
+  end if;
+
+  update bookings set refund_status = 'done'
+  where id = v_booking.id
+  returning * into v_booking;
+  return v_booking;
+end $$;
+
+-- ------------------------------------------------------------
 grant execute on function get_venue_availability(uuid, date) to anon, authenticated;
 grant execute on function create_booking(uuid, timestamptz, timestamptz, text, text, text) to authenticated;
 grant execute on function cancel_booking(text) to authenticated;
 grant execute on function register_venue(text, text, text, text, text, time, time, sport_type, int, int, text, text) to authenticated;
+revoke execute on function confirm_payment_manual(text) from public, anon;
+grant execute on function confirm_payment_manual(text) to authenticated;
+revoke execute on function mark_refund_done(text) from public, anon;
+grant execute on function mark_refund_done(text) to authenticated;
 -- Phải revoke khỏi PUBLIC, không chỉ anon/authenticated.
 --
 -- Postgres cấp EXECUTE cho PUBLIC trên mọi hàm mới, và anon kế thừa quyền đó.

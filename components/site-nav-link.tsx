@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
  * không đọc được đường dẫn — trước đây prop `active` không ai truyền và gạch
  * chân dưới mục đang mở không bao giờ hiện.
  */
-export function NavLink({ href, label }: { href: string; label: string }) {
+export function NavLink({ href, label, badge }: { href: string; label: string; badge?: number }) {
   const pathname = usePathname();
   const on = pathname === href || pathname.startsWith(`${href}/`);
 
@@ -20,7 +20,10 @@ export function NavLink({ href, label }: { href: string; label: string }) {
         on ? 'font-semibold text-ink shadow-[inset_0_-2px_0_var(--color-pitch)]' : 'font-medium text-ink-secondary'
       }`}
     >
-      {label}
+      <span className="flex items-center gap-1.5">
+        {label}
+        {!!badge && <span className="rounded-pill bg-pitch px-1.5 py-0.5 text-[10px] font-semibold leading-none text-pitch-ink">{badge > 99 ? '99+' : badge}</span>}
+      </span>
     </Link>
   );
 }

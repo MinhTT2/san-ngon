@@ -31,6 +31,9 @@ Chạy lần lượt trong SQL Editor, không gộp:
 4. Đăng nhập vào app một lần để có user, rồi `supabase/04_seed.sql`
 5. Bật extension `pg_cron` ở Database › Extensions, rồi `supabase/05_cron.sql`
 
+Khi cập nhật bản này, chạy lại `supabase/03_functions.sql` để thêm xác nhận tay
+và đánh dấu hoàn cọc. Các hàm dùng `create or replace` nên không tạo dữ liệu trùng.
+
 Kiểm tra tầng dữ liệu đã đúng:
 
 ```sql
@@ -110,12 +113,15 @@ Hệ thống phải chạy được cả khi chưa có `chat_id`: `sendTelegram`
 | `/dat-san/[code]` | QR, đếm ngược, tự nhảy khi tiền vào |
 | `/don-cua-toi` | Bảng trên desktop, thẻ trên điện thoại |
 | `/chu-san` | Lưới 7 ngày và đơn hôm nay |
+| `/thong-bao` | Thông báo trong app, badge chưa đọc |
 | `/dang-nhap` | Google và email OTP |
 | `/dang-ky-san` | Form đăng sân; đã gửi rồi thì hiện bốn bước duyệt |
 | `/chinh-sach-huy` | Điều kiện hoàn cọc |
 | `/lien-he` | |
 
 Luồng người chơi đi được từ đầu tới cuối: vào landing, tìm sân, chọn giờ, nhập thông tin, quét QR, nhận xác nhận, xem lại đơn, hủy đơn.
+
+Chủ sân có thể xác nhận tay đơn chờ cọc khi SePay không gửi webhook và đánh dấu các khoản đã hoàn cọc là đã xử lý ở `/chu-san`.
 
 Hồ sơ đăng sân vào thẳng trạng thái `pending`. Duyệt bằng SQL cho tới khi có trang admin:
 

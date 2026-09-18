@@ -11,6 +11,9 @@ import { BrandMark } from './brand-mark';
 export async function SiteHeader() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { count: unreadCount } = user
+    ? await supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null)
+    : { count: 0 };
 
   return (
     <header className="border-b border-hairline bg-card">
@@ -27,6 +30,7 @@ export async function SiteHeader() {
             <NavLink href="/tim-san" label="Tìm sân" />
             <NavLink href="/don-cua-toi" label="Đơn của tôi" />
             <NavLink href="/chu-san" label="Chủ sân" />
+            {user && <NavLink href="/thong-bao" label="Thông báo" badge={unreadCount ?? 0} />}
           </nav>
         </div>
 
@@ -39,7 +43,7 @@ export async function SiteHeader() {
           </Link>
 
           {user ? (
-            <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} />
+            <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} unreadCount={unreadCount ?? 0} />
           ) : (
             <Link href="/dang-nhap" className="flex h-11 items-center rounded-control bg-pitch px-5 text-[15px] font-semibold text-pitch-ink">
               Đăng nhập

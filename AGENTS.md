@@ -154,9 +154,9 @@ JS mới giấu đi — không thì JS hỏng là nội dung tàng hình.
 - [x] Trang trạng thái hồ sơ chờ duyệt, bốn bước
 - [x] Nút hủy đơn trong `/don-cua-toi`
 - [x] Đăng xuất — trước đây cả trang web không có đường nào thoát tài khoản
-- [ ] Bảng thông báo: badge chưa đọc trên header, trang danh sách
-- [ ] Danh sách cần hoàn cọc cho chủ sân, lọc `refund_status = 'needed'`
-- [ ] Nút chủ sân xác nhận tay khi webhook hỏng
+- [x] Bảng thông báo: badge chưa đọc trên header, trang danh sách
+- [x] Danh sách cần hoàn cọc cho chủ sân, lọc `refund_status = 'needed'`
+- [x] Nút chủ sân xác nhận tay khi webhook hỏng
 - [x] Bộ lọc thật ở `/tim-san`
 - [ ] Badge số khung còn trống trên thẻ sân
 - [ ] CRUD bảng giá cho chủ sân, hoặc nhập tay bằng SQL nếu hụt giờ
