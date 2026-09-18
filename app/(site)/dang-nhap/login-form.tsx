@@ -8,6 +8,22 @@ import { createClient } from '@/lib/supabase/client';
 const CALLBACK_ERROR =
   'Link đăng nhập không dùng được nữa. Link chỉ dùng một lần và hết hạn sau một giờ — gửi lại link mới giúp bạn nhé.';
 
+/**
+ * Supabase trả lỗi tiếng Anh. Ba lỗi hay gặp nhất dịch sẵn, phần còn lại giữ
+ * nguyên để còn tra được.
+ */
+function viError(raw: string) {
+  const s = raw.toLowerCase();
+  if (s.includes('provider is not enabled') || s.includes('unsupported provider')) {
+    return 'Đăng nhập Google chưa được bật. Dùng email phía dưới giúp bạn nhé.';
+  }
+  if (s.includes('rate limit') || s.includes('too many requests')) {
+    return 'Gửi quá nhiều lần rồi. Đợi ít phút rồi thử lại.';
+  }
+  if (s.includes('invalid email')) return 'Email không hợp lệ.';
+  return raw;
+}
+
 export function LoginForm() {
   const supabase = createClient();
   const params = useSearchParams();
@@ -15,10 +31,8 @@ export function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(
-    params.get('loi') ? CALLBACK_ERROR : null
-  );
+  const [busy, setBusy] = useState<'google' | 'email' | null>(null);
+  const [error, setError] = useState<string | null>(params.get('loi') ? CALLBACK_ERROR : null);
 
   // Thiếu NEXT_PUBLIC_SITE_URL thì chuỗi ra "undefined/auth/callback" và cả
   // hai cách đăng nhập đều hỏng mà không báo gì. Lấy origin của trình duyệt
@@ -29,40 +43,47 @@ export function LoginForm() {
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   async function google() {
-    setBusy(true);
+    setBusy('google');
+    setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo },
     });
-    if (error) { setError(error.message); setBusy(false); }
+    // Thành công thì trình duyệt đã rời trang, không cần tắt busy.
+    if (error) { setError(viError(error.message)); setBusy(null); }
   }
 
   async function otp(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
+    setBusy('email');
     setError(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },
     });
-    setBusy(false);
-    if (error) setError(error.message);
+    setBusy(null);
+    if (error) setError(viError(error.message));
     else setSent(true);
   }
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-3 rounded-card border border-strong bg-free-fill p-5">
-        <p className="text-sm leading-relaxed">
-          Đã gửi link đăng nhập tới <strong>{email}</strong>. Mở hộp thư rồi bấm vào link.
-        </p>
-        <p className="text-xs leading-relaxed text-ink-secondary">
-          Không thấy thư sau một phút thì xem thư mục spam. Link dùng một lần và hết hạn sau một giờ.
-        </p>
+      <div className="flex flex-col gap-4 rounded-control border border-strong bg-free-fill p-6">
+        <Envelope />
+        <div className="flex flex-col gap-2">
+          <p className="text-[17px] font-semibold text-pitch">Kiểm tra hộp thư</p>
+          <p className="text-[15px] leading-relaxed">
+            Đã gửi link đăng nhập tới <strong className="break-all">{email}</strong>. Mở thư rồi bấm
+            vào link là xong, không cần mật khẩu.
+          </p>
+          <p className="text-[13px] leading-relaxed text-[#2C4A3C]">
+            Không thấy sau một phút thì xem thư mục spam. Link dùng một lần và hết hạn sau một giờ.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => { setSent(false); setError(null); }}
-          className="self-start text-sm font-semibold text-pitch underline underline-offset-2"
+          className="w-fit text-sm font-semibold text-pitch underline underline-offset-2"
         >
           Gửi lại hoặc đổi email
         </button>
@@ -71,44 +92,73 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {error && (
         <p role="alert" className="rounded-control border border-danger/30 bg-danger/5 p-3.5 text-sm leading-relaxed text-danger">
           {error}
         </p>
       )}
+
       <button
+        type="button"
         onClick={google}
-        disabled={busy}
-        className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60"
+        disabled={busy !== null}
+        className="flex h-13 items-center justify-center gap-3 rounded-control border border-hairline bg-card text-base font-semibold transition-colors hover:border-strong disabled:opacity-60"
       >
-        Tiếp tục với Google
+        <GoogleMark />
+        {busy === 'google' ? 'Đang chuyển sang Google…' : 'Tiếp tục với Google'}
       </button>
 
       <div className="flex items-center gap-3 text-xs text-ink-secondary">
-        <span className="h-px flex-grow bg-hairline" />hoặc<span className="h-px flex-grow bg-hairline" />
+        <span className="h-px flex-grow bg-hairline" />
+        hoặc dùng email
+        <span className="h-px flex-grow bg-hairline" />
       </div>
 
-      <form onSubmit={otp} className="flex flex-col gap-3">
+      <form onSubmit={otp} className="flex flex-col gap-2.5">
         <label htmlFor="email" className="text-sm font-semibold">Email</label>
         <input
           id="email"
           type="email"
           required
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="ban@example.com"
-          className="h-13 rounded-control border border-hairline bg-card px-4 text-base"
+          className="h-13 rounded-control border border-hairline bg-page px-4 text-base focus:border-pitch focus:outline-none"
         />
         <button
           type="submit"
-          disabled={busy}
-          className="h-13 rounded-control border border-hairline bg-card text-base font-semibold disabled:opacity-60"
+          disabled={busy !== null}
+          className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60"
         >
-          Gửi link đăng nhập
+          {busy === 'email' ? 'Đang gửi…' : 'Gửi link đăng nhập'}
         </button>
+        <p className="text-[13px] leading-relaxed text-ink-secondary">
+          Không cần mật khẩu. Chúng tôi gửi một link, bấm vào là vào thẳng.
+        </p>
       </form>
-
     </div>
+  );
+}
+
+/** Logo Google bốn màu. Google yêu cầu dùng đúng mark này trên nút đăng nhập. */
+function GoogleMark() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 48 48" aria-hidden="true" className="flex-none">
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.3h12.1c-.2 2-1.6 5-4.5 7l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7z" />
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.3c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.02-6.7 5.2-.1.3C7.9 41.1 15.4 46 24 46z" />
+      <path fill="#FBBC05" d="M11.5 28.5c-.5-1.4-.7-2.9-.7-4.5s.3-3.1.7-4.5v-.3l-6.8-5.3-.2.1C2.9 17.1 2 20.4 2 24s.9 6.9 2.5 9.9l7-5.4z" />
+      <path fill="#EA4335" d="M24 10.4c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.2 29.9 2 24 2 15.4 2 7.9 6.9 4.5 14.1l7 5.4c1.8-5.3 6.7-9.1 12.5-9.1z" />
+    </svg>
+  );
+}
+
+function Envelope() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+      <rect x="1" y="6.5" width="32" height="22" rx="3" className="fill-card stroke-strong" strokeWidth="1.5" />
+      <path d="M2.5 8.5L17 19.5L31.5 8.5" className="stroke-free-line" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
   );
 }
