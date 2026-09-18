@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { HeroCarousel } from '@/components/hero-carousel';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
@@ -270,11 +269,7 @@ function WhyDeposit() {
           <p className="text-xs leading-5 text-free-line">Tỷ lệ minh họa. Mức cọc cụ thể được hiển thị khi đặt từng sân.</p>
         </div>
         <div className="flex items-center bg-free-line/10 p-5 sm:p-10 lg:p-12">
-          <div className="w-full rounded-[20px] bg-page p-4 sm:p-6">
-            <figure className="relative mb-6 aspect-[16/8] overflow-hidden rounded-[14px] bg-pitch">
-              <Image src="/images/venue-blue-hour.jpg" alt="Sân thể thao lên đèn lúc chạng vạng" fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-pitch/90 to-transparent px-4 pb-4 pt-10 text-xs font-medium text-white">Sân sẵn sàng cho buổi chơi tối nay</figcaption>
-            </figure>
+          <div className="w-full rounded-[20px] bg-page p-6 sm:p-8">
             <div className="flex items-start justify-between gap-3 border-b border-dashed border-strong pb-6">
               <div><p className="text-xs uppercase tracking-widest text-ink-secondary">Chia kèo thật dễ</p><h3 className="mt-2 font-display text-2xl font-bold">Một buổi bóng đá</h3><p className="mt-2 text-sm text-ink-secondary">2 tiếng · 10 người · Ví dụ</p></div>
               <span aria-hidden="true" className="text-3xl text-pitch">↗</span>
@@ -309,21 +304,22 @@ function Line({ label, value }: { label: string; value: string }) {
 function ForOwners() {
   return (
     <section className="mx-auto max-w-7xl px-5 pt-16 lg:px-16 lg:pt-24">
-      <div className="grid overflow-hidden rounded-[28px] border border-ink/10 bg-story-lilac lg:grid-cols-2">
-        <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Dành cho chủ sân</p>
+      <div className="relative grid min-h-[620px] overflow-hidden rounded-[28px] bg-pitch lg:min-h-[560px] lg:grid-cols-2">
+        {/* Nguồn: Mixkit, clip miễn phí "One on one in a soccer game". */}
+        <video className="absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline aria-hidden="true">
+          <source src="/videos/soccer-one-on-one.mp4" type="video/mp4" />
+        </video>
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-pitch via-pitch/80 to-pitch/30" />
+        <div className="relative z-10 flex flex-col justify-center p-7 text-white sm:p-10 lg:p-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Dành cho chủ sân</p>
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn chăm sân.<br />Khách tự chốt kèo.</h2>
-          <p className="mt-5 max-w-md text-[15px] leading-7 text-ink-secondary">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn nhận thông báo khi có đơn, quản lý lịch ngay trên web.</p>
+          <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn nhận thông báo khi có đơn, quản lý lịch ngay trên web.</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link href="/dang-ky-san" className="inline-flex min-h-12 items-center gap-5 rounded-control bg-pitch px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink">Đăng sân của bạn <span aria-hidden="true">↗</span></Link>
-            <Link href="/chu-san" className="inline-flex min-h-11 items-center border-b border-pitch text-sm font-semibold text-pitch">Xem trang quản lý</Link>
+            <Link href="/dang-ky-san" className="inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng sân của bạn <span aria-hidden="true">↗</span></Link>
+            <Link href="/chu-san" className="inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Xem trang quản lý</Link>
           </div>
         </div>
-        <div className="flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
-          <figure className="relative aspect-[16/8] overflow-hidden rounded-[20px] bg-pitch">
-            <Image src="/images/owner-courts-dusk.jpg" alt="Chủ sân kiểm tra lịch đặt bên sân thể thao" fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-pitch/90 to-transparent px-5 pb-4 pt-12 text-xs font-medium text-white">Lịch mới đến ngay cả khi đang ở ngoài sân</figcaption>
-          </figure>
+        <div className="relative z-10 flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
           <div className="rounded-[20px] border border-white bg-card p-6 sm:p-8">
             <div className="flex items-center justify-between gap-3 border-b border-hairline pb-5"><span className="font-display text-xl font-bold">Một ngày ở sân</span><span className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">Minh họa</span></div>
             <div className="divide-y divide-hairline">
