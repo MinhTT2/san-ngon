@@ -3,8 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import { VenueSchedule } from './venue-schedule';
 import { SPORT_LABELS } from '@/lib/constants';
 
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ ngay?: string }>;
+}) {
+  const [{ slug }, { ngay }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
 
   const { data: venue } = await supabase
@@ -38,6 +44,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
       <div className="mt-6">
         <VenueSchedule
+          initialDate={ngay}
           venueId={venue.id}
           depositPct={venue.deposit_pct}
           horizonDays={venue.booking_horizon_days}

@@ -29,11 +29,29 @@ export function ymd(d: Date) {
   }).format(d);
 }
 
-/** "Thứ năm, 18/09" */
+/**
+ * "Thứ năm, 18/09". Phần ngày/tháng ghép tay từ ymd() thay vì để Intl định
+ * dạng: bản ICU rút gọn của Node trả về "18-09", bản đầy đủ trả về "18/09",
+ * nên cùng một trang hiện khác nhau giữa máy dev và Vercel.
+ */
 export function dayLabel(d: Date) {
   const weekday = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: TZ }).format(d);
-  const dm = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', timeZone: TZ }).format(d);
-  return `${weekday}, ${dm}`;
+  const iso = ymd(d);
+  return `${weekday}, ${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+}
+
+/**
+ * "T2".."T7", "CN" — nhãn nút chọn ngày.
+ * Trước đây chỗ đó cắt cứng dayLabel() còn 6 ký tự, ra "Thứ Sá", "Thứ Bả":
+ * tiếng Việt cắt giữa âm tiết thì dấu rơi lại một mình, đọc như lỗi font.
+ */
+const WEEKDAY_VI: Record<string, string> = {
+  Mon: 'T2', Tue: 'T3', Wed: 'T4', Thu: 'T5', Fri: 'T6', Sat: 'T7', Sun: 'CN',
+};
+
+export function dayShort(d: Date) {
+  const en = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: TZ }).format(d);
+  return WEEKDAY_VI[en] ?? en;
 }
 
 /** Số giây còn lại → "11:04" */

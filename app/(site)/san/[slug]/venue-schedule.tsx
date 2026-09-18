@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { SlotPickerMobile } from '@/components/slot-picker-mobile';
 import { SlotPickerDesktop } from '@/components/slot-picker-desktop';
 import { BookingForm } from '@/components/booking-form';
-import { dayLabel, ymd } from '@/lib/format';
+import { dayShort, ymd } from '@/lib/format';
 import type { Selection } from '@/lib/types';
 
 /**
@@ -17,14 +17,17 @@ export function VenueSchedule({
   horizonDays,
   defaultName,
   defaultPhone,
+  initialDate,
 }: {
   venueId: string;
   depositPct: number;
   horizonDays: number;
   defaultName?: string | null;
   defaultPhone?: string | null;
+  /** 'YYYY-MM-DD' mang sang từ ô ngày ở trang chủ. */
+  initialDate?: string;
 }) {
-  const [date, setDate] = useState(() => new Date());
+  const [date, setDate] = useState(() => parseDayParam(initialDate, horizonDays));
   const [selection, setSelection] = useState<Selection | null>(null);
   const [confirming, setConfirming] = useState(false);
 
@@ -33,6 +36,10 @@ export function VenueSchedule({
     d.setDate(d.getDate() + i);
     return d;
   });
+
+  // Ngày mang sang có thể nằm ngoài dải nút bấm (ví dụ tuần sau) — chèn vào
+  // đầu dải để nó vẫn bấm lại được sau khi người dùng đổi sang ngày khác.
+  const extraDay = days.some((d) => ymd(d) === ymd(date)) ? null : date;
 
   if (confirming && selection) {
     return (
@@ -51,7 +58,7 @@ export function VenueSchedule({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {days.map((d) => {
+        {(extraDay ? [extraDay, ...days] : days).map((d) => {
           const active = ymd(d) === ymd(date);
           return (
             <button
@@ -62,7 +69,7 @@ export function VenueSchedule({
                 active ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card'
               }`}
             >
-              <span className="text-[11px] opacity-80">{dayLabel(d).split(',')[0].slice(0, 6)}</span>
+              <span className="text-[11px] opacity-80">{dayShort(d)}</span>
               <span className="text-base font-semibold tabular-nums">{d.getDate()}</span>
             </button>
           );
@@ -83,4 +90,23 @@ export function VenueSchedule({
       </div>
     </div>
   );
+}
+
+/**
+ * 'YYYY-MM-DD' → Date. Neo vào giữa trưa giờ Hà Nội để chênh lệch múi giờ của
+ * trình duyệt không kéo ngày lùi lại một hôm; mọi tính toán ngày giờ thật vẫn
+ * nằm trong SQL. Ngày quá khứ hoặc ngoài chân trời đặt trước thì rơi về hôm nay.
+ */
+function parseDayParam(raw: string | undefined, horizonDays: number): Date {
+  const today = new Date();
+  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return today;
+
+  const picked = new Date(`${raw}T12:00:00+07:00`);
+  if (Number.isNaN(picked.getTime())) return today;
+
+  const horizon = new Date();
+  horizon.setDate(horizon.getDate() + horizonDays);
+  if (ymd(picked) < ymd(today) || ymd(picked) > ymd(horizon)) return today;
+
+  return picked;
 }

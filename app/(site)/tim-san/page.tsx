@@ -23,13 +23,15 @@ type VenueRow = {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ sport?: string; q?: string }>;
+  searchParams: Promise<{ sport?: string; q?: string; ngay?: string }>;
 }) {
-  const { sport, q } = await searchParams;
+  const { sport, q, ngay } = await searchParams;
   const supabase = await createClient();
 
   const validSport = sport && sport in SPORT_LABELS ? sport : undefined;
   const term = q?.trim();
+  // Ngày chỉ đi kèm sang trang sân để lịch mở đúng hôm đó — không lọc gì ở đây.
+  const day = ngay && /^\d{4}-\d{2}-\d{2}$/.test(ngay) ? ngay : undefined;
 
   // !inner: chỉ giữ cụm sân thật sự có sân con đang mở của môn đó.
   let query = supabase
@@ -79,7 +81,7 @@ export default async function Page({
           return (
             <li key={v.id}>
               <Link
-                href={`/san/${v.slug}`}
+                href={day ? `/san/${v.slug}?ngay=${day}` : `/san/${v.slug}`}
                 className="flex h-full flex-col overflow-hidden rounded-card border border-hairline bg-card transition-colors hover:border-strong"
               >
                 <PitchThumb width="100%" height={132} />

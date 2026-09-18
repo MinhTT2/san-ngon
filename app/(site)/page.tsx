@@ -1,9 +1,29 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PitchNight } from '@/components/pitch-night';
+import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
+import { ymd } from '@/lib/format';
+import type { Slot } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Sân Ngon — Đặt sân thể thao ở Hà Nội',
+  description:
+    'Xem lịch trống thật của từng sân bóng, cầu lông, pickleball, tennis ở Hà Nội. Chốt sân bằng cọc chuyển khoản, khỏi gọi điện.',
+  openGraph: {
+    title: 'Sân trống tối nay, biết ngay trong 10 giây',
+    description: 'Lịch trống thật, cọc 30% qua QR, phần còn lại trả tại sân.',
+    locale: 'vi_VN',
+    type: 'website',
+  },
+};
+
+/** Lưới hero chỉ vừa 2 sân × 6 khung giờ — rộng hơn là chữ bé không đọc được. */
+const HERO_COURTS = 2;
+const HERO_TIMES = 6;
 
 /**
  * Landing page. Hero cho xem chính cái lưới lịch chứ không phải ảnh minh họa —
@@ -15,17 +35,34 @@ export const dynamic = 'force-dynamic';
 export default async function Page() {
   const supabase = await createClient();
 
-  const [{ count: venueCount }, { count: courtCount }, { data: districts }] = await Promise.all([
-    supabase.from('venues').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('courts').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('venues').select('district').eq('status', 'active'),
-  ]);
+  const [{ count: venueCount }, { count: courtCount }, { data: districts }, { data: featured }] =
+    await Promise.all([
+      supabase.from('venues').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('courts').select('id', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('venues').select('district').eq('status', 'active'),
+      supabase.from('venues').select('id, slug, name').eq('status', 'active').order('name').limit(1).maybeSingle(),
+    ]);
 
   const districtCount = new Set((districts ?? []).map((d) => d.district)).size;
+  const hero = featured ? await loadHeroSlots(supabase, featured.id) : null;
 
   return (
     <>
-      <Hero />
+      <Hero
+        grid={
+          hero && featured ? (
+            <HeroGrid
+              venueName={featured.name}
+              venueSlug={featured.slug}
+              date={hero.date}
+              slots={hero.slots}
+              tomorrow={hero.tomorrow}
+            />
+          ) : (
+            <HeroGridPlaceholder />
+          )
+        }
+      />
       {venueCount ? <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} /> : null}
       <HowItWorks />
       <WhyDeposit />
@@ -35,7 +72,43 @@ export default async function Page() {
   );
 }
 
-function Hero() {
+/**
+ * Khung giờ cho lưới hero: lấy các khung còn CHƯA QUA của hôm nay; muộn quá
+ * rồi thì nhảy sang ngày mai, vì một lưới toàn ô xám không bán được gì.
+ */
+async function loadHeroSlots(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  venueId: string
+): Promise<{ slots: Slot[]; date: Date; tomorrow: boolean } | null> {
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  for (const [date, isTomorrow] of [[today, false], [tomorrow, true]] as const) {
+    const { data } = await supabase.rpc('get_venue_availability', {
+      p_venue_id: venueId,
+      p_date: ymd(date),
+    });
+
+    const upcoming = ((data ?? []) as Slot[]).filter((s) => new Date(s.starts_at) > new Date());
+    if (upcoming.length === 0) continue;
+
+    const times = [...new Set(upcoming.map((s) => s.starts_at))].sort().slice(0, HERO_TIMES);
+    const courtIds = [...new Set(upcoming.map((s) => s.court_id))].slice(0, HERO_COURTS);
+    const timeSet = new Set(times);
+    const courtSet = new Set(courtIds);
+
+    return {
+      slots: upcoming.filter((s) => timeSet.has(s.starts_at) && courtSet.has(s.court_id)),
+      date,
+      tomorrow: isTomorrow,
+    };
+  }
+
+  return null;
+}
+
+function Hero({ grid }: { grid: React.ReactNode }) {
   return (
     <section className="bg-pitch">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-10 px-5 py-14 lg:flex-row lg:gap-12 lg:px-16 lg:py-18">
@@ -63,7 +136,7 @@ function Hero() {
 
         <div className="relative w-full flex-grow">
           <PitchNight className="h-64 w-full rounded-card object-cover lg:h-[430px]" />
-          <MiniGrid />
+          {grid}
         </div>
       </div>
     </section>
@@ -71,9 +144,15 @@ function Hero() {
 }
 
 function SearchBar() {
+  // Không cho chọn ngày đã qua; chân trời đặt trước do từng cụm sân quyết định
+  // nên chỉ chặn mốc dưới ở đây.
+  const today = ymd(new Date());
+
+  // Cột trái của hero rộng 520px, xếp bốn ô thành một hàng thì nút bấm tràn ra
+  // ngoài và chui xuống dưới ảnh — lưới hai cột, nút chiếm trọn hàng thứ hai.
   return (
-    <form action="/tim-san" className="flex flex-col gap-2.5 rounded-card bg-card p-4 sm:flex-row sm:items-end">
-      <div className="flex flex-grow flex-col gap-1.5">
+    <form action="/tim-san" className="grid grid-cols-1 gap-2.5 rounded-card bg-card p-4 sm:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-1.5">
         <label htmlFor="sport" className="text-xs font-semibold text-ink-secondary">Môn</label>
         <select id="sport" name="sport" defaultValue="" className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]">
           {/* Rỗng = mọi môn. Bỏ mục này thì ai bấm luôn cũng bị lọc về bóng đá 5. */}
@@ -83,62 +162,19 @@ function SearchBar() {
           ))}
         </select>
       </div>
-      <div className="flex flex-grow flex-col gap-1.5">
+      <div className="flex min-w-0 flex-col gap-1.5">
         <label htmlFor="q" className="text-xs font-semibold text-ink-secondary">Khu vực</label>
         <input id="q" name="q" placeholder="Nam Từ Liêm" className="h-12 rounded-[9px] border border-hairline bg-page px-3 text-[15px]" />
       </div>
-      <div className="flex flex-col gap-1.5 sm:w-36 sm:flex-none">
-        <label htmlFor="date" className="text-xs font-semibold text-ink-secondary">Ngày</label>
-        <input id="date" name="date" type="date" className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]" />
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <label htmlFor="ngay" className="text-xs font-semibold text-ink-secondary">Ngày</label>
+        <input id="ngay" name="ngay" type="date" min={today} defaultValue={today}
+          className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]" />
       </div>
-      <button type="submit" className="h-12 rounded-[9px] bg-pitch px-6 text-[15px] font-semibold text-pitch-ink">
+      <button type="submit" className="mt-1 h-12 self-end rounded-[9px] bg-pitch px-6 text-[15px] font-semibold text-pitch-ink">
         Xem sân trống
       </button>
     </form>
-  );
-}
-
-/** Lát cắt của lưới lịch thật, đặt chồng lên minh họa. Dữ liệu tĩnh, chỉ để minh họa. */
-function MiniGrid() {
-  const hours = ['17', '18', '19', '20', '21', '22'];
-  const rows = [
-    { name: 'Sân 1', cells: ['peak', 'taken', 'taken', 'peak', 'free', 'free'] },
-    { name: 'Sân 2', cells: ['taken', 'picked', 'picked', 'peak', 'free', 'free'] },
-  ] as const;
-
-  const price: Record<string, string> = { peak: '350k', free: '250k', picked: '350k', taken: '—' };
-  const tone: Record<string, string> = {
-    peak: 'bg-peak-fill text-peak-ink',
-    free: 'bg-free-fill text-free-ink',
-    picked: 'bg-pitch text-pitch-ink',
-    taken: 'bg-sunk text-taken-ink',
-  };
-
-  return (
-    <div className="absolute inset-x-4 bottom-4 flex flex-col gap-2.5 rounded-card bg-card p-4 lg:inset-x-6 lg:bottom-6">
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-semibold">Sân Mỹ Đình · thứ năm 18/09</span>
-        <span className="hidden text-xs text-ink-secondary sm:inline">cập nhật theo thời gian thực</span>
-      </div>
-
-      <div className="grid gap-1" style={{ gridTemplateColumns: `52px repeat(${hours.length}, minmax(0, 1fr))` }}>
-        <span />
-        {hours.map((h) => (
-          <span key={h} className="text-center text-[11px] tabular-nums text-ink-secondary">{h}</span>
-        ))}
-      </div>
-
-      {rows.map((r) => (
-        <div key={r.name} className="grid gap-1" style={{ gridTemplateColumns: `52px repeat(${hours.length}, minmax(0, 1fr))` }}>
-          <span className="flex items-center text-xs font-semibold text-pitch">{r.name}</span>
-          {r.cells.map((c, i) => (
-            <span key={i} className={`flex h-8 items-center justify-center rounded-slot text-[11px] font-semibold tabular-nums ${tone[c]}`}>
-              {price[c]}
-            </span>
-          ))}
-        </div>
-      ))}
-    </div>
   );
 }
 
