@@ -1,36 +1,51 @@
+/**
+ * Màn chờ: vòng tròn xoay quanh mark Sân Ngon, nền mờ.
+ *
+ * Độ mờ làm bằng backdrop-blur cộng hai quầng sáng blur-3xl — không phải đổ
+ * bóng, nên không phạm quy tắc "không đổ bóng ở đâu cả" trong AGENTS.md.
+ */
 import { BrandMark } from './brand-mark';
 
-export function BrandLoader({ label = 'Đang mở sân gần bạn…' }: { label?: string }) {
+export function BrandLoader({ label = 'Đang tải…' }: { label?: string }) {
   return (
     <div
       role="status"
       aria-live="polite"
-      className="pf-fade fixed inset-0 z-50 grid place-items-center overflow-hidden bg-pitch text-white"
+      className="pf-fade fixed inset-0 z-50 grid place-items-center overflow-hidden bg-page/70 backdrop-blur-xl"
     >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-60">
-        <span className="absolute -left-20 top-1/4 h-64 w-64 rounded-full bg-story-teal/20 blur-3xl" />
-        <span className="absolute -right-16 bottom-1/4 h-72 w-72 rounded-full bg-story-coral/20 blur-3xl" />
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1200 800" preserveAspectRatio="none" fill="none">
-          <path d="M-80 640 210 180h780l290 460" stroke="currentColor" strokeOpacity=".12" strokeWidth="2" />
-          <path d="M80 800 300 330h600l220 470M0 520h1200M360 330l90 470M840 330l-90 470" stroke="currentColor" strokeOpacity=".1" strokeWidth="2" />
-          <circle cx="600" cy="510" r="94" stroke="currentColor" strokeOpacity=".12" strokeWidth="2" />
-        </svg>
+      {/* Hai quầng màu mờ phía sau, lấy từ token giờ trống và giờ vàng. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <span className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-[70%] -translate-y-1/2 rounded-full bg-free-fill blur-3xl" />
+        <span className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-[10%] -translate-y-[35%] rounded-full bg-peak-fill blur-3xl" />
       </div>
 
-      <div className="relative flex w-[min(20rem,calc(100vw-2.5rem))] flex-col items-center rounded-[28px] border border-white/15 bg-white/[0.06] px-8 py-9 text-center">
-        <div className="relative grid h-28 w-28 place-items-center">
-          <span className="pf-loader-orbit absolute inset-0 rounded-full border border-free-line/30 border-t-story-coral" />
-          <span className="absolute inset-3 rounded-full border border-white/10" />
-          <span className="pf-loader-pulse absolute h-3 w-3 rounded-full bg-story-coral" />
-          <BrandMark size={54} />
+      <div className="relative flex flex-col items-center gap-5">
+        <div className="relative grid h-20 w-20 place-items-center">
+          <Ring />
+          <BrandMark size={34} />
         </div>
-        <p className="mt-7 font-display text-xl font-extrabold tracking-[-0.02em]">Sân Ngon</p>
-        <p className="mt-2 text-sm text-free-line">{label}</p>
-        <div className="mt-7 h-1 w-full overflow-hidden rounded-pill bg-white/10" aria-hidden="true">
-          <span className="pf-loader-progress block h-full w-1/3 rounded-pill bg-gradient-to-r from-free-line via-story-teal to-story-coral" />
-        </div>
-        <span className="mt-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">Xem lịch · Chọn sân · Lên kèo</span>
+        <span className="font-display text-[15px] font-bold tracking-tight text-pitch">{label}</span>
       </div>
     </div>
+  );
+}
+
+/** Cung tròn chạy vòng quanh. Mark đứng yên để còn đọc được. */
+function Ring() {
+  return (
+    <svg
+      viewBox="0 0 80 80"
+      className="pf-spin absolute inset-0 h-20 w-20"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="40" cy="40" r="36" className="stroke-strong" strokeWidth="3" />
+      <path
+        d="M40 4a36 36 0 0 1 36 36"
+        className="stroke-pitch"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

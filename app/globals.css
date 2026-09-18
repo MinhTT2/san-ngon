@@ -93,20 +93,6 @@ button:disabled,
   to   { opacity: 1; }
 }
 
-@keyframes pf-loader-orbit {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pf-loader-pulse {
-  0%, 100% { transform: scale(0.65); opacity: 0.55; }
-  50% { transform: scale(1.15); opacity: 1; }
-}
-
-@keyframes pf-loader-progress {
-  from { transform: translateX(-130%); }
-  to { transform: translateX(360%); }
-}
-
 /* Khối chờ hiện ra khi cuộn tới. Không có JS thì .pf-reveal không bao giờ
    nhận .is-in, nên mặc định phải là ĐÃ HIỆN — thà không có hiệu ứng còn hơn
    nội dung tàng hình. JS gắn .pf-armed rồi mới giấu đi. */
@@ -121,9 +107,6 @@ button:disabled,
 
 .pf-spin { animation: pf-spin 1.1s linear infinite; }
 .pf-fade { animation: pf-fade 0.3s ease-out; }
-.pf-loader-orbit { animation: pf-loader-orbit 2.4s linear infinite; }
-.pf-loader-pulse { animation: pf-loader-pulse 1.8s ease-in-out infinite; }
-.pf-loader-progress { animation: pf-loader-progress 1.8s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -133,7 +116,4 @@ button:disabled,
   /* Tắt hiệu ứng thì phải chắc chắn nội dung vẫn hiện. */
   .pf-reveal.pf-armed { opacity: 1; }
   .pf-spin { animation: none; }
-  .pf-loader-orbit,
-  .pf-loader-pulse,
-  .pf-loader-progress { animation: none; }
 }
