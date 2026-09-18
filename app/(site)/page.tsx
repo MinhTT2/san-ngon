@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { HeroCarousel } from '@/components/hero-carousel';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
@@ -269,7 +270,11 @@ function WhyDeposit() {
           <p className="text-xs leading-5 text-free-line">Tỷ lệ minh họa. Mức cọc cụ thể được hiển thị khi đặt từng sân.</p>
         </div>
         <div className="flex items-center bg-free-line/10 p-5 sm:p-10 lg:p-12">
-          <div className="w-full rounded-[20px] bg-page p-6 sm:p-8">
+          <div className="w-full rounded-[20px] bg-page p-4 sm:p-6">
+            <figure className="relative mb-6 aspect-[16/8] overflow-hidden rounded-[14px] bg-pitch">
+              <Image src="/images/venue-blue-hour.jpg" alt="Sân thể thao lên đèn lúc chạng vạng" fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
+              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-pitch/90 to-transparent px-4 pb-4 pt-10 text-xs font-medium text-white">Sân sẵn sàng cho buổi chơi tối nay</figcaption>
+            </figure>
             <div className="flex items-start justify-between gap-3 border-b border-dashed border-strong pb-6">
               <div><p className="text-xs uppercase tracking-widest text-ink-secondary">Chia kèo thật dễ</p><h3 className="mt-2 font-display text-2xl font-bold">Một buổi bóng đá</h3><p className="mt-2 text-sm text-ink-secondary">2 tiếng · 10 người · Ví dụ</p></div>
               <span aria-hidden="true" className="text-3xl text-pitch">↗</span>
@@ -315,6 +320,10 @@ function ForOwners() {
           </div>
         </div>
         <div className="flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
+          <figure className="relative aspect-[16/8] overflow-hidden rounded-[20px] bg-pitch">
+            <Image src="/images/owner-courts-dusk.jpg" alt="Chủ sân kiểm tra lịch đặt bên sân thể thao" fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-pitch/90 to-transparent px-5 pb-4 pt-12 text-xs font-medium text-white">Lịch mới đến ngay cả khi đang ở ngoài sân</figcaption>
+          </figure>
           <div className="rounded-[20px] border border-white bg-card p-6 sm:p-8">
             <div className="flex items-center justify-between gap-3 border-b border-hairline pb-5"><span className="font-display text-xl font-bold">Một ngày ở sân</span><span className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">Minh họa</span></div>
             <div className="divide-y divide-hairline">
