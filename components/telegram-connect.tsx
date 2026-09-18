@@ -54,7 +54,7 @@ export function TelegramConnect({ connected }: { connected: boolean }) {
 
       {url && (
         <div className="mt-4 border-l-2 border-free-line bg-free-fill px-4 py-3 text-sm leading-6 text-free-ink">
-          <p>Link có hiệu lực trong 10 phút và chỉ dùng một lần.</p>
+          <p>Link có hiệu lực trong ít phút và chỉ dùng một lần.</p>
           <div className="mt-2 flex flex-wrap gap-4 font-semibold">
             <a href={url} target="_blank" rel="noreferrer" className="underline underline-offset-4">Mở Telegram</a>
             <button type="button" onClick={() => router.refresh()} className="underline underline-offset-4">Tôi đã bấm Start</button>

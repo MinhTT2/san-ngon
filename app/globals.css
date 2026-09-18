@@ -34,6 +34,11 @@
   --color-success: #1F7A4D;
   --color-danger: #A32D2D;
 
+  /* Mảng màu biên tập trên landing page, không dùng cho trạng thái lịch. */
+  --color-story-coral: #F9DED6;
+  --color-story-lilac: #E8E1F5;
+  --color-story-teal: #D6EFEB;
+
   --font-sans: 'Be Vietnam Pro', system-ui, sans-serif;
   --font-display: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif;
 

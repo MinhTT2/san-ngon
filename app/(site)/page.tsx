@@ -193,31 +193,58 @@ function Stats({ venues, courts, districts }: { venues: number; courts: number; 
 
 function HowItWorks() {
   const steps = [
-    ['Xem lịch thật', 'Cả ngày của cả cụm sân trong một màn hình, dù là bốn sân bóng hay sáu sân cầu lông. Khung nào bận đã xám sẵn, giá hiện luôn.'],
-    ['Chọn và giữ chỗ', 'Bấm khung giờ, để lại số điện thoại. Sân được giữ 15 phút cho bạn kịp mở app ngân hàng.'],
-    ['Quét QR là xong', 'Chuyển khoản xong đợi vài giây, màn hình tự chuyển sang Đã xác nhận. Chủ sân nhận tin ngay lúc đó.'],
+    { title: 'Lịch rõ. Giá rõ.', body: 'Xem giờ trống và giá của từng sân, ngay trong một màn hình.', color: 'bg-story-teal', label: '01 / Chọn sân' },
+    { title: 'Giữ chỗ cho cả đội.', body: 'Chọn giờ, để lại thông tin. Bạn có 15 phút để hoàn tất tiền cọc.', color: 'bg-story-lilac', label: '02 / Giữ chỗ' },
+    { title: 'Chốt kèo. Lên sân.', body: 'Chuyển cọc qua QR. Khi tiền được xác nhận, sân đã sẵn sàng cho buổi chơi.', color: 'bg-story-coral', label: '03 / Xác nhận' },
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-16 lg:px-16 lg:py-18">
-      <div className="max-w-xl">
-        <h2 className="font-display text-3xl font-extrabold tracking-tight lg:text-4xl">Ba bước, không cuộc gọi nào</h2>
-        <p className="mt-3 text-base leading-relaxed text-ink-secondary">
-          Bóng đá, cầu lông, pickleball hay tennis đều chung một nỗi khổ: muốn biết còn sân không
-          thì phải gọi, và thường gọi trượt vài cuộc mới ra chỗ.
-        </p>
+    <section className="mx-auto max-w-7xl px-5 py-20 lg:px-16 lg:py-24">
+      <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+        <div className="max-w-2xl">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-secondary">Bớt hẹn qua điện thoại</p>
+          <h2 className="font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">Ba bước đặt sân.<br /><span className="text-pitch">Còn lại là cuộc chơi.</span></h2>
+        </div>
+        <Link href="/tim-san" className="inline-flex min-h-11 items-center gap-5 self-start border-b border-pitch pb-2 text-sm font-semibold text-pitch lg:self-end">
+          Tìm sân cho kèo tiếp theo <span aria-hidden="true">↗</span>
+        </Link>
       </div>
 
-      <div className="mt-9 grid gap-5 lg:grid-cols-3">
-        {steps.map(([title, body], i) => (
+      <div className="mt-10 grid gap-5 lg:grid-cols-3">
+        {steps.map(({ title, body, color, label }, i) => (
           <Reveal key={title} delay={i * 90} className="flex">
-            <div className="flex flex-col gap-3 rounded-[16px] border border-hairline bg-card p-6">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-free-fill text-[15px] font-bold text-pitch">
-              {i + 1}
-            </span>
-            <span className="text-lg font-semibold">{title}</span>
-            <p className="text-[15px] leading-relaxed text-ink-secondary">{body}</p>
-            </div>
+            <article className={`flex w-full flex-col overflow-hidden rounded-[24px] border border-ink/10 ${color}`}>
+              <div className="px-7 pt-7">
+                <p className="text-xs font-semibold uppercase tracking-widest text-pitch">{label}</p>
+                <h3 className="mt-4 font-display text-2xl font-bold tracking-tight">{title}</h3>
+                <p className="mt-3 min-h-20 text-sm leading-6 text-ink-secondary">{body}</p>
+              </div>
+              <div className="mx-5 mb-5 mt-6 flex min-h-48 flex-1 flex-col justify-center rounded-[18px] border border-white/70 bg-white/75 p-5">
+                {i === 0 ? (
+                  <>
+                    <div className="mb-4 flex items-center justify-between text-xs"><span className="font-semibold">Một góc lịch sân</span><span className="text-ink-secondary">Minh họa</span></div>
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      {['17:00', '18:00', '19:00'].map((time) => <span key={time} className="pb-1 text-ink-secondary">{time}</span>)}
+                      {['Trống', 'Đã đặt', 'Trống', 'Đã đặt', 'Trống', 'Trống'].map((status, slot) => (
+                        <span key={slot} className={`rounded-slot border py-3 ${status === 'Trống' ? 'border-free-line bg-free-fill text-free-ink' : 'border-hairline bg-taken-fill text-taken-ink'}`}>{status}</span>
+                      ))}
+                    </div>
+                  </>
+                ) : i === 1 ? (
+                  <>
+                    <span className="text-xs font-medium text-ink-secondary">Thời gian giữ chỗ</span>
+                    <p className="my-3 font-display text-6xl font-extrabold tracking-tight text-pitch">15<span className="ml-2 text-lg font-medium">phút</span></p>
+                    <p className="border-t border-strong pt-3 text-xs leading-5 text-ink-secondary">Đủ thời gian mở ngân hàng và chuyển cọc.</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pitch text-2xl text-white" aria-hidden="true">✓</div>
+                    <span className="font-display text-2xl font-bold text-pitch">Hẹn nhau ở sân!</span>
+                    <p className="mt-2 text-xs leading-5 text-ink-secondary">Trạng thái tự cập nhật khi khoản cọc được xác nhận.</p>
+                  </>
+                )}
+              </div>
+            </article>
           </Reveal>
         ))}
       </div>
@@ -228,30 +255,37 @@ function HowItWorks() {
 function WhyDeposit() {
   return (
     <section className="mx-auto max-w-7xl px-5 lg:px-16">
-      <div className="flex flex-col gap-10 rounded-[20px] border border-hairline bg-card p-7 lg:flex-row lg:gap-14 lg:p-12">
-        <div className="flex flex-col gap-4 lg:w-[520px] lg:flex-none">
-          <h2 className="font-display text-[28px] font-extrabold tracking-tight lg:text-[32px]">Vì sao phải đặt cọc?</h2>
-          <p className="text-base leading-7 text-ink-secondary">
-            Vì lời hứa qua điện thoại không ràng buộc ai. Chủ sân từ chối khách khác để giữ chỗ cho
-            bạn, rồi tới giờ không thấy ai tới.
-          </p>
-          <p className="text-base leading-7 text-ink-secondary">
-            Cọc 30% đổi lời hứa đó thành cam kết. Bảy mươi phần trăm còn lại bạn trả tại sân như
-            vẫn làm xưa nay, chủ sân không phải đổi thói quen gì.
-          </p>
-        </div>
-
-        <div className="flex flex-grow flex-col gap-3.5 rounded-[16px] bg-free-fill p-7">
-          <span className="text-sm text-[#2C4A3C]">Ví dụ một buổi hai tiếng giờ vàng, sân bóng 5 người</span>
-          <div className="flex flex-col gap-3 text-base">
-            <Line label="Tổng tiền sân" value="700.000đ" />
-            <Line label="Cọc trước qua QR" value="210.000đ" />
-            <div className="h-px bg-strong" />
-            <Line label="Trả tại sân" value="490.000đ" />
+      <div className="grid overflow-hidden rounded-[28px] bg-pitch lg:grid-cols-[1.1fr_1fr]">
+        <div className="flex flex-col justify-between gap-10 p-7 text-white sm:p-10 lg:p-12">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Một khoản cọc. Một lời hẹn.</p>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Sân giữ cho bạn.<br />Bạn giữ lời hẹn.</h2>
+            <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Cọc trước một phần để chủ sân giữ đúng khung giờ cho cả đội. Phần còn lại, thanh toán khi tới sân.</p>
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed text-[#2C4A3C]">
-            Chia đầu người nhóm 10: mỗi người góp 21.000đ trước, 49.000đ tại sân.
-          </p>
+          <div className="grid grid-cols-[3fr_7fr] gap-2" aria-label="Ví dụ: cọc trước 30%, trả tại sân 70%">
+            <div className="border-t-4 border-free-line pt-4"><p className="font-display text-4xl font-bold">30<span className="text-xl">%</span></p><p className="mt-1 text-xs text-free-line">Cọc trước</p></div>
+            <div className="border-t-4 border-white/25 pt-4"><p className="font-display text-4xl font-bold">70<span className="text-xl">%</span></p><p className="mt-1 text-xs text-free-line">Trả tại sân</p></div>
+          </div>
+          <p className="text-xs leading-5 text-free-line">Tỷ lệ minh họa. Mức cọc cụ thể được hiển thị khi đặt từng sân.</p>
+        </div>
+        <div className="flex items-center bg-free-line/10 p-5 sm:p-10 lg:p-12">
+          <div className="w-full rounded-[20px] bg-page p-6 sm:p-8">
+            <div className="flex items-start justify-between gap-3 border-b border-dashed border-strong pb-6">
+              <div><p className="text-xs uppercase tracking-widest text-ink-secondary">Chia kèo thật dễ</p><h3 className="mt-2 font-display text-2xl font-bold">Một buổi bóng đá</h3><p className="mt-2 text-sm text-ink-secondary">2 tiếng · 10 người · Ví dụ</p></div>
+              <span aria-hidden="true" className="text-3xl text-pitch">↗</span>
+            </div>
+            <div className="space-y-4 py-6 text-sm">
+              <Line label="Tổng tiền sân" value="700.000đ" />
+              <Line label="Cọc trước qua QR" value="210.000đ" />
+              <Line label="Trả tại sân" value="490.000đ" />
+            </div>
+            <div className="rounded-control bg-story-teal p-5">
+              <p className="text-xs font-medium text-pitch">Mỗi người chỉ cần góp trước</p>
+              <p className="mt-2 font-display text-4xl font-extrabold tracking-tight text-pitch">21.000<span className="ml-1 text-xl">đ</span></p>
+              <p className="mt-2 text-xs text-ink-secondary">Và 49.000đ khi tới sân.</p>
+            </div>
+            <Link href="/chinh-sach-huy" className="mt-5 inline-flex min-h-11 items-center gap-3 text-xs font-semibold text-pitch underline underline-offset-4">Xem chính sách hủy và hoàn cọc <span aria-hidden="true">↗</span></Link>
+          </div>
         </div>
       </div>
     </section>
@@ -260,8 +294,8 @@ function WhyDeposit() {
 
 function Line({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-[#2C4A3C]">{label}</span>
+    <div className="flex flex-wrap justify-between gap-2">
+      <span className="text-ink-secondary">{label}</span>
       <span className="font-semibold tabular-nums">{value}</span>
     </div>
   );
@@ -269,42 +303,37 @@ function Line({ label, value }: { label: string; value: string }) {
 
 function ForOwners() {
   return (
-    <section className="mt-16 bg-pitch lg:mt-18">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-5 py-14 lg:flex-row lg:items-center lg:gap-14 lg:px-16 lg:py-16">
-        <div className="flex flex-grow flex-col gap-4">
-          <span className="text-sm font-semibold uppercase tracking-wider text-[#A9C9B8]">Dành cho chủ sân</span>
-          <h2 className="max-w-lg font-display text-3xl font-extrabold leading-tight tracking-tight text-white lg:text-4xl">
-            Không nghe máy vẫn không mất kèo
-          </h2>
-          <p className="max-w-xl text-base leading-7 text-[#A9C9B8]">
-            Bạn đang ở ngoài sân, tay bận, trời ồn. Mỗi cuộc gọi lỡ là một khung giờ trống. Đăng sân
-            lên đây, khách tự xem lịch tự đặt, và bạn nhận tin báo ngay khi có đơn mới.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <Link href="/dang-ky-san" className="flex h-13 items-center rounded-control bg-card px-7 text-base font-semibold text-pitch">
-              Đăng sân của bạn
-            </Link>
-            <Link href="/chu-san" className="flex h-13 items-center rounded-control border border-[#2F6350] px-7 text-base font-semibold text-white">
-              Xem thử trang quản lý
-            </Link>
+    <section className="mx-auto max-w-7xl px-5 pt-16 lg:px-16 lg:pt-24">
+      <div className="grid overflow-hidden rounded-[28px] border border-ink/10 bg-story-lilac lg:grid-cols-2">
+        <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Dành cho chủ sân</p>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn chăm sân.<br />Khách tự chốt kèo.</h2>
+          <p className="mt-5 max-w-md text-[15px] leading-7 text-ink-secondary">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn nhận thông báo khi có đơn, quản lý lịch ngay trên web.</p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link href="/dang-ky-san" className="inline-flex min-h-12 items-center gap-5 rounded-control bg-pitch px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink">Đăng sân của bạn <span aria-hidden="true">↗</span></Link>
+            <Link href="/chu-san" className="inline-flex min-h-11 items-center border-b border-pitch text-sm font-semibold text-pitch">Xem trang quản lý</Link>
           </div>
         </div>
-
-        <div className="flex w-full flex-col gap-3 rounded-[16px] bg-card p-5 lg:w-[420px] lg:flex-none">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-pitch text-[13px] font-semibold text-pitch-ink">SN</span>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">Sân Ngon</span>
-              <span className="text-xs text-ink-secondary">16:42</span>
+        <div className="flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
+          <div className="rounded-[20px] border border-white bg-card p-6 sm:p-8">
+            <div className="flex items-center justify-between gap-3 border-b border-hairline pb-5"><span className="font-display text-xl font-bold">Một ngày ở sân</span><span className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">Minh họa</span></div>
+            <div className="divide-y divide-hairline">
+              {[
+                ['18:00', 'Sân bóng 01', 'Đã xác nhận'],
+                ['19:00', 'Sân cầu lông 02', 'Đã xác nhận'],
+                ['20:00', 'Sân pickleball 01', 'Còn trống'],
+              ].map(([time, court, status]) => (
+                <div key={time} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-5">
+                  <span className="font-display text-xl font-bold tabular-nums text-pitch">{time}</span>
+                  <span className="flex-1 text-sm font-medium">{court}</span>
+                  <span className="text-xs text-ink-secondary">{status}</span>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="h-px bg-hairline" />
-          <div className="flex flex-col gap-1.5 text-sm leading-relaxed">
-            <span className="font-bold">Đơn mới SANJ4K7WP</span>
-            <span>Sân bóng Mỹ Đình — Sân 2</span>
-            <span className="tabular-nums">Th 5, 18/09 18:00</span>
-            <span>Nguyễn Minh Đức · 0912 345 678</span>
-            <span className="font-semibold text-success">Đã cọc 210.000đ · thu tại sân 490.000đ</span>
+          <div className="flex items-start gap-4 rounded-[18px] bg-pitch p-5 text-white sm:ml-10">
+            <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-free-line/40 text-xl">✓</span>
+            <div><p className="text-sm font-semibold">Tiền cọc về. Lịch cập nhật.</p><p className="mt-1 text-xs leading-5 text-free-line">Theo dõi đơn và khoản cần thu tại sân, cùng một chỗ.</p></div>
           </div>
         </div>
       </div>
@@ -321,19 +350,23 @@ function Faq() {
   ];
 
   return (
-    <section className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-16 lg:flex-row lg:gap-14 lg:px-16 lg:py-18">
-      <h2 className="font-display text-[28px] font-extrabold tracking-tight lg:w-80 lg:flex-none lg:text-[32px]">
-        Câu hỏi thường gặp
-      </h2>
-      <div className="flex flex-grow flex-col">
+    <section className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:px-16 lg:py-24">
+      <div>
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-secondary">Trước khi ra sân</p>
+        <h2 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn hỏi.<br />Sân Ngon trả lời.</h2>
+        <p className="mt-5 max-w-xs text-sm leading-6 text-ink-secondary">Một vài điều nhỏ để buổi chơi diễn ra suôn sẻ.</p>
+        <Link href="/lien-he" className="mt-5 inline-flex min-h-11 items-center gap-4 text-sm font-semibold text-pitch underline underline-offset-4">Cần hỗ trợ thêm <span aria-hidden="true">↗</span></Link>
+      </div>
+      <div className="divide-y divide-hairline border-y border-hairline">
         {qa.map(([q, a], i) => (
-          <div
-            key={q}
-            className={`flex flex-col gap-2 border-t border-hairline py-5 ${i === qa.length - 1 ? 'border-b' : ''}`}
-          >
-            <span className="text-[17px] font-semibold">{q}</span>
-            <p className="text-[15px] leading-relaxed text-ink-secondary">{a}</p>
-          </div>
+          <details key={q} open={i === 0} className="group">
+            <summary className="flex list-none items-start gap-4 py-6 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-pitch [&::-webkit-details-marker]:hidden">
+              <span className="pt-0.5 text-xs font-normal tabular-nums text-ink-secondary">0{i + 1}</span>
+              <span className="flex-1">{q}</span>
+              <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-strong text-pitch transition-transform group-open:rotate-45 motion-reduce:transition-none">+</span>
+            </summary>
+            <p className="pb-6 pl-8 pr-8 text-sm leading-7 text-ink-secondary">{a}</p>
+          </details>
         ))}
       </div>
     </section>
