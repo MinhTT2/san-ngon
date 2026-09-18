@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/status-badge';
@@ -18,6 +19,16 @@ export default async function Page() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/chu-san');
+
+  // Ai cũng vào được /chu-san, nhưng RLS chỉ trả đơn thuộc sân của họ. Người
+  // chưa có sân mà thấy dashboard toàn số 0 thì tưởng hỏng — chỉ đường cho họ.
+  const { data: venue } = await supabase
+    .from('venues')
+    .select('name, status')
+    .eq('owner_id', user.id)
+    .maybeSingle();
+
+  if (!venue) return <NoVenue />;
 
   const from = new Date();
   const to = new Date();
@@ -48,9 +59,16 @@ export default async function Page() {
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch">Lịch sân của bạn</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
         <span className="text-sm text-ink-secondary">{dayLabel(new Date())}</span>
       </div>
+
+      {venue.status !== 'active' && (
+        <p className="mt-5 rounded-card border border-peak-line bg-peak-fill p-4 text-sm leading-relaxed text-peak-ink">
+          Hồ sơ đang chờ duyệt nên sân chưa hiện ở trang tìm sân và chưa nhận được đơn nào.{' '}
+          <Link href="/dang-ky-san" className="font-semibold underline underline-offset-2">Xem tiến độ</Link>
+        </p>
+      )}
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat value={String(paidToday.length)} label="Đơn đã chốt hôm nay" />
@@ -114,6 +132,26 @@ export default async function Page() {
           Hôm nay chưa có đơn nào.
         </p>
       )}
+    </main>
+  );
+}
+
+function NoVenue() {
+  return (
+    <main className="mx-auto max-w-3xl px-5 py-16 lg:px-16">
+      <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch">
+        Bạn chưa có cụm sân nào
+      </h1>
+      <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-secondary">
+        Trang này là nơi bạn xem lịch bảy ngày tới và các đơn trong ngày. Nó chỉ có nội dung sau
+        khi cụm sân của bạn được duyệt và bắt đầu nhận đặt.
+      </p>
+      <Link
+        href="/dang-ky-san"
+        className="mt-7 flex h-13 w-fit items-center rounded-control bg-pitch px-7 font-semibold text-pitch-ink"
+      >
+        Đăng sân của bạn
+      </Link>
     </main>
   );
 }

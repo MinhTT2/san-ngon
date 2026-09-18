@@ -45,7 +45,8 @@ app/
   dat-san/[code]/              THANH TOÁN — cố ý nằm ngoài (site)
   api/bookings/route.ts
   api/webhooks/sepay/route.ts
-  auth/callback/route.ts
+  auth/callback/route.ts           đổi code lấy phiên sau khi đăng nhập
+  auth/dang-xuat/route.ts          POST, xoá phiên phía server
 ```
 
 **Trang thanh toán không có header và footer.** Đó là lựa chọn, không phải quên: trang checkout bớt đường thoát càng tốt. Đừng "sửa" bằng cách kéo nó vào nhóm `(site)`.
@@ -141,6 +142,7 @@ Không đổ bóng ở đâu cả. Viền 1px và nền phẳng.
 - [x] Trang `/dang-ky-san`: form đăng ký cụm sân, có ô tài khoản nhận cọc
 - [x] Trang trạng thái hồ sơ chờ duyệt, bốn bước
 - [x] Nút hủy đơn trong `/don-cua-toi`
+- [x] Đăng xuất — trước đây cả trang web không có đường nào thoát tài khoản
 - [ ] Bảng thông báo: badge chưa đọc trên header, trang danh sách
 - [ ] Danh sách cần hoàn cọc cho chủ sân, lọc `refund_status = 'needed'`
 - [ ] Nút chủ sân xác nhận tay khi webhook hỏng

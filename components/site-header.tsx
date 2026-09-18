@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { NavLink } from './site-nav-link';
+import { UserMenu } from './user-menu';
 
 /**
  * Header dùng chung cho mọi trang TRỪ trang thanh toán.
@@ -37,12 +38,7 @@ export async function SiteHeader() {
           </Link>
 
           {user ? (
-            <Link href="/don-cua-toi" className="flex h-11 items-center gap-2 rounded-pill border border-hairline pl-4 pr-2 text-sm">
-              <span className="hidden sm:inline">{user.user_metadata?.full_name ?? 'Tài khoản'}</span>
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pitch text-xs font-semibold text-pitch-ink">
-                {(user.user_metadata?.full_name ?? 'B').slice(0, 1).toUpperCase()}
-              </span>
-            </Link>
+            <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} />
           ) : (
             <Link href="/dang-nhap" className="flex h-11 items-center rounded-control bg-pitch px-5 text-[15px] font-semibold text-pitch-ink">
               Đăng nhập

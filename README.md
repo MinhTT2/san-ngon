@@ -42,6 +42,35 @@ select * from get_venue_availability(
 
 Ra danh sách khung giờ kèm giá là xong. Ra rỗng nghĩa là seed chưa chạy.
 
+## Đăng nhập
+
+Hai cách: Google và link gửi qua email. Cần bật trong Supabase trước, xem phần
+Supabase Auth bên dưới.
+
+`/auth/callback` chỉ nhận `next` là đường dẫn nội bộ. Giá trị tuyệt đối từ link
+email bị bỏ qua, không ghép vào redirect.
+
+Đăng xuất là `POST /auth/dang-xuat`, không phải GET: một thẻ `<img>` trên trang
+khác không đá được người dùng ra ngoài. Cookie phiên do server xoá nên vẫn chạy
+khi JavaScript hỏng.
+
+## Supabase Auth
+
+Authentication › Providers:
+
+- **Email** — bật. Mặc định Supabase chỉ gửi được vài thư mỗi giờ, đủ để thử
+  chứ không đủ để demo. Cắm SMTP riêng ở Project Settings › Auth › SMTP.
+- **Google** — bật, dán Client ID và Client Secret của Google Cloud. Trong
+  Google Cloud, Authorized redirect URI là
+  `https://<project-ref>.supabase.co/auth/v1/callback`.
+
+Authentication › URL Configuration:
+
+- **Site URL**: domain production.
+- **Redirect URLs**: thêm `http://localhost:3000/**` và `https://<domain>/**`.
+  Thiếu dòng này thì bấm link trong email xong bị đá về Site URL, mất luôn
+  khung giờ đang chọn.
+
 ## SePay
 
 Đây là mắt xích duy nhất phụ thuộc bên ngoài và có thể mất vài ngày duyệt. Làm trước mọi thứ khác.
