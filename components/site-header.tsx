@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Bell } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { dayLabel, hhmm } from '@/lib/format';
+import { NotificationPopover } from './notification-popover';
 import { NavLink } from './site-nav-link';
 import { UserMenu } from './user-menu';
 import { BrandMark } from './brand-mark';
@@ -12,12 +13,14 @@ import { BrandMark } from './brand-mark';
 export async function SiteHeader() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const [{ count: unreadCount }, { data: profile }] = user
+  const [{ count: unreadCount }, { data: profile }, { data: notifications, error: notificationsError }] = user
     ? await Promise.all([
       supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null),
       supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+      supabase.from('notifications').select('id, title, body, read_at, created_at, booking_id')
+        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
     ])
-    : [{ count: 0 }, { data: null }];
+    : [{ count: 0 }, { data: null }, { data: null, error: null }];
   const isOwner = profile?.role === 'owner';
 
   return (
@@ -49,18 +52,14 @@ export async function SiteHeader() {
           )}
 
           {user && (
-            <Link
-              href="/thong-bao"
-              aria-label={unreadCount ? `Thông báo, ${unreadCount} chưa đọc` : 'Thông báo'}
-              className="relative flex size-11 items-center justify-center rounded-control border border-hairline text-ink transition-colors hover:bg-sunk"
-            >
-              <Bell size={20} strokeWidth={1.8} aria-hidden="true" />
-              {!!unreadCount && (
-                <span className="absolute right-1 top-1 flex min-w-4 translate-x-1/4 -translate-y-1/4 items-center justify-center rounded-pill bg-pitch px-1 text-[10px] font-semibold leading-4 text-pitch-ink">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </Link>
+            <NotificationPopover
+              unreadCount={unreadCount ?? 0}
+              loadError={!!notificationsError}
+              notifications={(notifications ?? []).map((notification) => ({
+                ...notification,
+                timeLabel: `${dayLabel(new Date(notification.created_at))} · ${hhmm(notification.created_at)}`,
+              }))}
+            />
           )}
 
           {user ? (
