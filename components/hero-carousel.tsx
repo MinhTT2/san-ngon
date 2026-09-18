@@ -33,7 +33,7 @@ const SLIDES = [
     href: '/tim-san?sport=pickleball', cta: 'Khám phá sân pickleball',
     layout: 'mx-auto max-w-3xl text-center text-white',
     heading: 'text-[40px] sm:text-[56px] lg:text-[68px]',
-    overlay: 'bg-pitch/65',
+    overlay: 'bg-pitch/45',
   },
 ] as const;
 

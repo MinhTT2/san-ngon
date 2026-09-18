@@ -1,133 +1,164 @@
 /**
  * Ba cảnh sân cho carousel hero, vẽ tay bằng SVG.
  *
- * AGENTS.md cấm ảnh stock: "người Hà Nội nhận ra ngay đó không phải sân phủi
- * ở đây". Nên đây là hình vẽ gốc, không phải ảnh giả làm ảnh thật — và mỗi
- * cảnh ứng với một môn trong dòng chữ ở hero, thay vì chỉ có bóng đá.
- *
- * Khi có ảnh thật của cụm sân đã onboard (chụp ~18h lúc đèn đã bật), thay
- * từng cảnh bằng <Image> là xong, cấu trúc carousel giữ nguyên.
+ * Đây là hình minh họa gốc thay cho ảnh stock. Mỗi cảnh có bảng màu riêng để
+ * carousel tạo cảm giác như ba buổi chơi khác nhau, thay vì ba nền xanh giống
+ * nhau.
  */
 
 type SceneProps = { className?: string };
 
-/** Sân bóng ban đêm dưới đèn cao áp. */
+/** Sân bóng lúc hoàng hôn, đèn sân vừa bật. */
 export function SceneFootball({ className = '' }: SceneProps) {
   return (
     <svg viewBox="0 0 700 430" className={className} preserveAspectRatio="xMidYMid slice" role="img"
-      aria-label="Sân bóng ban đêm dưới đèn cao áp">
-      <rect width="700" height="430" fill="#071A12" />
-      <rect y="150" width="700" height="60" fill="#0A2418" />
-      <rect y="210" width="700" height="44" fill="#0D2C1E" />
-      <circle cx="96" cy="58" r="3" fill="#2F6350" />
-      <circle cx="612" cy="44" r="2.5" fill="#2F6350" />
-      <circle cx="430" cy="72" r="2" fill="#2F6350" />
-      <polygon points="128,96 92,254 192,254" fill="#FDF3DF" opacity="0.1" />
-      <polygon points="572,96 508,254 608,254" fill="#FDF3DF" opacity="0.1" />
-      <rect x="124" y="96" width="8" height="158" fill="#16382B" />
-      <rect x="568" y="96" width="8" height="158" fill="#16382B" />
-      <rect x="104" y="72" width="48" height="26" rx="4" fill="#1F4A3A" />
-      <rect x="548" y="72" width="48" height="26" rx="4" fill="#1F4A3A" />
-      <rect x="110" y="78" width="16" height="14" rx="2" fill="#F4A81D" />
-      <rect x="130" y="78" width="16" height="14" rx="2" fill="#F4A81D" />
-      <rect x="554" y="78" width="16" height="14" rx="2" fill="#F4A81D" />
-      <rect x="574" y="78" width="16" height="14" rx="2" fill="#F4A81D" />
-      <polygon points="40,430 660,430 520,250 180,250" fill="#155742" />
-      <polygon points="40,430 660,430 520,250 180,250" fill="#1C6A51" opacity="0.5" />
-      <g stroke="#EAF5EF" strokeWidth="2" fill="none" opacity="0.55">
-        <polygon points="72,416 628,416 506,260 194,260" />
-        <line x1="149" y1="322" x2="551" y2="322" />
-        <ellipse cx="350" cy="322" rx="66" ry="24" />
-        <polygon points="266,260 434,260 452,286 248,286" />
+      aria-label="Sân bóng lúc hoàng hôn dưới đèn cao áp">
+      <defs>
+        <linearGradient id="footballSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#30205F" />
+          <stop offset="48%" stopColor="#D93D83" />
+          <stop offset="100%" stopColor="#FF8A4C" />
+        </linearGradient>
+        <linearGradient id="footballGrass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1B9A68" />
+          <stop offset="100%" stopColor="#064B3C" />
+        </linearGradient>
+        <radialGradient id="footballSun" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#FFE6A3" />
+          <stop offset="100%" stopColor="#FFB23E" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="footballGlow" x1="0" y1="0" x2="1" y2="1">
+          <stop stopColor="#FFF4D6" stopOpacity="0.25" />
+          <stop offset="1" stopColor="#FFF4D6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <rect width="700" height="430" fill="url(#footballSky)" />
+      <circle cx="350" cy="158" r="105" fill="url(#footballSun)" />
+      <circle cx="350" cy="158" r="34" fill="#FFD47A" opacity="0.92" />
+      <path d="M0 196h700v62H0z" fill="#241B42" opacity="0.66" />
+      <path d="M0 222 90 188l74 34 96-38 105 38 96-34 139 34v42H0Z" fill="#171A35" opacity="0.7" />
+      <polygon points="0,430 700,430 538,244 162,244" fill="url(#footballGrass)" />
+      <polygon points="0,430 700,430 538,244 162,244" fill="#5CE09A" opacity="0.12" />
+      <path d="m162 244 376 0" stroke="#D8FFF0" strokeWidth="3" opacity="0.85" />
+      <g stroke="#EAF5EF" strokeWidth="2.5" fill="none" opacity="0.84">
+        <polygon points="52,416 648,416 526,258 174,258" />
+        <line x1="116" y1="334" x2="584" y2="334" />
+        <ellipse cx="350" cy="334" rx="67" ry="25" />
+        <polygon points="262,258 438,258 456,286 244,286" />
       </g>
-      <circle cx="350" cy="322" r="3.5" fill="#EAF5EF" opacity="0.55" />
+      <g>
+        <path d="M96 83 71 254M604 83 629 254" stroke="#252346" strokeWidth="8" />
+        <path d="M96 83 71 254M604 83 629 254" stroke="#FFCF70" strokeWidth="2" opacity="0.7" />
+        <rect x="68" y="68" width="56" height="24" rx="6" fill="#35295D" />
+        <rect x="576" y="68" width="56" height="24" rx="6" fill="#35295D" />
+        <rect x="76" y="74" width="16" height="11" rx="2" fill="#FFE19A" />
+        <rect x="97" y="74" width="16" height="11" rx="2" fill="#FFE19A" />
+        <rect x="584" y="74" width="16" height="11" rx="2" fill="#FFE19A" />
+        <rect x="605" y="74" width="16" height="11" rx="2" fill="#FFE19A" />
+        <path d="M76 92 146 252H246L112 92ZM624 92 554 252H454L588 92Z" fill="url(#footballGlow)" />
+      </g>
+      <circle cx="493" cy="369" r="9" fill="#FFF8E8" opacity="0.96" />
+      <path d="m493 360 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill="#30205F" opacity="0.72" />
     </svg>
   );
 }
 
-/** Sân cầu lông trong nhà, đèn tuýp trần. */
+/** Sân cầu lông trong nhà với đèn màu và mặt sân coral. */
 export function SceneBadminton({ className = '' }: SceneProps) {
   return (
     <svg viewBox="0 0 700 430" className={className} preserveAspectRatio="xMidYMid slice" role="img"
-      aria-label="Sân cầu lông trong nhà">
+      aria-label="Sân cầu lông trong nhà với đèn màu">
       <defs>
-        <linearGradient id="bdCeil" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0B2419" />
-          <stop offset="100%" stopColor="#123020" />
+        <linearGradient id="badmintonCeiling" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#121A4A" />
+          <stop offset="1" stopColor="#6C265E" />
         </linearGradient>
-        <radialGradient id="bdGlow" cx="0.5" cy="0.1" r="0.75">
-          <stop offset="0%" stopColor="#EAF5EF" stopOpacity="0.16" />
-          <stop offset="100%" stopColor="#EAF5EF" stopOpacity="0" />
+        <linearGradient id="badmintonCourt" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#F06D62" />
+          <stop offset="1" stopColor="#D83964" />
+        </linearGradient>
+        <radialGradient id="badmintonLight" cx="0.5" cy="0.1" r="0.8">
+          <stop stopColor="#86F4FF" stopOpacity="0.36" />
+          <stop offset="1" stopColor="#86F4FF" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect width="700" height="430" fill="#0A1F17" />
-      <rect y="0" width="700" height="150" fill="url(#bdCeil)" />
-      <rect width="700" height="430" fill="url(#bdGlow)" />
-      {[130, 350, 570].map((x) => (
-        <g key={x}>
-          <rect x={x - 46} y="34" width="92" height="9" rx="4.5" fill="#1F4A3A" />
-          <rect x={x - 40} y="36" width="80" height="5" rx="2.5" fill="#EAF5EF" opacity="0.55" />
-          <polygon points={`${x - 46},43 ${x - 96},150 ${x + 96},150 ${x + 46},43`} fill="#EAF5EF" opacity="0.06" />
-        </g>
-      ))}
-      <polygon points="0,430 700,430 592,150 108,150" fill="#12402F" />
-      <g stroke="#EAF5EF" strokeWidth="2" fill="none" opacity="0.6">
-        <polygon points="46,414 654,414 566,166 134,166" />
-        <line x1="90" y1="290" x2="610" y2="290" />
-        <polygon points="196,166 504,166 556,290 144,290" />
-        <line x1="350" y1="166" x2="350" y2="414" />
+      <rect width="700" height="430" fill="#10163C" />
+      <rect width="700" height="175" fill="url(#badmintonCeiling)" />
+      <rect width="700" height="430" fill="url(#badmintonLight)" />
+      <path d="M0 175h700v255H0z" fill="#211D4A" />
+      <g opacity="0.95">
+        <rect x="92" y="30" width="142" height="12" rx="6" fill="#75F4FF" />
+        <rect x="279" y="30" width="142" height="12" rx="6" fill="#FFD166" />
+        <rect x="466" y="30" width="142" height="12" rx="6" fill="#FF6F91" />
+        <path d="M92 42 42 176h242L234 42ZM279 42l-50 134h242L421 42ZM466 42l-50 134h242L608 42Z" fill="#A5F7FF" opacity="0.08" />
       </g>
-      {/* Lưới */}
-      <g opacity="0.75">
-        <line x1="90" y1="290" x2="90" y2="222" stroke="#9FC6B2" strokeWidth="3" />
-        <line x1="610" y1="290" x2="610" y2="222" stroke="#9FC6B2" strokeWidth="3" />
-        <rect x="90" y="222" width="520" height="52" fill="#EAF5EF" opacity="0.14" />
-        <line x1="90" y1="222" x2="610" y2="222" stroke="#EAF5EF" strokeWidth="3" />
+      <polygon points="0,430 700,430 579,176 121,176" fill="url(#badmintonCourt)" />
+      <polygon points="0,430 700,430 579,176 121,176" fill="#FFBE6B" opacity="0.12" />
+      <g stroke="#FFF4E8" strokeWidth="2.5" fill="none" opacity="0.88">
+        <polygon points="45,414 655,414 568,190 132,190" />
+        <line x1="84" y1="302" x2="616" y2="302" />
+        <polygon points="188,190 512,190 555,302 145,302" />
+        <line x1="350" y1="190" x2="350" y2="414" />
+      </g>
+      <g opacity="0.9">
+        <line x1="84" y1="302" x2="84" y2="236" stroke="#A5F7FF" strokeWidth="4" />
+        <line x1="616" y1="302" x2="616" y2="236" stroke="#A5F7FF" strokeWidth="4" />
+        <rect x="84" y="236" width="532" height="48" fill="#B9FBFF" opacity="0.16" />
+        <line x1="84" y1="236" x2="616" y2="236" stroke="#F4FFFF" strokeWidth="3" />
+        <path d="m560 125 13 20 14-20-14-20Z" fill="#FFF4E8" />
+        <path d="m560 125 14 0 13 20-20-8Z" fill="#75F4FF" opacity="0.75" />
       </g>
     </svg>
   );
 }
 
-/** Sân pickleball/tennis lúc chạng vạng. */
+/** Sân pickleball trên sân thượng lúc chạng vạng. */
 export function ScenePickleball({ className = '' }: SceneProps) {
   return (
     <svg viewBox="0 0 700 430" className={className} preserveAspectRatio="xMidYMid slice" role="img"
-      aria-label="Sân pickleball lúc chạng vạng">
+      aria-label="Sân pickleball lúc chạng vạng với đèn dây màu">
       <defs>
-        <linearGradient id="pbSky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#071C16" />
-          <stop offset="70%" stopColor="#0C2E22" />
-          <stop offset="100%" stopColor="#12402F" />
+        <linearGradient id="pickleballSky" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#24205D" />
+          <stop offset="0.53" stopColor="#E65783" />
+          <stop offset="1" stopColor="#FFB34D" />
         </linearGradient>
-        <radialGradient id="pbMoon" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#9FC6B2" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#9FC6B2" stopOpacity="0" />
+        <linearGradient id="pickleballCourt" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#19B8B2" />
+          <stop offset="1" stopColor="#087D83" />
+        </linearGradient>
+        <radialGradient id="pickleballSun" cx="0.5" cy="0.5" r="0.5">
+          <stop stopColor="#FFE6A3" />
+          <stop offset="1" stopColor="#FFB34D" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect width="700" height="430" fill="#08211A" />
-      <rect y="0" width="700" height="168" fill="url(#pbSky)" />
-      <circle cx="560" cy="62" r="70" fill="url(#pbMoon)" />
-      <circle cx="560" cy="62" r="17" fill="#1F4A3A" />
-      <circle cx="120" cy="40" r="2" fill="#2F6350" />
-      <circle cx="300" cy="26" r="1.6" fill="#2F6350" />
-      <circle cx="420" cy="52" r="1.8" fill="#2F6350" />
-      {[64, 178, 292, 406, 520, 634].map((x) => (
-        <rect key={x} x={x} y="104" width="5" height="64" rx="2.5" fill="#123A2C" />
-      ))}
-      <rect y="160" width="700" height="10" fill="#123A2C" />
-      <rect y="104" width="700" height="4" rx="2" fill="#123A2C" opacity="0.7" />
-      <polygon points="20,430 680,430 556,168 144,168" fill="#14503C" />
-      <g stroke="#EAF5EF" strokeWidth="2" fill="none" opacity="0.62">
-        <polygon points="58,412 642,412 546,182 154,182" />
-        <line x1="112" y1="278" x2="588" y2="278" />
-        <polygon points="214,182 486,182 528,278 172,278" />
-        <line x1="350" y1="278" x2="350" y2="412" />
+      <rect width="700" height="430" fill="url(#pickleballSky)" />
+      <circle cx="525" cy="160" r="92" fill="url(#pickleballSun)" />
+      <circle cx="525" cy="160" r="30" fill="#FFE09A" opacity="0.95" />
+      <path d="M0 220 90 182l67 30 86-49 80 44 97-58 78 50 91-28 121 49v70H0Z" fill="#262052" opacity="0.8" />
+      <path d="M0 268h700v162H0z" fill="#171B3A" />
+      <polygon points="10,430 690,430 549,194 151,194" fill="url(#pickleballCourt)" />
+      <polygon points="10,430 690,430 549,194 151,194" fill="#FFCC66" opacity="0.16" />
+      <g stroke="#EFFFFA" strokeWidth="2.5" fill="none" opacity="0.9">
+        <polygon points="53,413 647,413 539,210 161,210" />
+        <line x1="104" y1="307" x2="596" y2="307" />
+        <polygon points="213,210 487,210 530,307 170,307" />
+        <line x1="350" y1="307" x2="350" y2="413" />
       </g>
-      <g opacity="0.8">
-        <line x1="112" y1="278" x2="112" y2="232" stroke="#9FC6B2" strokeWidth="3" />
-        <line x1="588" y1="278" x2="588" y2="232" stroke="#9FC6B2" strokeWidth="3" />
-        <rect x="112" y="232" width="476" height="40" fill="#EAF5EF" opacity="0.12" />
-        <line x1="112" y1="232" x2="588" y2="232" stroke="#EAF5EF" strokeWidth="3" />
+      <g>
+        <line x1="104" y1="307" x2="104" y2="247" stroke="#FFCF70" strokeWidth="4" />
+        <line x1="596" y1="307" x2="596" y2="247" stroke="#FFCF70" strokeWidth="4" />
+        <rect x="104" y="247" width="492" height="45" fill="#F8FFFF" opacity="0.16" />
+        <line x1="104" y1="247" x2="596" y2="247" stroke="#F8FFFF" strokeWidth="3" />
+      </g>
+      <g stroke="#FFCF70" strokeWidth="3" strokeLinecap="round">
+        <path d="M90 82C220 30 420 28 612 82" fill="none" opacity="0.7" />
+        <circle cx="137" cy="70" r="6" fill="#FF6F91" stroke="none" />
+        <circle cx="213" cy="52" r="6" fill="#75F4FF" stroke="none" />
+        <circle cx="296" cy="43" r="6" fill="#FFD166" stroke="none" />
+        <circle cx="393" cy="44" r="6" fill="#FF6F91" stroke="none" />
+        <circle cx="491" cy="56" r="6" fill="#75F4FF" stroke="none" />
+        <circle cx="575" cy="73" r="6" fill="#FFD166" stroke="none" />
       </g>
     </svg>
   );
