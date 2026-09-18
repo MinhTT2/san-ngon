@@ -31,8 +31,12 @@ Chạy lần lượt trong SQL Editor, không gộp:
 4. Đăng nhập vào app một lần để có user, rồi `supabase/04_seed.sql`
 5. Bật extension `pg_cron` ở Database › Extensions, rồi `supabase/05_cron.sql`
 
-Khi cập nhật bản này, chạy lại `supabase/03_functions.sql` để thêm xác nhận tay
-và đánh dấu hoàn cọc. Các hàm dùng `create or replace` nên không tạo dữ liệu trùng.
+Khi cập nhật bản này, chạy lại `supabase/03_functions.sql` để cập nhật đăng ký
+nhiều môn, xác nhận tay và đánh dấu hoàn cọc. Các hàm dùng `create or replace`
+nên không tạo dữ liệu trùng.
+
+Nếu database đã chạy từ trước khi có tự liên kết Telegram, chạy thêm
+`supabase/migrations/20260918000003_telegram_link.sql` một lần.
 
 Kiểm tra tầng dữ liệu đã đúng:
 
@@ -86,8 +90,21 @@ Authentication › URL Configuration:
 ## Telegram
 
 1. Nhắn `/newbot` cho @BotFather, lấy token.
-2. Chủ sân nhắn cho bot một lần — không có cách nào nhắn trước cho người lạ.
-3. Lấy `chat_id` qua `https://api.telegram.org/bot<token>/getUpdates`, lưu vào `profiles.telegram_chat_id`.
+2. Điền `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` (không có `@`) và một
+   chuỗi bí mật ngẫu nhiên vào `TELEGRAM_WEBHOOK_SECRET`.
+3. Trỏ webhook một lần sau khi deploy:
+
+   ```bash
+   curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+     -d "url=https://<domain>/api/webhooks/telegram" \
+     -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+   ```
+
+4. Chủ sân vào `/chu-san`, bấm **Tạo link kết nối**, mở Telegram rồi bấm
+   **Start**. App tự lưu `chat_id`; không cần chạy SQL hay lấy `getUpdates`.
+
+Chủ sân vẫn phải bấm Start một lần vì Telegram không cho bot tự nhắn người chưa
+từng mở cuộc trò chuyện. Mã trong deep link hết hạn sau 10 phút và chỉ dùng một lần.
 
 Hệ thống phải chạy được cả khi chưa có `chat_id`: `sendTelegram` trả về `NOT_CONFIGURED` và không ném lỗi.
 
@@ -114,7 +131,8 @@ Hệ thống phải chạy được cả khi chưa có `chat_id`: `sendTelegram`
 | `/don-cua-toi` | Bảng trên desktop, thẻ trên điện thoại |
 | `/chu-san` | Lưới 7 ngày và đơn hôm nay |
 | `/thong-bao` | Thông báo trong app, badge chưa đọc |
-| `/dang-nhap` | Google và email OTP |
+| `/dang-nhap` | Đăng nhập Google và email OTP |
+| `/dang-ky` | Tạo tài khoản bằng email OTP |
 | `/dang-ky-san` | Form đăng sân; đã gửi rồi thì hiện bốn bước duyệt |
 | `/chinh-sach-huy` | Điều kiện hoàn cọc |
 | `/lien-he` | |

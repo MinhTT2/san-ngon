@@ -1,24 +1,33 @@
 -- ============================================================
 -- Sân Ngon — 04. Seed
--- Chạy SAU khi đã đăng nhập ít nhất 1 lần. Thay bằng sân thật ngày 27/09.
+-- Demo duy nhất: điền email chủ sân trong SQL Editor sau demo-roles.sql.
+-- Không gán lại chủ sân, không sửa dữ liệu hiện có khi chạy lại.
 -- ============================================================
 do $$
 declare
+  v_owner_email text := 'owner@example.com';
   v_owner uuid; v_venue uuid; v_court uuid; v_i int;
   v_rows text[][] := array[
-    array['san-my-dinh',    'Sân bóng Mỹ Đình',     'Ngõ 5 Lê Đức Thọ',   'Nam Từ Liêm', '4'],
-    array['san-cau-giay',   'Sân Cầu Giấy Arena',   '92 Trần Thái Tông',  'Cầu Giấy',    '4'],
-    array['san-thanh-xuan', 'Sân Thanh Xuân Center','283 Khuất Duy Tiến', 'Thanh Xuân',  '3'],
-    array['san-bach-khoa',  'Sân Bách Khoa',        '17 Tạ Quang Bửu',    'Hai Bà Trưng','3'],
-    array['san-long-bien',  'Sân Long Biên Sport',  '2 Ngọc Lâm',         'Long Biên',   '2']
+    array['san-demo', 'Sân Ngon Demo', 'Hà Nội', 'Nam Từ Liêm', '2']
   ];
   v_row text[];
 begin
-  select id into v_owner from profiles order by created_at limit 1;
-  if v_owner is null then
-    raise exception 'Chưa có user nào. Đăng nhập vào app một lần rồi chạy lại.';
+  if v_owner_email in ('owner@example.com', '') then
+    raise exception 'Điền email chủ sân demo trước khi chạy.';
   end if;
-  update profiles set role = 'owner' where id = v_owner;
+  select p.id into v_owner from public.profiles p
+  join auth.users u on u.id = p.id
+  where lower(u.email) = lower(trim(v_owner_email)) and p.role = 'owner';
+  if v_owner is null then
+    raise exception 'Không tìm thấy chủ sân. Chạy demo-roles.sql trước.';
+  end if;
+  if exists (select 1 from venues where owner_id = v_owner) then
+    raise notice 'Chủ sân đã có cụm sân; giữ nguyên dữ liệu, bỏ qua seed.';
+    return;
+  end if;
+  if exists (select 1 from venues where slug = 'san-demo') then
+    raise exception 'Slug san-demo đã thuộc tài khoản khác; không chuyển chủ sân.';
+  end if;
 
   foreach v_row slice 1 in array v_rows loop
     insert into venues (owner_id, slug, name, address, district, phone, description,
@@ -48,4 +57,4 @@ begin
 end $$;
 
 -- Kiểm tra:
--- select * from get_venue_availability((select id from venues where slug='san-my-dinh'), current_date + 1) limit 20;
+-- select * from get_venue_availability((select id from venues where slug='san-demo'), current_date + 1) limit 20;

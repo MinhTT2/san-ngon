@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { hhmm, vnd, ymd, dayLabel } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
 import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booking-actions';
+import { TelegramConnect } from '@/components/telegram-connect';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,11 +24,10 @@ export default async function Page() {
 
   // Ai cũng vào được /chu-san, nhưng RLS chỉ trả đơn thuộc sân của họ. Người
   // chưa có sân mà thấy dashboard toàn số 0 thì tưởng hỏng — chỉ đường cho họ.
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('name, status')
-    .eq('owner_id', user.id)
-    .maybeSingle();
+  const [{ data: venue }, { data: profile }] = await Promise.all([
+    supabase.from('venues').select('name, status').eq('owner_id', user.id).maybeSingle(),
+    supabase.from('profiles').select('telegram_chat_id').eq('id', user.id).maybeSingle(),
+  ]);
 
   if (!venue) return <NoVenue />;
 
@@ -87,6 +87,8 @@ export default async function Page() {
         <Stat value={String(today.length - paidToday.length)} label="Đang chờ chuyển khoản" />
         <Stat value={String(refundRows.length)} label="Cần hoàn cọc" tone={refundRows.length ? 'danger' : undefined} />
       </div>
+
+      <TelegramConnect connected={Boolean(profile?.telegram_chat_id)} />
 
       {refundRows.length > 0 && (
         <section className="mt-8 rounded-card border border-peak-line bg-peak-fill p-4">

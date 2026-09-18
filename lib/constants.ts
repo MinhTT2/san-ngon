@@ -21,6 +21,9 @@ export const CANCEL_WINDOW_HOURS = 2;
 export const PEAK_FROM_HOUR = 16;
 export const PEAK_TO_HOUR = 21;
 
+/** Mã liên kết Telegram chỉ sống đủ lâu để chủ sân bấm Start. */
+export const TELEGRAM_LINK_MINUTES = 10;
+
 export const SPORT_LABELS: Record<string, string> = {
   football5: 'Bóng đá 5 người',
   football7: 'Bóng đá 7 người',

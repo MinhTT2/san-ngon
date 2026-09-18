@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 
 /** Link trong email quay về đây; ?loi=1 là do /auth/callback đá về. */
 const CALLBACK_ERROR =
-  'Link đăng nhập không dùng được nữa. Link chỉ dùng một lần và hết hạn sau một giờ — gửi lại link mới giúp bạn nhé.';
+  'Link xác thực không dùng được nữa. Link chỉ dùng một lần và hết hạn sau một giờ — gửi lại link mới giúp bạn nhé.';
 
 /**
  * Supabase trả lỗi tiếng Anh. Ba lỗi hay gặp nhất dịch sẵn, phần còn lại giữ
@@ -24,12 +24,14 @@ function viError(raw: string) {
   return raw;
 }
 
-export function LoginForm() {
+export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
+  const signup = mode === 'signup';
   const supabase = createClient();
   const params = useSearchParams();
   const next = params.get('next') ?? '/';
 
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState<'google' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(params.get('loi') ? CALLBACK_ERROR : null);
@@ -89,7 +91,11 @@ export function LoginForm() {
     setError(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo },
+      options: {
+        shouldCreateUser: signup,
+        emailRedirectTo: redirectTo,
+        ...(signup && name.trim() ? { data: { full_name: name.trim() } } : {}),
+      },
     });
     setBusy(null);
     if (error) setError(viError(error.message));
@@ -103,8 +109,8 @@ export function LoginForm() {
         <div className="flex flex-col gap-2">
           <p className="text-[17px] font-semibold text-pitch">Kiểm tra hộp thư</p>
           <p className="text-[15px] leading-relaxed">
-            Đã gửi link đăng nhập tới <strong className="break-all">{email}</strong>. Mở thư rồi bấm
-            vào link là xong, không cần mật khẩu.
+            Đã gửi link {signup ? 'xác nhận tài khoản' : 'đăng nhập'} tới{' '}
+            <strong className="break-all">{email}</strong>. Mở thư rồi bấm vào link là xong, không cần mật khẩu.
           </p>
           <p className="text-[13px] leading-relaxed text-[#2C4A3C]">
             Không thấy sau một phút thì xem thư mục spam. Link dùng một lần và hết hạn sau một giờ.
@@ -146,6 +152,21 @@ export function LoginForm() {
       </div>
 
       <form onSubmit={otp} className="flex flex-col gap-2.5">
+        {signup && (
+          <>
+            <label htmlFor="name" className="text-sm font-semibold">Tên của bạn</label>
+            <input
+              id="name"
+              type="text"
+              required
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nguyễn Văn A"
+              className="h-13 rounded-control border border-hairline bg-page px-4 text-base focus:border-pitch focus:outline-none"
+            />
+          </>
+        )}
         <label htmlFor="email" className="text-sm font-semibold">Email</label>
         <input
           id="email"
@@ -162,10 +183,10 @@ export function LoginForm() {
           disabled={busy !== null}
           className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60"
         >
-          {busy === 'email' ? 'Đang gửi…' : 'Gửi link đăng nhập'}
+          {busy === 'email' ? 'Đang gửi…' : signup ? 'Tạo tài khoản bằng email' : 'Gửi link đăng nhập'}
         </button>
         <p className="text-[13px] leading-relaxed text-ink-secondary">
-          Không cần mật khẩu. Chúng tôi gửi một link, bấm vào là vào thẳng.
+          Không cần mật khẩu. Chúng tôi gửi một link dùng một lần qua email.
         </p>
       </form>
     </div>

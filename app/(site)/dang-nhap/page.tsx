@@ -37,6 +37,11 @@ export default function Page() {
           </Suspense>
 
           <p className="border-t border-hairline pt-5 text-[13px] leading-relaxed text-ink-secondary">
+            Chưa có tài khoản?{' '}
+            <Link href="/dang-ky" className="font-semibold text-pitch underline underline-offset-2">
+              Đăng ký bằng email
+            </Link>
+            <br />
             Bạn là chủ sân?{' '}
             <Link href="/dang-ky-san" className="font-semibold text-pitch underline underline-offset-2">
               Đăng sân của bạn

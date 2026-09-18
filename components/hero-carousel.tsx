@@ -151,37 +151,6 @@ export function HeroCarousel() {
         </svg>
       </button>
 
-      <div className="relative z-20 mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 pb-6 pt-2 text-white lg:px-16">
-        <div className="flex items-center gap-1" aria-label="Chọn môn thể thao">
-          {SLIDES.map(({ key, label }, i) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setIndex(i)}
-              aria-label={`Xem ảnh ${label}`}
-              aria-current={i === index ? 'true' : undefined}
-              className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line"
-            >
-              <span className={`h-1.5 rounded-pill transition-all ${i === index ? 'w-8 bg-free-fill' : 'w-2 bg-free-line/50'}`} />
-            </button>
-          ))}
-          <span aria-hidden="true" className="ml-3 hidden text-xs font-medium text-free-line sm:inline">
-            0{index + 1} / 0{SLIDES.length} · {SLIDES[index].label}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setAutoplay((value) => !value)}
-            aria-label={autoplay ? 'Tạm dừng tự chuyển ảnh' : 'Bật tự chuyển ảnh'}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-free-line/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              {autoplay ? <path d="M4 3h3v10H4zM9 3h3v10H9z" /> : <path d="m5 2 9 6-9 6z" />}
-            </svg>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

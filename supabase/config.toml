@@ -1,0 +1,10 @@
+# Remote-only workflow; không cần Docker cho dự án này.
+project_id = "san-ngon"
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []

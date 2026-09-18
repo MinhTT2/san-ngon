@@ -11,6 +11,7 @@ type VenueRow = {
   name: string;
   address: string;
   district: string;
+  phone: string | null;
   amenities: string[];
   courts: { sport: string }[];
 };
@@ -38,8 +39,8 @@ export default async function Page({
     .from('venues')
     .select(
       validSport
-        ? 'id, slug, name, address, district, amenities, courts!inner(sport)'
-        : 'id, slug, name, address, district, amenities, courts(sport)'
+        ? 'id, slug, name, address, district, phone, amenities, courts!inner(sport)'
+        : 'id, slug, name, address, district, phone, amenities, courts(sport)'
     )
     .eq('status', 'active');
 
@@ -79,18 +80,22 @@ export default async function Page({
         {venues.map((v) => {
           const sports = [...new Set((v.courts ?? []).map((c) => SPORT_LABELS[c.sport] ?? c.sport))];
           return (
-            <li key={v.id}>
-              <Link
-                href={day ? `/san/${v.slug}?ngay=${day}` : `/san/${v.slug}`}
-                className="flex h-full flex-col overflow-hidden rounded-card border border-hairline bg-card transition-colors hover:border-strong"
-              >
+            <li key={v.id} className="flex h-full flex-col overflow-hidden rounded-card border border-hairline bg-card transition-colors hover:border-strong">
+              <Link href={day ? `/san/${v.slug}?ngay=${day}` : `/san/${v.slug}`}>
                 <PitchThumb width="100%" height={132} />
-                <div className="flex flex-col gap-1.5 p-4">
-                  <span className="font-semibold">{v.name}</span>
-                  <span className="text-sm text-ink-secondary">{v.address} · {v.district}</span>
-                  <span className="mt-1 text-sm text-ink-secondary">{sports.join(', ')}</span>
-                </div>
               </Link>
+              <div className="flex flex-1 flex-col gap-1.5 p-4">
+                <Link href={day ? `/san/${v.slug}?ngay=${day}` : `/san/${v.slug}`} className="font-semibold hover:underline">
+                  {v.name}
+                </Link>
+                <span className="text-sm text-ink-secondary">{v.address} · {v.district}</span>
+                <span className="mt-1 text-sm text-ink-secondary">{sports.join(', ')}</span>
+                {v.phone && (
+                  <a href={`tel:${v.phone}`} className="mt-2 w-fit text-sm font-semibold text-pitch underline underline-offset-2">
+                    Gọi chủ sân · {v.phone}
+                  </a>
+                )}
+              </div>
             </li>
           );
         })}

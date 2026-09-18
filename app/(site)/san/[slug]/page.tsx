@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { VenueSchedule } from './venue-schedule';
 import { SPORT_LABELS } from '@/lib/constants';
@@ -39,8 +40,31 @@ export default async function Page({
         <span>{venue.address} · {venue.district}</span>
         <span>· {sports.join(', ')}</span>
         <span>· Mở {venue.open_time.slice(0, 5)}–{venue.close_time.slice(0, 5)}</span>
-        {venue.phone && <span>· {venue.phone}</span>}
+        {venue.phone && (
+          <a href={`tel:${venue.phone}`} className="font-semibold text-pitch underline underline-offset-2">
+            · Gọi chủ sân {venue.phone}
+          </a>
+        )}
       </p>
+
+      <section className="mt-5 flex flex-col gap-3 rounded-card border border-hairline bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-semibold text-pitch">Thông tin liên hệ chủ sân</h2>
+          <address className="not-italic text-sm leading-relaxed text-ink-secondary">
+            {venue.address} · {venue.district}, Hà Nội
+          </address>
+          {!venue.phone && (
+            <p className="text-xs text-ink-secondary">
+              Chủ sân chưa công khai số điện thoại. <Link href="/lien-he" className="font-semibold text-pitch underline">Liên hệ Sân Ngon</Link> để được hỗ trợ.
+            </p>
+          )}
+        </div>
+        {venue.phone && (
+          <a href={`tel:${venue.phone}`} className="inline-flex h-11 items-center justify-center rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">
+            Gọi chủ sân · {venue.phone}
+          </a>
+        )}
+      </section>
 
       <div className="mt-6">
         <VenueSchedule

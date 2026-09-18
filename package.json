@@ -8,7 +8,18 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "ci": "npm run lint && npm run typecheck && npm run build"
+    "ci": "npm run lint && npm run typecheck && npm run build",
+    "setup:check": "node scripts/check-env.mjs",
+    "db:login": "supabase login",
+    "db:link": "supabase link",
+    "db:push": "supabase db push",
+    "db:dry": "supabase db push --dry-run",
+    "db:status": "supabase migration list",
+    "db:new": "supabase migration new",
+    "db:types": "node scripts/db-types.mjs",
+    "vercel:login": "vercel login",
+    "vercel:link": "vercel link",
+    "env:pull": "vercel env pull .env.local --environment=development"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
@@ -26,7 +37,12 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.25",
+    "supabase": "2.117.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vercel": "59.23.1"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }
