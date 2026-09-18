@@ -52,9 +52,63 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+  Preflight của Tailwind đặt button { cursor: default }, nên mọi nút trong app
+  đều không có con trỏ bàn tay. Sửa một chỗ thay vì rắc cursor-pointer khắp nơi.
+*/
+button:not(:disabled),
+summary,
+[role='button']:not([aria-disabled='true']),
+label[for],
+select:not(:disabled),
+input[type='date']:not(:disabled),
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+/* ---------- Chuyển động ---------- */
+
+@keyframes pf-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pf-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pf-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Khối chờ hiện ra khi cuộn tới. Không có JS thì .pf-reveal không bao giờ
+   nhận .is-in, nên mặc định phải là ĐÃ HIỆN — thà không có hiệu ứng còn hơn
+   nội dung tàng hình. JS gắn .pf-armed rồi mới giấu đi. */
+.pf-reveal.pf-armed { opacity: 0; }
+.pf-reveal.pf-armed.is-in {
+  animation: pf-rise 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+/* Khối trong hero: chạy ngay khi tải, không cần cuộn. `both` để nó bắt đầu
+   từ trạng thái ẩn mà vẫn không cần JS. */
+.pf-in { animation: pf-rise 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+.pf-spin { animation: pf-spin 1.1s linear infinite; }
+.pf-fade { animation: pf-fade 0.3s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  /* Tắt hiệu ứng thì phải chắc chắn nội dung vẫn hiện. */
+  .pf-reveal.pf-armed { opacity: 1; }
+  .pf-spin { animation: none; }
 }

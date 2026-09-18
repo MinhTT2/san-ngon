@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PitchNight } from '@/components/pitch-night';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
+import { Reveal } from '@/components/reveal';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { ymd } from '@/lib/format';
@@ -63,11 +64,15 @@ export default async function Page() {
           )
         }
       />
-      {venueCount ? <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} /> : null}
-      <HowItWorks />
-      <WhyDeposit />
-      <ForOwners />
-      <Faq />
+      {venueCount ? (
+        <Reveal>
+          <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} />
+        </Reveal>
+      ) : null}
+      <Reveal><HowItWorks /></Reveal>
+      <Reveal><WhyDeposit /></Reveal>
+      <Reveal><ForOwners /></Reveal>
+      <Reveal><Faq /></Reveal>
     </>
   );
 }
@@ -113,28 +118,28 @@ function Hero({ grid }: { grid: React.ReactNode }) {
     <section className="bg-pitch">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-10 px-5 py-14 lg:flex-row lg:gap-12 lg:px-16 lg:py-18">
         <div className="flex w-full flex-col gap-6 lg:w-[520px] lg:flex-none">
-          <span className="self-start rounded-pill bg-[#16543F] px-3.5 py-1.5 text-[13px] font-medium text-[#A9C9B8]">
+          <span className="pf-in self-start rounded-pill bg-[#16543F] px-3.5 py-1.5 text-[13px] font-medium text-[#A9C9B8]">
             Bóng đá · Cầu lông · Pickleball · Tennis
           </span>
 
-          <h1 className="font-display text-[38px] font-extrabold leading-[1.06] tracking-[-0.03em] text-white lg:text-[56px]">
+          <h1 style={{ animationDelay: '70ms' }} className="pf-in font-display text-[38px] font-extrabold leading-[1.06] tracking-[-0.03em] text-white lg:text-[56px]">
             Sân trống tối nay, biết ngay trong 10 giây.
           </h1>
 
-          <p className="text-base leading-7 text-[#A9C9B8] lg:text-lg lg:leading-8">
+          <p style={{ animationDelay: '140ms' }} className="pf-in text-base leading-7 text-[#A9C9B8] lg:text-lg lg:leading-8">
             Xem lịch trống thật của từng sân, chốt bằng tiền cọc chuyển khoản. Không gọi điện,
             không chờ chủ sân nghe máy, không sợ tới nơi mới biết hết chỗ.
           </p>
 
-          <SearchBar />
+          <div style={{ animationDelay: '210ms' }} className="pf-in"><SearchBar /></div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-[#A9C9B8]">
+          <div style={{ animationDelay: '280ms' }} className="pf-in flex flex-wrap gap-x-8 gap-y-2 text-sm text-[#A9C9B8]">
             <span>Miễn phí cho người đặt</span>
             <span>Cọc 30%, phần còn lại trả tại sân</span>
           </div>
         </div>
 
-        <div className="relative w-full flex-grow">
+        <div style={{ animationDelay: '160ms' }} className="pf-in relative w-full flex-grow">
           <PitchNight className="h-64 w-full rounded-card object-cover lg:h-[430px]" />
           {grid}
         </div>
@@ -218,13 +223,15 @@ function HowItWorks() {
 
       <div className="mt-9 grid gap-5 lg:grid-cols-3">
         {steps.map(([title, body], i) => (
-          <div key={title} className="flex flex-col gap-3 rounded-[16px] border border-hairline bg-card p-6">
+          <Reveal key={title} delay={i * 90} className="flex">
+            <div className="flex flex-col gap-3 rounded-[16px] border border-hairline bg-card p-6">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-free-fill text-[15px] font-bold text-pitch">
               {i + 1}
             </span>
             <span className="text-lg font-semibold">{title}</span>
             <p className="text-[15px] leading-relaxed text-ink-secondary">{body}</p>
-          </div>
+            </div>
+          </Reveal>
         ))}
       </div>
     </section>
