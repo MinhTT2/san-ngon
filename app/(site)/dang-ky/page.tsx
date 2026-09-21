@@ -16,7 +16,7 @@ export default function Page() {
           Tạo tài khoản Sân Ngon
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
-          Chỉ cần tên, số điện thoại và email. Không cần nhớ mật khẩu — lần sau thông tin sẽ được điền sẵn.
+          Chỉ cần tên, số điện thoại, email và một mật khẩu. Bạn sẽ nhập mã OTP gửi tới email để xác nhận tài khoản.
         </p>
         <div className="mt-7">
           <Suspense fallback={<div className="h-64 animate-pulse rounded-control bg-sunk" />}>

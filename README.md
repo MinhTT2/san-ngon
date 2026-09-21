@@ -94,7 +94,8 @@ Ra danh sách khung giờ kèm giá là xong. Ra rỗng nghĩa là seed chưa ch
 
 ## Đăng nhập
 
-Hai cách: Google và link gửi qua email. Cần bật trong Supabase trước, xem phần
+Hai cách: Google và email + mật khẩu. Khi đăng ký, Supabase gửi mã OTP để xác nhận
+tài khoản. Cần bật trong Supabase trước, xem phần
 Supabase Auth bên dưới.
 
 `/auth/callback` chỉ nhận `next` là đường dẫn nội bộ. Giá trị tuyệt đối từ link
@@ -110,6 +111,8 @@ Authentication › Providers:
 
 - **Email** — bật. Mặc định Supabase chỉ gửi được vài thư mỗi giờ, đủ để thử
   chứ không đủ để demo. Cắm SMTP riêng ở Project Settings › Auth › SMTP.
+- Trong Authentication › Email Templates › Confirm signup, dùng `{{ .Token }}`
+  trong nội dung thư để gửi mã 6 số; không dùng `{{ .ConfirmationURL }}`.
 - **Google** — bật, dán Client ID và Client Secret của Google Cloud. Trong
   Google Cloud, Authorized redirect URI là
   `https://<project-ref>.supabase.co/auth/v1/callback`.
@@ -174,8 +177,8 @@ Hệ thống phải chạy được cả khi chưa có `chat_id`: `sendTelegram`
 | `/don-cua-toi` | Bảng trên desktop, thẻ trên điện thoại |
 | `/chu-san` | Lưới 7 ngày và đơn hôm nay |
 | `/thong-bao` | Thông báo trong app, badge chưa đọc |
-| `/dang-nhap` | Đăng nhập Google và email OTP |
-| `/dang-ky` | Tạo tài khoản bằng email OTP |
+| `/dang-nhap` | Đăng nhập Google hoặc email + mật khẩu |
+| `/dang-ky` | Tạo tài khoản bằng mật khẩu và OTP email |
 | `/dang-ky-san` | Form đăng sân; đã gửi rồi thì hiện bốn bước duyệt |
 | `/chinh-sach-huy` | Điều kiện hoàn cọc |
 | `/lien-he` | |

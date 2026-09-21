@@ -87,7 +87,7 @@ export function BookingForm({
         <p className="text-sm leading-relaxed text-ink-secondary">
           {isAuthenticated
             ? 'Kiểm tra thông tin liên hệ rồi thanh toán cọc để giữ sân.'
-            : 'Nhập thông tin để chủ sân biết ai đặt. Bạn chỉ cần xác thực email một lần.'}
+            : 'Nhập thông tin để chủ sân biết ai đặt. Bạn chỉ cần xác thực email một lần bằng mã OTP.'}
         </p>
       </div>
 
@@ -120,7 +120,7 @@ export function BookingForm({
         <div className="flex gap-3 rounded-control border border-strong bg-free-fill p-3.5 text-sm text-free-ink">
           <span aria-hidden="true" className="mt-0.5 text-base">✦</span>
           <p className="leading-relaxed">
-            Chưa có tài khoản? Bước tiếp theo bạn sẽ nhập email để nhận link xác thực — không cần nhớ mật khẩu.
+            Chưa có tài khoản? Bước tiếp theo bạn sẽ tạo mật khẩu và nhập mã OTP gửi qua email.
           </p>
         </div>
       )}

@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-/** Link trong email quay về đây; ?loi=1 là do /auth/callback đá về. */
+/** ?loi=1 là do /auth/callback đá về. */
 const CALLBACK_ERROR =
-  'Link xác thực không dùng được nữa. Link chỉ dùng một lần và hết hạn sau một giờ — gửi lại link mới giúp bạn nhé.';
+  'Mã xác thực không dùng được nữa. Bạn hãy đăng nhập lại hoặc đăng ký lại nhé.';
 
 /**
  * Supabase trả lỗi tiếng Anh. Ba lỗi hay gặp nhất dịch sẵn, phần còn lại giữ
@@ -20,6 +20,10 @@ function viError(raw: string) {
   if (s.includes('rate limit') || s.includes('too many requests')) {
     return 'Gửi quá nhiều lần rồi. Đợi ít phút rồi thử lại.';
   }
+  if (s.includes('invalid login credentials')) return 'Email hoặc mật khẩu chưa đúng.';
+  if (s.includes('email not confirmed')) return 'Bạn chưa xác nhận email. Nhập mã OTP trong email rồi thử lại.';
+  if (s.includes('user already registered')) return 'Email này đã có tài khoản. Hãy đăng nhập.';
+  if (s.includes('password should be at least')) return 'Mật khẩu cần ít nhất 8 ký tự.';
   if (s.includes('invalid email')) return 'Email không hợp lệ.';
   return raw;
 }
@@ -27,6 +31,7 @@ function viError(raw: string) {
 export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   const signup = mode === 'signup';
   const supabase = createClient();
+  const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next') ?? '/';
   const hasBookingDraft = next.includes('/san/');
@@ -34,7 +39,10 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordAgain, setPasswordAgain] = useState('');
   const [sent, setSent] = useState(false);
+  const [token, setToken] = useState('');
   const [busy, setBusy] = useState<'google' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(params.get('loi') ? CALLBACK_ERROR : null);
 
@@ -102,26 +110,74 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
     window.location.href = data.url;
   }
 
-  async function otp(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy('email');
     setError(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: signup,
-        emailRedirectTo: redirectTo,
-        ...(signup ? {
+    if (signup) {
+      if (password.length < 8) {
+        setBusy(null);
+        setError('Mật khẩu cần ít nhất 8 ký tự.');
+        return;
+      }
+      if (password !== passwordAgain) {
+        setBusy(null);
+        setError('Mật khẩu nhập lại chưa khớp.');
+        return;
+      }
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
           data: {
             ...(name.trim() ? { full_name: name.trim() } : {}),
             ...(phone.trim() ? { phone: phone.trim() } : {}),
           },
-        } : {}),
-      },
-    });
+        },
+      });
+      setBusy(null);
+      if (error) {
+        setError(viError(error.message));
+      } else if (data.session) {
+        router.push(next);
+        router.refresh();
+      } else {
+        setSent(true);
+      }
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(null);
     if (error) setError(viError(error.message));
-    else setSent(true);
+    else if (data.session) {
+      router.push(next);
+      router.refresh();
+    }
+  }
+
+  async function verify(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy('email');
+    setError(null);
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+    setBusy(null);
+    if (error) {
+      setError(viError(error.message));
+      return;
+    }
+    if (data.session) {
+      router.push(next);
+      router.refresh();
+    }
+  }
+
+  async function resend() {
+    setBusy('email');
+    setError(null);
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setBusy(null);
+    if (error) setError(viError(error.message));
   }
 
   if (sent) {
@@ -129,22 +185,24 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
       <div className="flex flex-col gap-4 rounded-control border border-strong bg-free-fill p-6">
         <Envelope />
         <div className="flex flex-col gap-2">
-          <p className="text-[17px] font-semibold text-pitch">Kiểm tra hộp thư</p>
+          <p className="text-[17px] font-semibold text-pitch">Nhập mã OTP</p>
           <p className="text-[15px] leading-relaxed">
-            Đã gửi link {signup ? 'xác nhận tài khoản' : 'đăng nhập'} tới{' '}
-            <strong className="break-all">{email}</strong>. Mở thư rồi bấm vào link là xong, không cần mật khẩu.
+            Đã gửi mã xác nhận 6 số tới <strong className="break-all">{email}</strong>.
           </p>
           <p className="text-[13px] leading-relaxed text-[#2C4A3C]">
-            Không thấy sau một phút thì xem thư mục spam. Link dùng một lần và hết hạn sau một giờ.
+            Không thấy sau một phút thì xem thư mục spam. Mã chỉ dùng một lần.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => { setSent(false); setError(null); }}
-          className="w-fit text-sm font-semibold text-pitch underline underline-offset-2"
-        >
-          Gửi lại hoặc đổi email
-        </button>
+        {error && <p role="alert" className="rounded-control border border-danger/30 bg-danger/5 p-3.5 text-sm leading-relaxed text-danger">{error}</p>}
+        <form onSubmit={verify} className="flex flex-col gap-2.5">
+          <label htmlFor="token" className="text-sm font-semibold">Mã OTP</label>
+          <input id="token" type="text" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={token} onChange={(e) => setToken(e.target.value.replace(/\D/g, ''))} placeholder="123456" className="h-13 rounded-control border border-hairline bg-page px-4 text-center text-xl tracking-[0.35em] focus:border-pitch focus:outline-none" />
+          <button type="submit" disabled={busy !== null} className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60">{busy === 'email' ? 'Đang xác nhận…' : 'Xác nhận tài khoản'}</button>
+        </form>
+        <div className="flex gap-4 text-sm">
+          <button type="button" onClick={resend} disabled={busy !== null} className="font-semibold text-pitch underline underline-offset-2 disabled:opacity-60">Gửi lại mã</button>
+          <button type="button" onClick={() => { setSent(false); setError(null); setToken(''); }} className="font-semibold text-pitch underline underline-offset-2">Đổi email</button>
+        </div>
       </div>
     );
   }
@@ -177,7 +235,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
         </>
       )}
 
-      <form onSubmit={otp} className="flex flex-col gap-2.5">
+      <form onSubmit={submit} className="flex flex-col gap-2.5">
         {signup && (
           <>
             <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
@@ -223,15 +281,23 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
           placeholder="ban@example.com"
           className="h-13 rounded-control border border-hairline bg-page px-4 text-base focus:border-pitch focus:outline-none"
         />
+        <label htmlFor="password" className="text-sm font-semibold">Mật khẩu</label>
+        <input id="password" type="password" required minLength={8} autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ít nhất 8 ký tự" className="h-13 rounded-control border border-hairline bg-page px-4 text-base focus:border-pitch focus:outline-none" />
+        {signup && (
+          <>
+            <label htmlFor="password-again" className="text-sm font-semibold">Nhập lại mật khẩu</label>
+            <input id="password-again" type="password" required minLength={8} autoComplete="new-password" value={passwordAgain} onChange={(e) => setPasswordAgain(e.target.value)} placeholder="Nhập lại mật khẩu" className="h-13 rounded-control border border-hairline bg-page px-4 text-base focus:border-pitch focus:outline-none" />
+          </>
+        )}
         <button
           type="submit"
           disabled={busy !== null}
           className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60"
         >
-          {busy === 'email' ? 'Đang gửi…' : signup ? 'Nhận link xác nhận' : hasBookingDraft ? 'Tiếp tục đặt sân' : 'Gửi link đăng nhập'}
+          {busy === 'email' ? (signup ? 'Đang gửi mã…' : 'Đang đăng nhập…') : signup ? 'Đăng ký và nhận mã OTP' : hasBookingDraft ? 'Tiếp tục đặt sân' : 'Đăng nhập'}
         </button>
         <p className="text-[13px] leading-relaxed text-ink-secondary">
-          Không cần mật khẩu. Chúng tôi gửi một link dùng một lần qua email. Số điện thoại chỉ để chủ sân liên hệ khi cần.
+          {signup ? 'Mã OTP sẽ được gửi qua email để xác nhận tài khoản. Số điện thoại chỉ để chủ sân liên hệ khi cần.' : 'Dùng email và mật khẩu đã đăng ký để đăng nhập.'}
         </p>
       </form>
     </div>
