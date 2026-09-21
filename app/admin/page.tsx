@@ -1,0 +1,157 @@
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { Building2, CalendarCheck, Users } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { AdminVenueAction } from '@/components/admin-venue-action';
+import { VENUE_STATUS_LABELS } from '@/lib/constants';
+import { dayLabel, hhmm, vnd } from '@/lib/format';
+import type { BookingStatus, VenueStatus } from '@/lib/types';
+import { StatusBadge } from '@/components/status-badge';
+
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Quản trị · Sân Ngon' };
+
+type View = 'overview' | 'venues' | 'bookings' | 'users';
+
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/dang-nhap?next=/admin');
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  if (profile?.role !== 'admin') redirect('/');
+
+  const view = parseView((await searchParams).view);
+  const [{ data: venues, error: venuesError }, { count: bookingCount }, { count: userCount }] = await Promise.all([
+    supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at').order('created_at', { ascending: false }),
+    supabase.from('bookings').select('id', { count: 'exact', head: true }),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }),
+  ]);
+  if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
+
+  const pendingVenues = (venues ?? []).filter((venue) => venue.status === 'pending');
+  const activeVenues = (venues ?? []).filter((venue) => venue.status === 'active');
+
+  const bookings = view === 'bookings'
+    ? (await supabase
+      .from('bookings')
+      .select('id, code, starts_at, status, total_amount, customer_name, courts(name, venues(name))')
+      .order('starts_at', { ascending: false }).limit(30)).data ?? []
+    : [];
+  const users = view === 'users'
+    ? (await supabase.from('profiles').select('id, full_name, phone, role, created_at').order('created_at', { ascending: false }).limit(30)).data ?? []
+    : [];
+
+  return (
+    <main className="mx-auto max-w-[1400px] px-5 py-8 lg:px-10 lg:py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-ink-secondary">Thứ hai, {dayLabel(new Date())}</p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-pitch">Tổng quan vận hành</h1>
+        </div>
+        <Link href="/" className="rounded-control border border-hairline bg-card px-4 py-2.5 text-sm font-medium text-ink-secondary hover:border-strong">
+          Xem trang đặt sân ↗
+        </Link>
+      </div>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        <AdminStat icon={Building2} value={String(pendingVenues.length)} label="Hồ sơ chờ duyệt" tone={pendingVenues.length ? 'peak' : undefined} />
+        <AdminStat icon={CalendarCheck} value={String(bookingCount ?? 0)} label="Tổng đơn đặt sân" />
+        <AdminStat icon={Users} value={String(userCount ?? 0)} label="Tài khoản" />
+      </div>
+
+      {view === 'overview' && (
+        <Overview pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} />
+      )}
+      {view === 'venues' && <VenueTable venues={venues ?? []} />}
+      {view === 'bookings' && <BookingTable bookings={bookings} />}
+      {view === 'users' && <UserTable users={users} />}
+    </main>
+  );
+}
+
+function Overview({ pendingVenues, activeVenueCount }: { pendingVenues: VenueRow[]; activeVenueCount: number }) {
+  return (
+    <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="rounded-card border border-hairline bg-card">
+        <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+          <div>
+            <h2 className="font-semibold">Hồ sơ cần xử lý</h2>
+            <p className="mt-1 text-xs text-ink-secondary">Duyệt xong, sân sẽ xuất hiện trên trang tìm sân.</p>
+          </div>
+          <Link href="/admin?view=venues" className="text-sm font-semibold text-pitch">Xem tất cả</Link>
+        </div>
+        {pendingVenues.length === 0 ? (
+          <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ nào đang chờ duyệt.</p>
+        ) : (
+          <ul className="divide-y divide-hairline">
+            {pendingVenues.slice(0, 6).map((venue) => <VenueRowItem key={venue.id} venue={venue} />)}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-card border border-hairline bg-card p-5">
+        <h2 className="font-semibold">Tình hình hệ thống</h2>
+        <div className="mt-5 space-y-4">
+          <ProgressRow label="Cụm sân đang hoạt động" value={activeVenueCount} total={activeVenueCount + pendingVenues.length} />
+          <div className="border-t border-hairline pt-4">
+            <p className="text-sm font-medium">Việc cần làm tiếp theo</p>
+            <p className="mt-1 text-sm leading-6 text-ink-secondary">Kiểm tra thông tin liên hệ và bảng giá trước khi duyệt hồ sơ.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string };
+
+function VenueRowItem({ venue }: { venue: VenueRow }) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+      <div className="min-w-0">
+        <p className="truncate font-semibold">{venue.name}</p>
+        <p className="mt-1 text-xs text-ink-secondary">{venue.district} · Mã chủ sân {venue.owner_id.slice(0, 8)}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-medium text-peak-ink">{VENUE_STATUS_LABELS[venue.status]}</span>
+        <AdminVenueAction venueId={venue.id} />
+      </div>
+    </li>
+  );
+}
+
+function VenueTable({ venues }: { venues: VenueRow[] }) {
+  return (
+    <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
+      <div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tất cả hồ sơ sân</h2></div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[700px] text-sm">
+          <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Cụm sân</th><th className="px-5 py-3 font-medium">Khu vực</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
+          <tbody>{venues.map((venue) => <tr key={venue.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{venue.name}<span className="mt-1 block text-xs font-normal text-ink-secondary">{venue.slug}</span></td><td className="px-5 py-4">{venue.district}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(venue.created_at))}</td><td className="px-5 py-4"><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-medium">{VENUE_STATUS_LABELS[venue.status]}</span></td><td className="px-5 py-4 text-right">{venue.status === 'pending' && <AdminVenueAction venueId={venue.id} />}</td></tr>)}</tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function BookingTable({ bookings }: { bookings: Array<{ id: string; code: string; starts_at: string; status: BookingStatus; total_amount: number; customer_name: string | null; courts: unknown }> }) {
+  return <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card"><div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Đơn đặt sân gần đây</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Mã đơn</th><th className="px-5 py-3 font-medium">Khách</th><th className="px-5 py-3 font-medium">Thời gian</th><th className="px-5 py-3 text-right font-medium">Giá trị</th><th className="px-5 py-3 font-medium">Trạng thái</th></tr></thead><tbody>{bookings.map((booking) => <tr key={booking.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{booking.code}</td><td className="px-5 py-4">{booking.customer_name ?? 'Khách đặt sân'}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(booking.starts_at))} · {hhmm(booking.starts_at)}</td><td className="px-5 py-4 text-right tabular-nums">{vnd(booking.total_amount)}</td><td className="px-5 py-4"><StatusBadge status={booking.status} /></td></tr>)}</tbody></table></div>{bookings.length === 0 && <p className="p-10 text-center text-sm text-ink-secondary">Chưa có đơn đặt sân.</p>}</section>;
+}
+
+function UserTable({ users }: { users: Array<{ id: string; full_name: string | null; phone: string | null; role: string; created_at: string }> }) {
+  return <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card"><div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tài khoản gần đây</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Tên</th><th className="px-5 py-3 font-medium">Liên hệ</th><th className="px-5 py-3 font-medium">Vai trò</th><th className="px-5 py-3 font-medium">Ngày tạo</th></tr></thead><tbody>{users.map((item) => <tr key={item.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{item.full_name ?? 'Chưa cập nhật'}</td><td className="px-5 py-4 text-ink-secondary">{item.phone ?? '—'}</td><td className="px-5 py-4 capitalize">{item.role}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(item.created_at))}</td></tr>)}</tbody></table></div></section>;
+}
+
+function AdminStat({ icon: Icon, value, label, tone }: { icon: typeof Building2; value: string; label: string; tone?: 'peak' }) {
+  return <div className="flex items-center gap-4 rounded-card border border-hairline bg-card p-5"><span className={`flex size-11 items-center justify-center rounded-control ${tone === 'peak' ? 'bg-peak-fill text-peak-ink' : 'bg-free-fill text-pitch'}`}><Icon className="size-5" aria-hidden="true" /></span><span><strong className="block font-display text-2xl font-bold text-pitch">{value}</strong><span className="text-xs text-ink-secondary">{label}</span></span></div>;
+}
+
+function ProgressRow({ label, value, total }: { label: string; value: number; total: number }) {
+  const width = total ? Math.round(value / total * 100) : 0;
+  return <div><div className="flex justify-between gap-4 text-sm"><span>{label}</span><strong>{value}</strong></div><div className="mt-2 h-2 rounded-pill bg-sunk"><div className="h-full rounded-pill bg-pitch" style={{ width: `${width}%` }} /></div></div>;
+}
+
+function parseView(value?: string): View {
+  return value === 'venues' || value === 'bookings' || value === 'users' ? value : 'overview';
+}

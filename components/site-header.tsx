@@ -10,7 +10,7 @@ import { BrandMark } from './brand-mark';
  * Header dùng chung cho mọi trang công khai. Dashboard chủ sân dùng cùng dữ
  * liệu tài khoản nhưng có thanh điều hướng riêng, không dùng footer công khai.
  */
-export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'dashboard' }) {
+export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'dashboard' | 'admin' }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const [{ count: unreadCount }, { data: profile }, { data: notifications, error: notificationsError }] = user
@@ -22,13 +22,15 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
     ])
     : [{ count: 0 }, { data: null }, { data: null, error: null }];
   const isOwner = profile?.role === 'owner';
-  const dashboard = variant === 'dashboard';
+  const isAdmin = profile?.role === 'admin';
+  const dashboard = variant !== 'site';
+  const admin = variant === 'admin';
 
   return (
     <header className="border-b border-hairline bg-card">
       <div className="mx-auto flex min-h-19 max-w-7xl items-center justify-between gap-5 px-5 lg:px-16">
         <div className="flex min-w-0 items-center gap-6 lg:gap-11">
-          <Link href={dashboard ? '/chu-san' : '/'} className="flex flex-none items-center gap-2.5">
+          <Link href={admin ? '/admin' : dashboard ? '/chu-san' : '/'} className="flex flex-none items-center gap-2.5">
             <BrandMark />
             <span className="font-display text-xl font-extrabold tracking-tight text-pitch lg:text-[22px]">
               Sân Ngon
@@ -37,7 +39,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
 
           {dashboard ? (
             <span className="hidden border-l border-hairline pl-6 text-sm font-semibold text-ink-secondary md:inline lg:pl-8">
-              Dashboard chủ sân
+              {admin ? 'Quản trị Sân Ngon' : 'Dashboard chủ sân'}
             </span>
           ) : (
             <nav className="hidden gap-8 md:flex">
@@ -51,6 +53,10 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
           {dashboard ? (
             <Link href="/" className="hidden h-11 items-center rounded-control border border-hairline px-4 text-sm font-medium text-ink-secondary lg:flex">
               Trang đặt sân <span aria-hidden="true" className="ml-2">↗</span>
+            </Link>
+          ) : isAdmin ? (
+            <Link href="/admin" className="hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink lg:flex">
+              Quản trị <span aria-hidden="true" className="ml-2">↗</span>
             </Link>
           ) : isOwner ? (
             <Link href="/chu-san" className="hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink lg:flex">
@@ -75,7 +81,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
           )}
 
           {user ? (
-            <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} isOwner={isOwner} />
+            <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} isOwner={isOwner} isAdmin={isAdmin} />
           ) : (
             <Link href="/dang-nhap" className="flex h-11 items-center rounded-control bg-pitch px-5 text-[15px] font-semibold text-pitch-ink">
               Đăng nhập
@@ -84,15 +90,6 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
         </div>
       </div>
 
-      {dashboard && (
-        <div className="border-t border-hairline bg-sunk">
-          <nav aria-label="Điều hướng dashboard" className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-5 lg:px-16">
-            <NavLink href="/chu-san" label="Tổng quan" compact />
-            <NavLink href="/dang-ky-san" label="Hồ sơ sân" compact />
-            <NavLink href="/tim-san" label="Xem trang đặt sân" compact />
-          </nav>
-        </div>
-      )}
     </header>
   );
 }

@@ -1,4 +1,5 @@
 import { SiteHeader } from '@/components/site-header';
+import { DashboardSidebar } from '@/components/dashboard-sidebar';
 
 /**
  * Khu chủ sân có shell riêng: không dùng footer và nav của trang đặt sân.
@@ -8,7 +9,10 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-dvh flex-col bg-sunk">
       <SiteHeader variant="dashboard" />
-      <div className="flex-grow">{children}</div>
+      <div className="flex flex-grow flex-col lg:flex-row">
+        <DashboardSidebar role="owner" />
+        <div className="min-w-0 flex-grow">{children}</div>
+      </div>
     </div>
   );
 }

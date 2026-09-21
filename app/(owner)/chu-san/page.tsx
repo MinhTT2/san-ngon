@@ -142,7 +142,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </section>
       )}
 
-      <h2 className="mt-10 text-[15px] font-semibold">Bảy ngày tới</h2>
+      <h2 id="calendar" className="mt-10 scroll-mt-6 text-[15px] font-semibold">Bảy ngày tới</h2>
       <div className="mt-3 hidden overflow-x-auto rounded-card border border-hairline bg-card p-4 lg:block">
         <div className="grid min-w-[900px] gap-3" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
           {days.map((d) => {
@@ -176,7 +176,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </div>
       </div>
 
-      <h2 className="mt-10 text-[15px] font-semibold">Đơn hôm nay</h2>
+      <h2 id="bookings" className="mt-10 scroll-mt-6 text-[15px] font-semibold">Đơn hôm nay</h2>
       <ul className="mt-3 flex flex-col gap-2">
         {today.map((b) => (
           <li key={b.id} className="flex flex-wrap items-center gap-3 rounded-card border border-hairline bg-card p-4">

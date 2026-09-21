@@ -10,7 +10,7 @@ import Link from 'next/link';
  * Nút đăng xuất là <form method="post"> chứ không phải onClick: cookie phiên
  * do server xoá, nên vẫn chạy kể cả khi JavaScript chưa kịp tải.
  */
-export function UserMenu({ name, isOwner }: { name: string; isOwner: boolean }) {
+export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isOwner: boolean; isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -51,6 +51,8 @@ export function UserMenu({ name, isOwner }: { name: string; isOwner: boolean }) 
             <Item href="/don-cua-toi" onNavigate={() => setOpen(false)}>Đơn của tôi</Item>
             {isOwner ? (
               <Item href="/chu-san" onNavigate={() => setOpen(false)}>Trang quản lý</Item>
+            ) : isAdmin ? (
+              <Item href="/admin" onNavigate={() => setOpen(false)}>Quản trị</Item>
             ) : (
               <Item href="/dang-ky-san" onNavigate={() => setOpen(false)}>Đăng sân của bạn</Item>
             )}
