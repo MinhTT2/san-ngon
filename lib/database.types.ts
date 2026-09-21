@@ -340,6 +340,8 @@ export type Database = {
           address: string
           amenities: string[]
           booking_horizon_days: number
+          business_license_name: string | null
+          business_license_path: string | null
           city: string
           close_time: string
           created_at: string
@@ -361,6 +363,8 @@ export type Database = {
           address: string
           amenities?: string[]
           booking_horizon_days?: number
+          business_license_name?: string | null
+          business_license_path?: string | null
           city?: string
           close_time?: string
           created_at?: string
@@ -382,6 +386,8 @@ export type Database = {
           address?: string
           amenities?: string[]
           booking_horizon_days?: number
+          business_license_name?: string | null
+          business_license_path?: string | null
           city?: string
           close_time?: string
           created_at?: string
@@ -519,8 +525,84 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_court: {
+        Args: {
+          p_close_time: string
+          p_is_indoor: boolean
+          p_name: string
+          p_open_time: string
+          p_price_per_hour: number
+          p_slot_minutes: number
+          p_sport: Database["public"]["Enums"]["sport_type"]
+          p_surface: string
+          p_venue_id: string
+        }
+        Returns: {
+          close_time: string | null
+          id: string
+          is_active: boolean
+          is_indoor: boolean
+          name: string
+          open_time: string | null
+          slot_minutes: number
+          sort_order: number
+          sport: Database["public"]["Enums"]["sport_type"]
+          surface: string | null
+          venue_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "courts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_venue: {
+        Args: {
+          p_address: string
+          p_close_time: string
+          p_description: string
+          p_district: string
+          p_name: string
+          p_open_time: string
+          p_phone: string
+          p_sports: Json
+        }
+        Returns: {
+          address: string
+          amenities: string[]
+          booking_horizon_days: number
+          business_license_name: string | null
+          business_license_path: string | null
+          city: string
+          close_time: string
+          created_at: string
+          deposit_pct: number
+          description: string | null
+          district: string
+          id: string
+          images: string[]
+          lat: number | null
+          lng: number | null
+          name: string
+          open_time: string
+          owner_id: string
+          phone: string | null
+          slug: string
+          status: Database["public"]["Enums"]["venue_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venues"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      delete_court: { Args: { p_court_id: string }; Returns: undefined }
+      delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       expire_pending_bookings: { Args: never; Returns: number }
       gen_booking_code: { Args: never; Returns: string }
+      get_owner_email: { Args: { p_owner_id: string }; Returns: string }
       get_venue_availability: {
         Args: { p_date: string; p_venue_id: string }
         Returns: {
@@ -534,6 +616,7 @@ export type Database = {
           starts_at: string
         }[]
       }
+      is_admin: { Args: never; Returns: boolean }
       mark_refund_done: {
         Args: { p_code: string }
         Returns: {
@@ -563,20 +646,6 @@ export type Database = {
         }
       }
       owns_court: { Args: { p_court_id: string }; Returns: boolean }
-      create_venue: {
-        Args: {
-          p_address: string
-          p_close_time: string
-          p_description: string | null
-          p_district: string
-          p_name: string
-          p_open_time: string
-          p_phone: string
-          p_sports: Json
-        }
-        Returns: Database["public"]["Tables"]["venues"]["Row"]
-        SetofOptions: { from: "*"; to: "venues"; isOneToOne: true; isSetofReturn: false }
-      }
       register_owner: {
         Args: {
           p_business_license_name: string
@@ -586,13 +655,115 @@ export type Database = {
           p_payout_bank: string
           p_phone: string
         }
-        Returns: Database["public"]["Tables"]["profiles"]["Row"]
-        SetofOptions: { from: "*"; to: "profiles"; isOneToOne: true; isSetofReturn: false }
+        Returns: {
+          avatar_url: string | null
+          business_license_name: string | null
+          business_license_path: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          owner_application_status: string | null
+          payout_account: string | null
+          payout_bank: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          telegram_chat_id: string | null
+          telegram_link_expires_at: string | null
+          telegram_link_token_hash: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      get_owner_email: { Args: { p_owner_id: string }; Returns: string | null }
-      review_owner: { Args: { p_owner_id: string; p_status: string }; Returns: undefined }
+      review_owner: {
+        Args: { p_owner_id: string; p_status: string }
+        Returns: undefined
+      }
+      review_venue: {
+        Args: { p_status: string; p_venue_id: string }
+        Returns: undefined
+      }
       slugify: { Args: { p_text: string }; Returns: string }
       unaccent_vi: { Args: { p_text: string }; Returns: string }
+      update_court: {
+        Args: {
+          p_close_time: string
+          p_court_id: string
+          p_is_active: boolean
+          p_is_indoor: boolean
+          p_name: string
+          p_open_time: string
+          p_price_per_hour: number
+          p_slot_minutes: number
+          p_sport: Database["public"]["Enums"]["sport_type"]
+          p_surface: string
+        }
+        Returns: {
+          close_time: string | null
+          id: string
+          is_active: boolean
+          is_indoor: boolean
+          name: string
+          open_time: string | null
+          slot_minutes: number
+          sort_order: number
+          sport: Database["public"]["Enums"]["sport_type"]
+          surface: string | null
+          venue_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "courts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_venue: {
+        Args: {
+          p_address: string
+          p_booking_horizon_days: number
+          p_close_time: string
+          p_deposit_pct: number
+          p_description: string
+          p_district: string
+          p_name: string
+          p_open_time: string
+          p_phone: string
+          p_venue_id: string
+        }
+        Returns: {
+          address: string
+          amenities: string[]
+          booking_horizon_days: number
+          business_license_name: string | null
+          business_license_path: string | null
+          city: string
+          close_time: string
+          created_at: string
+          deposit_pct: number
+          description: string | null
+          district: string
+          id: string
+          images: string[]
+          lat: number | null
+          lng: number | null
+          name: string
+          open_time: string
+          owner_id: string
+          phone: string | null
+          slug: string
+          status: Database["public"]["Enums"]["venue_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venues"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       booking_status:
@@ -607,8 +778,8 @@ export type Database = {
         | "deposit_paid"
         | "expiring_soon"
         | "rescheduled"
-        | "owner_application"
         | "venue_approved"
+        | "owner_application"
       refund_status: "none" | "needed" | "done"
       sport_type:
         | "football5"
@@ -760,6 +931,7 @@ export const Constants = {
         "expiring_soon",
         "rescheduled",
         "venue_approved",
+        "owner_application",
       ],
       refund_status: ["none", "needed", "done"],
       sport_type: [

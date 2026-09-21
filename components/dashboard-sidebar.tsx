@@ -19,6 +19,7 @@ const OWNER_LINKS = [
   { href: '/chu-san#calendar', label: 'Lịch sân', icon: CalendarDays },
   { href: '/chu-san#bookings', label: 'Đơn đặt sân', icon: ClipboardList },
   { href: '/tao-cum-san', label: 'Tạo cụm sân', icon: Building2 },
+  { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
   { href: '/thong-bao', label: 'Thông báo', icon: Bell },
 ] as const;
 

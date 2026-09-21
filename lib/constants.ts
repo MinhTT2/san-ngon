@@ -82,6 +82,30 @@ export const VENUE_ERRORS: Record<string, string> = {
   PAYOUT_REQUIRED: 'Bạn cần nhập tài khoản nhận tiền để nhận tiền cọc.',
   PAYOUT_INVALID: 'Số tài khoản phải gồm 6 đến 30 chữ số.',
   SLUG_COLLISION: 'Tên sân bị trùng quá nhiều. Đổi tên khác giúp bạn nhé.',
+  VENUE_NOT_FOUND: 'Không tìm thấy cụm sân.',
+  VENUE_HAS_BOOKINGS: 'Không thể xóa cụm sân đã có đơn đặt. Hãy tắt sân trước.',
+  VENUE_NOT_EDITABLE: 'Cụm sân này đang bị từ chối và chưa thể chỉnh sửa.',
+  NAME_TOO_LONG: 'Tên cụm sân không quá 120 ký tự.',
+  ADDRESS_TOO_LONG: 'Địa chỉ không quá 200 ký tự.',
+  DISTRICT_REQUIRED: 'Chọn quận/huyện của cụm sân.',
+  DEPOSIT_INVALID: 'Tỷ lệ cọc phải từ 0 đến 100%.',
+  HORIZON_INVALID: 'Thời hạn đặt trước phải từ 1 đến 180 ngày.',
+};
+
+export const COURT_ERRORS: Record<string, string> = {
+  AUTH_REQUIRED: 'Bạn cần đăng nhập để quản lý sân.',
+  VENUE_NOT_FOUND: 'Không tìm thấy cụm sân.',
+  COURT_NOT_FOUND: 'Không tìm thấy sân con.',
+  VENUE_NOT_EDITABLE: 'Cụm sân này đang bị từ chối và chưa thể chỉnh sửa.',
+  COURT_NAME_REQUIRED: 'Nhập tên sân con.',
+  COURT_NAME_TOO_LONG: 'Tên sân con không quá 80 ký tự.',
+  COURT_NAME_EXISTS: 'Tên sân con đã tồn tại trong cụm sân.',
+  SLOT_MINUTES_INVALID: 'Thời lượng khung phải là 30, 60, 90 hoặc 120 phút.',
+  PRICE_INVALID: 'Giá thuê phải từ 1.000 đến 10.000.000 đồng/giờ.',
+  COURT_HOURS_PAIR_REQUIRED: 'Giờ mở và đóng của sân con phải nhập cùng nhau.',
+  COURT_HOURS_OUTSIDE_VENUE: 'Giờ sân con phải nằm trong giờ mở cửa cụm sân.',
+  INVALID_HOURS: 'Giờ đóng cửa phải sau giờ mở cửa.',
+  COURT_HAS_BOOKINGS: 'Không thể xóa sân đã có đơn đặt. Hãy tắt sân trước.',
 };
 
 export const OWNER_ERRORS: Record<string, string> = {
@@ -111,6 +135,10 @@ export function cancelErrorMessage(raw?: string) {
 
 export function venueErrorMessage(raw?: string) {
   return translate(VENUE_ERRORS, raw, 'Không gửi được hồ sơ. Thử lại sau vài giây.');
+}
+
+export function courtErrorMessage(raw?: string) {
+  return translate(COURT_ERRORS, raw, 'Không lưu được sân con. Thử lại sau vài giây.');
 }
 
 export function ownerErrorMessage(raw?: string) {
