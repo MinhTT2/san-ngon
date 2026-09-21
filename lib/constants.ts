@@ -62,12 +62,14 @@ export const CANCEL_ERRORS: Record<string, string> = {
   NOT_CANCELLABLE: 'Đơn này không hủy được nữa.',
 };
 
-/** Lỗi từ register_venue. */
+/** Lỗi từ create_venue. */
 export const VENUE_ERRORS: Record<string, string> = {
   AUTH_REQUIRED: 'Bạn cần đăng nhập để đăng sân.',
+  OWNER_NOT_APPROVED: 'Tài khoản chủ sân chưa được duyệt.',
   NAME_REQUIRED: 'Nhập tên cụm sân.',
   ADDRESS_REQUIRED: 'Nhập địa chỉ sân.',
   PHONE_REQUIRED: 'Nhập số điện thoại để khách liên hệ.',
+  PHONE_INVALID: 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.',
   COURT_COUNT_RANGE: 'Số sân con phải từ 1 đến 20.',
   PRICE_REQUIRED: 'Nhập giá thuê một giờ.',
   SPORT_REQUIRED: 'Chọn ít nhất một môn thể thao.',
@@ -80,6 +82,20 @@ export const VENUE_ERRORS: Record<string, string> = {
   PAYOUT_REQUIRED: 'Bạn cần nhập tài khoản nhận tiền để nhận tiền cọc.',
   PAYOUT_INVALID: 'Số tài khoản phải gồm 6 đến 30 chữ số.',
   SLUG_COLLISION: 'Tên sân bị trùng quá nhiều. Đổi tên khác giúp bạn nhé.',
+};
+
+export const OWNER_ERRORS: Record<string, string> = {
+  AUTH_REQUIRED: 'Bạn cần đăng nhập để đăng ký chủ sân.',
+  REPRESENTATIVE_REQUIRED: 'Nhập họ tên người đại diện hợp lệ.',
+  PHONE_INVALID: 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.',
+  BUSINESS_LICENSE_REQUIRED: 'Bạn cần tải lên giấy tờ kinh doanh.',
+  BUSINESS_LICENSE_INVALID: 'Giấy tờ kinh doanh không hợp lệ.',
+  BUSINESS_LICENSE_MISSING: 'Không tìm thấy giấy tờ kinh doanh đã tải lên.',
+  PAYOUT_REQUIRED: 'Bạn cần nhập tài khoản nhận tiền để nhận tiền cọc.',
+  PAYOUT_INVALID: 'Số tài khoản phải gồm 6 đến 30 chữ số.',
+  OWNER_APPLICATION_EXISTS: 'Hồ sơ chủ sân của bạn đang chờ duyệt.',
+  OWNER_ALREADY_APPROVED: 'Tài khoản của bạn đã được duyệt chủ sân.',
+  PROFILE_REQUIRED: 'Không tìm thấy hồ sơ tài khoản.',
 };
 
 /** Dò mã lỗi Postgres trong chuỗi message rồi đổi sang câu tiếng Việt. */
@@ -95,6 +111,10 @@ export function cancelErrorMessage(raw?: string) {
 
 export function venueErrorMessage(raw?: string) {
   return translate(VENUE_ERRORS, raw, 'Không gửi được hồ sơ. Thử lại sau vài giây.');
+}
+
+export function ownerErrorMessage(raw?: string) {
+  return translate(OWNER_ERRORS, raw, 'Không gửi được hồ sơ chủ sân. Thử lại sau vài giây.');
 }
 
 export function bookingErrorMessage(raw?: string) {

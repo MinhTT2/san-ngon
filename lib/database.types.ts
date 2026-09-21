@@ -287,9 +287,12 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          business_license_name: string | null
+          business_license_path: string | null
           created_at: string
           full_name: string | null
           id: string
+          owner_application_status: string | null
           payout_account: string | null
           payout_bank: string | null
           phone: string | null
@@ -300,9 +303,12 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          business_license_name?: string | null
+          business_license_path?: string | null
           created_at?: string
           full_name?: string | null
           id: string
+          owner_application_status?: string | null
           payout_account?: string | null
           payout_bank?: string | null
           phone?: string | null
@@ -313,9 +319,12 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          business_license_name?: string | null
+          business_license_path?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          owner_application_status?: string | null
           payout_account?: string | null
           payout_bank?: string | null
           phone?: string | null
@@ -554,47 +563,33 @@ export type Database = {
         }
       }
       owns_court: { Args: { p_court_id: string }; Returns: boolean }
-      register_venue: {
+      create_venue: {
         Args: {
           p_address: string
           p_close_time: string
-          p_description: string
+          p_description: string | null
           p_district: string
           p_name: string
           p_open_time: string
-          p_payout_account: string
-          p_payout_bank: string
           p_phone: string
           p_sports: Json
         }
-        Returns: {
-          address: string
-          amenities: string[]
-          booking_horizon_days: number
-          city: string
-          close_time: string
-          created_at: string
-          deposit_pct: number
-          description: string | null
-          district: string
-          id: string
-          images: string[]
-          lat: number | null
-          lng: number | null
-          name: string
-          open_time: string
-          owner_id: string
-          phone: string | null
-          slug: string
-          status: Database["public"]["Enums"]["venue_status"]
-        }
-        SetofOptions: {
-          from: "*"
-          to: "venues"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        Returns: Database["public"]["Tables"]["venues"]["Row"]
+        SetofOptions: { from: "*"; to: "venues"; isOneToOne: true; isSetofReturn: false }
       }
+      register_owner: {
+        Args: {
+          p_business_license_name: string
+          p_business_license_path: string
+          p_full_name: string
+          p_payout_account: string
+          p_payout_bank: string
+          p_phone: string
+        }
+        Returns: Database["public"]["Tables"]["profiles"]["Row"]
+        SetofOptions: { from: "*"; to: "profiles"; isOneToOne: true; isSetofReturn: false }
+      }
+      review_owner: { Args: { p_owner_id: string; p_status: string }; Returns: undefined }
       slugify: { Args: { p_text: string }; Returns: string }
       unaccent_vi: { Args: { p_text: string }; Returns: string }
     }

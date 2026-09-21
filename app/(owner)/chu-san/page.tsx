@@ -208,14 +208,13 @@ function NoVenue() {
         Bạn chưa có cụm sân nào
       </h1>
       <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-secondary">
-        Trang này là nơi bạn xem lịch bảy ngày tới và các đơn trong ngày. Nó chỉ có nội dung sau
-        khi cụm sân của bạn được duyệt và bắt đầu nhận đặt.
+        Tạo cụm sân đầu tiên để thêm sân con, bảng giá và bắt đầu nhận đặt.
       </p>
       <Link
-        href="/dang-ky-san"
+        href="/tao-cum-san"
         className="mt-7 flex h-13 w-fit items-center rounded-control bg-pitch px-7 font-semibold text-pitch-ink"
       >
-        Đăng sân của bạn
+        Tạo cụm sân
       </Link>
     </main>
   );

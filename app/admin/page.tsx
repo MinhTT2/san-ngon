@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { Building2, CalendarCheck, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
+import { AdminOwnerAction } from '@/components/admin-owner-action';
 import { VENUE_STATUS_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import type { BookingStatus, VenueStatus } from '@/lib/types';
@@ -24,13 +25,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const view = parseView((await searchParams).view);
   const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('id, full_name, phone'),
+    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
   if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
 
   const pendingVenues = (venues ?? []).filter((venue) => venue.status === 'pending');
+  const pendingOwners = (ownerProfiles ?? []).filter((profile) => profile.owner_application_status === 'pending');
   const activeVenues = (venues ?? []).filter((venue) => venue.status === 'active');
   const profileById = new Map((ownerProfiles ?? []).map((profile) => [profile.id, profile]));
 
@@ -57,13 +59,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <AdminStat icon={Building2} value={String(pendingVenues.length)} label="Hồ sơ chờ duyệt" tone={pendingVenues.length ? 'peak' : undefined} />
+        <AdminStat icon={Building2} value={String(pendingOwners.length + pendingVenues.length)} label="Hồ sơ chờ duyệt" tone={pendingOwners.length + pendingVenues.length ? 'peak' : undefined} />
         <AdminStat icon={CalendarCheck} value={String(bookingCount ?? 0)} label="Tổng đơn đặt sân" />
         <AdminStat icon={Users} value={String(userCount ?? 0)} label="Tài khoản" />
       </div>
 
       {view === 'overview' && (
-        <Overview pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
+        <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
       )}
       {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
@@ -72,7 +74,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   );
 }
 
-function Overview({ pendingVenues, activeVenueCount, profileById }: { pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile> }) {
+function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById }: { pendingOwners: OwnerProfile[]; pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile> }) {
   return (
     <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="rounded-card border border-hairline bg-card">
@@ -83,10 +85,11 @@ function Overview({ pendingVenues, activeVenueCount, profileById }: { pendingVen
           </div>
           <Link href="/admin?view=venues" className="text-sm font-semibold text-pitch">Xem tất cả</Link>
         </div>
-        {pendingVenues.length === 0 ? (
+        {pendingOwners.length === 0 && pendingVenues.length === 0 ? (
           <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ nào đang chờ duyệt.</p>
         ) : (
           <ul className="divide-y divide-hairline">
+            {pendingOwners.slice(0, 6).map((owner) => <OwnerRowItem key={owner.id} owner={owner} />)}
             {pendingVenues.slice(0, 6).map((venue) => <VenueRowItem key={venue.id} venue={venue} profile={profileById.get(venue.owner_id)} />)}
           </ul>
         )}
@@ -107,7 +110,11 @@ function Overview({ pendingVenues, activeVenueCount, profileById }: { pendingVen
 }
 
 type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string; phone: string | null; business_license_path: string | null };
-type OwnerProfile = { id: string; full_name: string | null; phone: string | null };
+type OwnerProfile = { id: string; full_name: string | null; phone: string | null; role?: string; owner_application_status?: string | null; business_license_path?: string | null };
+
+function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
+  return <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><p className="font-semibold">{owner.full_name ?? 'Chưa có tên'}</p><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'} · Đăng ký tài khoản chủ sân</p></div><div className="flex items-center gap-3">{owner.business_license_path && <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminOwnerAction ownerId={owner.id} /></div></li>;
+}
 
 function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProfile }) {
   return (
