@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { DISTRICTS, SPORT_LABELS } from '@/lib/constants';
 import { vnd } from '@/lib/format';
 
 type SportRow = { sport: string; courtCount: string; price: string };
+type Bank = { code: string; name: string; shortName: string };
 const SPORT_KEYS = Object.keys(SPORT_LABELS);
 const MAX_SPORTS = 6;
 const STEPS = ['Người đại diện', 'Cụm sân', 'Môn thể thao', 'Giấy tờ', 'Tài khoản nhận tiền'];
@@ -15,10 +16,15 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+  const [banks, setBanks] = useState<Bank[]>([]);
   const stepRefs = useRef<Array<HTMLFieldSetElement | null>>([]);
   const [sports, setSports] = useState<SportRow[]>([
     { sport: 'football5', courtCount: '4', price: '250000' },
   ]);
+
+  useEffect(() => {
+    fetch('/api/banks').then((response) => response.json()).then((json: { banks?: Bank[] }) => setBanks(json.banks ?? [])).catch(() => setBanks([]));
+  }, []);
 
   function updateSport(index: number, patch: Partial<SportRow>) {
     setSports((current) => current.map((item, i) => i === index ? { ...item, ...patch } : item));
@@ -214,7 +220,10 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
           <div className="border-l-2 border-strong bg-sunk px-4 py-3 text-sm leading-6 text-ink-secondary">Tiền cọc sẽ được chuyển vào tài khoản này. Đây là thông tin bắt buộc để hồ sơ được duyệt.</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Ngân hàng" htmlFor="payout_bank" required>
-              <input id="payout_bank" name="payout_bank" required minLength={2} maxLength={60} autoComplete="off" placeholder="Ví dụ: MBBank" className={INPUT} />
+              <select id="payout_bank" name="payout_bank" required defaultValue="" className={INPUT}>
+                <option value="" disabled>{banks.length ? 'Chọn ngân hàng' : 'Đang tải danh sách ngân hàng…'}</option>
+                {banks.map((bank) => <option key={bank.code} value={bank.shortName}>{bank.shortName}</option>)}
+              </select>
             </Field>
             <Field label="Số tài khoản" htmlFor="payout_account" required hint="6–30 chữ số.">
               <input id="payout_account" name="payout_account" required minLength={6} maxLength={30} pattern="[0-9]{6,30}" inputMode="numeric" autoComplete="off" placeholder="0123456789" className={INPUT} />
