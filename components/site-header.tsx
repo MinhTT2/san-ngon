@@ -72,7 +72,6 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
             <NotificationPopover
               unreadCount={unreadCount ?? 0}
               loadError={!!notificationsError}
-              dashboard={dashboard}
               notifications={(notifications ?? []).map((notification) => ({
                 ...notification,
                 timeLabel: `${dayLabel(new Date(notification.created_at))} · ${hhmm(notification.created_at)}`,
