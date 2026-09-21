@@ -321,6 +321,12 @@ begin
   if coalesce(trim(p_address),'') = '' then raise exception 'ADDRESS_REQUIRED'; end if;
   if coalesce(trim(p_phone),'') = '' then raise exception 'PHONE_REQUIRED'; end if;
   if p_close_time <= p_open_time then raise exception 'INVALID_HOURS'; end if;
+  if coalesce(trim(p_payout_bank), '') = '' or coalesce(trim(p_payout_account), '') = '' then
+    raise exception 'PAYOUT_REQUIRED';
+  end if;
+  if trim(p_payout_account) !~ '^[0-9]{6,30}$' then
+    raise exception 'PAYOUT_INVALID';
+  end if;
   if coalesce(trim(p_business_license_path), '') = ''
      or coalesce(trim(p_business_license_name), '') = '' then
     raise exception 'BUSINESS_LICENSE_REQUIRED';
@@ -519,6 +525,25 @@ drop policy if exists venues_owner_update_pending on venues;
 create policy venues_owner_update_pending on venues for update
   using (owner_id = auth.uid() and status = 'pending')
   with check (owner_id = auth.uid() and status = 'pending');
+
+create or replace function public.require_venue_payout()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.status = 'active' and not exists (
+    select 1 from profiles
+    where id = new.owner_id
+      and coalesce(trim(payout_bank), '') <> ''
+      and coalesce(trim(payout_account), '') ~ '^[0-9]{6,30}$'
+  ) then
+    raise exception 'PAYOUT_REQUIRED';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists venues_require_payout on venues;
+create trigger venues_require_payout
+before insert or update of status on venues
+for each row execute function public.require_venue_payout();
 
 -- ------------------------------------------------------------
 grant execute on function get_venue_availability(uuid, date) to anon, authenticated;

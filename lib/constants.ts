@@ -77,6 +77,8 @@ export const VENUE_ERRORS: Record<string, string> = {
   BUSINESS_LICENSE_REQUIRED: 'Bạn cần tải lên giấy tờ kinh doanh.',
   BUSINESS_LICENSE_INVALID: 'Giấy tờ kinh doanh không hợp lệ.',
   BUSINESS_LICENSE_MISSING: 'Không tìm thấy giấy tờ kinh doanh đã tải lên.',
+  PAYOUT_REQUIRED: 'Bạn cần nhập tài khoản nhận tiền để nhận tiền cọc.',
+  PAYOUT_INVALID: 'Số tài khoản phải gồm 6 đến 30 chữ số.',
   SLUG_COLLISION: 'Tên sân bị trùng quá nhiều. Đổi tên khác giúp bạn nhé.',
 };
 

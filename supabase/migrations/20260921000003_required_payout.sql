@@ -1,24 +1,27 @@
--- Hồ sơ chủ sân bắt buộc có giấy tờ kinh doanh trước khi chờ duyệt.
-alter table venues add column if not exists business_license_path text;
-alter table venues add column if not exists business_license_name text;
+-- Không có tài khoản nhận tiền thì không thể nhận cọc.
+create or replace function public.require_venue_payout()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.status = 'active' and not exists (
+    select 1 from profiles
+    where id = new.owner_id
+      and coalesce(trim(payout_bank), '') <> ''
+      and coalesce(trim(payout_account), '') ~ '^[0-9]{6,30}$'
+  ) then
+    raise exception 'PAYOUT_REQUIRED';
+  end if;
+  return new;
+end;
+$$;
 
-insert into storage.buckets (id, name, public)
-values ('venue-documents', 'venue-documents', false)
-on conflict (id) do update set public = false;
-
-drop policy if exists venue_documents_insert on storage.objects;
-create policy venue_documents_insert on storage.objects for insert to authenticated
-  with check (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists venue_documents_select on storage.objects;
-create policy venue_documents_select on storage.objects for select to authenticated
-  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists venue_documents_delete on storage.objects;
-create policy venue_documents_delete on storage.objects for delete to authenticated
-  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop function if exists register_venue(text, text, text, text, text, time, time, jsonb, text, text);
+drop trigger if exists venues_require_payout on venues;
+create trigger venues_require_payout
+before insert or update of status on venues
+for each row execute function public.require_venue_payout();
 
 create or replace function register_venue(
   p_name text, p_address text, p_district text, p_phone text,
@@ -127,4 +130,5 @@ begin
 
   return v_venue;
 end $$;
+
 grant execute on function register_venue(text, text, text, text, text, time, time, jsonb, text, text, text, text) to authenticated;

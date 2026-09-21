@@ -20,6 +20,12 @@ begin
   if coalesce(trim(p_address),'') = '' then raise exception 'ADDRESS_REQUIRED'; end if;
   if coalesce(trim(p_phone),'') = '' then raise exception 'PHONE_REQUIRED'; end if;
   if p_close_time <= p_open_time then raise exception 'INVALID_HOURS'; end if;
+  if coalesce(trim(p_payout_bank), '') = '' or coalesce(trim(p_payout_account), '') = '' then
+    raise exception 'PAYOUT_REQUIRED';
+  end if;
+  if trim(p_payout_account) !~ '^[0-9]{6,30}$' then
+    raise exception 'PAYOUT_INVALID';
+  end if;
   if coalesce(trim(p_business_license_path), '') = ''
      or coalesce(trim(p_business_license_name), '') = '' then
     raise exception 'BUSINESS_LICENSE_REQUIRED';

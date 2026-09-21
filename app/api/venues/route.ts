@@ -27,8 +27,8 @@ const Body = z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tổng số sân con không được quá 20 sân.' });
       }
     }),
-  payout_bank: z.string().trim().max(60).optional(),
-  payout_account: z.string().trim().max(40).optional(),
+  payout_bank: z.string().trim().min(2, 'Nhập tên ngân hàng.').max(60),
+  payout_account: z.string().trim().regex(/^\d{6,30}$/, 'Số tài khoản phải gồm 6 đến 30 chữ số.'),
 });
 
 const LICENSE_TYPES = new Map([
@@ -92,8 +92,8 @@ export async function POST(req: NextRequest) {
     p_sports: v.sports,
     p_business_license_path: licensePath,
     p_business_license_name: license.name,
-    p_payout_bank: v.payout_bank ?? null,
-    p_payout_account: v.payout_account ?? null,
+    p_payout_bank: v.payout_bank,
+    p_payout_account: v.payout_account,
   }).single();
 
   if (error) {

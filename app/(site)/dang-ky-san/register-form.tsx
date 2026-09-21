@@ -48,8 +48,8 @@ export function RegisterForm({ defaultPhone }: { defaultPhone?: string | null })
         court_count: Number(item.courtCount),
         price_per_hour: Number(item.price),
       })),
-      payout_bank: String(f.get('payout_bank') ?? '') || undefined,
-      payout_account: String(f.get('payout_account') ?? '') || undefined,
+      payout_bank: String(f.get('payout_bank') ?? ''),
+      payout_account: String(f.get('payout_account') ?? ''),
     };
 
     try {
@@ -170,11 +170,11 @@ export function RegisterForm({ defaultPhone }: { defaultPhone?: string | null })
         <Fieldset number="04" legend="Tài khoản nhận tiền">
           <div className="border-l-2 border-strong bg-sunk px-4 py-3 text-sm leading-6 text-ink-secondary">Thông tin này dùng để đối soát tiền cọc. Bạn có thể bổ sung hoặc thay đổi sau khi Sân Ngon xác minh hồ sơ.</div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Ngân hàng" htmlFor="payout_bank" optional>
-              <input id="payout_bank" name="payout_bank" maxLength={60} autoComplete="off" placeholder="Ví dụ: MBBank" className={INPUT} />
+            <Field label="Ngân hàng" htmlFor="payout_bank" required>
+              <input id="payout_bank" name="payout_bank" required minLength={2} maxLength={60} autoComplete="off" placeholder="Ví dụ: MBBank" className={INPUT} />
             </Field>
-            <Field label="Số tài khoản" htmlFor="payout_account" optional>
-              <input id="payout_account" name="payout_account" maxLength={40} inputMode="numeric" autoComplete="off" placeholder="0123456789" className={INPUT} />
+            <Field label="Số tài khoản" htmlFor="payout_account" required hint="6–30 chữ số.">
+              <input id="payout_account" name="payout_account" required minLength={6} maxLength={30} pattern="[0-9]{6,30}" inputMode="numeric" autoComplete="off" placeholder="0123456789" className={INPUT} />
             </Field>
           </div>
         </Fieldset>
