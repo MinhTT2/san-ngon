@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { Check, FileText, UploadCloud, X } from 'lucide-react';
 import { DISTRICTS, SPORT_LABELS } from '@/lib/constants';
 import { vnd } from '@/lib/format';
 
@@ -17,7 +18,10 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [banks, setBanks] = useState<Bank[]>([]);
+  const [licenseFile, setLicenseFile] = useState<File | null>(null);
+  const [licenseDragging, setLicenseDragging] = useState(false);
   const stepRefs = useRef<Array<HTMLFieldSetElement | null>>([]);
+  const licenseInputRef = useRef<HTMLInputElement | null>(null);
   const [sports, setSports] = useState<SportRow[]>([
     { sport: 'football5', courtCount: '4', price: '250000' },
   ]);
@@ -52,6 +56,20 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
   function nextStep() {
     setError(null);
     if (validateStep(step)) setStep((current) => Math.min(current + 1, STEPS.length - 1));
+  }
+
+  function chooseLicense(file?: File) {
+    if (!file || !licenseInputRef.current) return;
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    licenseInputRef.current.files = transfer.files;
+    setLicenseFile(file);
+    setError(null);
+  }
+
+  function removeLicense() {
+    if (licenseInputRef.current) licenseInputRef.current.value = '';
+    setLicenseFile(null);
   }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -212,7 +230,33 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
         <Fieldset innerRef={(node) => { stepRefs.current[3] = node; }} hidden={step !== 3} number="04" legend="Giấy tờ kinh doanh">
           <p className="-mt-1 text-sm leading-6 text-ink-secondary">Tải lên giấy đăng ký hộ kinh doanh/doanh nghiệp hoặc giấy tờ chứng minh quyền khai thác sân. Sân Ngon chỉ mở lịch sau khi kiểm tra giấy tờ.</p>
           <Field label="Giấy tờ" htmlFor="business_license" required hint="PDF, JPG hoặc PNG · tối đa 10MB.">
-            <input id="business_license" name="business_license" type="file" required accept="application/pdf,image/jpeg,image/png" className="block w-full rounded-control border border-hairline bg-page px-3.5 py-3 text-sm file:mr-4 file:rounded-control file:border-0 file:bg-sunk file:px-3 file:py-2 file:font-semibold" />
+            <div
+              onDragOver={(event) => { event.preventDefault(); setLicenseDragging(true); }}
+              onDragLeave={() => setLicenseDragging(false)}
+              onDrop={(event) => { event.preventDefault(); setLicenseDragging(false); chooseLicense(event.dataTransfer.files[0]); }}
+              className={`rounded-control border-2 border-dashed p-3 transition-colors ${licenseDragging ? 'border-pitch bg-free-fill' : 'border-strong bg-sunk'}`}
+            >
+              <label htmlFor="business_license" className="flex cursor-pointer flex-col items-center justify-center rounded-[calc(var(--radius-control)-4px)] border border-transparent px-4 py-7 text-center hover:border-strong hover:bg-card">
+                <span className={`flex size-12 items-center justify-center rounded-full ${licenseFile ? 'bg-free-fill text-free-ink' : 'bg-card text-pitch'}`}>
+                  {licenseFile ? <Check className="size-6" aria-hidden="true" /> : <UploadCloud className="size-6" aria-hidden="true" />}
+                </span>
+                <span className="mt-3 text-sm font-semibold text-pitch">{licenseFile ? 'Đổi giấy tờ khác' : 'Kéo thả giấy tờ vào đây'}</span>
+                <span className="mt-1 text-xs text-ink-secondary">hoặc bấm để chọn từ thiết bị</span>
+                <input ref={licenseInputRef} id="business_license" name="business_license" type="file" required accept="application/pdf,image/jpeg,image/png" onChange={(event) => chooseLicense(event.target.files?.[0])} className="sr-only" />
+              </label>
+            </div>
+            {licenseFile && (
+              <div className="mt-3 flex items-center gap-3 rounded-control border border-free-line bg-free-fill px-3.5 py-3">
+                <FileText className="size-5 shrink-0 text-free-ink" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-free-ink" title={licenseFile.name}>{licenseFile.name}</p>
+                  <p className="mt-0.5 text-xs text-free-ink/80">{formatFileSize(licenseFile.size)} · Sẵn sàng gửi</p>
+                </div>
+                <button type="button" onClick={removeLicense} aria-label="Xóa giấy tờ đã chọn" className="flex size-8 shrink-0 items-center justify-center rounded-full text-free-ink hover:bg-card">
+                  <X className="size-4" aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </Field>
         </Fieldset>
 
@@ -245,6 +289,11 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
 }
 
 const INPUT = 'h-12 w-full rounded-control border border-hairline bg-page px-3.5 text-[15px] outline-none transition-colors placeholder:text-ink-secondary/70 focus:border-pitch focus:ring-2 focus:ring-strong';
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function Fieldset({ number, legend, children, hidden, innerRef }: { number: string; legend: string; children: ReactNode; hidden?: boolean; innerRef?: (node: HTMLFieldSetElement | null) => void }) {
   return <fieldset ref={innerRef} hidden={hidden} className="flex flex-col gap-4"><legend className="mb-1 flex items-center gap-3 text-base font-semibold text-pitch"><span className="flex size-7 items-center justify-center rounded-full bg-free-fill text-xs font-bold text-free-ink">{number}</span>{legend}</legend>{children}</fieldset>;
