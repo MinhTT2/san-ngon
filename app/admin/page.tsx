@@ -125,7 +125,7 @@ type OwnerProfile = {
 };
 
 function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
-  return <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><p className="font-semibold">{owner.full_name ?? 'Chưa có tên'}</p><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'} · Đăng ký tài khoản chủ sân</p></div><div className="flex items-center gap-3">{owner.business_license_path && <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminOwnerAction ownerId={owner.id} /></div></li>;
+  return <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'} · Đăng ký tài khoản chủ sân</p></div><div className="flex items-center gap-3">{owner.business_license_path && <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminOwnerAction ownerId={owner.id} /></div></li>;
 }
 
 function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
@@ -152,7 +152,7 @@ function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
             <tbody>
               {sortedOwners.map((owner) => (
                 <tr key={owner.id} className="border-b border-hairline last:border-0 align-top">
-                  <td className="px-5 py-4"><p className="font-semibold">{owner.full_name ?? 'Chưa có tên'}</p><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></td>
+                  <td className="px-5 py-4"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></td>
                   <td className="px-5 py-4"><p>{owner.payout_bank ?? 'Chưa có ngân hàng'}</p><p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></td>
                   <td className="px-5 py-4">{owner.business_license_path ? <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="font-semibold text-pitch underline underline-offset-4">{owner.business_license_name ?? 'Mở giấy tờ'} ↗</a> : <span className="text-ink-secondary">Chưa có</span>}</td>
                   <td className="px-5 py-4 text-ink-secondary">{owner.created_at ? dayLabel(new Date(owner.created_at)) : '—'}</td>
