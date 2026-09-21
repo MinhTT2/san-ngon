@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+
+const Body = z.object({ status: z.enum(['active', 'rejected']) });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -9,14 +12,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
 
-  let body: { status?: string } = {};
-  try { body = await request.json(); } catch { /* body không hợp lệ sẽ trả 400 bên dưới */ }
-  if (body.status !== 'active' && body.status !== 'rejected') {
-    return NextResponse.json({ error: 'INVALID_STATUS' }, { status: 400 });
-  }
-
   const { id } = await params;
-  const { error } = await supabase.from('venues').update({ status: body.status }).eq('id', id);
-  if (error) return NextResponse.json({ error: 'UPDATE_FAILED' }, { status: 500 });
+  const parsed = Body.safeParse(await request.json().catch(() => null));
+  if (!parsed.success || !z.string().uuid().safeParse(id).success) {
+    return NextResponse.json({ error: 'Thông tin duyệt hồ sơ không hợp lệ.' }, { status: 400 });
+  }
+  const { error } = await supabase.rpc('review_venue', { p_venue_id: id, p_status: parsed.data.status });
+  if (error) {
+    const messages: Record<string, string> = {
+      VENUE_NOT_FOUND: 'Không tìm thấy hồ sơ.',
+      VENUE_ALREADY_REVIEWED: 'Hồ sơ đã được xử lý. Hãy tải lại trang.',
+      REPRESENTATIVE_REQUIRED: 'Hồ sơ thiếu họ tên hoặc số điện thoại người đại diện.',
+      BUSINESS_LICENSE_MISSING: 'Hồ sơ thiếu giấy tờ kinh doanh.',
+      PAYOUT_REQUIRED: 'Chủ sân chưa bổ sung tài khoản nhận tiền.',
+    };
+    const key = Object.keys(messages).find((key) => error.message.includes(key));
+    return NextResponse.json({ error: key ? messages[key] : 'Không lưu được kết quả duyệt. Hãy thử lại.' }, { status: key ? 409 : 500 });
+  }
   return NextResponse.json({ ok: true });
 }

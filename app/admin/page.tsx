@@ -22,8 +22,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   if (profile?.role !== 'admin') redirect('/');
 
   const view = parseView((await searchParams).view);
-  const [{ data: venues, error: venuesError }, { count: bookingCount }, { count: userCount }] = await Promise.all([
-    supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at').order('created_at', { ascending: false }),
+  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }] = await Promise.all([
+    supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, full_name, phone'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
@@ -31,6 +32,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   const pendingVenues = (venues ?? []).filter((venue) => venue.status === 'pending');
   const activeVenues = (venues ?? []).filter((venue) => venue.status === 'active');
+  const profileById = new Map((ownerProfiles ?? []).map((profile) => [profile.id, profile]));
 
   const bookings = view === 'bookings'
     ? (await supabase
@@ -61,16 +63,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </div>
 
       {view === 'overview' && (
-        <Overview pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} />
+        <Overview pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
       )}
-      {view === 'venues' && <VenueTable venues={venues ?? []} />}
+      {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
       {view === 'users' && <UserTable users={users} />}
     </main>
   );
 }
 
-function Overview({ pendingVenues, activeVenueCount }: { pendingVenues: VenueRow[]; activeVenueCount: number }) {
+function Overview({ pendingVenues, activeVenueCount, profileById }: { pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile> }) {
   return (
     <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="rounded-card border border-hairline bg-card">
@@ -85,7 +87,7 @@ function Overview({ pendingVenues, activeVenueCount }: { pendingVenues: VenueRow
           <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ nào đang chờ duyệt.</p>
         ) : (
           <ul className="divide-y divide-hairline">
-            {pendingVenues.slice(0, 6).map((venue) => <VenueRowItem key={venue.id} venue={venue} />)}
+            {pendingVenues.slice(0, 6).map((venue) => <VenueRowItem key={venue.id} venue={venue} profile={profileById.get(venue.owner_id)} />)}
           </ul>
         )}
       </section>
@@ -104,31 +106,33 @@ function Overview({ pendingVenues, activeVenueCount }: { pendingVenues: VenueRow
   );
 }
 
-type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string };
+type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string; phone: string | null; business_license_path: string | null };
+type OwnerProfile = { id: string; full_name: string | null; phone: string | null };
 
-function VenueRowItem({ venue }: { venue: VenueRow }) {
+function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProfile }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
       <div className="min-w-0">
         <p className="truncate font-semibold">{venue.name}</p>
-        <p className="mt-1 text-xs text-ink-secondary">{venue.district} · Mã chủ sân {venue.owner_id.slice(0, 8)}</p>
+        <p className="mt-1 text-xs text-ink-secondary">{profile?.full_name ?? 'Chưa có tên'} · {profile?.phone ?? venue.phone ?? 'Chưa có số điện thoại'} · {venue.district}</p>
       </div>
       <div className="flex items-center gap-3">
         <span className="rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-medium text-peak-ink">{VENUE_STATUS_LABELS[venue.status]}</span>
+        {venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}
         <AdminVenueAction venueId={venue.id} />
       </div>
     </li>
   );
 }
 
-function VenueTable({ venues }: { venues: VenueRow[] }) {
+function VenueTable({ venues, profileById }: { venues: VenueRow[]; profileById: Map<string, OwnerProfile> }) {
   return (
     <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
       <div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tất cả hồ sơ sân</h2></div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
-          <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Cụm sân</th><th className="px-5 py-3 font-medium">Khu vực</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
-          <tbody>{venues.map((venue) => <tr key={venue.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{venue.name}<span className="mt-1 block text-xs font-normal text-ink-secondary">{venue.slug}</span></td><td className="px-5 py-4">{venue.district}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(venue.created_at))}</td><td className="px-5 py-4"><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-medium">{VENUE_STATUS_LABELS[venue.status]}</span></td><td className="px-5 py-4 text-right">{venue.status === 'pending' && <AdminVenueAction venueId={venue.id} />}</td></tr>)}</tbody>
+          <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Cụm sân</th><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Khu vực</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
+          <tbody>{venues.map((venue) => <tr key={venue.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{venue.name}<span className="mt-1 block text-xs font-normal text-ink-secondary">{venue.slug}</span></td><td className="px-5 py-4">{profileById.get(venue.owner_id)?.full_name ?? 'Chưa có tên'}<span className="mt-1 block text-xs font-normal text-ink-secondary">{profileById.get(venue.owner_id)?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}</span></td><td className="px-5 py-4">{venue.district}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(venue.created_at))}</td><td className="px-5 py-4"><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-medium">{VENUE_STATUS_LABELS[venue.status]}</span></td><td className="px-5 py-4 text-right"><span className="inline-flex items-center gap-3">{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}{venue.status === 'pending' && <AdminVenueAction venueId={venue.id} />}</span></td></tr>)}</tbody>
         </table>
       </div>
     </section>

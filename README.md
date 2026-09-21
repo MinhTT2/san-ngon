@@ -74,6 +74,10 @@ nên không tạo dữ liệu trùng.
 Hồ sơ chủ sân phải kèm giấy tờ kinh doanh. Với database đã chạy trước đó, chạy
 thêm migration `supabase/migrations/20260921000001_business_license.sql`.
 
+Luồng duyệt hồ sơ dùng thêm `20260921000005_review_venue.sql` và
+`20260921000006_admin_license_access.sql`. Chạy `npm run db:push` để áp dụng
+migration còn thiếu; admin mở `/admin` để xem giấy tờ và duyệt/từ chối.
+
 Nếu database đã chạy từ trước khi có tự liên kết Telegram, chạy thêm
 `supabase/migrations/20260918000003_telegram_link.sql` một lần.
 
@@ -180,10 +184,6 @@ Luồng người chơi đi được từ đầu tới cuối: vào landing, tìm
 
 Chủ sân có thể xác nhận tay đơn chờ cọc khi SePay không gửi webhook và đánh dấu các khoản đã hoàn cọc là đã xử lý ở `/chu-san`.
 
-Hồ sơ đăng sân vào thẳng trạng thái `pending`. Duyệt bằng SQL cho tới khi có trang admin:
-
-```sql
-update venues set status = 'active' where slug = '<slug>';
-```
+Hồ sơ đăng sân vào thẳng trạng thái `pending`. Admin đăng nhập tại `/admin`, kiểm tra thông tin người đại diện và giấy phép rồi bấm **Duyệt hồ sơ**. Chỉ hồ sơ `active` mới xuất hiện ở trang tìm sân và nhận đơn.
 
 Đây là sản phẩm **web**, không phải app. Bố cục desktop là chính, điện thoại là bản rút gọn.

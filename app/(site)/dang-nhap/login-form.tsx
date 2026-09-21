@@ -157,21 +157,25 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={google}
-        disabled={busy !== null}
-        className="flex h-13 items-center justify-center gap-3 rounded-control border border-hairline bg-card text-base font-semibold transition-colors hover:border-strong disabled:opacity-60"
-      >
-        <GoogleMark />
-        {busy === 'google' ? 'Đang chuyển sang Google…' : 'Tiếp tục với Google'}
-      </button>
+      {!signup && (
+        <>
+          <button
+            type="button"
+            onClick={google}
+            disabled={busy !== null}
+            className="flex h-13 items-center justify-center gap-3 rounded-control border border-hairline bg-card text-base font-semibold transition-colors hover:border-strong disabled:opacity-60"
+          >
+            <GoogleMark />
+            {busy === 'google' ? 'Đang chuyển sang Google…' : 'Tiếp tục với Google'}
+          </button>
 
-      <div className="flex items-center gap-3 text-xs text-ink-secondary">
-        <span className="h-px flex-grow bg-hairline" />
-        hoặc dùng email
-        <span className="h-px flex-grow bg-hairline" />
-      </div>
+          <div className="flex items-center gap-3 text-xs text-ink-secondary">
+            <span className="h-px flex-grow bg-hairline" />
+            hoặc dùng email
+            <span className="h-px flex-grow bg-hairline" />
+          </div>
+        </>
+      )}
 
       <form onSubmit={otp} className="flex flex-col gap-2.5">
         {signup && (
