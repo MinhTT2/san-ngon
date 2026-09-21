@@ -239,7 +239,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
         {signup && (
           <>
             <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
-              <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold">
+              <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm font-semibold">
                 Tên của bạn
                 <input
                   id="name"
@@ -249,10 +249,10 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nguyễn Văn A"
-                  className="h-13 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
+                  className="h-13 w-full min-w-0 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
                 />
               </label>
-              <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold">
+              <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm font-semibold">
                 Số điện thoại
                 <input
                   id="phone"
@@ -264,7 +264,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="0912 345 678"
-                  className="h-13 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
+                  className="h-13 w-full min-w-0 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
                 />
               </label>
             </div>
