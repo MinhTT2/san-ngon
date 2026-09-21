@@ -12,6 +12,7 @@ export default async function Page() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   let venues: OwnerVenue[] = [];
+  let fullName: string | null = null;
   let phone: string | null = null;
   let loadFailed = false;
 
@@ -19,9 +20,10 @@ export default async function Page() {
     const [venueResult, profile] = await Promise.all([
       supabase.from('venues').select('id, slug, name, address, district, phone, status')
         .eq('owner_id', user.id).order('created_at').order('id'),
-      supabase.from('profiles').select('phone').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('full_name, phone').eq('id', user.id).maybeSingle(),
     ]);
     venues = (venueResult.data ?? []) as OwnerVenue[];
+    fullName = profile.data?.full_name ?? null;
     phone = profile.data?.phone ?? null;
     loadFailed = Boolean(venueResult.error);
   }
@@ -50,7 +52,7 @@ export default async function Page() {
             <section className="rounded-card border border-hairline bg-card p-5 sm:p-8">
               <h2 className="font-display text-2xl font-bold tracking-tight text-pitch">Đăng thêm cụm sân</h2>
               <p className="mt-2 text-sm leading-6 text-ink-secondary">Mỗi cụm sân có địa chỉ, lịch và hồ sơ giấy tờ riêng.</p>
-              <div className="mt-7"><RegisterForm defaultPhone={phone} /></div>
+              <div className="mt-7"><RegisterForm defaultName={fullName} defaultPhone={phone} /></div>
             </section>
           </div>
         </>
@@ -62,7 +64,7 @@ export default async function Page() {
             <p className="mt-5 max-w-xl text-[15px] leading-7 text-ink-secondary">Đưa sân lên Sân Ngon để người chơi tìm thấy, xem lịch trống và đặt sân. Bắt đầu bằng vài thông tin về cụm sân của bạn.</p>
           </header>
           <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
-            {user ? <RegisterForm defaultPhone={phone} /> : (
+            {user ? <RegisterForm defaultName={fullName} defaultPhone={phone} /> : (
               <section className="rounded-card border border-hairline bg-card p-6 sm:p-10">
                 <BrandMark size={44} />
                 <h2 className="mt-6 font-display text-2xl font-bold text-pitch">Một tài khoản, quản lý các cụm sân</h2>

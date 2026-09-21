@@ -7,6 +7,7 @@ import { venueErrorMessage } from '@/lib/constants';
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({
+  full_name: z.string().trim().min(2, 'Nhập họ và tên người đại diện.').max(120),
   name: z.string().trim().min(3).max(120),
   address: z.string().trim().min(3).max(200),
   district: z.string().trim().min(2).max(60),
@@ -71,6 +72,14 @@ export async function POST(req: NextRequest) {
   }
 
   const v = parsed.data;
+  const { error: profileError } = await supabase.from('profiles').update({
+    full_name: v.full_name,
+    phone: v.phone,
+  }).eq('id', user.id);
+  if (profileError) {
+    return NextResponse.json({ error: 'Không lưu được thông tin người đại diện. Thử lại sau vài giây.' }, { status: 500 });
+  }
+
   const licensePath = `${user.id}/${randomUUID()}.${extension}`;
   const storage = supabase.storage.from('venue-documents');
   const { error: uploadError } = await storage.upload(licensePath, license, {
