@@ -40,7 +40,7 @@ export function HeroGrid({
           {venueName} · {tomorrow ? 'mai' : 'hôm nay'} {dayLabel(date).split(', ')[1]}
         </span>
         <span className="hidden flex-none text-xs text-ink-secondary sm:inline">
-          cập nhật theo thời gian thực
+          xem giờ còn trống
         </span>
       </div>
 
@@ -104,7 +104,7 @@ export function HeroGridPlaceholder() {
     <div className="flex flex-col gap-2.5 rounded-card bg-card p-4 lg:p-5">
       <div className="flex items-baseline justify-between">
         <span className="text-sm font-semibold">Sân Mỹ Đình · thứ năm 18/09</span>
-        <span className="hidden text-xs text-ink-secondary sm:inline">ví dụ minh họa</span>
+        <span className="hidden text-xs text-ink-secondary sm:inline">lịch mẫu</span>
       </div>
 
       <Row cols={hours.length}>

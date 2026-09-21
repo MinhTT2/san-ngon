@@ -14,10 +14,10 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Sân Ngon — Đặt sân thể thao ở Hà Nội',
   description:
-    'Xem lịch trống thật của từng sân bóng, cầu lông, pickleball, tennis ở Hà Nội. Chốt sân bằng cọc chuyển khoản, khỏi gọi điện.',
+    'Tìm sân bóng, cầu lông, pickleball, tennis còn chỗ ở Hà Nội. Xem lịch, biết giá, đặt cọc dễ dàng bằng chuyển khoản.',
   openGraph: {
-    title: 'Sân trống tối nay, biết ngay trong 10 giây',
-    description: 'Lịch trống thật, cọc 30% qua QR, phần còn lại trả tại sân.',
+    title: 'Tối nay chơi gì? Chọn sân, hẹn bạn, lên đường',
+    description: 'Chọn sân gần bạn, giữ giờ đẹp, cọc nhanh qua QR — phần còn lại thanh toán tại sân.',
     locale: 'vi_VN',
     type: 'website',
   },
@@ -122,12 +122,12 @@ function Hero({ grid }: { grid: React.ReactNode }) {
       <div className="border-t border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16">
           <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold text-ink">Tìm sân cho buổi chơi tiếp theo</h2>
+            <h2 className="text-sm font-semibold text-ink">Chọn sân cho cuộc vui sắp tới</h2>
             <SearchBar />
-            <p className="text-xs leading-5 text-ink-secondary">Miễn phí cho người đặt · Xem lịch trước, đăng nhập sau</p>
+            <p className="text-xs leading-5 text-ink-secondary">Tìm sân miễn phí · Chỉ cần đăng nhập khi đặt</p>
           </div>
           <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold text-ink">Một góc lịch sân</h2>
+            <h2 className="text-sm font-semibold text-ink">Xem giờ sân còn trống</h2>
             {grid}
           </div>
         </div>
@@ -173,9 +173,9 @@ function SearchBar() {
 function Stats({ venues, courts, districts }: { venues: number; courts: number; districts: number }) {
   const items: [number, string, string][] = [
     [venues, '', 'cụm sân đang nhận đặt'],
-    [courts, '', 'sân con trong hệ thống'],
-    [districts, '', 'quận ở Hà Nội'],
-    [15, ' giây', 'từ chuyển khoản tới xác nhận'],
+    [courts, '', 'sân cho bạn lựa chọn'],
+    [districts, '', 'quận có sân'],
+    [15, ' phút', 'giữ chỗ để bạn chuyển cọc'],
   ];
   return (
     <section className="border-b border-hairline bg-card">
@@ -193,9 +193,9 @@ function Stats({ venues, courts, districts }: { venues: number; courts: number; 
 
 function HowItWorks() {
   const steps = [
-    { title: 'Lịch rõ. Giá rõ.', body: 'Xem giờ trống và giá của từng sân, ngay trong một màn hình.', color: 'bg-story-teal', label: '01 / Chọn sân' },
-    { title: 'Giữ chỗ cho cả đội.', body: 'Chọn giờ, để lại thông tin. Bạn có 15 phút để hoàn tất tiền cọc.', color: 'bg-story-lilac', label: '02 / Giữ chỗ' },
-    { title: 'Chốt kèo. Lên sân.', body: 'Chuyển cọc qua QR. Khi tiền được xác nhận, sân đã sẵn sàng cho buổi chơi.', color: 'bg-story-coral', label: '03 / Xác nhận' },
+    { title: 'Lịch rõ. Giá rõ.', body: 'Xem giờ còn trống và mức giá ngay trên lịch sân.', color: 'bg-story-teal', label: '01 / Chọn giờ' },
+    { title: 'Giữ chỗ cho cả đội.', body: 'Chọn giờ, điền thông tin. Sân được giữ cho bạn 15 phút để chuyển cọc.', color: 'bg-story-lilac', label: '02 / Giữ chỗ' },
+    { title: 'Chốt kèo. Lên sân.', body: 'Cọc qua QR, nhận xác nhận rồi rủ cả đội lên sân.', color: 'bg-story-coral', label: '03 / Sẵn sàng chơi' },
   ];
 
   return (
@@ -203,7 +203,7 @@ function HowItWorks() {
       <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
         <div className="max-w-2xl">
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-secondary">Bớt hẹn qua điện thoại</p>
-          <h2 className="font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">Ba bước đặt sân.<br /><span className="text-pitch">Còn lại là cuộc chơi.</span></h2>
+          <h2 className="font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">Ba bước đặt sân.<br /><span className="text-pitch">Còn lại là cuộc vui.</span></h2>
         </div>
         <Link href="/tim-san" className="inline-flex min-h-11 items-center gap-5 self-start border-b border-pitch pb-2 text-sm font-semibold text-pitch lg:self-end">
           Tìm sân cho kèo tiếp theo <span aria-hidden="true">↗</span>
@@ -222,7 +222,7 @@ function HowItWorks() {
               <div className="mx-5 mb-5 mt-6 flex min-h-48 flex-1 flex-col justify-center rounded-[18px] border border-white/70 bg-white/75 p-5">
                 {i === 0 ? (
                   <>
-                    <div className="mb-4 flex items-center justify-between text-xs"><span className="font-semibold">Một góc lịch sân</span><span className="text-ink-secondary">Minh họa</span></div>
+                    <div className="mb-4 flex items-center justify-between text-xs"><span className="font-semibold">Giờ còn trống</span><span className="text-ink-secondary">Minh họa</span></div>
                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                       {['17:00', '18:00', '19:00'].map((time) => <span key={time} className="pb-1 text-ink-secondary">{time}</span>)}
                       {['Trống', 'Đã đặt', 'Trống', 'Đã đặt', 'Trống', 'Trống'].map((status, slot) => (
@@ -232,15 +232,15 @@ function HowItWorks() {
                   </>
                 ) : i === 1 ? (
                   <>
-                    <span className="text-xs font-medium text-ink-secondary">Thời gian giữ chỗ</span>
+                    <span className="text-xs font-medium text-ink-secondary">Bạn có thời gian chuyển cọc</span>
                     <p className="my-3 font-display text-6xl font-extrabold tracking-tight text-pitch">15<span className="ml-2 text-lg font-medium">phút</span></p>
-                    <p className="border-t border-strong pt-3 text-xs leading-5 text-ink-secondary">Đủ thời gian mở ngân hàng và chuyển cọc.</p>
+                    <p className="border-t border-strong pt-3 text-xs leading-5 text-ink-secondary">Mở ứng dụng ngân hàng và hoàn tất trong vài bước.</p>
                   </>
                 ) : (
                   <>
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pitch text-2xl text-white" aria-hidden="true">✓</div>
                     <span className="font-display text-2xl font-bold text-pitch">Hẹn nhau ở sân!</span>
-                    <p className="mt-2 text-xs leading-5 text-ink-secondary">Trạng thái tự cập nhật khi khoản cọc được xác nhận.</p>
+                    <p className="mt-2 text-xs leading-5 text-ink-secondary">Nhận xác nhận đặt sân, yên tâm hẹn cả đội.</p>
                   </>
                 )}
               </div>
@@ -271,7 +271,7 @@ function WhyDeposit() {
         <div className="flex items-center bg-free-line/10 p-5 sm:p-10 lg:p-12">
           <div className="w-full rounded-[20px] bg-page p-6 sm:p-8">
             <div className="flex items-start justify-between gap-3 border-b border-dashed border-strong pb-6">
-              <div><p className="text-xs uppercase tracking-widest text-ink-secondary">Chia kèo thật dễ</p><h3 className="mt-2 font-display text-2xl font-bold">Một buổi bóng đá</h3><p className="mt-2 text-sm text-ink-secondary">2 tiếng · 10 người · Ví dụ</p></div>
+              <div><p className="text-xs uppercase tracking-widest text-ink-secondary">Chia tiền thật dễ</p><h3 className="mt-2 font-display text-2xl font-bold">Một buổi bóng đá</h3><p className="mt-2 text-sm text-ink-secondary">2 tiếng · 10 người · Ví dụ</p></div>
               <span aria-hidden="true" className="text-3xl text-pitch">↗</span>
             </div>
             <div className="space-y-4 py-6 text-sm">
@@ -313,15 +313,15 @@ function ForOwners() {
         <div className="relative z-10 flex flex-col justify-center p-7 text-white sm:p-10 lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Dành cho chủ sân</p>
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn chăm sân.<br />Khách tự chốt kèo.</h2>
-          <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn nhận thông báo khi có đơn, quản lý lịch ngay trên web.</p>
+          <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn biết ngay khi có khách, nắm lịch và khoản cần thu thật gọn.</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link href="/dang-ky-san" className="inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng sân của bạn <span aria-hidden="true">↗</span></Link>
-            <Link href="/chu-san" className="inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Xem trang quản lý</Link>
+            <Link href="/chu-san" className="inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Mở trang dành cho chủ sân</Link>
           </div>
         </div>
         <div className="relative z-10 flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
           <div className="rounded-[20px] border border-white bg-card p-6 sm:p-8">
-            <div className="flex items-center justify-between gap-3 border-b border-hairline pb-5"><span className="font-display text-xl font-bold">Một ngày ở sân</span><span className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">Minh họa</span></div>
+            <div className="flex items-center justify-between gap-3 border-b border-hairline pb-5"><span className="font-display text-xl font-bold">Lịch sân trong ngày</span><span className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">Ví dụ</span></div>
             <div className="divide-y divide-hairline">
               {[
                 ['18:00', 'Sân bóng 01', 'Đã xác nhận'],
@@ -338,7 +338,7 @@ function ForOwners() {
           </div>
           <div className="flex items-start gap-4 rounded-[18px] bg-pitch p-5 text-white sm:ml-10">
             <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-free-line/40 text-xl">✓</span>
-            <div><p className="text-sm font-semibold">Tiền cọc về. Lịch cập nhật.</p><p className="mt-1 text-xs leading-5 text-free-line">Theo dõi đơn và khoản cần thu tại sân, cùng một chỗ.</p></div>
+            <div><p className="text-sm font-semibold">Có khách đặt. Bạn biết ngay.</p><p className="mt-1 text-xs leading-5 text-free-line">Biết giờ nào đã có khách, khoản nào cần thu tại sân.</p></div>
           </div>
         </div>
       </div>
@@ -348,10 +348,10 @@ function ForOwners() {
 
 function Faq() {
   const qa = [
-    ['Xem lịch có phải đăng nhập không?', 'Không. Chỉ khi bấm đặt mới cần, để chủ sân biết ai đặt và gọi được nếu có thay đổi.'],
-    ['Trời mưa không đá được thì sao?', 'Chủ sân thường cho đổi sang khung khác, cọc chuyển thẳng sang giờ mới. Nếu không đổi được thì hoàn lại cọc.'],
-    ['Hai nhóm bấm đặt cùng lúc thì ai được?', 'Người bấm trước. Người sau nhận thông báo ngay và lưới lịch cập nhật lại, không có chuyện hai nhóm cùng tới một sân.'],
-    ['Đặt xong mà không chuyển khoản?', 'Sau 15 phút đơn tự hủy và khung giờ mở lại cho người khác. Không mất phí gì.'],
+    ['Xem lịch có phải đăng nhập không?', 'Không. Bạn cứ xem lịch thoải mái; chỉ cần đăng nhập khi đặt để giữ chỗ và nhận hỗ trợ khi cần.'],
+    ['Trời mưa không chơi được thì sao?', 'Liên hệ chủ sân để được hỗ trợ. Việc đổi giờ hoặc hoàn cọc tùy theo chính sách của từng sân.'],
+    ['Tôi có cần trả hết tiền khi đặt không?', 'Bạn chỉ cần cọc trước một phần, phần còn lại trả tại sân. Tiền cọc và tổng tiền đều được ghi rõ trước khi bạn chuyển khoản.'],
+    ['Đặt xong mà không chuyển khoản?', 'Sau 15 phút, chỗ giữ tạm hết hạn và giờ đó mở lại cho người khác. Bạn không mất phí.'],
   ];
 
   return (

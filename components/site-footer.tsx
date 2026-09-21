@@ -36,7 +36,7 @@ export function SiteFooter() {
 
         <div className="flex flex-col gap-4 py-6 text-xs text-free-line sm:flex-row sm:items-center sm:justify-between">
           <span>© 2026 Sân Ngon · Hà Nội</span>
-          <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-story-coral" /> Lịch sân cập nhật theo thời gian thực</span>
+          <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-story-coral" /> Chọn giờ hợp ý · Hẹn nhau ra sân</span>
         </div>
       </div>
     </footer>
