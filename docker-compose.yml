@@ -1,0 +1,17 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_SEPAY_ACCOUNT: ${NEXT_PUBLIC_SEPAY_ACCOUNT}
+        NEXT_PUBLIC_SEPAY_BANK: ${NEXT_PUBLIC_SEPAY_BANK}
+        NEXT_PUBLIC_SEPAY_ACCOUNT_NAME: ${NEXT_PUBLIC_SEPAY_ACCOUNT_NAME}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    env_file:
+      - .env.docker
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

@@ -21,6 +21,21 @@ npm run build      # next build
 npm run ci         # cả ba
 ```
 
+## Chạy bằng Docker
+
+Cần Docker Engine và Docker Compose v2. Container chỉ chạy app Next.js; dữ liệu
+vẫn nằm ở project Supabase từ xa.
+
+```bash
+cp .env.example .env.docker
+# điền các giá trị thật trong .env.docker
+docker compose --env-file .env.docker up --build
+```
+
+Mở `http://localhost:3000`. Các biến `NEXT_PUBLIC_*` được nhúng vào client khi
+build, nên phải build lại sau khi đổi chúng. `.env.docker` chứa secret và không
+được commit vào Git.
+
 ## Supabase
 
 Chạy lần lượt trong SQL Editor, không gộp:
