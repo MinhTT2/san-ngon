@@ -12,7 +12,7 @@ import { StatusBadge } from '@/components/status-badge';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Quản trị · Sân Ngon' };
 
-type View = 'overview' | 'venues' | 'bookings' | 'users';
+type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const supabase = await createClient();
@@ -25,7 +25,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const view = parseView((await searchParams).view);
   const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path'),
+    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
@@ -67,6 +67,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {view === 'overview' && (
         <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
       )}
+      {view === 'owners' && <OwnerTable owners={pendingOwners} />}
       {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
       {view === 'users' && <UserTable users={users} />}
@@ -110,10 +111,55 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById 
 }
 
 type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string; phone: string | null; business_license_path: string | null };
-type OwnerProfile = { id: string; full_name: string | null; phone: string | null; role?: string; owner_application_status?: string | null; business_license_path?: string | null };
+type OwnerProfile = {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  role?: string;
+  owner_application_status?: string | null;
+  business_license_path?: string | null;
+  business_license_name?: string | null;
+  payout_bank?: string | null;
+  payout_account?: string | null;
+  created_at?: string;
+};
 
 function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
   return <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><p className="font-semibold">{owner.full_name ?? 'Chưa có tên'}</p><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'} · Đăng ký tài khoản chủ sân</p></div><div className="flex items-center gap-3">{owner.business_license_path && <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminOwnerAction ownerId={owner.id} /></div></li>;
+}
+
+function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
+  return (
+    <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-hairline px-5 py-4">
+        <div>
+          <h2 className="font-semibold">Chủ sân cần duyệt</h2>
+          <p className="mt-1 text-xs text-ink-secondary">Kiểm tra thông tin đại diện, giấy tờ và tài khoản nhận cọc trước khi duyệt.</p>
+        </div>
+        <span className="rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-semibold text-peak-ink">{owners.length} hồ sơ chờ xử lý</span>
+      </div>
+      {owners.length === 0 ? (
+        <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ chủ sân nào đang chờ duyệt.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[980px] text-sm">
+            <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Tài khoản nhận cọc</th><th className="px-5 py-3 font-medium">Giấy tờ</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3" /></tr></thead>
+            <tbody>
+              {owners.map((owner) => (
+                <tr key={owner.id} className="border-b border-hairline last:border-0 align-top">
+                  <td className="px-5 py-4"><p className="font-semibold">{owner.full_name ?? 'Chưa có tên'}</p><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></td>
+                  <td className="px-5 py-4"><p>{owner.payout_bank ?? 'Chưa có ngân hàng'}</p><p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></td>
+                  <td className="px-5 py-4">{owner.business_license_path ? <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="font-semibold text-pitch underline underline-offset-4">{owner.business_license_name ?? 'Mở giấy tờ'} ↗</a> : <span className="text-ink-secondary">Chưa có</span>}</td>
+                  <td className="px-5 py-4 text-ink-secondary">{owner.created_at ? dayLabel(new Date(owner.created_at)) : '—'}</td>
+                  <td className="px-5 py-4 text-right"><AdminOwnerAction ownerId={owner.id} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProfile }) {
@@ -164,5 +210,5 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
 }
 
 function parseView(value?: string): View {
-  return value === 'venues' || value === 'bookings' || value === 'users' ? value : 'overview';
+  return value === 'owners' || value === 'venues' || value === 'bookings' || value === 'users' ? value : 'overview';
 }
