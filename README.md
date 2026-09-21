@@ -4,7 +4,43 @@ Nền tảng đặt sân bóng ở Hà Nội. Người chơi tự xem lịch tr�
 
 Đây là **xương sườn**: tầng dữ liệu hoàn chỉnh, các route API lõi, lưới lịch hai bố cục, và kênh thông báo. Phần giao diện còn nhiều `TODO` kèm ngày trong kế hoạch.
 
-## Chạy lần đầu
+## Chạy nhanh bằng Docker
+
+Cần Docker Desktop (Docker Engine + Docker Compose v2). Docker chỉ chạy app
+Next.js; database vẫn là project Supabase từ xa.
+
+```bash
+git clone <repository-url>
+cd san-ngon
+cp .env.example .env.docker
+```
+
+Điền giá trị thật trong `.env.docker`, ít nhất là:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Muốn chạy đầy đủ trang thanh toán và webhook thì điền thêm các biến SePay,
+`SUPABASE_SERVICE_ROLE_KEY` và các biến Telegram/email tương ứng.
+
+Khởi động bản production:
+
+```bash
+docker compose --env-file .env.docker up --build
+```
+
+Mở <http://localhost:3000>. Dừng container bằng lệnh sau:
+
+```bash
+docker compose --env-file .env.docker down
+```
+
+Các biến `NEXT_PUBLIC_*` được nhúng vào client khi build, nên phải chạy lại
+`up --build` sau khi đổi chúng. `.env.docker` chứa secret và không được commit.
+
+## Chạy development không dùng Docker
+
+Cần Node.js 24 trở lên:
 
 ```bash
 npm install
@@ -20,21 +56,6 @@ npm run typecheck  # tsc --noEmit
 npm run build      # next build
 npm run ci         # cả ba
 ```
-
-## Chạy bằng Docker
-
-Cần Docker Engine và Docker Compose v2. Container chỉ chạy app Next.js; dữ liệu
-vẫn nằm ở project Supabase từ xa.
-
-```bash
-cp .env.example .env.docker
-# điền các giá trị thật trong .env.docker
-docker compose --env-file .env.docker up --build
-```
-
-Mở `http://localhost:3000`. Các biến `NEXT_PUBLIC_*` được nhúng vào client khi
-build, nên phải build lại sau khi đổi chúng. `.env.docker` chứa secret và không
-được commit vào Git.
 
 ## Supabase
 
