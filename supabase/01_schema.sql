@@ -85,11 +85,6 @@ create table if not exists venues (
 
 create index if not exists venues_district_idx on venues (district) where status = 'active';
 create index if not exists venues_owner_idx    on venues (owner_id);
--- Một tài khoản chỉ mở một hồ sơ trong MVP. Ràng buộc ở DB để hai lần gửi
--- đồng thời không thể tạo ra hai cụm sân.
-create unique index if not exists venues_one_per_owner_idx
-  on venues (owner_id) where status in ('draft', 'pending');
-
 -- ---------- courts ----------
 create table if not exists courts (
   id           uuid primary key default gen_random_uuid(),

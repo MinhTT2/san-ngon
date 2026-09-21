@@ -362,11 +362,6 @@ begin
     raise exception 'COURT_COUNT_RANGE';
   end if;
 
-  -- Một tài khoản một cụm sân trong MVP. Cụm thứ hai chờ bản sau.
-  if exists (select 1 from venues where owner_id = v_uid) then
-    raise exception 'VENUE_EXISTS';
-  end if;
-
   v_base := left(coalesce(nullif(slugify(p_name), ''), 'san'), 40);
   v_slug := v_base;
   while exists (select 1 from venues where slug = v_slug) loop
@@ -518,12 +513,7 @@ begin
 end $$;
 
 -- ------------------------------------------------------------
--- Hardening hồ sơ chủ sân. Đặt ở đây để khi cập nhật bản đang chạy chỉ cần
--- chạy lại file business logic (README đã hướng dẫn), không tạo hồ sơ trùng
--- nếu hai request đến cùng lúc và không cho chủ sân tự duyệt hồ sơ.
-create unique index if not exists venues_one_per_owner_idx
-  on venues (owner_id) where status in ('draft', 'pending');
-
+-- Chủ sân có thể đăng nhiều cụm sân; chỉ trạng thái mới bị khóa bởi policy.
 drop policy if exists venues_owner_write on venues;
 drop policy if exists venues_owner_update_pending on venues;
 create policy venues_owner_update_pending on venues for update

@@ -1,24 +1,5 @@
--- Hồ sơ chủ sân bắt buộc có giấy tờ kinh doanh trước khi chờ duyệt.
-alter table venues add column if not exists business_license_path text;
-alter table venues add column if not exists business_license_name text;
-
-insert into storage.buckets (id, name, public)
-values ('venue-documents', 'venue-documents', false)
-on conflict (id) do update set public = false;
-
-drop policy if exists venue_documents_insert on storage.objects;
-create policy venue_documents_insert on storage.objects for insert to authenticated
-  with check (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists venue_documents_select on storage.objects;
-create policy venue_documents_select on storage.objects for select to authenticated
-  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists venue_documents_delete on storage.objects;
-create policy venue_documents_delete on storage.objects for delete to authenticated
-  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop function if exists register_venue(text, text, text, text, text, time, time, jsonb, text, text);
+-- Một chủ sân có thể quản lý nhiều cụm sân.
+drop index if exists public.venues_one_per_owner_idx;
 
 create or replace function register_venue(
   p_name text, p_address text, p_district text, p_phone text,
@@ -121,4 +102,5 @@ begin
 
   return v_venue;
 end $$;
+
 grant execute on function register_venue(text, text, text, text, text, time, time, jsonb, text, text, text, text) to authenticated;

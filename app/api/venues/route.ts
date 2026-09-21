@@ -98,12 +98,8 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     await storage.remove([licensePath]);
-    const alreadyExists = error.message.includes('VENUE_EXISTS')
-      || error.message.includes('venues_one_per_owner_idx');
-    const status = error.message.includes('AUTH_REQUIRED') ? 401
-      : alreadyExists ? 409
-      : 400;
-    return NextResponse.json({ error: venueErrorMessage(alreadyExists ? 'VENUE_EXISTS' : error.message) }, { status });
+    const status = error.message.includes('AUTH_REQUIRED') ? 401 : 400;
+    return NextResponse.json({ error: venueErrorMessage(error.message) }, { status });
   }
 
   return NextResponse.json({ venue: data }, { status: 201 });

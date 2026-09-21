@@ -11,19 +11,19 @@ export const metadata = { title: 'Đăng ký chủ sân · Sân Ngon' };
 export default async function Page() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  let venue: OwnerVenue | null = null;
+  let venues: OwnerVenue[] = [];
   let phone: string | null = null;
   let loadFailed = false;
 
   if (user) {
-    const [venues, profile] = await Promise.all([
+    const [venueResult, profile] = await Promise.all([
       supabase.from('venues').select('id, slug, name, address, district, phone, status')
-        .eq('owner_id', user.id).order('created_at').limit(1).maybeSingle(),
+        .eq('owner_id', user.id).order('created_at').order('id'),
       supabase.from('profiles').select('phone').eq('id', user.id).maybeSingle(),
     ]);
-    venue = venues.data as OwnerVenue | null;
+    venues = (venueResult.data ?? []) as OwnerVenue[];
     phone = profile.data?.phone ?? null;
-    loadFailed = Boolean(venues.error);
+    loadFailed = Boolean(venueResult.error);
   }
 
   return (
@@ -38,7 +38,23 @@ export default async function Page() {
           <p className="mt-3 text-ink-secondary">Hãy tải lại trang để kiểm tra hồ sơ trước khi đăng ký.</p>
           <Link href="/dang-ky-san" className="mt-5 inline-block font-semibold text-pitch underline">Thử lại</Link>
         </div>
-      ) : venue ? <VenueStatusSteps venue={venue} /> : (
+      ) : venues.length > 0 ? (
+        <>
+          <header className="mb-8 max-w-2xl">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Dành cho chủ sân</p>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.12] tracking-tight text-pitch sm:text-5xl">Các cụm sân của bạn.</h1>
+            <p className="mt-5 max-w-xl text-[15px] leading-7 text-ink-secondary">Theo dõi hồ sơ đang xác minh và đăng thêm cụm sân bằng cùng một tài khoản.</p>
+          </header>
+          <div className="flex max-w-3xl flex-col gap-8">
+            {venues.map((venue) => <VenueStatusSteps key={venue.id} venue={venue} />)}
+            <section className="rounded-card border border-hairline bg-card p-5 sm:p-8">
+              <h2 className="font-display text-2xl font-bold tracking-tight text-pitch">Đăng thêm cụm sân</h2>
+              <p className="mt-2 text-sm leading-6 text-ink-secondary">Mỗi cụm sân có địa chỉ, lịch và hồ sơ giấy tờ riêng.</p>
+              <div className="mt-7"><RegisterForm defaultPhone={phone} /></div>
+            </section>
+          </div>
+        </>
+      ) : (
         <>
           <header className="mb-10 max-w-2xl">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Đồng hành cùng Sân Ngon</p>
@@ -49,7 +65,7 @@ export default async function Page() {
             {user ? <RegisterForm defaultPhone={phone} /> : (
               <section className="rounded-card border border-hairline bg-card p-6 sm:p-10">
                 <BrandMark size={44} />
-                <h2 className="mt-6 font-display text-2xl font-bold text-pitch">Một tài khoản, quản lý cả cụm sân</h2>
+                <h2 className="mt-6 font-display text-2xl font-bold text-pitch">Một tài khoản, quản lý các cụm sân</h2>
                 <p className="mt-3 text-sm leading-7 text-ink-secondary">Đăng nhập để gửi hồ sơ và theo dõi kết quả xác minh. Tài khoản này cũng sẽ dùng để quản lý lịch và đơn đặt sân.</p>
                 <Link href="/dang-nhap?next=/dang-ky-san" className="mt-7 inline-flex min-h-13 items-center justify-center gap-6 rounded-control bg-pitch px-6 font-semibold text-pitch-ink">Đăng nhập để bắt đầu <span aria-hidden="true">→</span></Link>
                 <p className="mt-4 text-xs text-ink-secondary">Có thể dùng tài khoản Google hoặc email của bạn.</p>
