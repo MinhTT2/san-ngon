@@ -74,6 +74,9 @@ export const VENUE_ERRORS: Record<string, string> = {
   SPORT_DUPLICATE: 'Mỗi môn thể thao chỉ chọn một lần.',
   SPORT_CONFIG_INVALID: 'Kiểm tra lại số sân và giá của từng môn.',
   INVALID_HOURS: 'Giờ đóng cửa phải sau giờ mở cửa.',
+  BUSINESS_LICENSE_REQUIRED: 'Bạn cần tải lên giấy tờ kinh doanh.',
+  BUSINESS_LICENSE_INVALID: 'Giấy tờ kinh doanh không hợp lệ.',
+  BUSINESS_LICENSE_MISSING: 'Không tìm thấy giấy tờ kinh doanh đã tải lên.',
   VENUE_EXISTS: 'Tài khoản này đã đăng một cụm sân rồi.',
   SLUG_COLLISION: 'Tên sân bị trùng quá nhiều. Đổi tên khác giúp bạn nhé.',
 };

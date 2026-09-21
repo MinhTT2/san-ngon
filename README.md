@@ -71,6 +71,9 @@ Khi cập nhật bản này, chạy lại `supabase/03_functions.sql` để cậ
 nhiều môn, xác nhận tay và đánh dấu hoàn cọc. Các hàm dùng `create or replace`
 nên không tạo dữ liệu trùng.
 
+Hồ sơ chủ sân phải kèm giấy tờ kinh doanh. Với database đã chạy trước đó, chạy
+thêm migration `supabase/migrations/20260921000001_business_license.sql`.
+
 Nếu database đã chạy từ trước khi có tự liên kết Telegram, chạy thêm
 `supabase/migrations/20260918000003_telegram_link.sql` một lần.
 

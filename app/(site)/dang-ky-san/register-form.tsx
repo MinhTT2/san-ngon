@@ -53,10 +53,17 @@ export function RegisterForm({ defaultPhone }: { defaultPhone?: string | null })
     };
 
     try {
+      const license = f.get('business_license');
+      if (!(license instanceof File) || license.size === 0) {
+        setError('Bạn cần tải lên giấy tờ kinh doanh.');
+        return;
+      }
+      const payload = new FormData();
+      payload.set('data', JSON.stringify(body));
+      payload.set('business_license', license);
       const res = await fetch('/api/venues', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: payload,
       });
       if (res.status === 401) {
         router.push('/dang-nhap?next=/dang-ky-san');
@@ -153,7 +160,14 @@ export function RegisterForm({ defaultPhone }: { defaultPhone?: string | null })
           </div>
         </Fieldset>
 
-        <Fieldset number="03" legend="Tài khoản nhận tiền">
+        <Fieldset number="03" legend="Giấy tờ kinh doanh">
+          <p className="-mt-1 text-sm leading-6 text-ink-secondary">Tải lên giấy đăng ký hộ kinh doanh/doanh nghiệp hoặc giấy tờ chứng minh quyền khai thác sân. Sân Ngon chỉ mở lịch sau khi kiểm tra giấy tờ.</p>
+          <Field label="Giấy tờ" htmlFor="business_license" required hint="PDF, JPG hoặc PNG · tối đa 10MB.">
+            <input id="business_license" name="business_license" type="file" required accept="application/pdf,image/jpeg,image/png" className="block w-full rounded-control border border-hairline bg-page px-3.5 py-3 text-sm file:mr-4 file:rounded-control file:border-0 file:bg-sunk file:px-3 file:py-2 file:font-semibold" />
+          </Field>
+        </Fieldset>
+
+        <Fieldset number="04" legend="Tài khoản nhận tiền">
           <div className="border-l-2 border-strong bg-sunk px-4 py-3 text-sm leading-6 text-ink-secondary">Thông tin này dùng để đối soát tiền cọc. Bạn có thể bổ sung hoặc thay đổi sau khi Sân Ngon xác minh hồ sơ.</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Ngân hàng" htmlFor="payout_bank" optional>

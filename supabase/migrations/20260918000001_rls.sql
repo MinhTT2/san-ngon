@@ -38,6 +38,23 @@ create policy venues_owner_update_pending on venues for update
   using (owner_id = auth.uid() and status = 'pending')
   with check (owner_id = auth.uid() and status = 'pending');
 
+-- Giấy tờ kinh doanh riêng tư: chủ sân chỉ được tải lên/xem/xóa file của mình.
+insert into storage.buckets (id, name, public)
+values ('venue-documents', 'venue-documents', false)
+on conflict (id) do update set public = false;
+
+drop policy if exists venue_documents_insert on storage.objects;
+create policy venue_documents_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists venue_documents_select on storage.objects;
+create policy venue_documents_select on storage.objects for select to authenticated
+  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists venue_documents_delete on storage.objects;
+create policy venue_documents_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
 -- courts
 drop policy if exists courts_read on courts;
 create policy courts_read on courts for select using (

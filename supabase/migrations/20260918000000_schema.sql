@@ -71,6 +71,8 @@ create table if not exists venues (
   lng                  double precision,
   phone                text,
   description          text,
+  business_license_path text,
+  business_license_name text,
   images               text[] not null default '{}',
   amenities            text[] not null default '{}',
   open_time            time not null default '05:00',

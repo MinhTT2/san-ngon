@@ -300,12 +300,13 @@ $$;
 
 -- Bản cũ nhận một môn duy nhất. Xóa overload cũ để client không thể bỏ qua
 -- kiểm tra nhiều môn bằng cách gọi trực tiếp RPC cũ.
-drop function if exists register_venue(text, text, text, text, text, time, time, sport_type, int, int, text, text);
+drop function if exists register_venue(text, text, text, text, text, time, time, jsonb, text, text);
 
 create or replace function register_venue(
   p_name text, p_address text, p_district text, p_phone text,
   p_description text, p_open_time time, p_close_time time,
   p_sports jsonb,
+  p_business_license_path text, p_business_license_name text,
   p_payout_bank text, p_payout_account text
 ) returns venues
 language plpgsql security definer set search_path = public as $$
@@ -320,6 +321,19 @@ begin
   if coalesce(trim(p_address),'') = '' then raise exception 'ADDRESS_REQUIRED'; end if;
   if coalesce(trim(p_phone),'') = '' then raise exception 'PHONE_REQUIRED'; end if;
   if p_close_time <= p_open_time then raise exception 'INVALID_HOURS'; end if;
+  if coalesce(trim(p_business_license_path), '') = ''
+     or coalesce(trim(p_business_license_name), '') = '' then
+    raise exception 'BUSINESS_LICENSE_REQUIRED';
+  end if;
+  if p_business_license_path !~ ('^' || v_uid::text || '/[0-9a-f-]+\.(pdf|jpg|png)$') then
+    raise exception 'BUSINESS_LICENSE_INVALID';
+  end if;
+  if not exists (
+    select 1 from storage.objects
+    where bucket_id = 'venue-documents' and name = p_business_license_path
+  ) then
+    raise exception 'BUSINESS_LICENSE_MISSING';
+  end if;
 
   if p_sports is null or jsonb_typeof(p_sports) <> 'array'
      or jsonb_array_length(p_sports) < 1 or jsonb_array_length(p_sports) > 6 then
@@ -362,9 +376,11 @@ begin
   end loop;
 
   insert into venues (owner_id, slug, name, address, district, phone, description,
+                      business_license_path, business_license_name,
                       open_time, close_time, status)
   values (v_uid, v_slug, trim(p_name), trim(p_address), trim(p_district), trim(p_phone),
-          nullif(trim(coalesce(p_description,'')),''), p_open_time, p_close_time, 'pending')
+          nullif(trim(coalesce(p_description,'')),''), p_business_license_path,
+          left(trim(p_business_license_name), 255), p_open_time, p_close_time, 'pending')
   returning * into v_venue;
 
   for v_sport in
@@ -518,7 +534,7 @@ create policy venues_owner_update_pending on venues for update
 grant execute on function get_venue_availability(uuid, date) to anon, authenticated;
 grant execute on function create_booking(uuid, timestamptz, timestamptz, text, text, text) to authenticated;
 grant execute on function cancel_booking(text) to authenticated;
-grant execute on function register_venue(text, text, text, text, text, time, time, jsonb, text, text) to authenticated;
+grant execute on function register_venue(text, text, text, text, text, time, time, jsonb, text, text, text, text) to authenticated;
 revoke execute on function confirm_payment_manual(text) from public, anon;
 grant execute on function confirm_payment_manual(text) to authenticated;
 revoke execute on function mark_refund_done(text) from public, anon;

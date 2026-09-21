@@ -7,8 +7,8 @@ import type { OwnerVenue } from '@/lib/types';
  * của tôi lên? Nên trang này trả lời đúng câu đó và không gì khác.
  */
 const STEPS = [
-  ['Đã nhận hồ sơ', 'Chúng tôi có đủ thông tin cụm sân của bạn.'],
-  ['Đang xác minh', 'Một người sẽ gọi vào số bạn để lại, trong một ngày làm việc.'],
+  ['Đã nhận hồ sơ và giấy tờ', 'Chúng tôi đã nhận thông tin cụm sân và giấy tờ kinh doanh của bạn.'],
+  ['Đang xác minh', 'Chúng tôi kiểm tra giấy tờ và gọi vào số bạn để lại nếu cần.'],
   ['Mở lịch', 'Sân xuất hiện ở trang tìm sân, khách bắt đầu đặt được.'],
   ['Nhận đơn đầu tiên', 'Bạn nhận tin báo ngay khi có người chuyển cọc.'],
 ] as const;

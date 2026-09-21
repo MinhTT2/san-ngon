@@ -10,6 +10,12 @@ alter table bookings      enable row level security;
 alter table payments      enable row level security;
 alter table notifications enable row level security;
 
+-- Dùng cho trang quản trị. SECURITY DEFINER tránh vòng lặp khi policy đọc lại profiles.
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
+
 create or replace function owns_court(p_court_id uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (
@@ -22,6 +28,9 @@ $$;
 drop policy if exists profiles_select_own on profiles;
 create policy profiles_select_own on profiles for select using (id = auth.uid());
 
+drop policy if exists profiles_admin_read on profiles;
+create policy profiles_admin_read on profiles for select using (id = auth.uid() or public.is_admin());
+
 drop policy if exists profiles_update_own on profiles;
 create policy profiles_update_own on profiles for update
   using (id = auth.uid()) with check (id = auth.uid());
@@ -29,7 +38,11 @@ create policy profiles_update_own on profiles for update
 -- venues: công khai khi active, chủ sân thấy cả hồ sơ chờ duyệt của mình
 drop policy if exists venues_read on venues;
 create policy venues_read on venues for select
-  using (status = 'active' or owner_id = auth.uid());
+  using (status = 'active' or owner_id = auth.uid() or public.is_admin());
+
+drop policy if exists venues_admin_update on venues;
+create policy venues_admin_update on venues for update
+  using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists venues_owner_write on venues;
 -- Hồ sơ được tạo bởi register_venue() (security definer). Chủ sân chỉ được
@@ -38,11 +51,28 @@ create policy venues_owner_update_pending on venues for update
   using (owner_id = auth.uid() and status = 'pending')
   with check (owner_id = auth.uid() and status = 'pending');
 
+-- Giấy tờ kinh doanh riêng tư: chủ sân chỉ được tải lên/xem/xóa file của mình.
+insert into storage.buckets (id, name, public)
+values ('venue-documents', 'venue-documents', false)
+on conflict (id) do update set public = false;
+
+drop policy if exists venue_documents_insert on storage.objects;
+create policy venue_documents_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists venue_documents_select on storage.objects;
+create policy venue_documents_select on storage.objects for select to authenticated
+  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists venue_documents_delete on storage.objects;
+create policy venue_documents_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'venue-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
 -- courts
 drop policy if exists courts_read on courts;
 create policy courts_read on courts for select using (
   exists (select 1 from venues v where v.id = venue_id
-          and (v.status = 'active' or v.owner_id = auth.uid()))
+          and (v.status = 'active' or v.owner_id = auth.uid() or public.is_admin()))
 );
 
 drop policy if exists courts_owner_write on courts;
@@ -62,7 +92,7 @@ create policy price_rules_owner_write on price_rules for all
 drop policy if exists bookings_update_owner on bookings;
 drop policy if exists bookings_select on bookings;
 create policy bookings_select on bookings for select
-  using (user_id = auth.uid() or owns_court(court_id));
+  using (user_id = auth.uid() or owns_court(court_id) or public.is_admin());
 
 drop policy if exists bookings_insert_own on bookings;
 create policy bookings_insert_own on bookings for insert
