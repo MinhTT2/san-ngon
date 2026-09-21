@@ -55,7 +55,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
               Trang đặt sân <span aria-hidden="true" className="ml-2">↗</span>
             </Link>
           ) : isAdmin ? (
-            <Link href="/admin" className="hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink lg:flex">
+            <Link href="/admin" className="hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink md:flex">
               Quản trị <span aria-hidden="true" className="ml-2">↗</span>
             </Link>
           ) : isOwner ? (
