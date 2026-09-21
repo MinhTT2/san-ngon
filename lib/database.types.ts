@@ -589,6 +589,7 @@ export type Database = {
         Returns: Database["public"]["Tables"]["profiles"]["Row"]
         SetofOptions: { from: "*"; to: "profiles"; isOneToOne: true; isSetofReturn: false }
       }
+      get_owner_email: { Args: { p_owner_id: string }; Returns: string | null }
       review_owner: { Args: { p_owner_id: string; p_status: string }; Returns: undefined }
       slugify: { Args: { p_text: string }; Returns: string }
       unaccent_vi: { Args: { p_text: string }; Returns: string }
@@ -606,6 +607,7 @@ export type Database = {
         | "deposit_paid"
         | "expiring_soon"
         | "rescheduled"
+        | "owner_application"
         | "venue_approved"
       refund_status: "none" | "needed" | "done"
       sport_type:

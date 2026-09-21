@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { ownerApplicationEmail, sendEmail } from '@/lib/notify';
 
 const Body = z.object({ status: z.enum(['active', 'rejected']) });
 
@@ -19,5 +20,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const key = Object.keys(messages).find((item) => error.message.includes(item));
     return NextResponse.json({ error: key ? messages[key] : 'Không lưu được kết quả duyệt. Hãy thử lại.' }, { status: key ? 409 : 500 });
   }
-  return NextResponse.json({ ok: true });
+  const { data: ownerEmail, error: emailLookupError } = await supabase.rpc('get_owner_email', { p_owner_id: id });
+  if (emailLookupError) console.error('[owner-review] không lấy được email chủ sân', emailLookupError.message);
+  let emailSent = false;
+  if (ownerEmail) {
+    const message = ownerApplicationEmail(parsed.data.status);
+    const email = await sendEmail(ownerEmail, message.subject, message.html);
+    emailSent = email.ok;
+    if (!email.ok && email.reason !== 'NOT_CONFIGURED') console.error('[owner-review] không gửi được email', email.reason);
+  }
+  return NextResponse.json({ ok: true, emailSent });
 }
