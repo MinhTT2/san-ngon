@@ -12,6 +12,8 @@ if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
 if (missing.length) console.error(`Chưa chạy được app: ${missing.join(', ')}`); else console.log('Đủ cấu hình Supabase cho app.');
 const missingPayment = payment.filter((name) => !present(name));
 if (missingPayment.length) console.log(`Thanh toán chưa sẵn sàng: ${missingPayment.join(', ')}`);
-if (!present('TELEGRAM_BOT_TOKEN')) console.log('Telegram chưa cấu hình (không bắt buộc).');
+const telegram = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOT_USERNAME', 'TELEGRAM_WEBHOOK_SECRET'];
+const missingTelegram = telegram.filter((name) => !present(name));
+if (missingTelegram.length) console.log(`Telegram chưa sẵn sàng: ${missingTelegram.join(', ')}`);
 console.log('NEXT_PUBLIC_SITE_URL: production phải dùng domain thật.');
 process.exitCode = missing.length ? 1 : 0;
