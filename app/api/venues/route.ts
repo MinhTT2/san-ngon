@@ -14,10 +14,10 @@ const Body = z.object({
   open_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   close_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   sports: z.array(z.object({
-    sport: z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball', 'tennis']),
+    sport: z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball']),
     court_count: z.number().int().min(1).max(20),
     price_per_hour: z.number().int().min(1000).max(10_000_000),
-  })).min(1).max(6).superRefine((sports, ctx) => {
+  })).min(1).max(5).superRefine((sports, ctx) => {
     if (new Set(sports.map((item) => item.sport)).size !== sports.length) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Mỗi môn thể thao chỉ chọn một lần.' });
     if (sports.reduce((total, item) => total + item.court_count, 0) > 20) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tổng số sân con không được quá 20 sân.' });
   }),
