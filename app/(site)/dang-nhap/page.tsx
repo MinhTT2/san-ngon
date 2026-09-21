@@ -16,7 +16,14 @@ export const metadata: Metadata = {
  * tới đây đang bị chặn giữa luồng đặt sân, nên cột trái phải trả lời ngay
  * "đăng nhập để làm gì" chứ không bỏ họ nhìn vào một ô email trống.
  */
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+  const signupHref = next ? `/dang-ky?next=${encodeURIComponent(next)}` : '/dang-ky';
+
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16 lg:py-16">
       <div className="grid overflow-hidden rounded-[20px] border border-hairline bg-card lg:grid-cols-[1.05fr_1fr]">
@@ -38,7 +45,7 @@ export default function Page() {
 
           <p className="border-t border-hairline pt-5 text-[13px] leading-relaxed text-ink-secondary">
             Chưa có tài khoản?{' '}
-            <Link href="/dang-ky" className="font-semibold text-pitch underline underline-offset-2">
+            <Link href={signupHref} className="font-semibold text-pitch underline underline-offset-2">
               Đăng ký bằng email
             </Link>
             <br />

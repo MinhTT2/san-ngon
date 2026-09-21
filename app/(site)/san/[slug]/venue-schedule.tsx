@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SlotPickerMobile } from '@/components/slot-picker-mobile';
 import { SlotPickerDesktop } from '@/components/slot-picker-desktop';
 import { BookingForm } from '@/components/booking-form';
@@ -17,6 +17,7 @@ export function VenueSchedule({
   horizonDays,
   defaultName,
   defaultPhone,
+  isAuthenticated,
   initialDate,
 }: {
   venueId: string;
@@ -24,12 +25,31 @@ export function VenueSchedule({
   horizonDays: number;
   defaultName?: string | null;
   defaultPhone?: string | null;
+  isAuthenticated: boolean;
   /** 'YYYY-MM-DD' mang sang từ ô ngày ở trang chủ. */
   initialDate?: string;
 }) {
   const [date, setDate] = useState(() => parseDayParam(initialDate, horizonDays));
   const [selection, setSelection] = useState<Selection | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [draftContact, setDraftContact] = useState<{ name?: string; phone?: string; note?: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('san-ngon:booking-draft');
+      if (!raw) return;
+      const draft = JSON.parse(raw) as {
+        selection?: Selection; name?: string; phone?: string; note?: string; savedAt?: number;
+      };
+      sessionStorage.removeItem('san-ngon:booking-draft');
+      if (!draft.selection || !draft.savedAt || Date.now() - draft.savedAt > 15 * 60_000) return;
+      setDraftContact({ name: draft.name, phone: draft.phone, note: draft.note });
+      setSelection(draft.selection);
+      setConfirming(true);
+    } catch {
+      sessionStorage.removeItem('san-ngon:booking-draft');
+    }
+  }, []);
 
   const days = Array.from({ length: Math.min(horizonDays, 14) }, (_, i) => {
     const d = new Date();
@@ -47,8 +67,10 @@ export function VenueSchedule({
         <BookingForm
           selection={selection}
           depositPct={depositPct}
-          defaultName={defaultName}
-          defaultPhone={defaultPhone}
+          defaultName={draftContact?.name ?? defaultName}
+          defaultPhone={draftContact?.phone ?? defaultPhone}
+          defaultNote={draftContact?.note}
+          isAuthenticated={isAuthenticated}
           onCancel={() => setConfirming(false)}
         />
       </div>

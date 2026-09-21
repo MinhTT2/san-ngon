@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -29,9 +29,11 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   const supabase = createClient();
   const params = useSearchParams();
   const next = params.get('next') ?? '/';
+  const hasBookingDraft = next.includes('/san/');
 
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState<'google' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(params.get('loi') ? CALLBACK_ERROR : null);
@@ -43,6 +45,21 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
     process.env.NEXT_PUBLIC_SITE_URL ??
     (typeof window === 'undefined' ? '' : window.location.origin);
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
+  // Khi người dùng vừa chọn giờ rồi mới đăng nhập, điền lại thông tin họ đã
+  // nhập ở form đặt sân để không bắt họ gõ lần hai.
+  useEffect(() => {
+    if (!signup) return;
+    try {
+      const raw = sessionStorage.getItem('san-ngon:booking-draft');
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { name?: string; phone?: string };
+      if (draft.name) setName(draft.name);
+      if (draft.phone) setPhone(draft.phone);
+    } catch {
+      // Draft chỉ là tiện ích UX, hỏng thì form vẫn dùng bình thường.
+    }
+  }, [signup]);
 
   /**
    * signInWithOAuth KHÔNG gọi mạng: nó dựng URL ở phía client rồi gán thẳng
@@ -94,7 +111,12 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
       options: {
         shouldCreateUser: signup,
         emailRedirectTo: redirectTo,
-        ...(signup && name.trim() ? { data: { full_name: name.trim() } } : {}),
+        ...(signup ? {
+          data: {
+            ...(name.trim() ? { full_name: name.trim() } : {}),
+            ...(phone.trim() ? { phone: phone.trim() } : {}),
+          },
+        } : {}),
       },
     });
     setBusy(null);
@@ -154,17 +176,36 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
       <form onSubmit={otp} className="flex flex-col gap-2.5">
         {signup && (
           <>
-            <label htmlFor="name" className="text-sm font-semibold">Tên của bạn</label>
-            <input
-              id="name"
-              type="text"
-              required
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nguyễn Văn A"
-              className="h-13 rounded-control border border-hairline bg-page px-4 text-base focus:border-pitch focus:outline-none"
-            />
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
+              <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold">
+                Tên của bạn
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nguyễn Văn A"
+                  className="h-13 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold">
+                Số điện thoại
+                <input
+                  id="phone"
+                  type="tel"
+                  required
+                  inputMode="numeric"
+                  pattern="0\d{9}"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0912 345 678"
+                  className="h-13 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
+                />
+              </label>
+            </div>
           </>
         )}
         <label htmlFor="email" className="text-sm font-semibold">Email</label>
@@ -183,10 +224,10 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
           disabled={busy !== null}
           className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60"
         >
-          {busy === 'email' ? 'Đang gửi…' : signup ? 'Tạo tài khoản bằng email' : 'Gửi link đăng nhập'}
+          {busy === 'email' ? 'Đang gửi…' : signup ? 'Nhận link xác nhận' : hasBookingDraft ? 'Tiếp tục đặt sân' : 'Gửi link đăng nhập'}
         </button>
         <p className="text-[13px] leading-relaxed text-ink-secondary">
-          Không cần mật khẩu. Chúng tôi gửi một link dùng một lần qua email.
+          Không cần mật khẩu. Chúng tôi gửi một link dùng một lần qua email. Số điện thoại chỉ để chủ sân liên hệ khi cần.
         </p>
       </form>
     </div>

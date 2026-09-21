@@ -74,6 +74,7 @@ export default async function Page({
           horizonDays={venue.booking_horizon_days}
           defaultName={profile?.full_name}
           defaultPhone={profile?.phone}
+          isAuthenticated={!!user}
         />
       </div>
     </main>
