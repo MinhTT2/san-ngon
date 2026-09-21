@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-type Bank = { code: string; name: string; shortName: string };
+type Bank = { code: string; name: string; shortName: string; logo?: string };
 
 const FALLBACK_BANKS: Bank[] = [
   { code: 'VCB', name: 'Ngân hàng TMCP Ngoại thương Việt Nam', shortName: 'Vietcombank' },
@@ -19,10 +19,10 @@ export async function GET() {
   try {
     const response = await fetch('https://api.vietqr.io/v2/banks', { next: { revalidate: 86400 } });
     if (!response.ok) throw new Error('BANKS_FETCH_FAILED');
-    const json = await response.json() as { data?: Array<{ code?: string; name?: string; shortName?: string; short_name?: string; transferSupported?: number }> };
+    const json = await response.json() as { data?: Array<{ code?: string; name?: string; shortName?: string; short_name?: string; logo?: string; transferSupported?: number }> };
     const banks = (json.data ?? [])
       .filter((bank) => bank.code && bank.name && bank.transferSupported !== 0)
-      .map((bank) => ({ code: bank.code!, name: bank.name!, shortName: bank.shortName ?? bank.short_name ?? bank.name! }))
+      .map((bank) => ({ code: bank.code!, name: bank.name!, shortName: bank.shortName ?? bank.short_name ?? bank.name!, logo: bank.logo }))
       .sort((a, b) => a.shortName.localeCompare(b.shortName, 'vi'));
     if (banks.length) return NextResponse.json({ banks });
   } catch {

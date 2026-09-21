@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'qr.sepay.vn' },
+      { protocol: 'https', hostname: 'cdn.vietqr.io' },
     ],
   },
 };
