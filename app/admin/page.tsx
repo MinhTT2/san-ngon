@@ -67,7 +67,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {view === 'overview' && (
         <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
       )}
-      {view === 'owners' && <OwnerTable owners={pendingOwners} />}
+      {view === 'owners' && <OwnerTable owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
       {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
       {view === 'users' && <UserTable users={users} />}
@@ -129,29 +129,35 @@ function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
 }
 
 function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
+  const sortedOwners = [...owners].sort((a, b) => {
+    if (a.owner_application_status === 'pending' && b.owner_application_status !== 'pending') return -1;
+    if (a.owner_application_status !== 'pending' && b.owner_application_status === 'pending') return 1;
+    return (b.created_at ?? '').localeCompare(a.created_at ?? '');
+  });
   return (
     <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-hairline px-5 py-4">
         <div>
-          <h2 className="font-semibold">Chủ sân cần duyệt</h2>
-          <p className="mt-1 text-xs text-ink-secondary">Kiểm tra thông tin đại diện, giấy tờ và tài khoản nhận cọc trước khi duyệt.</p>
+          <h2 className="font-semibold">Hồ sơ chủ sân</h2>
+          <p className="mt-1 text-xs text-ink-secondary">Xem hồ sơ đang chờ, đã duyệt và bị từ chối.</p>
         </div>
-        <span className="rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-semibold text-peak-ink">{owners.length} hồ sơ chờ xử lý</span>
+        <span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-semibold text-ink-secondary">{owners.length} hồ sơ</span>
       </div>
       {owners.length === 0 ? (
-        <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ chủ sân nào đang chờ duyệt.</p>
+        <p className="p-10 text-center text-sm text-ink-secondary">Chưa có hồ sơ chủ sân nào.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
-            <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Tài khoản nhận cọc</th><th className="px-5 py-3 font-medium">Giấy tờ</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3" /></tr></thead>
+            <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Tài khoản nhận cọc</th><th className="px-5 py-3 font-medium">Giấy tờ</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
             <tbody>
-              {owners.map((owner) => (
+              {sortedOwners.map((owner) => (
                 <tr key={owner.id} className="border-b border-hairline last:border-0 align-top">
                   <td className="px-5 py-4"><p className="font-semibold">{owner.full_name ?? 'Chưa có tên'}</p><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></td>
                   <td className="px-5 py-4"><p>{owner.payout_bank ?? 'Chưa có ngân hàng'}</p><p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></td>
                   <td className="px-5 py-4">{owner.business_license_path ? <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="font-semibold text-pitch underline underline-offset-4">{owner.business_license_name ?? 'Mở giấy tờ'} ↗</a> : <span className="text-ink-secondary">Chưa có</span>}</td>
                   <td className="px-5 py-4 text-ink-secondary">{owner.created_at ? dayLabel(new Date(owner.created_at)) : '—'}</td>
-                  <td className="px-5 py-4 text-right"><AdminOwnerAction ownerId={owner.id} /></td>
+                  <td className="px-5 py-4"><OwnerApplicationStatus status={owner.owner_application_status} /></td>
+                  <td className="px-5 py-4 text-right">{owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}</td>
                 </tr>
               ))}
             </tbody>
@@ -160,6 +166,12 @@ function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
       )}
     </section>
   );
+}
+
+function OwnerApplicationStatus({ status }: { status?: string | null }) {
+  const labels: Record<string, string> = { pending: 'Chờ duyệt', active: 'Đã duyệt', rejected: 'Bị từ chối' };
+  const styles: Record<string, string> = { pending: 'bg-peak-fill text-peak-ink', active: 'bg-free-fill text-pitch', rejected: 'bg-sunk text-ink-secondary' };
+  return <span className={`rounded-pill px-2.5 py-1 text-xs font-medium ${styles[status ?? ''] ?? 'bg-sunk text-ink-secondary'}`}>{labels[status ?? ''] ?? 'Chưa có trạng thái'}</span>;
 }
 
 function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProfile }) {
