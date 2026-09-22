@@ -6,6 +6,8 @@ import { hhmm, vnd, ymd, dayLabel } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
 import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booking-actions';
 import { TelegramConnect } from '@/components/telegram-connect';
+import { OwnerStatsPanel, PeriodLinks } from '@/components/stats-panels';
+import { parseOwnerStats } from '@/lib/stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,12 +18,13 @@ export const dynamic = 'force-dynamic';
  *
  * Lọc đơn theo cụm sân đang chọn; RLS còn cho đọc các đơn tự đặt ở sân khác.
  */
-export default async function Page({ searchParams }: { searchParams: Promise<{ venue?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ venue?: string; period?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/chu-san');
 
-  const { venue: selectedVenueId } = await searchParams;
+  const { venue: selectedVenueId, period: rawPeriod } = await searchParams;
+  const period = rawPeriod === '7' || rawPeriod === '90' ? Number(rawPeriod) : 30;
   const [{ data: venues, error: venuesError }, { data: profile }] = await Promise.all([
     supabase.from('venues').select('id, name, status').eq('owner_id', user.id).order('created_at').order('id'),
     supabase.from('profiles').select('telegram_chat_id').eq('id', user.id).maybeSingle(),
@@ -30,6 +33,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   if (venuesError) throw new Error('Không tải được danh sách sân. Vui lòng thử lại.');
   if (!venues?.length) return <NoVenue />;
   const venue = venues.find((item) => item.id === selectedVenueId) ?? venues[0];
+
+  const statsTo = new Date();
+  const statsFrom = new Date();
+  statsFrom.setDate(statsFrom.getDate() - period + 1);
+  const { data: statsData } = await supabase.rpc('get_owner_stats' as never, {
+    p_venue_id: venue.id,
+    p_from: ymd(statsFrom),
+    p_to: ymd(statsTo),
+  } as never);
+  const stats = parseOwnerStats(statsData);
 
   const from = new Date();
   const to = new Date();
@@ -104,6 +117,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         <Stat value={String(today.length - paidToday.length)} label="Đang chờ chuyển khoản" />
         <Stat value={String(refundRows.length)} label="Cần hoàn cọc" tone={refundRows.length ? 'danger' : undefined} />
       </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-secondary">Theo dõi doanh thu và công suất để biết sân nào cần lấp lịch.</p>
+        <PeriodLinks path={`/chu-san?venue=${venue.id}`} period={period} />
+      </div>
+      <OwnerStatsPanel stats={stats} />
 
       <TelegramConnect connected={Boolean(profile?.telegram_chat_id)} />
 

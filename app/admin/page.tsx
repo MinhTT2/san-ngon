@@ -5,16 +5,18 @@ import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
 import { VENUE_STATUS_LABELS } from '@/lib/constants';
-import { dayLabel, hhmm, vnd } from '@/lib/format';
+import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import type { BookingStatus, VenueStatus } from '@/lib/types';
 import { StatusBadge } from '@/components/status-badge';
+import { AdminStatsPanel, PeriodLinks } from '@/components/stats-panels';
+import { parseAdminStats } from '@/lib/stats';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Quản trị · Sân Ngon' };
 
 type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string; period?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/admin');
@@ -22,12 +24,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
   if (profile?.role !== 'admin') redirect('/');
 
-  const view = parseView((await searchParams).view);
-  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }] = await Promise.all([
+  const params = await searchParams;
+  const view = parseView(params.view);
+  const period = params.period === '7' || params.period === '90' ? Number(params.period) : 30;
+  const statsTo = new Date();
+  const statsFrom = new Date();
+  statsFrom.setDate(statsFrom.getDate() - period + 1);
+  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }, { data: statsData }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    supabase.rpc('get_admin_stats' as never, { p_from: ymd(statsFrom), p_to: ymd(statsTo) } as never),
   ]);
   if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
 
@@ -35,6 +43,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const pendingOwners = (ownerProfiles ?? []).filter((profile) => profile.owner_application_status === 'pending');
   const activeVenues = (venues ?? []).filter((venue) => venue.status === 'active');
   const profileById = new Map((ownerProfiles ?? []).map((profile) => [profile.id, profile]));
+  const stats = parseAdminStats(statsData);
 
   const bookings = view === 'bookings'
     ? (await supabase
@@ -63,6 +72,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <AdminStat icon={CalendarCheck} value={String(bookingCount ?? 0)} label="Tổng đơn đặt sân" />
         <AdminStat icon={Users} value={String(userCount ?? 0)} label="Tài khoản" />
       </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-secondary">Một góc nhìn cho quyết định duyệt hồ sơ, hỗ trợ chủ sân và tăng giao dịch.</p>
+        <PeriodLinks path="/admin" period={period} />
+      </div>
+      {view === 'overview' && <AdminStatsPanel stats={stats} />}
 
       {view === 'overview' && (
         <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
