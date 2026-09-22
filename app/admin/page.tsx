@@ -3,9 +3,9 @@ import { redirect } from 'next/navigation';
 import { Clock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { VenueReview } from '@/components/admin/venue-review';
-import { StatTile } from '@/components/charts/stat-tile';
-import { RevenueArea, type RevenuePoint } from '@/components/charts/revenue-area';
 import { OccupancyHeatmap, type OccupancyCell } from '@/components/charts/occupancy-heatmap';
+import { AdminStatsPanel, PeriodLinks } from '@/components/stats-panels';
+import { parseAdminStats } from '@/lib/stats';
 import { OwnerReview } from '@/components/admin/owner-review';
 import { UserRowActions } from '@/components/admin/user-row-actions';
 import { ROLE_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
@@ -19,13 +19,7 @@ export const metadata = { title: 'Quản trị · Sân Ngon' };
 
 type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
-type Summary = {
-  doanh_thu: number; doanh_thu_truoc: number;
-  so_don: number; so_don_truoc: number;
-  so_don_huy: number; ty_le_lap_day: number;
-};
-
-type Search = { view?: string; q?: string; vai_tro?: string; trang_thai?: string; trang?: string; ho_so?: string; san?: string };
+type Search = { view?: string; period?: string; q?: string; vai_tro?: string; trang_thai?: string; trang?: string; ho_so?: string; san?: string };
 
 const USERS_PER_PAGE = 25;
 
@@ -40,20 +34,21 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const view = parseView(sp.view);
 
-  // Ba lượt gọi song song với phần còn lại của trang; mọi phép tính nằm trong
-  // Postgres, Node chỉ vẽ lại.
-  const [summary, revenue, occupancy] = await Promise.all([
-    supabase.rpc('stats_summary', { p_venue_id: null, p_days: 30 }).single(),
-    supabase.rpc('stats_revenue_daily', { p_venue_id: null, p_days: 30 }),
+  // Bảng thống kê chính do get_admin_stats() lo (doanh thu, lấp đầy, xếp hạng).
+  // stats_occupancy_grid() chỉ bù đúng phần nó không có: lưới giờ × thứ.
+  const period = sp.period === '7' || sp.period === '90' ? Number(sp.period) : 30;
+  const statsTo = new Date();
+  const statsFrom = new Date();
+  statsFrom.setDate(statsFrom.getDate() - period + 1);
+  const [statsRes, occupancy] = await Promise.all([
+    supabase.rpc('get_admin_stats', { p_from: ymd(statsFrom), p_to: ymd(statsTo) }),
     supabase.rpc('stats_occupancy_grid', { p_venue_id: null, p_days: 28 }),
   ]);
-  const tongQuan = summary.data as Summary | null;
-  const doanhThu = (revenue.data ?? []) as RevenuePoint[];
+  const stats = parseAdminStats(statsRes.data);
   const luoiLapDay = (occupancy.data ?? []) as OccupancyCell[];
-  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: userCount }] = await Promise.all([
+  const [{ data: venues, error: venuesError }, { data: ownerProfiles }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path, hidden_reason, reviewed_at').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
   if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
 
@@ -101,38 +96,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          label="Tiền cọc 30 ngày"
-          value={trieu(tongQuan?.doanh_thu ?? 0)}
-          unit="triệu"
-          delta={tyLe(tongQuan?.doanh_thu, tongQuan?.doanh_thu_truoc)}
-          spark={doanhThu.map((d) => d.doanh_thu)}
-        />
-        <StatTile
-          label="Đơn đã thanh toán 30 ngày"
-          value={String(tongQuan?.so_don ?? 0)}
-          delta={tyLe(tongQuan?.so_don, tongQuan?.so_don_truoc)}
-          spark={doanhThu.map((d) => d.so_don)}
-        />
-        <StatTile
-          label="Lấp đầy trung bình 28 ngày"
-          value={`${Math.round((tongQuan?.ty_le_lap_day ?? 0) * 100)}%`}
-          deltaLabel={`${tongQuan?.so_don_huy ?? 0} đơn huỷ hoặc không đến`}
-          delta={null}
-        />
-        <StatTile
-          label="Hồ sơ chủ sân chờ duyệt"
-          value={String(pendingOwners.length)}
-          tone={pendingOwners.length ? 'peak' : undefined}
-          deltaLabel={`${activeVenues.length} cụm sân đang chạy · ${userCount ?? 0} tài khoản`}
-          delta={null}
-        />
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-secondary">Một góc nhìn cho quyết định duyệt hồ sơ, hỗ trợ chủ sân và tăng giao dịch.</p>
+        <PeriodLinks path="/admin" period={period} />
       </div>
+      {view === 'overview' && <AdminStatsPanel stats={stats} />}
 
       {view === 'overview' && (
         <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length}
-          profileById={profileById} doanhThu={doanhThu} luoiLapDay={luoiLapDay} />
+          profileById={profileById} luoiLapDay={luoiLapDay} />
       )}
       {view === 'owners' && (
         <OwnerTable
@@ -153,7 +125,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   );
 }
 
-function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById, doanhThu, luoiLapDay }: { pendingOwners: OwnerProfile[]; pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile>; doanhThu: RevenuePoint[]; luoiLapDay: OccupancyCell[] }) {
+function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById, luoiLapDay }: { pendingOwners: OwnerProfile[]; pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile>; luoiLapDay: OccupancyCell[] }) {
   // Hồ sơ chờ lâu nhất lên đầu — đó là cái sắp mất khách.
   const owners = [...pendingOwners].sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''));
   const oldest = owners[0]?.created_at;
@@ -161,15 +133,8 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById,
   return (
     <div className="mt-6 flex flex-col gap-6">
       {/* Lưới lấp đầy cần cả 18 cột giờ nên ăn trọn bề ngang; nhét vào nửa trang
-          là cắt mất đúng khung giờ vàng. */}
-      <section className="rounded-card border border-hairline bg-card p-5 sm:p-6">
-        <h2 className="font-semibold">Tiền cọc về tài khoản</h2>
-        <p className="mt-1 text-xs text-ink-secondary">30 ngày gần nhất, toàn hệ thống.</p>
-        <div className="mt-5">
-          <RevenueArea data={doanhThu} />
-        </div>
-      </section>
-
+          là cắt mất đúng khung giờ vàng. AdminStatsPanel đã lo doanh thu và xếp
+          hạng, đây chỉ bù đúng phần nó không có. */}
       <section className="rounded-card border border-hairline bg-card p-5 sm:p-6">
         <h2 className="font-semibold">Khung giờ nào đang kín</h2>
         <p className="mt-1 text-xs text-ink-secondary">Tỉ lệ lấp đầy 28 ngày gần nhất, theo giờ và thứ.</p>
@@ -705,17 +670,6 @@ function UserPageLink({ filter, to, disabled, children }: {
       {children}
     </Link>
   );
-}
-
-/** 34.590.000 → "34,6" — thẻ số liệu đọc bằng mắt, không phải để đối soát. */
-function trieu(v: number) {
-  return (v / 1_000_000).toFixed(1).replace('.', ',');
-}
-
-/** Tỉ lệ thay đổi so với kỳ trước; kỳ trước bằng 0 thì không có gì để so. */
-function tyLe(now?: number, before?: number) {
-  if (!before || before === 0 || now === undefined) return null;
-  return (now - before) / before;
 }
 
 /** Giá trị lạ trên URL thì coi như không lọc, đừng đẩy thẳng xuống SQL. */

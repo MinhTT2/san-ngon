@@ -6,17 +6,11 @@ import { hhmm, vnd, ymd, dayLabel } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
 import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booking-actions';
 import { TelegramConnect } from '@/components/telegram-connect';
-import { StatTile } from '@/components/charts/stat-tile';
-import { RevenueArea, type RevenuePoint } from '@/components/charts/revenue-area';
 import { OccupancyHeatmap, type OccupancyCell } from '@/components/charts/occupancy-heatmap';
+import { OwnerStatsPanel, PeriodLinks } from '@/components/stats-panels';
+import { parseOwnerStats } from '@/lib/stats';
 
 export const dynamic = 'force-dynamic';
-
-type OwnerSummary = {
-  doanh_thu: number; doanh_thu_truoc: number;
-  so_don: number; so_don_truoc: number;
-  so_don_huy: number; ty_le_lap_day: number;
-};
 
 /**
  * Dashboard chủ sân. Trên desktop là lưới cả tuần — chủ sân cần thấy tuần tới
@@ -25,12 +19,13 @@ type OwnerSummary = {
  *
  * Lọc đơn theo cụm sân đang chọn; RLS còn cho đọc các đơn tự đặt ở sân khác.
  */
-export default async function Page({ searchParams }: { searchParams: Promise<{ venue?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ venue?: string; period?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/chu-san');
 
-  const { venue: selectedVenueId } = await searchParams;
+  const { venue: selectedVenueId, period: rawPeriod } = await searchParams;
+  const period = rawPeriod === '7' || rawPeriod === '90' ? Number(rawPeriod) : 30;
   const [{ data: venues, error: venuesError }, { data: profile }] = await Promise.all([
     supabase.from('venues').select('id, name, status').eq('owner_id', user.id).order('created_at').order('id'),
     supabase.from('profiles').select('telegram_chat_id').eq('id', user.id).maybeSingle(),
@@ -39,6 +34,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   if (venuesError) throw new Error('Không tải được danh sách sân. Vui lòng thử lại.');
   if (!venues?.length) return <NoVenue />;
   const venue = venues.find((item) => item.id === selectedVenueId) ?? venues[0];
+
+  const statsTo = new Date();
+  const statsFrom = new Date();
+  statsFrom.setDate(statsFrom.getDate() - period + 1);
+  const { data: statsData } = await supabase.rpc('get_owner_stats', {
+    p_venue_id: venue.id,
+    p_from: ymd(statsFrom),
+    p_to: ymd(statsTo),
+  });
+  const stats = parseOwnerStats(statsData);
 
   const from = new Date();
   const to = new Date();
@@ -52,16 +57,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     .lte('starts_at', `${ymd(to)}T23:59:59+07:00`)
     .order('starts_at');
 
-  // Số liệu của riêng cụm sân đang chọn. stats_can_read() trong Postgres tự
-  // chặn nếu ai đó đổi ?venue= sang cụm sân của người khác.
-  const [tomTat, doanhThuNgay, luoiLapDay] = await Promise.all([
-    supabase.rpc('stats_summary', { p_venue_id: venue.id, p_days: 30 }).single(),
-    supabase.rpc('stats_revenue_daily', { p_venue_id: venue.id, p_days: 30 }),
-    supabase.rpc('stats_occupancy_grid', { p_venue_id: venue.id, p_days: 28 }),
-  ]);
-  const tongQuan = tomTat.data as OwnerSummary | null;
-  const doanhThu = (doanhThuNgay.data ?? []) as RevenuePoint[];
-  const luoi = (luoiLapDay.data ?? []) as OccupancyCell[];
+  // get_owner_stats() lo doanh thu, lấp đầy và xếp hạng sân con.
+  // stats_occupancy_grid() chỉ bù đúng phần nó không có: lưới giờ × thứ.
+  // stats_can_read() trong Postgres tự chặn nếu đổi ?venue= sang sân người khác.
+  const { data: luoiData } = await supabase.rpc('stats_occupancy_grid', { p_venue_id: venue.id, p_days: 28 });
+  const luoi = (luoiData ?? []) as OccupancyCell[];
 
   const { data: refunds } = await supabase
     .from('bookings')
@@ -87,8 +87,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   });
 
   const today = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(new Date()));
-  const paidToday = today.filter((b) => b.status === 'confirmed');
-
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -118,58 +116,27 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </p>
       )}
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          label="Tiền cọc 30 ngày"
-          value={trieu(tongQuan?.doanh_thu ?? 0)}
-          unit="triệu"
-          delta={tyLe(tongQuan?.doanh_thu, tongQuan?.doanh_thu_truoc)}
-          spark={doanhThu.map((d) => d.doanh_thu)}
-        />
-        <StatTile
-          label="Lấp đầy trung bình 28 ngày"
-          value={`${Math.round((tongQuan?.ty_le_lap_day ?? 0) * 100)}%`}
-          delta={null}
-          deltaLabel={`${tongQuan?.so_don_huy ?? 0} đơn huỷ hoặc không đến`}
-        />
-        <StatTile
-          label="Hôm nay"
-          value={String(paidToday.length)}
-          unit="đơn đã chốt"
-          delta={null}
-          deltaLabel={`${vnd(paidToday.reduce((sum, b) => sum + b.deposit_amount, 0))} cọc · ${today.length - paidToday.length} đơn đang chờ chuyển khoản`}
-        />
-        <StatTile
-          label="Cần hoàn cọc"
-          value={String(refundRows.length)}
-          delta={null}
-          tone={refundRows.length ? 'peak' : undefined}
-          deltaLabel={refundRows.length ? 'Khách huỷ sớm, phải trả lại cọc' : 'Không có khoản nào phải trả lại'}
-        />
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-secondary">Đơn đã thanh toán mới tính vào doanh thu.</p>
+        <PeriodLinks path="/chu-san" period={period} />
       </div>
+      <OwnerStatsPanel stats={stats} />
 
-      <div className="mt-6 flex flex-col gap-5">
-        <section className="rounded-card border border-hairline bg-card p-5 sm:p-6">
-          <h2 className="font-semibold">Tiền cọc về tài khoản</h2>
-          <p className="mt-1 text-xs text-ink-secondary">30 ngày gần nhất của {venue.name}.</p>
-          <div className="mt-5"><RevenueArea data={doanhThu} height={190} /></div>
-        </section>
-
-        {/* Lưới cần cả 18 cột giờ; nhét vào nửa trang là cắt mất giờ vàng. */}
-        <section className="rounded-card border border-hairline bg-card p-5 sm:p-6">
-          <h2 className="font-semibold">Khung nào đang ế</h2>
-          <p className="mt-1 text-xs text-ink-secondary">
-            Ô nhạt là khung còn trống đều —{' '}
-            <Link href="/chu-san/quan-ly" className="font-medium text-pitch underline underline-offset-2">
-              hạ giá khung đó
-            </Link>{' '}
-            thường kéo được khách.
-          </p>
-          <div className="mt-5">
-            <OccupancyHeatmap data={luoi} subtitle="Tính trên số lượt có thể bán của chính cụm sân này." />
-          </div>
-        </section>
-      </div>
+      {/* Lưới giờ × thứ là thứ OwnerStatsPanel không có, và là thứ trả lời thẳng
+          câu "khung nào ế mà hạ giá". Cần cả 18 cột giờ nên ăn trọn bề ngang. */}
+      <section className="mt-4 rounded-card border border-hairline bg-card p-5 sm:p-6">
+        <h2 className="font-semibold">Khung nào đang ế</h2>
+        <p className="mt-1 text-xs text-ink-secondary">
+          Ô nhạt là khung còn trống đều —{' '}
+          <Link href="/chu-san/quan-ly" className="font-medium text-pitch underline underline-offset-2">
+            hạ giá khung đó
+          </Link>{' '}
+          thường kéo được khách.
+        </p>
+        <div className="mt-5">
+          <OccupancyHeatmap data={luoi} subtitle="Tính trên số lượt có thể bán của chính cụm sân này." />
+        </div>
+      </section>
 
       <TelegramConnect connected={Boolean(profile?.telegram_chat_id)} />
 
@@ -286,14 +253,5 @@ function NoVenue() {
   );
 }
 
-/** 34.590.000 → "34,6" — thẻ số liệu đọc bằng mắt, không phải để đối soát. */
-function trieu(v: number) {
-  return (v / 1_000_000).toFixed(1).replace('.', ',');
-}
 
-/** Kỳ trước bằng 0 thì không có gì để so. */
-function tyLe(now?: number, before?: number) {
-  if (!before || before === 0 || now === undefined) return null;
-  return (now - before) / before;
-}
 

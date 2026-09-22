@@ -1,8 +1,8 @@
 -- Số liệu cho dashboard admin và chủ sân.
 --
--- Hai trang này đang chỉ có vài ô đếm và mấy cái danh sách. Câu hỏi chủ sân hỏi
--- mỗi tuần — "tuần này thu hơn tuần trước không, khung nào đang ế" — thì không
--- trang nào trả lời được.
+-- get_admin_stats()/get_owner_stats() (20260922000003) đã lo doanh thu, lấp đầy
+-- và xếp hạng. Hàm dưới đây chỉ bù đúng phần chúng không có: lưới lấp đầy theo
+-- giờ × thứ — thứ trả lời thẳng câu "khung nào đang ế mà hạ giá".
 --
 -- Một hàm dùng chung cho cả hai vai: p_venue_id null = toàn hệ thống (chỉ admin),
 -- có id = một cụm sân (chủ sân của nó, hoặc admin).
@@ -19,41 +19,6 @@ $$;
 
 revoke execute on function public.stats_can_read(uuid) from public, anon;
 grant execute on function public.stats_can_read(uuid) to authenticated;
-
--- ---------- Doanh thu theo ngày ----------
--- Tiền thật là payments đã trả, không phải total_amount của đơn: phần còn lại
--- khách trả tay tại sân, hệ thống không thấy nên không được tính vào.
-create or replace function public.stats_revenue_daily(p_venue_id uuid default null, p_days int default 30)
-returns table (ngay date, doanh_thu bigint, so_don int)
-language plpgsql stable security definer set search_path = public as $$
-declare v_days int := greatest(7, least(coalesce(p_days, 30), 180));
-begin
-  if not public.stats_can_read(p_venue_id) then raise exception 'FORBIDDEN'; end if;
-
-  return query
-  with days as (
-    select generate_series(
-      (now() at time zone 'Asia/Ho_Chi_Minh')::date - (v_days - 1),
-      (now() at time zone 'Asia/Ho_Chi_Minh')::date,
-      interval '1 day')::date as d
-  ),
-  paid as (
-    select (p.paid_at at time zone 'Asia/Ho_Chi_Minh')::date as d,
-           p.amount, b.id as booking_id
-    from payments p
-    join bookings b on b.id = p.booking_id
-    join courts c   on c.id = b.court_id
-    where p.paid_at is not null
-      and p.status = 'success'
-      and (p_venue_id is null or c.venue_id = p_venue_id)
-  )
-  select days.d,
-         coalesce(sum(paid.amount), 0)::bigint,
-         count(distinct paid.booking_id)::int
-  from days left join paid on paid.d = days.d
-  group by days.d
-  order by days.d;
-end $$;
 
 -- ---------- Lưới lấp đầy: giờ × thứ ----------
 -- Mẫu số là số lượt có thể bán: mỗi sân con, mỗi lần thứ đó xuất hiện trong kỳ,
@@ -107,49 +72,4 @@ begin
   order by luot.thu, luot.gio;
 end $$;
 
--- ---------- Tóm tắt kỳ này so với kỳ trước ----------
-create or replace function public.stats_summary(p_venue_id uuid default null, p_days int default 30)
-returns table (
-  doanh_thu bigint, doanh_thu_truoc bigint,
-  so_don int, so_don_truoc int,
-  so_don_huy int, ty_le_lap_day numeric
-)
-language plpgsql stable security definer set search_path = public as $$
-declare
-  v_days int := greatest(7, least(coalesce(p_days, 30), 180));
-  v_d0 date; v_dp date;
-begin
-  if not public.stats_can_read(p_venue_id) then raise exception 'FORBIDDEN'; end if;
-  v_d0 := (now() at time zone 'Asia/Ho_Chi_Minh')::date - (v_days - 1);
-  v_dp := v_d0 - v_days;
 
-  return query
-  with paid as (
-    select (p.paid_at at time zone 'Asia/Ho_Chi_Minh')::date as d, p.amount, b.id as bid
-    from payments p join bookings b on b.id = p.booking_id join courts c on c.id = b.court_id
-    where p.paid_at is not null and p.status = 'success'
-      and (p_venue_id is null or c.venue_id = p_venue_id)
-  ),
-  huy as (
-    select count(*)::int as n
-    from bookings b join courts c on c.id = b.court_id
-    where b.status in ('cancelled', 'no_show')
-      and (b.starts_at at time zone 'Asia/Ho_Chi_Minh')::date >= v_d0
-      and (p_venue_id is null or c.venue_id = p_venue_id)
-  ),
-  lap as (select coalesce(avg(ty_le), 0) as r from stats_occupancy_grid(p_venue_id, v_days))
-  select
-    (select coalesce(sum(amount), 0)::bigint from paid where d >= v_d0),
-    (select coalesce(sum(amount), 0)::bigint from paid where d >= v_dp and d < v_d0),
-    (select count(distinct bid)::int from paid where d >= v_d0),
-    (select count(distinct bid)::int from paid where d >= v_dp and d < v_d0),
-    (select n from huy),
-    (select round(r, 4) from lap);
-end $$;
-
-revoke execute on function public.stats_revenue_daily(uuid, int)  from public, anon;
-revoke execute on function public.stats_occupancy_grid(uuid, int) from public, anon;
-revoke execute on function public.stats_summary(uuid, int)        from public, anon;
-grant execute on function public.stats_revenue_daily(uuid, int)  to authenticated;
-grant execute on function public.stats_occupancy_grid(uuid, int) to authenticated;
-grant execute on function public.stats_summary(uuid, int)        to authenticated;
