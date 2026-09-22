@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Building2, CalendarCheck, Clock, Users } from 'lucide-react';
+import { Building2, CalendarCheck, Clock, ShieldCheck, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import { AdminVenueAction } from '@/components/admin-venue-action';
+import { VenueReview } from '@/components/admin/venue-review';
 import { OwnerReview } from '@/components/admin/owner-review';
 import { UserRowActions } from '@/components/admin/user-row-actions';
 import { ROLE_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
@@ -16,7 +16,7 @@ export const metadata = { title: 'Quản trị · Sân Ngon' };
 
 type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
-type Search = { view?: string; q?: string; vai_tro?: string; trang_thai?: string; trang?: string; ho_so?: string };
+type Search = { view?: string; q?: string; vai_tro?: string; trang_thai?: string; trang?: string; ho_so?: string; san?: string };
 
 const USERS_PER_PAGE = 25;
 
@@ -31,7 +31,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const view = parseView(sp.view);
   const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }] = await Promise.all([
-    supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
+    supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path, hidden_reason, reviewed_at').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
@@ -82,10 +82,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <AdminStat icon={Building2} value={String(pendingOwners.length + pendingVenues.length)} label="Hồ sơ chờ duyệt" tone={pendingOwners.length + pendingVenues.length ? 'peak' : undefined} />
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminStat icon={ShieldCheck} value={String(pendingOwners.length)} label="Hồ sơ chủ sân chờ duyệt" tone={pendingOwners.length ? 'peak' : undefined} />
         <AdminStat icon={CalendarCheck} value={String(bookingCount ?? 0)} label="Tổng đơn đặt sân" />
         <AdminStat icon={Users} value={String(userCount ?? 0)} label="Tài khoản" />
+        <AdminStat icon={Building2} value={String(activeVenues.length)} label="Cụm sân đang chạy" />
       </div>
 
       {view === 'overview' && (
@@ -97,7 +98,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           tab={pickOne(sp.ho_so, ['pending', 'active', 'rejected']) ?? 'pending'}
         />
       )}
-      {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
+      {view === 'venues' && (
+        <VenueTable
+          venues={venues ?? []}
+          profileById={profileById}
+          tab={pickOne(sp.san, ['active', 'pending', 'rejected', 'draft']) ?? (pendingVenues.length > 0 ? 'pending' : 'active')}
+        />
+      )}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
       {view === 'users' && <UserTable users={users} filter={userFilter} page={userPage} meId={user.id} />}
     </main>
@@ -174,7 +181,7 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById 
   );
 }
 
-type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string; phone: string | null; business_license_path: string | null };
+type VenueRow = { id: string; name: string; slug: string; district: string; status: VenueStatus; owner_id: string; created_at: string; phone: string | null; business_license_path: string | null; hidden_reason?: string | null; reviewed_at?: string | null };
 type OwnerProfile = {
   id: string;
   full_name: string | null;
@@ -394,28 +401,107 @@ function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProf
     <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
       <div className="min-w-0">
         <p className="truncate font-semibold">{venue.name}</p>
-        <p className="mt-1 text-xs text-ink-secondary">{profile?.full_name ?? 'Chưa có tên'} · {profile?.phone ?? venue.phone ?? 'Chưa có số điện thoại'} · {venue.district}</p>
+        <p className="mt-1 text-xs text-ink-secondary">
+          {profile?.full_name ?? 'Chưa có tên'} · {profile?.phone ?? venue.phone ?? 'Chưa có số điện thoại'} · {venue.district}
+        </p>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-medium text-peak-ink">{VENUE_STATUS_LABELS[venue.status]}</span>
-        {venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}
-        <AdminVenueAction venueId={venue.id} />
-      </div>
+      <VenueReview venueId={venue.id} venueName={venue.name} status={venue.status} />
     </li>
   );
 }
 
-function VenueTable({ venues, profileById }: { venues: VenueRow[]; profileById: Map<string, OwnerProfile> }) {
+function VenueTable({ venues, profileById, tab }: { venues: VenueRow[]; profileById: Map<string, OwnerProfile>; tab: string }) {
+  const counts = {
+    active: venues.filter((v) => v.status === 'active').length,
+    pending: venues.filter((v) => v.status === 'pending').length,
+    rejected: venues.filter((v) => v.status === 'rejected').length,
+    draft: venues.filter((v) => v.status === 'draft').length,
+  };
+  const rows = venues
+    .filter((v) => v.status === tab)
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+
   return (
-    <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
-      <div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tất cả hồ sơ sân</h2></div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px] text-sm">
-          <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Cụm sân</th><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Khu vực</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
-          <tbody>{venues.map((venue) => <tr key={venue.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{venue.name}<span className="mt-1 block text-xs font-normal text-ink-secondary">{venue.slug}</span></td><td className="px-5 py-4">{profileById.get(venue.owner_id)?.full_name ?? 'Chưa có tên'}<span className="mt-1 block text-xs font-normal text-ink-secondary">{profileById.get(venue.owner_id)?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}</span></td><td className="px-5 py-4">{venue.district}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(venue.created_at))}</td><td className="px-5 py-4"><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-medium">{VENUE_STATUS_LABELS[venue.status]}</span></td><td className="px-5 py-4 text-right"><span className="inline-flex items-center gap-3">{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}{venue.status === 'pending' && <AdminVenueAction venueId={venue.id} />}</span></td></tr>)}</tbody>
-        </table>
+    <section className="mt-8 flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-pitch">Cụm sân</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-secondary">
+            Chủ sân đã được duyệt thì đăng sân là chạy ngay, không phải chờ ai. Chỗ này để
+            gỡ xuống khi sân đăng sai hoặc khách phàn nàn — đơn đã đặt vẫn giữ nguyên.
+          </p>
+        </div>
+        <nav className="flex gap-1 rounded-control border border-hairline bg-card p-1">
+          {([['active', 'Đang chạy'], ['pending', 'Chờ duyệt'], ['rejected', 'Đã gỡ'], ['draft', 'Nháp']] as const).map(([key, label]) => (
+            <Link key={key} href={`/admin?view=venues&san=${key}`}
+              aria-current={tab === key ? 'page' : undefined}
+              className={`flex h-9 items-center gap-2 rounded-[7px] px-3.5 text-sm font-medium transition-colors ${
+                tab === key ? 'bg-pitch text-pitch-ink' : 'text-ink-secondary hover:bg-sunk'
+              }`}>
+              {label}
+              <span className={`rounded-pill px-1.5 text-xs tabular-nums ${tab === key ? 'bg-white/15' : 'bg-sunk'}`}>{counts[key]}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
+
+      {rows.length === 0 ? (
+        <p className="rounded-card border border-hairline bg-card p-12 text-center text-sm text-ink-secondary">
+          {tab === 'pending'
+            ? 'Không có cụm sân nào chờ duyệt. Chủ sân đã duyệt thì sân của họ chạy thẳng.'
+            : tab === 'rejected' ? 'Chưa gỡ cụm sân nào xuống.'
+            : tab === 'draft' ? 'Không có bản nháp nào.'
+            : 'Chưa có cụm sân nào đang chạy.'}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {rows.map((venue) => {
+            const owner = profileById.get(venue.owner_id);
+            return (
+              <li key={venue.id} className="flex flex-wrap items-start justify-between gap-5 rounded-card border border-hairline bg-card p-5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <Link href={`/san/${venue.slug}`} target="_blank" rel="noreferrer"
+                      className="font-display text-lg font-bold text-pitch underline-offset-4 hover:underline">
+                      {venue.name} ↗
+                    </Link>
+                    <VenueStatusPill status={venue.status} />
+                  </div>
+                  <p className="mt-2 text-sm text-ink-secondary">
+                    {venue.district} · chủ sân{' '}
+                    <Link href={`/admin/owners/${venue.owner_id}`} className="font-medium text-pitch underline-offset-4 hover:underline">
+                      {owner?.full_name ?? 'Chưa có tên'}
+                    </Link>
+                    {' · '}{owner?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}
+                    {' · gửi '}{dayLabel(new Date(venue.created_at))}
+                  </p>
+                  {venue.status === 'rejected' && venue.hidden_reason && (
+                    <p className="mt-3 border-t border-hairline pt-3 text-sm leading-relaxed">
+                      <span className="text-ink-secondary">Lý do đã gửi chủ sân: </span>{venue.hidden_reason}
+                    </p>
+                  )}
+                </div>
+                <VenueReview venueId={venue.id} venueName={venue.name} status={venue.status} />
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
+  );
+}
+
+function VenueStatusPill({ status }: { status: VenueStatus }) {
+  const styles: Record<string, string> = {
+    active: 'border-free-line bg-free-fill text-free-ink',
+    pending: 'border-peak-line bg-peak-fill text-peak-ink',
+    rejected: 'border-danger/30 bg-danger/5 text-danger',
+  };
+  const labels: Record<string, string> = { ...VENUE_STATUS_LABELS, active: 'Đang chạy', rejected: 'Đã gỡ' };
+  return (
+    <span className={`rounded-pill border px-2.5 py-1 text-xs font-medium ${styles[status] ?? 'border-hairline bg-sunk text-ink-secondary'}`}>
+      {labels[status] ?? status}
+    </span>
   );
 }
 

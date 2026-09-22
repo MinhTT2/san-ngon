@@ -257,6 +257,34 @@ Thứ tự hiển thị trên thẻ: còn giờ vàng thì khoe giờ vàng (đ�
 tìm), hết giờ vàng thì nói còn mấy khung và sớm nhất lúc nào, hết sạch thì nói
 thẳng "hết chỗ" để khách khỏi bấm vào rồi thất vọng.
 
+## Quản lý cụm sân
+
+Từ `20260921000007` thì duyệt là duyệt **người**, không duyệt từng sân: chủ sân
+qua được hồ sơ thì `create_venue()` cho sân chạy ngay (`status = 'active'`).
+Không quay lại bắt duyệt từng cụm sân — thêm một cửa nữa cho người đã thẩm tra
+rồi là chặn nhầm chỗ.
+
+Nhưng phải có đường gỡ một cụm sân xuống, và `review_venue()` cũ không có:
+
+- Nó chỉ nhận `status = 'pending'`, nên sân bậy chỉ còn cách khoá cả tài khoản
+  chủ sân — chôn luôn mọi cụm sân khác của họ.
+- Và duyệt sân chờ duyệt thì LUÔN ném `BUSINESS_LICENSE_MISSING`: hàm tìm giấy
+  phép ở `venues.business_license_path`, trong khi giấy phép đã chuyển sang
+  `profiles` và `create_venue()` không ghi cột đó nữa.
+
+Bản mới cho ba đường: `pending → active/rejected`, `active → rejected` (gỡ
+xuống), `rejected → active` (mở lại). Điều kiện cho sân chạy là **chủ sân đã
+được duyệt và không bị khoá**, vì giấy phép nằm ở hồ sơ chủ sân.
+
+- **Gỡ xuống là chặn thật, không phải ẩn cho đẹp**: `create_booking()` đòi
+  `v.status = 'active'` nên đơn mới bị từ chối ngay ở tầng dữ liệu.
+- **Đơn khách đã đặt không bị đụng tới.** Khách trả cọc cho một khung giờ cụ
+  thể; gỡ sân là chuyện giữa admin và chủ sân, huỷ kèo của khách là chuyện khác.
+- Gỡ xuống bắt nhập lý do, lý do vào `venues.hidden_reason` và vào thông báo gửi
+  chủ sân — cùng một nguyên tắc với từ chối hồ sơ chủ sân.
+- Thẻ thống kê ở `/admin` không gộp hồ sơ chủ sân với cụm sân vào một con số:
+  hai việc khác hẳn nhau, gộp lại làm người xem tưởng có một hàng đợi chung.
+
 ## Ràng buộc môi trường
 
 Không Docker, không ORM, không thư viện quản lý state, không react-hook-form. Tailwind v4, token trong `app/globals.css`. Deploy Vercel, database Supabase region Singapore.
