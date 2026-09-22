@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Building2, CalendarCheck, Users } from 'lucide-react';
+import { Building2, CalendarCheck, Clock, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
-import { AdminOwnerAction } from '@/components/admin-owner-action';
+import { OwnerReview } from '@/components/admin/owner-review';
 import { UserRowActions } from '@/components/admin/user-row-actions';
 import { ROLE_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
+import { ownerChecklist, waitingFor, OWNER_STATUS_LABELS } from '@/lib/owner-review';
 import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import type { AdminUserRow, BookingStatus, VenueStatus } from '@/lib/types';
 import { StatusBadge } from '@/components/status-badge';
@@ -15,7 +16,7 @@ export const metadata = { title: 'Quản trị · Sân Ngon' };
 
 type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
-type Search = { view?: string; q?: string; vai_tro?: string; trang_thai?: string; trang?: string };
+type Search = { view?: string; q?: string; vai_tro?: string; trang_thai?: string; trang?: string; ho_so?: string };
 
 const USERS_PER_PAGE = 25;
 
@@ -31,7 +32,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const view = parseView(sp.view);
   const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
+    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
@@ -71,7 +72,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <main className="mx-auto max-w-[1400px] px-5 py-8 lg:px-10 lg:py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-ink-secondary">Thứ hai, {dayLabel(new Date())}</p>
+          {/* dayLabel() đã trả sẵn thứ; ghép thêm "Thứ hai," ở đây thì mọi ngày
+            đều in ra "Thứ hai, Thứ Ba, 22/09". */}
+        <p className="text-sm font-medium capitalize text-ink-secondary">{dayLabel(new Date())}</p>
           <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-pitch">Tổng quan vận hành</h1>
         </div>
         <Link href="/" className="rounded-control border border-hairline bg-card px-4 py-2.5 text-sm font-medium text-ink-secondary hover:border-strong">
@@ -88,7 +91,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {view === 'overview' && (
         <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
       )}
-      {view === 'owners' && <OwnerTable owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
+      {view === 'owners' && (
+        <OwnerTable
+          owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)}
+          tab={pickOne(sp.ho_so, ['pending', 'active', 'rejected']) ?? 'pending'}
+        />
+      )}
       {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
       {view === 'users' && <UserTable users={users} filter={userFilter} page={userPage} meId={user.id} />}
@@ -97,25 +105,50 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 }
 
 function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById }: { pendingOwners: OwnerProfile[]; pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile> }) {
+  // Hồ sơ chờ lâu nhất lên đầu — đó là cái sắp mất khách.
+  const owners = [...pendingOwners].sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''));
+  const oldest = owners[0]?.created_at;
+
   return (
     <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="rounded-card border border-hairline bg-card">
-        <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
-          <div>
-            <h2 className="font-semibold">Hồ sơ cần xử lý</h2>
-            <p className="mt-1 text-xs text-ink-secondary">Duyệt xong, sân sẽ xuất hiện trên trang tìm sân.</p>
+      <div className="flex flex-col gap-6">
+        {/* Hai loại hồ sơ tách hẳn hai khối. Trước đây chúng nằm chung một danh
+            sách nên nhìn không ra đang duyệt người hay duyệt sân — hai việc khác
+            nhau: duyệt người mở quyền nhận tiền, duyệt sân chỉ mở hiển thị. */}
+        <section className="rounded-card border border-hairline bg-card">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+            <div>
+              <h2 className="font-semibold">Hồ sơ chủ sân chờ duyệt</h2>
+              <p className="mt-1 text-xs text-ink-secondary">
+                Duyệt xong, họ mới đăng được sân và nhận được tiền cọc của khách.
+              </p>
+            </div>
+            <Link href="/admin?view=owners&ho_so=pending" className="text-sm font-semibold text-pitch">Xem tất cả</Link>
           </div>
-          <Link href="/admin?view=venues" className="text-sm font-semibold text-pitch">Xem tất cả</Link>
-        </div>
-        {pendingOwners.length === 0 && pendingVenues.length === 0 ? (
-          <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ nào đang chờ duyệt.</p>
-        ) : (
-          <ul className="divide-y divide-hairline">
-            {pendingOwners.slice(0, 6).map((owner) => <OwnerRowItem key={owner.id} owner={owner} />)}
-            {pendingVenues.slice(0, 6).map((venue) => <VenueRowItem key={venue.id} venue={venue} profile={profileById.get(venue.owner_id)} />)}
-          </ul>
+          {owners.length === 0 ? (
+            <p className="p-10 text-center text-sm text-ink-secondary">Không còn hồ sơ chủ sân nào chờ duyệt.</p>
+          ) : (
+            <ul className="divide-y divide-hairline">
+              {owners.slice(0, 5).map((owner) => <OwnerRowItem key={owner.id} owner={owner} />)}
+            </ul>
+          )}
+        </section>
+
+        {pendingVenues.length > 0 && (
+          <section className="rounded-card border border-hairline bg-card">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+              <div>
+                <h2 className="font-semibold">Cụm sân chờ duyệt</h2>
+                <p className="mt-1 text-xs text-ink-secondary">Duyệt xong, sân sẽ xuất hiện trên trang tìm sân.</p>
+              </div>
+              <Link href="/admin?view=venues" className="text-sm font-semibold text-pitch">Xem tất cả</Link>
+            </div>
+            <ul className="divide-y divide-hairline">
+              {pendingVenues.slice(0, 5).map((venue) => <VenueRowItem key={venue.id} venue={venue} profile={profileById.get(venue.owner_id)} />)}
+            </ul>
+          </section>
         )}
-      </section>
+      </div>
 
       <section className="rounded-card border border-hairline bg-card p-5">
         <h2 className="font-semibold">Tình hình hệ thống</h2>
@@ -123,7 +156,17 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById 
           <ProgressRow label="Cụm sân đang hoạt động" value={activeVenueCount} total={activeVenueCount + pendingVenues.length} />
           <div className="border-t border-hairline pt-4">
             <p className="text-sm font-medium">Việc cần làm tiếp theo</p>
-            <p className="mt-1 text-sm leading-6 text-ink-secondary">Kiểm tra thông tin liên hệ và bảng giá trước khi duyệt hồ sơ.</p>
+            {owners.length === 0 ? (
+              <p className="mt-1 text-sm leading-6 text-ink-secondary">
+                Không còn hồ sơ nào chờ. Hồ sơ mới gửi lên sẽ hiện ngay ở đây.
+              </p>
+            ) : (
+              <p className="mt-1 text-sm leading-6 text-ink-secondary">
+                {owners.length} hồ sơ chủ sân đang chờ, cái lâu nhất đã{' '}
+                <strong className="font-semibold text-peak-ink">{oldest ? waitingFor(oldest) : '—'}</strong>.
+                Mở giấy phép kinh doanh ra đối chiếu tên người đại diện và số tài khoản nhận cọc trước khi duyệt.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -142,57 +185,208 @@ type OwnerProfile = {
   business_license_name?: string | null;
   payout_bank?: string | null;
   payout_account?: string | null;
+  owner_rejection_reason?: string | null;
+  owner_reviewed_at?: string | null;
   created_at?: string;
 };
 
 function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
-  return <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'} · Đăng ký tài khoản chủ sân</p></div><div className="flex items-center gap-3">{owner.business_license_path && <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminOwnerAction ownerId={owner.id} /></div></li>;
+  const missing = ownerChecklist({
+    full_name: owner.full_name ?? null,
+    phone: owner.phone ?? null,
+    business_license_path: owner.business_license_path ?? null,
+    business_license_name: owner.business_license_name ?? null,
+    payout_bank: owner.payout_bank ?? null,
+    payout_account: owner.payout_account ?? null,
+  }).filter((c) => !c.ok);
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+      <div className="min-w-0">
+        <Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">
+          {owner.full_name ?? 'Chưa có tên'}
+        </Link>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-secondary">
+          <span>{owner.phone ?? 'Chưa có số điện thoại'}</span>
+          <span aria-hidden="true">·</span>
+          <span className="inline-flex items-center gap-1 font-medium text-peak-ink">
+            <Clock className="size-3.5" aria-hidden="true" />
+            chờ {owner.created_at ? waitingFor(owner.created_at) : '—'}
+          </span>
+          {missing.length > 0 && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="font-medium text-danger">
+                thiếu {missing.map((m) => m.label.toLowerCase()).join(', ')}
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+      <Link href={`/admin/owners/${owner.id}`}
+        className="flex h-9 items-center rounded-control border border-hairline px-3.5 text-xs font-semibold text-pitch">
+        Xem hồ sơ →
+      </Link>
+    </li>
+  );
 }
 
-function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
-  const sortedOwners = [...owners].sort((a, b) => {
-    if (a.owner_application_status === 'pending' && b.owner_application_status !== 'pending') return -1;
-    if (a.owner_application_status !== 'pending' && b.owner_application_status === 'pending') return 1;
-    return (b.created_at ?? '').localeCompare(a.created_at ?? '');
-  });
+function OwnerTable({ owners, tab }: { owners: OwnerProfile[]; tab: string }) {
+  const counts = {
+    pending: owners.filter((o) => o.owner_application_status === 'pending').length,
+    active: owners.filter((o) => o.owner_application_status === 'active').length,
+    rejected: owners.filter((o) => o.owner_application_status === 'rejected').length,
+  };
+
+  // Hồ sơ chờ lâu nhất lên đầu: để lâu là người ta bỏ đi đăng chỗ khác. Các tab
+  // còn lại xếp theo lần xử lý gần nhất, vì ở đó cái mới mới là cái cần tra.
+  const rows = owners
+    .filter((o) => o.owner_application_status === tab)
+    .sort((a, b) => tab === 'pending'
+      ? (a.created_at ?? '').localeCompare(b.created_at ?? '')
+      : (b.owner_reviewed_at ?? b.created_at ?? '').localeCompare(a.owner_reviewed_at ?? a.created_at ?? ''));
+
   return (
-    <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-hairline px-5 py-4">
+    <section className="mt-8 flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-semibold">Hồ sơ chủ sân</h2>
-          <p className="mt-1 text-xs text-ink-secondary">Xem hồ sơ đang chờ, đã duyệt và bị từ chối.</p>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-pitch">Hồ sơ chủ sân</h2>
+          <p className="mt-1 text-sm text-ink-secondary">
+            Duyệt xong, chủ sân mới đăng được sân và nhận được tiền cọc của khách.
+          </p>
         </div>
-        <span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-semibold text-ink-secondary">{owners.length} hồ sơ</span>
+        {/* Mặc định mở thẳng tab "Chờ duyệt": đó là việc duy nhất cần làm ở đây,
+            hai tab kia chỉ để tra lại. */}
+        <nav className="flex gap-1 rounded-control border border-hairline bg-card p-1">
+          {([['pending', 'Chờ duyệt'], ['active', 'Đã duyệt'], ['rejected', 'Bị từ chối']] as const).map(([key, label]) => (
+            <Link
+              key={key}
+              href={`/admin?view=owners&ho_so=${key}`}
+              aria-current={tab === key ? 'page' : undefined}
+              className={`flex h-9 items-center gap-2 rounded-[7px] px-3.5 text-sm font-medium transition-colors ${
+                tab === key ? 'bg-pitch text-pitch-ink' : 'text-ink-secondary hover:bg-sunk'
+              }`}
+            >
+              {label}
+              <span className={`rounded-pill px-1.5 text-xs tabular-nums ${tab === key ? 'bg-white/15' : 'bg-sunk'}`}>
+                {counts[key]}
+              </span>
+            </Link>
+          ))}
+        </nav>
       </div>
-      {owners.length === 0 ? (
-        <p className="p-10 text-center text-sm text-ink-secondary">Chưa có hồ sơ chủ sân nào.</p>
+
+      {rows.length === 0 ? (
+        <p className="rounded-card border border-hairline bg-card p-12 text-center text-sm text-ink-secondary">
+          {tab === 'pending'
+            ? 'Không còn hồ sơ nào chờ duyệt. Xong việc rồi.'
+            : tab === 'active' ? 'Chưa duyệt hồ sơ chủ sân nào.' : 'Chưa từ chối hồ sơ nào.'}
+        </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Tài khoản nhận cọc</th><th className="px-5 py-3 font-medium">Giấy tờ</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
-            <tbody>
-              {sortedOwners.map((owner) => (
-                <tr key={owner.id} className="border-b border-hairline last:border-0 align-top">
-                  <td className="px-5 py-4"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></td>
-                  <td className="px-5 py-4"><p>{owner.payout_bank ?? 'Chưa có ngân hàng'}</p><p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></td>
-                  <td className="px-5 py-4">{owner.business_license_path ? <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="font-semibold text-pitch underline underline-offset-4">{owner.business_license_name ?? 'Mở giấy tờ'} ↗</a> : <span className="text-ink-secondary">Chưa có</span>}</td>
-                  <td className="px-5 py-4 text-ink-secondary">{owner.created_at ? dayLabel(new Date(owner.created_at)) : '—'}</td>
-                  <td className="px-5 py-4"><OwnerApplicationStatus status={owner.owner_application_status} /></td>
-                  <td className="px-5 py-4 text-right">{owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="flex flex-col gap-3">
+          {rows.map((owner) => <OwnerCard key={owner.id} owner={owner} />)}
+        </ul>
       )}
     </section>
   );
 }
 
+/**
+ * Một hồ sơ trong danh sách.
+ *
+ * Dạng thẻ chứ không phải dòng bảng: hồ sơ chủ sân có ba mục phải đối chiếu và
+ * một lý do từ chối dài, nhồi hết vào ô bảng thì chữ xuống dòng rối và mắt
+ * không bắt được mục nào đang thiếu.
+ */
+function OwnerCard({ owner }: { owner: OwnerProfile }) {
+  const checks = ownerChecklist({
+    full_name: owner.full_name ?? null,
+    phone: owner.phone ?? null,
+    business_license_path: owner.business_license_path ?? null,
+    business_license_name: owner.business_license_name ?? null,
+    payout_bank: owner.payout_bank ?? null,
+    payout_account: owner.payout_account ?? null,
+  });
+  const pending = owner.owner_application_status === 'pending';
+  const missing = checks.filter((c) => !c.ok);
+
+  return (
+    <li className="rounded-card border border-hairline bg-card">
+      <div className="flex flex-wrap items-start justify-between gap-5 p-5">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link href={`/admin/owners/${owner.id}`} className="font-display text-lg font-bold text-pitch underline-offset-4 hover:underline">
+              {owner.full_name ?? 'Chưa có tên'}
+            </Link>
+            <OwnerApplicationStatus status={owner.owner_application_status} />
+            {pending && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-peak-ink">
+                <Clock className="size-3.5" aria-hidden="true" />
+                chờ {owner.created_at ? waitingFor(owner.created_at) : '—'}
+              </span>
+            )}
+          </div>
+
+          <dl className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-3">
+            {checks.map((item) => (
+              <div key={item.key} className="flex gap-2.5">
+                <span aria-hidden="true" className={`mt-0.5 flex size-4.5 flex-none items-center justify-center rounded-full text-[10px] font-bold ${
+                  item.ok ? 'bg-free-fill text-free-ink' : 'bg-danger/10 text-danger'
+                }`}>
+                  {item.ok ? '✓' : '!'}
+                </span>
+                <span className="min-w-0">
+                  <dt className="text-xs text-ink-secondary">{item.label}</dt>
+                  <dd className={`break-words text-sm ${item.ok ? '' : 'font-medium text-danger'}`}>{item.detail}</dd>
+                </span>
+              </div>
+            ))}
+          </dl>
+
+          {owner.owner_application_status === 'rejected' && owner.owner_rejection_reason && (
+            <p className="mt-4 border-t border-hairline pt-3 text-sm leading-relaxed">
+              <span className="text-ink-secondary">Lý do đã gửi chủ sân: </span>
+              {owner.owner_rejection_reason}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-none flex-col items-end gap-2.5">
+          {pending ? (
+            <OwnerReview
+              ownerId={owner.id}
+              owner={{
+                full_name: owner.full_name ?? null,
+                phone: owner.phone ?? null,
+                business_license_path: owner.business_license_path ?? null,
+                business_license_name: owner.business_license_name ?? null,
+                payout_bank: owner.payout_bank ?? null,
+                payout_account: owner.payout_account ?? null,
+              }}
+            />
+          ) : owner.owner_reviewed_at ? (
+            <span className="text-xs text-ink-secondary">Xử lý {dayLabel(new Date(owner.owner_reviewed_at))}</span>
+          ) : null}
+          <Link href={`/admin/owners/${owner.id}`} className="text-sm font-semibold text-pitch underline-offset-4 hover:underline">
+            {missing.length > 0 && pending ? 'Xem hồ sơ' : 'Xem giấy tờ'} →
+          </Link>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 function OwnerApplicationStatus({ status }: { status?: string | null }) {
-  const labels: Record<string, string> = { pending: 'Chờ duyệt', active: 'Đã duyệt', rejected: 'Bị từ chối' };
-  const styles: Record<string, string> = { pending: 'bg-peak-fill text-peak-ink', active: 'bg-free-fill text-pitch', rejected: 'bg-sunk text-ink-secondary' };
-  return <span className={`rounded-pill px-2.5 py-1 text-xs font-medium ${styles[status ?? ''] ?? 'bg-sunk text-ink-secondary'}`}>{labels[status ?? ''] ?? 'Chưa có trạng thái'}</span>;
+  const styles: Record<string, string> = {
+    pending: 'border-peak-line bg-peak-fill text-peak-ink',
+    active: 'border-free-line bg-free-fill text-free-ink',
+    rejected: 'border-danger/30 bg-danger/5 text-danger',
+  };
+  return (
+    <span className={`rounded-pill border px-2.5 py-1 text-xs font-medium ${styles[status ?? ''] ?? 'border-hairline bg-sunk text-ink-secondary'}`}>
+      {OWNER_STATUS_LABELS[status ?? ''] ?? 'Chưa có trạng thái'}
+    </span>
+  );
 }
 
 function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProfile }) {

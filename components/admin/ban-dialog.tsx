@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from './modal';
 import type { AdminUserRow } from '@/lib/types';
@@ -23,6 +23,8 @@ export function BanDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
+  // Mỗi dòng trong bảng dựng một hộp thoại riêng: id phải duy nhất theo dòng.
+  const reasonId = useId();
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export function BanDialog({
       </div>
 
       <div className="flex flex-col gap-2.5">
-        <label htmlFor="ban-reason" className="text-sm font-semibold">
+        <label htmlFor={reasonId} className="text-sm font-semibold">
           Lý do khoá <span className="font-normal text-ink-secondary">(bắt buộc)</span>
         </label>
 
@@ -86,7 +88,7 @@ export function BanDialog({
         </div>
 
         <textarea
-          id="ban-reason"
+          id={reasonId}
           rows={3}
           value={reason}
           onChange={(e) => setReason(e.target.value)}

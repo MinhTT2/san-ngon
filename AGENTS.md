@@ -200,6 +200,31 @@ này. Vài điểm không được đổi:
 preflight của Tailwind đặt `margin: 0`, nên phải trả lại `m-auto` — không thì
 hộp thoại rơi về góc trên bên trái màn hình.
 
+## Duyệt hồ sơ chủ sân
+
+Nghiệp vụ: người dùng nộp hồ sơ (`register_owner`) gồm họ tên, số điện thoại,
+giấy phép kinh doanh và tài khoản nhận cọc. Admin duyệt (`review_owner`) thì họ
+thành `owner` và mới tạo được cụm sân. Duyệt chủ sân là mở quyền **nhận tiền
+cọc của khách**, nên nó nặng hơn duyệt một cụm sân.
+
+- **Từ chối bắt buộc có lý do**, kiểm ở cả route lẫn `review_owner()`. Lý do lưu
+  vào `profiles.owner_rejection_reason` và đi thẳng vào thông báo gửi chủ sân —
+  `register_owner()` cho phép nộp lại sau khi bị từ chối, nên không nói rõ thiếu
+  gì là bắt họ gọi điện hỏi.
+- `profiles.owner_reviewed_at` / `owner_reviewed_by` ghi ai xử lý và lúc nào.
+- **`ownerChecklist()` trong `lib/owner-review.ts` phải khớp đúng ba điều kiện
+  `review_owner()` kiểm trước khi duyệt.** Lệch một bên là admin thấy hồ sơ "đủ",
+  bấm Duyệt rồi mới ăn lỗi từ server — đúng cái phải tránh. Giao diện dùng
+  checklist này để khoá sẵn nút Duyệt khi hồ sơ còn thiếu.
+- Trang chi tiết nhúng thẳng giấy phép kinh doanh (`LicensePreview`), vì việc
+  admin thật sự làm là đối chiếu tên và số tài khoản trên giấy với thông tin đã
+  khai. Link ký lấy ở server chứ không trỏ `<iframe>` vào route chuyển hướng:
+  iframe không báo lỗi HTTP, nó vẽ luôn phần thân lỗi ra màn hình.
+- Khối "Vận hành thực tế" chỉ hiện với hồ sơ **đã duyệt**. Hồ sơ đang chờ hoặc
+  bị từ chối thì chưa tạo được sân nào, mọi chỉ số đều bằng 0.
+- Hộp thoại dựng theo từng dòng/thẻ, nên id của ô nhập phải lấy từ `useId()`.
+  Ghi cứng một chuỗi thì cả trang trùng id và `<label>` trỏ nhầm ô.
+
 ## Ràng buộc môi trường
 
 Không Docker, không ORM, không thư viện quản lý state, không react-hook-form. Tailwind v4, token trong `app/globals.css`. Deploy Vercel, database Supabase region Singapore.

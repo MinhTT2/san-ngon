@@ -56,14 +56,24 @@ export async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-export function ownerApplicationEmail(status: 'active' | 'rejected') {
+export function ownerApplicationEmail(status: 'active' | 'rejected', reason?: string) {
   const approved = status === 'active';
+  // Lý do từ chối là chữ admin gõ, nên phải thoát trước khi nhét vào HTML.
+  const why = reason?.trim()
+    ? `<p><b>Cần bổ sung:</b> ${escapeHtml(reason.trim())}</p>`
+    : '';
   return {
     subject: approved ? 'Hồ sơ chủ sân đã được duyệt · Sân Ngon' : 'Cập nhật hồ sơ chủ sân · Sân Ngon',
     html: approved
       ? '<h2>Hồ sơ chủ sân đã được duyệt</h2><p>Bạn có thể đăng nhập Sân Ngon để tạo cụm sân và thêm các sân con.</p><p>Hẹn gặp bạn trên Sân Ngon.</p>'
-      : '<h2>Hồ sơ chủ sân cần bổ sung</h2><p>Hồ sơ của bạn chưa được duyệt lần này. Vui lòng liên hệ Sân Ngon để biết thông tin cần cập nhật.</p>',
+      : `<h2>Hồ sơ chủ sân cần bổ sung</h2>${why}<p>Bạn sửa lại rồi gửi hồ sơ lần nữa trên Sân Ngon nhé.</p>`,
   };
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
 /** Tin nhắn báo đơn mới gửi cho chủ sân. Giữ ngắn, họ đọc trên sân. */

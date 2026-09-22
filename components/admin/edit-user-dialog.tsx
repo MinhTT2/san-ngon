@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from './modal';
 import { ROLE_LABELS } from '@/lib/constants';
@@ -16,6 +16,8 @@ export function EditUserDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
+  // Mỗi dòng trong bảng dựng một hộp thoại riêng: id phải duy nhất theo dòng.
+  const uid = useId();
   const [fullName, setFullName] = useState(user.full_name ?? '');
   const [phone, setPhone] = useState(user.phone ?? '');
   const [role, setRole] = useState(user.role);
@@ -41,23 +43,23 @@ export function EditUserDialog({
   return (
     <Modal open={open} onClose={onClose} title="Sửa tài khoản" description={user.email}>
       <form onSubmit={save} className="flex flex-col gap-4">
-        <Field label="Họ tên" htmlFor="ed-name">
-          <input id="ed-name" value={fullName} onChange={(e) => setFullName(e.target.value)}
+        <Field label="Họ tên" htmlFor={`${uid}-name`}>
+          <input id={`${uid}-name`} value={fullName} onChange={(e) => setFullName(e.target.value)}
             maxLength={100} className={INPUT} />
         </Field>
 
-        <Field label="Số điện thoại" htmlFor="ed-phone">
-          <input id="ed-phone" type="tel" inputMode="numeric" pattern="0\d{9}"
+        <Field label="Số điện thoại" htmlFor={`${uid}-phone`}>
+          <input id={`${uid}-phone`} type="tel" inputMode="numeric" pattern="0\d{9}"
             value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0987654321"
             className={INPUT} />
         </Field>
 
         <Field
           label="Vai trò"
-          htmlFor="ed-role"
+          htmlFor={`${uid}-role`}
           hint={role === 'admin' ? 'Quản trị thấy và sửa được mọi tài khoản. Cấp quyền này cẩn thận.' : undefined}
         >
-          <select id="ed-role" value={role}
+          <select id={`${uid}-role`} value={role}
             onChange={(e) => setRole(e.target.value as AdminUserRow['role'])} className={INPUT}>
             {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
