@@ -15,7 +15,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
 
   const { data, error } = await supabase
     .from('venues')
-    .select('id, name, address, district, phone, description, open_time, close_time, deposit_pct, booking_horizon_days, status, courts(id, name, sport, surface, is_indoor, slot_minutes, open_time, close_time, is_active, sort_order, price_rules(price_per_hour, start_time, end_time, label))')
+    .select('id, name, address, district, phone, description, open_time, close_time, deposit_pct, booking_horizon_days, status, courts(id, name, sport, surface, is_indoor, slot_minutes, open_time, close_time, is_active, sort_order, price_rules(price_per_hour, start_time, end_time, label, days, priority))')
     .eq('owner_id', user.id)
     .order('created_at')
     .order('id');

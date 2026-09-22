@@ -159,7 +159,7 @@ JS mới giấu đi — không thì JS hỏng là nội dung tàng hình.
 - [x] Nút chủ sân xác nhận tay khi webhook hỏng
 - [x] Bộ lọc thật ở `/tim-san`
 - [ ] Badge số khung còn trống trên thẻ sân
-- [ ] CRUD bảng giá cho chủ sân, hoặc nhập tay bằng SQL nếu hụt giờ
+- [x] Bảng giá theo khung giờ cho chủ sân ở `/chu-san/quan-ly`
 - [x] `confirm_payment` trả thêm `owner_id` và `booking_id`
 - [x] Trang duyệt hồ sơ cho admin
 - [x] Quản trị tài khoản ở `/admin?view=users`: tìm, lọc, sửa hồ sơ/vai trò, khoá, mở khoá, xoá
@@ -224,6 +224,27 @@ cọc của khách**, nên nó nặng hơn duyệt một cụm sân.
   bị từ chối thì chưa tạo được sân nào, mọi chỉ số đều bằng 0.
 - Hộp thoại dựng theo từng dòng/thẻ, nên id của ô nhập phải lấy từ `useId()`.
   Ghi cứng một chuỗi thì cả trang trùng id và `<label>` trỏ nhầm ô.
+
+## Bảng giá theo khung giờ
+
+`get_venue_availability()` và `create_booking()` đã đọc `price_rules` theo
+priority từ đầu, nhưng mọi đường tạo sân trong app chỉ đẻ một dòng `Giá chung`
+cho cả tuần. `set_court_price_rules()` là phần còn thiếu: chủ sân tự thêm khung
+đè lên nền đó.
+
+- Cách chồng giá: `Giá chung` (priority 0) làm nền, khung đặc biệt (priority 10)
+  đè lên. `set_court_price_rules()` chỉ thay các dòng `priority > 0`, không đụng
+  vào nền — nền do `update_court()` quản.
+- **`resolvePrice()` trong `lib/price-rules.ts` phải khớp đúng thứ tự của
+  `get_venue_availability()`**: priority cao nhất trước, cùng priority thì giá
+  cao hơn. Lệch một chút là phần xem trước nói một đằng, khách trả một nẻo.
+- **Không khung nào phủ một giờ thì SQL trả 0đ**, tức là khách đặt giờ đó không
+  mất tiền. Phần xem trước không được bù bằng giá mặc định để "cho đẹp" — nó tô
+  đỏ ô 0đ và cảnh báo, vì đây là lỗ tiền chứ không phải lỗi nhập liệu.
+- Hai khung cùng priority đè nhau thì SQL chọn cái đắt hơn: đúng luật nhưng chủ
+  sân không đoán được, nên `RULES_OVERLAP` chặn ngay từ đầu.
+- Khung nằm ngoài giờ mở cửa bị chặn (`OUTSIDE_HOURS`) thay vì lưu im lặng rồi
+  không bao giờ áp dụng.
 
 ## Ràng buộc môi trường
 
