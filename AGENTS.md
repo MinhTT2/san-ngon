@@ -161,13 +161,44 @@ JS mới giấu đi — không thì JS hỏng là nội dung tàng hình.
 - [ ] Badge số khung còn trống trên thẻ sân
 - [ ] CRUD bảng giá cho chủ sân, hoặc nhập tay bằng SQL nếu hụt giờ
 - [x] `confirm_payment` trả thêm `owner_id` và `booking_id`
-- [ ] Trang duyệt hồ sơ cho admin — hiện phải `update venues set status='active'` bằng SQL
+- [x] Trang duyệt hồ sơ cho admin
+- [x] Quản trị tài khoản ở `/admin?view=users`: tìm, lọc, sửa hồ sơ/vai trò, khoá, mở khoá, xoá
 
 ## Đã cố tình cắt
 
-Bản đồ, đánh giá sao, tìm đối ghép kèo, hoàn tiền tự động, ví nội bộ, trang quản trị riêng, test tự động, Zalo OA, email cho người chơi, upload ảnh sân.
+Bản đồ, đánh giá sao, tìm đối ghép kèo, hoàn tiền tự động, ví nội bộ, test tự động, Zalo OA, email cho người chơi, upload ảnh sân.
+
+Trang quản trị từng nằm trong danh sách này, nay đã mở lại ở `/admin` nhưng vẫn
+giữ phạm vi hẹp: duyệt hồ sơ và quản lý tài khoản, không thống kê, không báo cáo.
 
 Đừng thêm lại nếu không còn dư thời gian. Danh sách "còn thiếu" ở trên đi trước.
+
+## Quản trị tài khoản
+
+`supabase/migrations/20260921000011_admin_user_management.sql` giữ toàn bộ phần
+này. Vài điểm không được đổi:
+
+- Quyền admin kiểm tra **một chỗ duy nhất**, trong Postgres. Các route
+  `/api/admin/users/*` cố ý KHÔNG kiểm tra lại bằng TypeScript: hàm `admin_*` tự
+  ném `NOT_ADMIN`. Hai chỗ kiểm tra thì sớm muộn lệch nhau, và chỗ lỏng hơn thắng.
+- Khoá tài khoản đụng hai tầng: `profiles.banned_at` cho app đọc, và
+  `auth.users.banned_until` để chính Supabase từ chối cấp token. Chỉ khoá một
+  tầng thì người đang có phiên vẫn dùng tiếp tới khi token hết hạn.
+- Chặn người bị khoá bằng **trigger** `block_banned_users()` trên `bookings` và
+  `venues`, không nhét `if banned then` vào trong `create_booking()`. Trigger
+  chặn mọi đường vào, kể cả hàm viết sau này, và không phải chép lại thân hàm
+  mỗi lần chúng đổi. Chặn ở giao diện là không đủ: người bị khoá vẫn gọi thẳng
+  RPC bằng anon key được.
+- Không xoá được tài khoản đã có đơn (`HAS_BOOKINGS`) và không hạ quyền admin
+  cuối cùng (`LAST_ADMIN`). Xoá người đặt đi thì chủ sân mất luôn lịch sử đơn.
+- Hộp thoại khoá nói rõ ba hậu quả trước khi bấm và bắt nhập lý do; lý do lưu
+  vào `profiles.ban_reason` để sáu tháng sau còn tra lại được.
+- Cảnh báo trong hộp thoại dùng màu đỏ, **không** dùng nền hổ phách: màu đó vẫn
+  chỉ dành cho giờ vàng và đơn chờ thanh toán.
+
+`<dialog>` của trình duyệt lo sẵn focus trap, phím Esc và lớp phủ. Nhưng
+preflight của Tailwind đặt `margin: 0`, nên phải trả lại `m-auto` — không thì
+hộp thoại rơi về góc trên bên trái màn hình.
 
 ## Ràng buộc môi trường
 

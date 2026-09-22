@@ -102,3 +102,20 @@ export type OwnerVenue = Pick<
   Venue,
   'id' | 'slug' | 'name' | 'address' | 'district' | 'phone' | 'status'
 >;
+
+/** Một dòng trong bảng quản trị người dùng (RPC admin_list_users). */
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  role: 'player' | 'owner' | 'admin';
+  banned_at: string | null;
+  ban_reason: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+  so_don: number;
+  so_cum_san: number;
+  /** Tổng số bản ghi khớp bộ lọc, dùng để phân trang. */
+  tong_so: number;
+};

@@ -149,6 +149,29 @@ export function bookingErrorMessage(raw?: string) {
   return translate(BOOKING_ERRORS, raw, 'Không đặt được sân. Thử lại sau vài giây.');
 }
 
+export const ROLE_LABELS: Record<string, string> = {
+  player: 'Người chơi',
+  owner: 'Chủ sân',
+  admin: 'Quản trị',
+};
+
+/** Lỗi từ các hàm admin_*. */
+export const ADMIN_ERRORS: Record<string, string> = {
+  NOT_ADMIN: 'Bạn không có quyền quản trị.',
+  USER_NOT_FOUND: 'Không tìm thấy tài khoản này.',
+  ROLE_INVALID: 'Vai trò không hợp lệ.',
+  LAST_ADMIN: 'Đây là quản trị viên cuối cùng. Cấp quyền cho người khác trước đã.',
+  CANNOT_BAN_SELF: 'Không tự khoá tài khoản của mình được.',
+  CANNOT_DELETE_SELF: 'Không tự xoá tài khoản của mình được.',
+  REASON_REQUIRED: 'Nhập lý do khoá để còn tra lại về sau.',
+  HAS_BOOKINGS: 'Tài khoản này đã có đơn đặt sân nên không xoá được — khoá lại thay vì xoá, để chủ sân giữ được lịch sử đơn.',
+  ACCOUNT_BANNED: 'Tài khoản của bạn đang bị khoá.',
+};
+
+export function adminErrorMessage(raw?: string) {
+  return translate(ADMIN_ERRORS, raw, 'Thao tác không thực hiện được. Thử lại sau vài giây.');
+}
+
 export const VENUE_STATUS_LABELS: Record<string, string> = {
   draft: 'Nháp',
   pending: 'Chờ duyệt',
