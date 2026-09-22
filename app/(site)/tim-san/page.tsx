@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { PitchThumb } from '@/components/pitch-thumb';
-import { SPORT_LABELS } from '@/lib/constants';
+import { PEAK_FROM_HOUR, PEAK_TO_HOUR, SPORT_LABELS } from '@/lib/constants';
+import { dayLabel, hhmm, ymd } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,13 @@ type VenueRow = {
   phone: string | null;
   amenities: string[];
   courts: { sport: string }[];
+};
+
+type FreeSlots = {
+  venue_id: string;
+  con_trong: number;
+  con_trong_gio_vang: number;
+  som_nhat: string | null;
 };
 
 /**
@@ -55,6 +63,22 @@ export default async function Page({
   const { data } = await query.order('name');
   const venues = (data ?? []) as unknown as VenueRow[];
 
+  // Một lượt cho cả trang. Không có sân nào thì bỏ qua luôn, đừng gọi RPC với
+  // mảng rỗng chỉ để nhận lại mảng rỗng.
+  const today = ymd(new Date());
+  const forDay = day ?? today;
+  const free = new Map<string, FreeSlots>();
+  if (venues.length > 0) {
+    const { data: rows } = await supabase.rpc('venues_free_slots', {
+      p_venue_ids: venues.map((v) => v.id),
+      p_date: forDay,
+      p_peak_from: PEAK_FROM_HOUR,
+      p_peak_to: PEAK_TO_HOUR,
+    });
+    for (const row of (rows ?? []) as FreeSlots[]) free.set(row.venue_id, row);
+  }
+  const dayWord = forDay === today ? 'hôm nay' : dayLabel(new Date(`${forDay}T12:00:00+07:00`)).toLowerCase();
+
   const filters = [validSport && SPORT_LABELS[validSport], term].filter(Boolean) as string[];
   const filtered = filters.length > 0;
 
@@ -90,6 +114,7 @@ export default async function Page({
                 </Link>
                 <span className="text-sm text-ink-secondary">{v.address} · {v.district}</span>
                 <span className="mt-1 text-sm text-ink-secondary">{sports.join(', ')}</span>
+                <FreeSlotsLine free={free.get(v.id)} dayWord={dayWord} />
                 {v.phone && (
                   <a href={`tel:${v.phone}`} className="mt-2 w-fit text-sm font-semibold text-pitch underline underline-offset-2">
                     Gọi chủ sân · {v.phone}
@@ -120,5 +145,38 @@ export default async function Page({
         </div>
       )}
     </main>
+  );
+}
+
+/**
+ * Còn bao nhiêu khung trống — lời hứa ngoài trang chủ, giờ nói ngay trên thẻ.
+ *
+ * Ưu tiên khoe giờ vàng vì đó là khung người ta tìm; hết giờ vàng thì vẫn nói
+ * còn chỗ lúc nào, và hết sạch thì nói thẳng để khỏi bấm vào rồi thất vọng.
+ */
+function FreeSlotsLine({ free, dayWord }: { free?: FreeSlots; dayWord: string }) {
+  if (!free) return null;
+
+  if (free.con_trong === 0) {
+    return (
+      <span className="mt-2 w-fit rounded-pill border border-hairline bg-sunk px-2.5 py-1 text-xs font-semibold text-taken-ink">
+        Hết chỗ {dayWord}
+      </span>
+    );
+  }
+
+  if (free.con_trong_gio_vang > 0) {
+    return (
+      <span className="mt-2 w-fit rounded-pill border border-peak-line bg-peak-fill px-2.5 py-1 text-xs font-semibold text-peak-ink">
+        Còn {free.con_trong_gio_vang} khung giờ vàng {dayWord}
+      </span>
+    );
+  }
+
+  return (
+    <span className="mt-2 w-fit rounded-pill border border-free-line bg-free-fill px-2.5 py-1 text-xs font-semibold text-free-ink">
+      Còn {free.con_trong} khung {dayWord}
+      {free.som_nhat ? ` · sớm nhất ${hhmm(free.som_nhat)}` : ''}
+    </span>
   );
 }

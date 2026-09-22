@@ -158,7 +158,7 @@ JS mới giấu đi — không thì JS hỏng là nội dung tàng hình.
 - [x] Danh sách cần hoàn cọc cho chủ sân, lọc `refund_status = 'needed'`
 - [x] Nút chủ sân xác nhận tay khi webhook hỏng
 - [x] Bộ lọc thật ở `/tim-san`
-- [ ] Badge số khung còn trống trên thẻ sân
+- [x] Badge số khung còn trống trên thẻ sân ở `/tim-san`
 - [x] Bảng giá theo khung giờ cho chủ sân ở `/chu-san/quan-ly`
 - [x] `confirm_payment` trả thêm `owner_id` và `booking_id`
 - [x] Trang duyệt hồ sơ cho admin
@@ -245,6 +245,17 @@ cho cả tuần. `set_court_price_rules()` là phần còn thiếu: chủ sân t
   sân không đoán được, nên `RULES_OVERLAP` chặn ngay từ đầu.
 - Khung nằm ngoài giờ mở cửa bị chặn (`OUTSIDE_HOURS`) thay vì lưu im lặng rồi
   không bao giờ áp dụng.
+
+## Badge số khung trống
+
+`venues_free_slots()` đếm khung trống của nhiều cụm sân trong một lượt cho
+`/tim-san`. Nó gọi lại `get_venue_availability()` qua lateral join chứ không
+chép lại phần sinh khung giờ — chuyện múi giờ, `slot_minutes` và giờ mở cửa chỉ
+được có một bản. Một lượt cho cả trang, không phải mỗi thẻ một vòng mạng.
+
+Thứ tự hiển thị trên thẻ: còn giờ vàng thì khoe giờ vàng (đó là khung người ta
+tìm), hết giờ vàng thì nói còn mấy khung và sớm nhất lúc nào, hết sạch thì nói
+thẳng "hết chỗ" để khách khỏi bấm vào rồi thất vọng.
 
 ## Ràng buộc môi trường
 
