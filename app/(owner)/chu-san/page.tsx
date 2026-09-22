@@ -6,8 +6,17 @@ import { hhmm, vnd, ymd, dayLabel } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
 import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booking-actions';
 import { TelegramConnect } from '@/components/telegram-connect';
+import { StatTile } from '@/components/charts/stat-tile';
+import { RevenueArea, type RevenuePoint } from '@/components/charts/revenue-area';
+import { OccupancyHeatmap, type OccupancyCell } from '@/components/charts/occupancy-heatmap';
 
 export const dynamic = 'force-dynamic';
+
+type OwnerSummary = {
+  doanh_thu: number; doanh_thu_truoc: number;
+  so_don: number; so_don_truoc: number;
+  so_don_huy: number; ty_le_lap_day: number;
+};
 
 /**
  * Dashboard chủ sân. Trên desktop là lưới cả tuần — chủ sân cần thấy tuần tới
@@ -42,6 +51,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     .gte('starts_at', `${ymd(from)}T00:00:00+07:00`)
     .lte('starts_at', `${ymd(to)}T23:59:59+07:00`)
     .order('starts_at');
+
+  // Số liệu của riêng cụm sân đang chọn. stats_can_read() trong Postgres tự
+  // chặn nếu ai đó đổi ?venue= sang cụm sân của người khác.
+  const [tomTat, doanhThuNgay, luoiLapDay] = await Promise.all([
+    supabase.rpc('stats_summary', { p_venue_id: venue.id, p_days: 30 }).single(),
+    supabase.rpc('stats_revenue_daily', { p_venue_id: venue.id, p_days: 30 }),
+    supabase.rpc('stats_occupancy_grid', { p_venue_id: venue.id, p_days: 28 }),
+  ]);
+  const tongQuan = tomTat.data as OwnerSummary | null;
+  const doanhThu = (doanhThuNgay.data ?? []) as RevenuePoint[];
+  const luoi = (luoiLapDay.data ?? []) as OccupancyCell[];
 
   const { data: refunds } = await supabase
     .from('bookings')
@@ -98,11 +118,57 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </p>
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat value={String(paidToday.length)} label="Đơn đã chốt hôm nay" />
-        <Stat value={vnd(paidToday.reduce((s, b) => s + b.deposit_amount, 0))} label="Cọc đã nhận hôm nay" />
-        <Stat value={String(today.length - paidToday.length)} label="Đang chờ chuyển khoản" />
-        <Stat value={String(refundRows.length)} label="Cần hoàn cọc" tone={refundRows.length ? 'danger' : undefined} />
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          label="Tiền cọc 30 ngày"
+          value={trieu(tongQuan?.doanh_thu ?? 0)}
+          unit="triệu"
+          delta={tyLe(tongQuan?.doanh_thu, tongQuan?.doanh_thu_truoc)}
+          spark={doanhThu.map((d) => d.doanh_thu)}
+        />
+        <StatTile
+          label="Lấp đầy trung bình 28 ngày"
+          value={`${Math.round((tongQuan?.ty_le_lap_day ?? 0) * 100)}%`}
+          delta={null}
+          deltaLabel={`${tongQuan?.so_don_huy ?? 0} đơn huỷ hoặc không đến`}
+        />
+        <StatTile
+          label="Hôm nay"
+          value={String(paidToday.length)}
+          unit="đơn đã chốt"
+          delta={null}
+          deltaLabel={`${vnd(paidToday.reduce((sum, b) => sum + b.deposit_amount, 0))} cọc · ${today.length - paidToday.length} đơn đang chờ chuyển khoản`}
+        />
+        <StatTile
+          label="Cần hoàn cọc"
+          value={String(refundRows.length)}
+          delta={null}
+          tone={refundRows.length ? 'peak' : undefined}
+          deltaLabel={refundRows.length ? 'Khách huỷ sớm, phải trả lại cọc' : 'Không có khoản nào phải trả lại'}
+        />
+      </div>
+
+      <div className="mt-6 flex flex-col gap-5">
+        <section className="rounded-card border border-hairline bg-card p-5 sm:p-6">
+          <h2 className="font-semibold">Tiền cọc về tài khoản</h2>
+          <p className="mt-1 text-xs text-ink-secondary">30 ngày gần nhất của {venue.name}.</p>
+          <div className="mt-5"><RevenueArea data={doanhThu} height={190} /></div>
+        </section>
+
+        {/* Lưới cần cả 18 cột giờ; nhét vào nửa trang là cắt mất giờ vàng. */}
+        <section className="rounded-card border border-hairline bg-card p-5 sm:p-6">
+          <h2 className="font-semibold">Khung nào đang ế</h2>
+          <p className="mt-1 text-xs text-ink-secondary">
+            Ô nhạt là khung còn trống đều —{' '}
+            <Link href="/chu-san/quan-ly" className="font-medium text-pitch underline underline-offset-2">
+              hạ giá khung đó
+            </Link>{' '}
+            thường kéo được khách.
+          </p>
+          <div className="mt-5">
+            <OccupancyHeatmap data={luoi} subtitle="Tính trên số lượt có thể bán của chính cụm sân này." />
+          </div>
+        </section>
       </div>
 
       <TelegramConnect connected={Boolean(profile?.telegram_chat_id)} />
@@ -220,13 +286,14 @@ function NoVenue() {
   );
 }
 
-function Stat({ value, label, tone }: { value: string; label: string; tone?: 'danger' }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-card border border-hairline bg-card p-4">
-      <span className={`font-display text-xl font-bold ${tone === 'danger' ? 'text-danger' : 'text-pitch'}`}>
-        {value}
-      </span>
-      <span className="text-[11px] leading-tight text-ink-secondary">{label}</span>
-    </div>
-  );
+/** 34.590.000 → "34,6" — thẻ số liệu đọc bằng mắt, không phải để đối soát. */
+function trieu(v: number) {
+  return (v / 1_000_000).toFixed(1).replace('.', ',');
 }
+
+/** Kỳ trước bằng 0 thì không có gì để so. */
+function tyLe(now?: number, before?: number) {
+  if (!before || before === 0 || now === undefined) return null;
+  return (now - before) / before;
+}
+

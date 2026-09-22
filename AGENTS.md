@@ -285,6 +285,30 @@ xuống), `rejected → active` (mở lại). Điều kiện cho sân chạy là
 - Thẻ thống kê ở `/admin` không gộp hồ sơ chủ sân với cụm sân vào một con số:
   hai việc khác hẳn nhau, gộp lại làm người xem tưởng có một hàng đợi chung.
 
+## Biểu đồ trong dashboard
+
+Không thêm thư viện biểu đồ. `components/charts/*` vẽ SVG ngay ở server: không
+JavaScript phía client, không phụ thuộc mới, và tooltip là `<title>` của SVG nên
+vẫn chạy khi JS chưa tải. Mọi phép tính nằm trong Postgres
+(`stats_revenue_daily`, `stats_occupancy_grid`, `stats_summary`), Node chỉ vẽ lại.
+
+- **Một sắc cho thang độ lớn.** `--color-scale-0..5` nội suy trong OKLab giữa
+  `--color-free-fill` và `--color-pitch`, sáu bước cách đều ΔL ≈ 12.7. Không cầu
+  vồng: đây là thang độ lớn, không phải thang danh mục. Vàng hổ phách vẫn chỉ
+  dành cho giờ vàng, không được kéo vào làm một bậc của thang.
+- Dải này để ở `:root` chứ không ở `@theme`: Tailwind v4 chỉ xuất biến `@theme`
+  nào có class dùng tới, mà nó chỉ được gọi trong `style` của SVG.
+- **Không ghi số lên mọi điểm.** Biểu đồ doanh thu chỉ ghi nhãn đỉnh và điểm
+  cuối; lưới lấp đầy không ghi số vào 126 ô, con số nằm ở tooltip và ở câu tóm
+  tắt "khung kín nhất". Ghi hết thì không ai đọc.
+- **Lưới lấp đầy phải đủ bề ngang 18 cột giờ.** Nhét vào nửa trang là cắt mất
+  đúng khung 19–22h, tức là cắt mất thứ người ta mở dashboard lên để xem.
+- Mẫu số của tỉ lệ lấp đầy là số lượt *có thể bán* (mỗi sân con × mỗi lần thứ đó
+  xuất hiện trong kỳ). Không có mẫu số thì "12 đơn lúc 19h" vô nghĩa — sân hai
+  sân con khác hẳn sân mười sân con.
+- Doanh thu tính trên `payments` đã trả, không phải `bookings.total_amount`:
+  phần còn lại khách trả tay tại sân, hệ thống không thấy nên không được tính.
+
 ## Ràng buộc môi trường
 
 Không Docker, không ORM, không thư viện quản lý state, không react-hook-form. Tailwind v4, token trong `app/globals.css`. Deploy Vercel, database Supabase region Singapore.

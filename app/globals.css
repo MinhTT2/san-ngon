@@ -50,6 +50,23 @@
 
 :root { color-scheme: light; }
 
+/*
+  Dải chuỗi một sắc cho biểu đồ: nội suy trong OKLab giữa --color-free-fill và
+  --color-pitch, sáu bước cách đều ΔL ≈ 12.7 nên mắt đọc được thứ tự đậm nhạt.
+  Một sắc, không cầu vồng — đây là thang độ lớn, không phải thang danh mục.
+
+  Để ở :root chứ không ở @theme: Tailwind v4 chỉ xuất biến @theme nào có class
+  dùng tới, mà dải này chỉ được gọi trong style của SVG nên sẽ bị lược mất.
+*/
+:root {
+  --color-scale-0: #EAF5EF;
+  --color-scale-1: #BCCDC5;
+  --color-scale-2: #8FA79C;
+  --color-scale-3: #648275;
+  --color-scale-4: #3B5E50;
+  --color-scale-5: #0F3D2E;
+}
+
 body {
   background: var(--color-page);
   color: var(--color-ink);
