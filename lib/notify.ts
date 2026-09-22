@@ -66,6 +66,16 @@ export function ownerApplicationEmail(status: 'active' | 'rejected') {
   };
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char] ?? char);
+}
+
+function escapeTelegramHtml(value: string | null | undefined) {
+  return escapeHtml(value ?? '');
+}
+
 /** Tin nhắn báo đơn mới gửi cho chủ sân. Giữ ngắn, họ đọc trên sân. */
 export function ownerBookingMessage(r: ConfirmPaymentResult) {
   const start = r.starts_at
@@ -78,9 +88,31 @@ export function ownerBookingMessage(r: ConfirmPaymentResult) {
 
   return [
     `<b>Đơn mới ${r.code}</b>`,
-    `${r.venue_name} — ${r.court_name}`,
-    start,
-    `${r.customer_name ?? 'Khách'} · ${r.customer_phone}`,
-    `Đã cọc ${vnd(r.deposit_amount ?? 0)} · thu tại sân ${vnd((r.total_amount ?? 0) - (r.deposit_amount ?? 0))}`,
+    `${escapeTelegramHtml(r.venue_name)} — ${escapeTelegramHtml(r.court_name)}`,
+    escapeTelegramHtml(start),
+    `${escapeTelegramHtml(r.customer_name ?? 'Khách')} · ${escapeTelegramHtml(r.customer_phone)}`,
+    `Đã cọc ${escapeTelegramHtml(vnd(r.deposit_amount ?? 0))} · thu tại sân ${escapeTelegramHtml(vnd((r.total_amount ?? 0) - (r.deposit_amount ?? 0)))}`,
   ].join('\n');
+}
+
+/** Email báo đơn mới cho chủ sân. Người chơi vẫn chỉ nhận thông báo trong app. */
+export function ownerBookingEmail(r: ConfirmPaymentResult) {
+  const start = r.starts_at
+    ? new Intl.DateTimeFormat('vi-VN', {
+        weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+        timeZone: 'Asia/Ho_Chi_Minh',
+      }).format(new Date(r.starts_at))
+    : 'Chưa có thời gian';
+  const rows = [
+    ['Cụm sân', r.venue_name ?? ''],
+    ['Sân', r.court_name ?? ''],
+    ['Thời gian', start],
+    ['Khách', r.customer_name ?? 'Khách'],
+    ['Điện thoại', r.customer_phone ?? ''],
+    ['Tiền cọc', vnd(r.deposit_amount ?? 0)],
+    ['Thu tại sân', vnd((r.total_amount ?? 0) - (r.deposit_amount ?? 0))],
+  ].map(([label, value]) => `<tr><th align="left">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('');
+
+  return `<h2>Đơn mới ${escapeHtml(r.code ?? '')}</h2><table cellpadding="6" cellspacing="0">${rows}</table>`;
 }

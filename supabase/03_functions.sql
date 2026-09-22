@@ -581,7 +581,7 @@ begin
 
   select id into v_id
   from profiles
-  where telegram_link_token_hash = encode(digest(p_token, 'sha256'), 'hex')
+  where telegram_link_token_hash = encode(extensions.digest(convert_to(p_token, 'UTF8'), 'sha256'), 'hex')
     and telegram_link_expires_at > now()
   for update;
 
