@@ -420,6 +420,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_stats: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_owner_stats: {
+        Args: { p_from: string; p_to: string; p_venue_id: string }
+        Returns: Json
+      }
       cancel_booking: {
         Args: { p_code: string }
         Returns: {

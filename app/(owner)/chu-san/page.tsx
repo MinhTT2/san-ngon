@@ -37,11 +37,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   const statsTo = new Date();
   const statsFrom = new Date();
   statsFrom.setDate(statsFrom.getDate() - period + 1);
-  const { data: statsData } = await supabase.rpc('get_owner_stats' as never, {
+  const { data: statsData } = await supabase.rpc('get_owner_stats', {
     p_venue_id: venue.id,
     p_from: ymd(statsFrom),
     p_to: ymd(statsTo),
-  } as never);
+  });
   const stats = parseOwnerStats(statsData);
 
   const from = new Date();

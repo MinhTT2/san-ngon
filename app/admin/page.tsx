@@ -35,7 +35,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
     supabase.from('bookings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.rpc('get_admin_stats' as never, { p_from: ymd(statsFrom), p_to: ymd(statsTo) } as never),
+    supabase.rpc('get_admin_stats', { p_from: ymd(statsFrom), p_to: ymd(statsTo) }),
   ]);
   if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
 
