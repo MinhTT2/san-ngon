@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Building2, CalendarCheck, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
@@ -30,11 +29,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const statsTo = new Date();
   const statsFrom = new Date();
   statsFrom.setDate(statsFrom.getDate() - period + 1);
-  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { count: bookingCount }, { count: userCount }, { data: statsData }] = await Promise.all([
+  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { data: statsData }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
-    supabase.from('bookings').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.rpc('get_admin_stats', { p_from: ymd(statsFrom), p_to: ymd(statsTo) }),
   ]);
   if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
@@ -65,12 +62,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <Link href="/" className="rounded-control border border-hairline bg-card px-4 py-2.5 text-sm font-medium text-ink-secondary hover:border-strong">
           Xem trang đặt sân ↗
         </Link>
-      </div>
-
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <AdminStat icon={Building2} value={String(pendingOwners.length + pendingVenues.length)} label="Hồ sơ chờ duyệt" tone={pendingOwners.length + pendingVenues.length ? 'peak' : undefined} />
-        <AdminStat icon={CalendarCheck} value={String(bookingCount ?? 0)} label="Tổng đơn đặt sân" />
-        <AdminStat icon={Users} value={String(userCount ?? 0)} label="Tài khoản" />
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -225,10 +216,6 @@ function BookingTable({ bookings }: { bookings: Array<{ id: string; code: string
 
 function UserTable({ users }: { users: Array<{ id: string; full_name: string | null; phone: string | null; role: string; created_at: string }> }) {
   return <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card"><div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tài khoản gần đây</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Tên</th><th className="px-5 py-3 font-medium">Liên hệ</th><th className="px-5 py-3 font-medium">Vai trò</th><th className="px-5 py-3 font-medium">Ngày tạo</th></tr></thead><tbody>{users.map((item) => <tr key={item.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{item.full_name ?? 'Chưa cập nhật'}</td><td className="px-5 py-4 text-ink-secondary">{item.phone ?? '—'}</td><td className="px-5 py-4 capitalize">{item.role}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(item.created_at))}</td></tr>)}</tbody></table></div></section>;
-}
-
-function AdminStat({ icon: Icon, value, label, tone }: { icon: typeof Building2; value: string; label: string; tone?: 'peak' }) {
-  return <div className="flex items-center gap-4 rounded-card border border-hairline bg-card p-5"><span className={`flex size-11 items-center justify-center rounded-control ${tone === 'peak' ? 'bg-peak-fill text-peak-ink' : 'bg-free-fill text-pitch'}`}><Icon className="size-5" aria-hidden="true" /></span><span><strong className="block font-display text-2xl font-bold text-pitch">{value}</strong><span className="text-xs text-ink-secondary">{label}</span></span></div>;
 }
 
 function ProgressRow({ label, value, total }: { label: string; value: number; total: number }) {

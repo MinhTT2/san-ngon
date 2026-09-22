@@ -80,8 +80,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   });
 
   const today = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(new Date()));
-  const paidToday = today.filter((b) => b.status === 'confirmed');
-
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -110,13 +108,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
           <Link href="/dang-ky-san" className="font-semibold underline underline-offset-2">Xem tiến độ</Link>
         </p>
       )}
-
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat value={String(paidToday.length)} label="Đơn đã chốt hôm nay" />
-        <Stat value={vnd(paidToday.reduce((s, b) => s + b.deposit_amount, 0))} label="Cọc đã nhận hôm nay" />
-        <Stat value={String(today.length - paidToday.length)} label="Đang chờ chuyển khoản" />
-        <Stat value={String(refundRows.length)} label="Cần hoàn cọc" tone={refundRows.length ? 'danger' : undefined} />
-      </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-secondary">Theo dõi doanh thu và công suất để biết sân nào cần lấp lịch.</p>
@@ -236,16 +227,5 @@ function NoVenue() {
         Tạo cụm sân
       </Link>
     </main>
-  );
-}
-
-function Stat({ value, label, tone }: { value: string; label: string; tone?: 'danger' }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-card border border-hairline bg-card p-4">
-      <span className={`font-display text-xl font-bold ${tone === 'danger' ? 'text-danger' : 'text-pitch'}`}>
-        {value}
-      </span>
-      <span className="text-[11px] leading-tight text-ink-secondary">{label}</span>
-    </div>
   );
 }
