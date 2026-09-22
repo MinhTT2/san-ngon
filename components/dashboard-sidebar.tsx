@@ -16,8 +16,8 @@ type DashboardRole = 'owner' | 'admin';
 
 const OWNER_LINKS = [
   { href: '/chu-san', label: 'Tổng quan', icon: LayoutDashboard },
-  { href: '/chu-san#calendar', label: 'Lịch sân', icon: CalendarDays },
-  { href: '/chu-san#bookings', label: 'Đơn đặt sân', icon: ClipboardList },
+  { href: '/chu-san/lich', label: 'Lịch sân', icon: CalendarDays },
+  { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
   { href: '/tao-cum-san', label: 'Tạo cụm sân', icon: Building2 },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
   { href: '/thong-bao', label: 'Thông báo', icon: Bell },
@@ -28,7 +28,7 @@ const ADMIN_LINKS = [
   { href: '/admin?view=owners', label: 'Hồ sơ chủ sân', icon: ShieldCheck },
   { href: '/admin?view=venues', label: 'Hồ sơ sân', icon: Building2 },
   { href: '/admin?view=bookings', label: 'Đơn đặt sân', icon: ClipboardList },
-  { href: '/admin?view=users', label: 'Tài khoản', icon: Users },
+  { href: '/admin/users', label: 'Người dùng', icon: Users },
 ] as const;
 
 export function DashboardSidebar({ role }: { role: DashboardRole }) {
