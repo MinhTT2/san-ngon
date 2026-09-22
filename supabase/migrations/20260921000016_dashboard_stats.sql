@@ -73,3 +73,5 @@ begin
 end $$;
 
 
+revoke execute on function public.stats_occupancy_grid(uuid, int) from public, anon;
+grant execute on function public.stats_occupancy_grid(uuid, int) to authenticated;
