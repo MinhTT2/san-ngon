@@ -58,5 +58,5 @@ function MiniStat({ label, value, icon: Icon, tone }: { label: string; value: nu
 }
 
 function Empty() {
-  return <main className="mx-auto max-w-3xl px-5 py-16 lg:px-16"><h1 className="font-display text-3xl font-extrabold text-pitch">Bạn chưa có cụm sân nào</h1><p className="mt-3 text-sm text-ink-secondary">Tạo cụm sân để bắt đầu nhận và quản lý đơn đặt sân.</p><Link href="/tao-cum-san" className="mt-6 inline-flex rounded-control bg-pitch px-5 py-3 text-sm font-semibold text-pitch-ink">Tạo cụm sân</Link></main>;
+  return <main className="mx-auto max-w-3xl px-5 py-16 lg:px-16"><h1 className="font-display text-3xl font-extrabold text-pitch">Bạn chưa có cụm sân nào</h1><p className="mt-3 text-sm text-ink-secondary">Tạo cụm sân để bắt đầu nhận và quản lý đơn đặt sân.</p><Link href="/chu-san/quan-ly" className="mt-6 inline-flex rounded-control bg-pitch px-5 py-3 text-sm font-semibold text-pitch-ink">Tạo cụm sân</Link></main>;
 }

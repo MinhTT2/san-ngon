@@ -15,7 +15,6 @@ type DashboardRole = 'owner' | 'admin';
 const OWNER_LINKS = [
   { href: '/chu-san', label: 'Tổng quan', icon: LayoutDashboard },
   { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
-  { href: '/tao-cum-san', label: 'Tạo cụm sân', icon: Building2 },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
 ] as const;
 

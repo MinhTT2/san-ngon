@@ -10,7 +10,7 @@ const SPORT_KEYS = Object.keys(SPORT_LABELS);
 const EMPTY: SportRow = { sport: 'football5', courtCount: '1', price: '250000' };
 
 type Errors = Record<string, string>;
-export function VenueForm({ defaultPhone }: { defaultPhone?: string | null }) {
+export function VenueForm({ defaultPhone, embedded = false, onSuccess }: { defaultPhone?: string | null; embedded?: boolean; onSuccess?: (venueId?: string) => void }) {
   const router = useRouter();
   const firstField = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
@@ -37,12 +37,13 @@ export function VenueForm({ defaultPhone }: { defaultPhone?: string | null }) {
       const response = await fetch('/api/venues', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) { setError(result.error ?? 'Không tạo được cụm sân.'); setFieldErrors(result.fieldErrors ?? {}); return; }
-      router.push(`/chu-san/quan-ly?venue=${result.venue?.id ?? ''}`); router.refresh();
+      if (onSuccess) onSuccess(result.venue?.id);
+      else { router.push(`/chu-san/quan-ly?venue=${result.venue?.id ?? ''}`); router.refresh(); }
     } catch { setError('Không kết nối được. Kiểm tra mạng rồi thử lại.'); }
     finally { setBusy(false); }
   }
 
-  return <div className="rounded-card border border-hairline bg-card p-5 sm:p-8">
+  return <div className={embedded ? '' : 'rounded-card border border-hairline bg-card p-5 sm:p-8'}>
     <div className="mb-8 flex items-center gap-3 text-sm"><Step number={1} active={step === 1} done={step > 1} label="Thông tin cụm" /><span className="h-px flex-1 bg-hairline" /><Step number={2} active={step === 2} done={false} label="Thiết lập sân" /></div>
     {step === 1 ? <form onSubmit={goToSetup}>
       <div className="grid gap-4 sm:grid-cols-2"><OwnerField label="Tên cụm sân" error={fieldErrors.name}><input ref={firstField} className={OWNER_INPUT} value={details.name} onChange={(e) => updateDetails('name', e.target.value)} placeholder="Ví dụ: Sân bóng Mỹ Đình" required maxLength={120} /></OwnerField><OwnerField label="Số điện thoại tại sân" error={fieldErrors.phone}><input className={OWNER_INPUT} value={details.phone} onChange={(e) => updateDetails('phone', e.target.value)} placeholder="0987654321" required pattern="0\d{9}" /></OwnerField></div>

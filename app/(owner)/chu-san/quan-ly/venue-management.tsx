@@ -1,24 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { X } from 'lucide-react';
 import { DISTRICTS, SPORT_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
 import { OWNER_INPUT, OWNER_PRIMARY, OWNER_SECONDARY, OwnerField } from '@/components/owner-form-field';
+import { VenueForm } from '../../tao-cum-san/venue-form';
 
 type PriceRule = { label: string | null; price_per_hour: number; start_time: string; end_time: string };
 type Court = { id: string; name: string; sport: keyof typeof SPORT_LABELS; surface: string | null; is_indoor: boolean; slot_minutes: number; open_time: string | null; close_time: string | null; is_active: boolean; price_rules: PriceRule[] };
 type Venue = { id: string; name: string; address: string; district: string; phone: string | null; description: string | null; open_time: string; close_time: string; deposit_pct: number; booking_horizon_days: number; status: keyof typeof VENUE_STATUS_LABELS; courts: Court[] };
-type Props = { initialVenues: Venue[]; selectedVenueId?: string };
+type Props = { initialVenues: Venue[]; selectedVenueId?: string; defaultPhone?: string | null };
 type VenueDraft = { name: string; address: string; district: string; phone: string; description: string; deposit_pct: number; booking_horizon_days: number; open_time: string; close_time: string };
 type CourtDraft = { name: string; sport: Court['sport']; surface: string; is_indoor: boolean; slot_minutes: number; open_time: string; close_time: string; is_active: boolean; price_per_hour: number };
 type Errors = Record<string, string>;
 const EMPTY_COURT: CourtDraft = { name: '', sport: 'football5', surface: '', is_indoor: false, slot_minutes: 60, open_time: '', close_time: '', is_active: true, price_per_hour: 250000 };
 
-export function VenueManagement({ initialVenues, selectedVenueId }: Props) {
+export function VenueManagement({ initialVenues, selectedVenueId, defaultPhone }: Props) {
   const router = useRouter();
   const [venues, setVenues] = useState(initialVenues);
   const [selected, setSelected] = useState(selectedVenueId && initialVenues.some((v) => v.id === selectedVenueId) ? selectedVenueId : initialVenues[0]?.id ?? '');
+  const [creatingVenue, setCreatingVenue] = useState(false);
   const [editingVenue, setEditingVenue] = useState<string | null>(null);
   const [editingCourt, setEditingCourt] = useState<string | null>(null);
   const [addingCourt, setAddingCourt] = useState<string | null>(null);
@@ -26,6 +29,11 @@ export function VenueManagement({ initialVenues, selectedVenueId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Errors>({});
   const venue = venues.find((item) => item.id === selected);
+
+  useEffect(() => {
+    setVenues(initialVenues);
+    setSelected(selectedVenueId && initialVenues.some((v) => v.id === selectedVenueId) ? selectedVenueId : initialVenues[0]?.id ?? '');
+  }, [initialVenues, selectedVenueId]);
 
   function selectVenue(id: string) { setSelected(id); setEditingVenue(null); setAddingCourt(null); setEditingCourt(null); router.replace(`/chu-san/quan-ly?venue=${id}`, { scroll: false }); }
   function showError(text: string, fields: Errors = {}) { setError(text); setMessage(null); setFormErrors(fields); }
@@ -49,13 +57,33 @@ export function VenueManagement({ initialVenues, selectedVenueId }: Props) {
   }
   async function remove(url: string, question: string, done: () => void, success: string) { if (!window.confirm(question)) return; try { await request(url, 'DELETE'); done(); showMessage(success); } catch (e) { showError((e as Error).message); } }
 
-  if (!venue) return <div className="rounded-card border border-dashed border-strong bg-card p-10 text-center"><p className="text-ink-secondary">Bạn chưa có cụm sân nào.</p><a href="/tao-cum-san" className={`${OWNER_PRIMARY} mt-5`}>+ Thêm cụm sân</a></div>;
   return <div className="space-y-6">
+    {creatingVenue && <CreateVenueModal defaultPhone={defaultPhone} onClose={() => setCreatingVenue(false)} onSuccess={(venueId) => { setCreatingVenue(false); if (venueId) router.replace(`/chu-san/quan-ly?venue=${venueId}`, { scroll: false }); router.refresh(); }} />}
+    {!venue && <div className="rounded-card border border-dashed border-strong bg-card p-10 text-center"><p className="text-ink-secondary">Bạn chưa có cụm sân nào.</p><button type="button" onClick={() => setCreatingVenue(true)} className={`${OWNER_PRIMARY} mt-5`}>+ Tạo cụm sân</button></div>}
+    {venue && <>
     {venues.length > 1 && <div className="flex flex-wrap gap-2" aria-label="Chọn cụm sân">{venues.map((item) => <button key={item.id} type="button" onClick={() => selectVenue(item.id)} className={`rounded-control border px-4 py-3 text-sm font-semibold ${item.id === venue.id ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-pitch'}`}>{item.name}</button>)}</div>}
     {(message || error) && <p role={error ? 'alert' : 'status'} className={`rounded-card border px-4 py-3 text-sm ${error ? 'border-danger bg-[#FFF5F5] text-danger' : 'border-free-line bg-free-fill text-free-ink'}`}>{error ?? message}</p>}
-    <section className="overflow-hidden rounded-card border border-hairline bg-card"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-hairline p-5"><div><div className="flex flex-wrap items-center gap-3"><h2 className="font-display text-2xl font-bold text-pitch">{venue.name}</h2><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs">{VENUE_STATUS_LABELS[venue.status]}</span></div><p className="mt-1 text-sm text-ink-secondary">{venue.address} · {venue.district} · Mở {venue.open_time.slice(0, 5)}–{venue.close_time.slice(0, 5)}</p></div><div className="flex gap-2"><button type="button" onClick={() => setEditingVenue(venue.id)} className={OWNER_SECONDARY}>Sửa cụm sân</button><a href="/tao-cum-san" className={OWNER_PRIMARY}>+ Thêm cụm sân</a></div></div>{editingVenue === venue.id && <VenueEditor initial={toVenueDraft(venue)} errors={formErrors} onCancel={() => setEditingVenue(null)} onSave={(draft) => saveVenue(venue.id, draft)} />}
+    <section className="overflow-hidden rounded-card border border-hairline bg-card"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-hairline p-5"><div><div className="flex flex-wrap items-center gap-3"><h2 className="font-display text-2xl font-bold text-pitch">{venue.name}</h2><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs">{VENUE_STATUS_LABELS[venue.status]}</span></div><p className="mt-1 text-sm text-ink-secondary">{venue.address} · {venue.district} · Mở {venue.open_time.slice(0, 5)}–{venue.close_time.slice(0, 5)}</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setEditingVenue(venue.id)} className={OWNER_SECONDARY}>Sửa cụm sân</button><button type="button" onClick={() => setCreatingVenue(true)} className={OWNER_PRIMARY}>+ Tạo cụm sân</button></div></div>{editingVenue === venue.id && <VenueEditor initial={toVenueDraft(venue)} errors={formErrors} onCancel={() => setEditingVenue(null)} onSave={(draft) => saveVenue(venue.id, draft)} />}
       <div className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display text-xl font-bold text-pitch">Sân con</h3><p className="mt-1 text-sm text-ink-secondary">{venue.courts.length} sân · mỗi sân có lịch và giá riêng.</p></div><button type="button" onClick={() => { setAddingCourt(venue.id); setEditingCourt(null); setError(null); setFormErrors({}); }} className={OWNER_PRIMARY}>+ Thêm sân</button></div>{addingCourt === venue.id && <CourtEditor venue={venue} initial={EMPTY_COURT} errors={formErrors} onCancel={() => setAddingCourt(null)} onSave={(draft, again) => saveCourt(venue.id, draft, undefined, again)} />}
       <div className="mt-4 overflow-hidden border-y border-hairline"><div className="hidden grid-cols-[minmax(0,1.5fr)_1fr_1fr_1fr_auto] gap-4 bg-sunk px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-secondary md:grid"><span>Tên sân</span><span>Môn</span><span>Giá chung/giờ</span><span>Giờ hoạt động</span><span>Trạng thái</span></div>{venue.courts.map((court) => editingCourt === court.id ? <div key={court.id}><CourtEditor venue={venue} initial={toCourtDraft(court)} errors={formErrors} onCancel={() => setEditingCourt(null)} onSave={(draft) => saveCourt(venue.id, draft, court.id)} /></div> : <CourtRow key={court.id} court={court} venue={venue} onEdit={() => { setFormErrors({}); setEditingCourt(court.id); }} onDelete={() => remove(`/api/courts/${court.id}`, `Xóa sân “${court.name}”? Nếu đã có đơn, hãy tắt sân thay vì xóa.`, () => setVenues((rows) => rows.map((v) => v.id === venue.id ? { ...v, courts: v.courts.filter((c) => c.id !== court.id) } : v)), 'Đã xóa sân con.')} />)}</div>{venue.courts.length === 0 && <p className="mt-4 rounded-control border border-dashed border-strong p-5 text-sm text-ink-secondary">Chưa có sân con. Thêm sân đầu tiên để bắt đầu nhận đặt.</p>}</div></section>
+    </>}
+  </div>;
+}
+function CreateVenueModal({ defaultPhone, onClose, onSuccess }: { defaultPhone?: string | null; onClose: () => void; onSuccess: (venueId?: string) => void }) {
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', closeOnEscape);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', closeOnEscape); document.body.style.overflow = previousOverflow; };
+  }, [onClose]);
+
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="create-venue-title">
+    <button type="button" aria-label="Đóng cửa sổ tạo cụm sân" onClick={onClose} className="absolute inset-0 h-full w-full cursor-default bg-pitch/35" />
+    <section className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hairline bg-card sm:max-h-[calc(100dvh-3rem)]">
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-7"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Quản lý sân</p><h2 id="create-venue-title" className="mt-1 font-display text-2xl font-bold text-pitch">Tạo cụm sân mới</h2><p className="mt-1 text-sm text-ink-secondary">Thêm thông tin cụm và các sân con để bắt đầu nhận đặt.</p></div><button type="button" onClick={onClose} className="grid size-10 shrink-0 place-items-center rounded-control border border-hairline text-ink-secondary hover:border-strong hover:text-pitch" aria-label="Đóng"><X className="size-5" aria-hidden="true" /></button></header>
+      <div className="overflow-y-auto p-4 sm:p-7"><VenueForm defaultPhone={defaultPhone} embedded onSuccess={onSuccess} /></div>
+    </section>
   </div>;
 }
 function CourtRow({ court, venue, onEdit, onDelete }: { court: Court; venue: Venue; onEdit: () => void; onDelete: () => void }) { const price = court.price_rules?.find((rule) => rule.label === 'Giá chung')?.price_per_hour ?? court.price_rules?.[0]?.price_per_hour; return <div className="grid gap-3 border-t border-hairline p-4 md:grid-cols-[minmax(0,1.5fr)_1fr_1fr_1fr_auto] md:items-center md:gap-4"><div><p className="font-semibold">{court.name} <span className={`ml-2 rounded-pill px-2 py-0.5 text-xs ${court.is_active ? 'bg-free-fill text-free-ink' : 'bg-sunk text-ink-secondary'}`}>{court.is_active ? 'Đang mở' : 'Đang tắt'}</span></p><p className="mt-1 text-sm text-ink-secondary md:hidden">{SPORT_LABELS[court.sport]} · {price?.toLocaleString('vi-VN') ?? '—'}đ/giờ</p></div><span className="hidden text-sm md:inline">{SPORT_LABELS[court.sport]}</span><span className="hidden text-sm md:inline">{price?.toLocaleString('vi-VN') ?? '—'}đ/giờ</span><span className="hidden text-sm md:inline">{(court.open_time ?? venue.open_time).slice(0, 5)}–{(court.close_time ?? venue.close_time).slice(0, 5)}</span><div className="flex gap-2"><Link href={`/chu-san/lich?court=${court.id}`} className={OWNER_SECONDARY}>Lịch</Link><button type="button" onClick={onEdit} className={OWNER_SECONDARY}>Sửa</button><button type="button" onClick={onDelete} className="inline-flex min-h-12 items-center justify-center rounded-control border border-hairline px-3 py-2 text-sm font-semibold text-danger">Xóa</button></div></div>; }

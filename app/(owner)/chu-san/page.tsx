@@ -221,7 +221,7 @@ function NoVenue() {
         Tạo cụm sân đầu tiên để thêm sân con, bảng giá và bắt đầu nhận đặt.
       </p>
       <Link
-        href="/tao-cum-san"
+        href="/chu-san/quan-ly"
         className="mt-7 flex h-13 w-fit items-center rounded-control bg-pitch px-7 font-semibold text-pitch-ink"
       >
         Tạo cụm sân
