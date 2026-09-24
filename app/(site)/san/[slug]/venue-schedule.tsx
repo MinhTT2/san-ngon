@@ -79,23 +79,27 @@ export function VenueSchedule({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {(extraDay ? [extraDay, ...days] : days).map((d) => {
+      <div className="rounded-card border border-hairline bg-card p-4 sm:p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Bước 1 · Chọn ngày</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Bạn muốn chơi ngày nào?</h2></div><p className="text-xs text-ink-secondary">Giữ chỗ 15 phút để chuyển cọc</p></div>
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        {(extraDay ? [extraDay, ...days] : days).map((d, index) => {
           const active = ymd(d) === ymd(date);
           return (
             <button
               key={ymd(d)}
               onClick={() => setDate(d)}
               aria-pressed={active}
-              className={`flex h-15 w-14 flex-none flex-col items-center justify-center gap-0.5 rounded-control border ${
-                active ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card'
+              className={`flex h-[4.25rem] w-[4.25rem] flex-none flex-col items-center justify-center gap-0.5 rounded-control border transition-colors ${
+                active ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-page hover:border-pitch'
               }`}
             >
-              <span className="text-[11px] opacity-80">{dayShort(d)}</span>
-              <span className="text-base font-semibold tabular-nums">{d.getDate()}</span>
+              <span className="text-[11px] font-semibold uppercase opacity-75">{index === 0 && ymd(d) === ymd(new Date()) ? 'Hôm nay' : dayShort(d)}</span>
+              <span className="text-lg font-semibold tabular-nums">{String(d.getDate()).padStart(2, '0')}</span>
+              <span className="text-[10px] opacity-70">Tháng {d.getMonth() + 1}</span>
             </button>
           );
         })}
+        </div>
       </div>
 
       <div className="md:hidden">

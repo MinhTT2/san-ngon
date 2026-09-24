@@ -47,18 +47,20 @@ export function SlotPickerMobile({
   }
 
   const deposit = a.selection ? Math.ceil((a.selection.total * depositPct) / 100 / 1000) * 1000 : 0;
+  const availableCount = a.slots.filter((slot) => slot.is_available).length;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
+      <div className="flex items-end justify-between gap-3"><div><p className="text-sm font-semibold text-pitch">Chọn giờ trên lịch</p><p className="mt-1 text-xs text-ink-secondary">Chọn giờ liền nhau trên cùng một sân</p></div><span className="rounded-pill bg-free-fill px-3 py-1 text-xs font-semibold text-free-ink">{availableCount} giờ trống</span></div>
       <Legend />
 
       <div className="overflow-x-auto rounded-card border border-hairline bg-card">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 w-11 bg-card px-2 py-3 text-left text-xs font-medium text-ink-secondary">Giờ</th>
+              <th className="sticky left-0 z-10 w-16 bg-card px-3 py-3 text-left text-xs font-semibold text-ink-secondary">Giờ</th>
               {a.courts.map((c) => (
-                <th key={c.id} className="min-w-[80px] border-l border-hairline px-1 py-3 text-xs font-semibold text-pitch">
+                  <th key={c.id} className="min-w-[92px] border-l border-hairline px-1 py-3 text-xs font-semibold text-pitch">
                   {c.name}
                 </th>
               ))}
@@ -67,7 +69,7 @@ export function SlotPickerMobile({
           <tbody>
             {a.times.map((t) => (
               <tr key={t} className="border-t border-hairline">
-                <th className="sticky left-0 z-10 bg-card px-2 py-1 text-left align-middle text-xs font-medium tabular-nums text-ink-secondary">
+                <th className="sticky left-0 z-10 bg-card px-3 py-1 text-left align-middle text-xs font-medium tabular-nums text-ink-secondary">
                   {hhmm(t)}
                 </th>
                 {a.courts.map((c) => {
@@ -88,23 +90,23 @@ export function SlotPickerMobile({
       </div>
 
       {a.selection ? (
-        <div className="sticky bottom-0 -mx-4 border-t border-hairline bg-card px-4 pb-5 pt-3">
-          <div className="mb-3 flex items-baseline justify-between">
+        <div className="sticky bottom-3 z-20 -mx-1 rounded-card border border-pitch bg-pitch px-4 pb-4 pt-4 text-pitch-ink">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-semibold">
                 {a.selection.courtName} · {hhmm(a.selection.startsAt)}–{hhmm(a.selection.endsAt)}
               </span>
-              <span className="text-xs text-ink-secondary">Cọc trước {vnd(deposit)}</span>
+              <span className="text-xs text-pitch-ink/70">Cọc trước {vnd(deposit)}</span>
             </div>
-            <span className="font-display text-xl font-bold text-pitch">{vnd(a.selection.total)}</span>
+            <span className="font-display text-xl font-bold">{vnd(a.selection.total)}</span>
           </div>
-          <button onClick={onConfirm} className="h-13 w-full rounded-control bg-pitch text-base font-semibold text-pitch-ink">
-            Tiếp tục
+          <button onClick={onConfirm} className="h-12 w-full rounded-control bg-white text-base font-semibold text-pitch transition-colors hover:bg-free-fill">
+            Tiếp tục đặt sân <span aria-hidden="true" className="ml-2">→</span>
           </button>
         </div>
       ) : (
-        <p className="text-xs text-ink-secondary">
-          Chọn tối đa {MAX_SLOTS} khung giờ liền nhau trên cùng một sân.
+        <p className="rounded-control bg-sunk px-3 py-3 text-xs leading-5 text-ink-secondary">
+          Chọn tối đa {MAX_SLOTS} khung giờ liền nhau trên cùng một sân. Giờ vàng được tô màu vàng.
         </p>
       )}
     </div>

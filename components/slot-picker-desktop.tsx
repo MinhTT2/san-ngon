@@ -27,7 +27,7 @@ export function SlotPickerDesktop({
 
   useEffect(() => { onSelectionChange?.(a.selection); }, [a.selection, onSelectionChange]);
 
-  if (a.loading) return <div className="h-64 animate-pulse rounded-card bg-sunk" aria-busy="true" />;
+  if (a.loading) return <div className="h-[30rem] animate-pulse rounded-card border border-hairline bg-sunk" aria-busy="true" />;
   if (a.failed) {
     return (
       <div className="rounded-card border border-hairline p-6 text-center text-sm text-ink-secondary">
@@ -40,24 +40,29 @@ export function SlotPickerDesktop({
     return <div className="rounded-card border border-hairline p-8 text-center text-sm text-ink-secondary">Sân chưa mở lịch cho ngày này.</div>;
   }
 
-  const cols = `92px repeat(${a.times.length}, minmax(0, 1fr))`;
+  const cols = `112px repeat(${a.times.length}, minmax(78px, 1fr))`;
   const deposit = a.selection ? Math.ceil((a.selection.total * depositPct) / 100 / 1000) * 1000 : 0;
 
+  const availableCount = a.slots.filter((slot) => slot.is_available).length;
+
   return (
-    <div className="flex gap-8">
-      <div className="min-w-0 flex-grow rounded-card border border-hairline bg-card p-4">
-        <div className="grid gap-1 pb-1" style={{ gridTemplateColumns: cols }}>
-          <span className="text-[11px] text-ink-secondary">Giờ</span>
+    <div className="flex flex-col gap-4 xl:flex-row">
+      <div className="min-w-0 flex-1 rounded-card border border-hairline bg-card p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-semibold text-pitch">Lịch sân trong ngày</p><p className="mt-1 text-xs text-ink-secondary">Bấm các giờ liền nhau trên cùng một sân · tối đa 3 khung</p></div><span className="rounded-pill bg-free-fill px-3 py-1 text-xs font-semibold text-free-ink">{availableCount} giờ còn trống</span></div>
+        <div className="overflow-x-auto pb-2"><div className="min-w-[720px]">
+        <div className="grid gap-1 pb-2" style={{ gridTemplateColumns: cols }}>
+          <span className="flex items-end pb-1 text-[11px] font-semibold text-ink-secondary">Sân / giờ</span>
           {a.times.map((t) => (
-            <span key={t} className="text-center text-[11px] tabular-nums text-ink-secondary">
-              {hhmm(t).slice(0, 2)}
+            <span key={t} className="text-center text-[11px] font-semibold tabular-nums text-ink-secondary">
+              {hhmm(t)}
             </span>
           ))}
         </div>
 
+        <div className="flex flex-col gap-2">
         {a.courts.map((c) => (
-          <div key={c.id} className="grid gap-1 pb-1" style={{ gridTemplateColumns: cols }}>
-            <span className="flex items-center text-[13px] font-semibold text-pitch">{c.name}</span>
+          <div key={c.id} className="grid gap-1 rounded-control border border-hairline bg-page p-1" style={{ gridTemplateColumns: cols }}>
+            <span className="flex items-center px-2 text-[13px] font-semibold text-pitch">{c.name}</span>
             {a.times.map((t) => {
               const key = `${c.id}|${t}`;
               const slot = a.byKey.get(key);
@@ -69,27 +74,26 @@ export function SlotPickerDesktop({
             })}
           </div>
         ))}
+        </div>
+        </div></div>
       </div>
 
-      <aside className="w-80 flex-none rounded-card border border-hairline bg-card p-5">
-        <h2 className="mb-4 text-[15px] font-semibold">Khung giờ bạn chọn</h2>
+      <aside className="w-full flex-none rounded-card border border-pitch bg-pitch p-5 text-pitch-ink xl:sticky xl:top-5 xl:w-80 xl:self-start">
+        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch-ink/65">Tóm tắt đặt sân</p><h2 className="mt-2 font-display text-xl font-bold">{a.selection ? 'Sẵn sàng chốt kèo?' : 'Chọn giờ bạn muốn chơi'}</h2></div>{a.selection && <span className="grid size-8 place-items-center rounded-full bg-white/15 text-sm">✓</span>}</div>
         {!a.selection ? (
-          <p className="text-[13px] leading-relaxed text-ink-secondary">
-            Bấm vào ô trống trên lịch. Chọn được tối đa 3 giờ liền nhau trên cùng một sân.
+          <p className="mt-6 text-[13px] leading-relaxed text-pitch-ink/75">
+            Bấm vào ô màu xanh trên lịch. Bạn có thể chọn tối đa 3 giờ liền nhau trên cùng một sân.
           </p>
         ) : (
-          <div className="flex flex-col gap-4">
-            <Row label="Sân" value={a.selection.courtName} />
-            <Row label="Giờ" value={`${hhmm(a.selection.startsAt)} – ${hhmm(a.selection.endsAt)}`} />
-            <div className="h-px bg-hairline" />
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm text-ink-secondary">Tổng tiền sân</span>
-              <span className="font-display text-2xl font-bold text-pitch">{vnd(a.selection.total)}</span>
+          <div className="mt-6 flex flex-col gap-4">
+            <div className="rounded-control bg-white/10 p-3"><Row label="Sân" value={a.selection.courtName} /><div className="mt-2"><Row label="Thời gian" value={`${hhmm(a.selection.startsAt)} – ${hhmm(a.selection.endsAt)}`} /></div></div>
+            <div className="flex items-baseline justify-between border-b border-white/20 pb-4">
+              <span className="text-sm text-pitch-ink/75">Tổng tiền sân</span>
+              <span className="font-display text-2xl font-bold">{vnd(a.selection.total)}</span>
             </div>
-            <Row label={`Cọc trước ${depositPct}%`} value={vnd(deposit)} />
-            <Row label="Trả tại sân" value={vnd(a.selection.total - deposit)} />
-            <button onClick={onConfirm} className="h-12 rounded-control bg-pitch text-[15px] font-semibold text-pitch-ink">
-              Đặt và trả cọc
+            <div className="flex flex-col gap-2 text-sm"><Row label={`Cọc trước ${depositPct}%`} value={vnd(deposit)} /><Row label="Trả tại sân" value={vnd(a.selection.total - deposit)} /></div>
+            <button onClick={onConfirm} className="h-12 rounded-control bg-white text-[15px] font-semibold text-pitch transition-colors hover:bg-free-fill">
+              Tiếp tục đặt sân <span aria-hidden="true" className="ml-2">→</span>
             </button>
           </div>
         )}
@@ -101,7 +105,7 @@ export function SlotPickerDesktop({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3 text-sm">
-      <span className="text-ink-secondary">{label}</span>
+      <span className="text-pitch-ink/70">{label}</span>
       <span className="font-semibold">{value}</span>
     </div>
   );
