@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
-  Bell,
   Building2,
-  CalendarDays,
   ClipboardList,
   LayoutDashboard,
   ShieldCheck,
@@ -16,11 +14,9 @@ type DashboardRole = 'owner' | 'admin';
 
 const OWNER_LINKS = [
   { href: '/chu-san', label: 'Tổng quan', icon: LayoutDashboard },
-  { href: '/chu-san/lich', label: 'Lịch sân', icon: CalendarDays },
   { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
   { href: '/tao-cum-san', label: 'Tạo cụm sân', icon: Building2 },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
-  { href: '/thong-bao', label: 'Thông báo', icon: Bell },
 ] as const;
 
 const ADMIN_LINKS = [
