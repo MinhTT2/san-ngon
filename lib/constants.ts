@@ -85,9 +85,14 @@ export const VENUE_ERRORS: Record<string, string> = {
   VENUE_NOT_FOUND: 'Không tìm thấy cụm sân.',
   VENUE_HAS_BOOKINGS: 'Không thể xóa cụm sân đã có đơn đặt. Hãy tắt sân trước.',
   VENUE_NOT_EDITABLE: 'Cụm sân này đang bị từ chối và chưa thể chỉnh sửa.',
+  VENUE_LAST_ACTIVE_COURT: 'Cụm sân phải còn ít nhất một sân đang mở.',
+  VENUE_HAS_FUTURE_BOOKINGS: 'Không thể đổi giờ cụm vì đang có đơn trong khung giờ bị ảnh hưởng.',
+  COURT_HOURS_OUTSIDE_VENUE: 'Giờ cụm mới phải bao trùm giờ riêng của các sân con.',
   NAME_TOO_LONG: 'Tên cụm sân không quá 120 ký tự.',
   ADDRESS_TOO_LONG: 'Địa chỉ không quá 200 ký tự.',
   DISTRICT_REQUIRED: 'Chọn quận/huyện của cụm sân.',
+  DISTRICT_TOO_LONG: 'Quận/huyện không quá 60 ký tự.',
+  DESCRIPTION_TOO_LONG: 'Giới thiệu không quá 500 ký tự.',
   DEPOSIT_INVALID: 'Tỷ lệ cọc phải từ 0 đến 100%.',
   HORIZON_INVALID: 'Thời hạn đặt trước phải từ 1 đến 180 ngày.',
 };
@@ -106,6 +111,14 @@ export const COURT_ERRORS: Record<string, string> = {
   COURT_HOURS_OUTSIDE_VENUE: 'Giờ sân con phải nằm trong giờ mở cửa cụm sân.',
   INVALID_HOURS: 'Giờ đóng cửa phải sau giờ mở cửa.',
   COURT_HAS_BOOKINGS: 'Không thể xóa sân đã có đơn đặt. Hãy tắt sân trước.',
+  COURT_HAS_FUTURE_BOOKINGS: 'Không thể đổi môn, giờ hoặc tắt sân khi đang có đơn trong tương lai.',
+  VENUE_LAST_ACTIVE_COURT: 'Cụm sân phải còn ít nhất một sân đang mở.',
+  PRICE_RULE_NOT_FOUND: 'Mức giá đã bị xóa. Hãy tải lại trang.',
+  PRICE_LABEL_INVALID: 'Tên mức giá phải có từ 1 đến 80 ký tự.',
+  PRICE_DAYS_INVALID: 'Chọn ít nhất một ngày trong tuần.',
+  PRICE_PRIORITY_INVALID: 'Độ ưu tiên phải từ 0 đến 100.',
+  BASE_PRICE_RESERVED: 'Tên “Giá chung” dành cho mức giá mặc định của sân.',
+  BASE_PRICE_REQUIRED: 'Giá chung đảm bảo sân luôn có giá. Bạn có thể sửa số tiền thay vì xóa.',
 };
 
 export const OWNER_ERRORS: Record<string, string> = {

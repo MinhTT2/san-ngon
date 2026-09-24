@@ -15,9 +15,9 @@ export function OwnerStatusSteps({ status }: { status: 'pending' | 'rejected' })
         <span className="inline-flex rounded-pill bg-white/10 px-3 py-1 text-xs font-semibold text-white">Cần bổ sung thông tin</span>
         <h1 className="mt-6 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Hồ sơ cần được cập nhật.</h1>
         <p className="mt-4 text-sm leading-7 text-pitch-ink/75">Chúng tôi chưa thể duyệt hồ sơ lần này. Liên hệ để biết chính xác giấy tờ hoặc thông tin cần bổ sung.</p>
-        <Link href="/lien-he" className="mt-8 inline-flex min-h-12 items-center rounded-control bg-white px-5 font-semibold text-pitch">Liên hệ Sân Ngon <span aria-hidden="true" className="ml-3">→</span></Link>
+        <Link href="/dang-ky-san?resubmit=1" className="mt-8 inline-flex min-h-12 items-center rounded-control bg-white px-5 font-semibold text-pitch">Cập nhật và gửi lại hồ sơ <span aria-hidden="true" className="ml-3">→</span></Link>
       </div>
-      <div className="p-7 sm:p-10"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Bước tiếp theo</p><div className="mt-5 flex gap-4"><span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-peak-fill text-peak-ink"><MessageCircle className="size-5" aria-hidden="true" /></span><div><h2 className="font-display text-xl font-bold text-pitch">Trao đổi với đội ngũ</h2><p className="mt-1 text-sm leading-6 text-ink-secondary">Sau khi cập nhật, Sân Ngon sẽ kiểm tra lại hồ sơ của bạn.</p></div></div></div>
+      <div className="p-7 sm:p-10"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Bước tiếp theo</p><div className="mt-5 flex gap-4"><span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-peak-fill text-peak-ink"><MessageCircle className="size-5" aria-hidden="true" /></span><div><h2 className="font-display text-xl font-bold text-pitch">Cập nhật thông tin cần bổ sung</h2><p className="mt-1 text-sm leading-6 text-ink-secondary">Bạn có thể gửi lại hồ sơ sau khi sửa thông tin hoặc thay giấy tờ.</p></div></div></div>
     </div>;
   }
 

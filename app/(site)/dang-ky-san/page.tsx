@@ -10,7 +10,8 @@ export const metadata = { title: 'Đăng ký chủ sân · Sân Ngon' };
 
 type OwnerProfile = { full_name: string | null; phone: string | null; role: string; owner_application_status: string | null };
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ resubmit?: string }> }) {
+  const { resubmit } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   let profile: OwnerProfile | null = null;
@@ -25,13 +26,14 @@ export default async function Page() {
     venues = (venueRows ?? []) as OwnerVenue[];
     loadFailed = Boolean(profileError || venueError);
   }
-  const approved = profile?.owner_application_status === 'active' || profile?.role === 'owner';
+  const approved = profile?.owner_application_status === 'active';
 
-  return <main className="mx-auto max-w-7xl px-5 py-8 lg:px-16 lg:py-12"><div className="mb-8 flex items-center gap-2 text-xs text-ink-secondary"><Link href="/" className="hover:text-pitch">Trang chủ</Link><span aria-hidden="true">/</span><span>Dành cho chủ sân</span></div>{loadFailed ? <section className="rounded-card border border-hairline bg-card p-8"><h1 className="font-display text-2xl font-bold text-pitch">Chưa tải được hồ sơ của bạn</h1><p className="mt-3 text-ink-secondary">Hãy tải lại trang để kiểm tra lại trạng thái.</p></section> : !user ? <LoginCard /> : !approved ? <OwnerStatusOrForm profile={profile} /> : <ApprovedOwner venues={venues} />}</main>;
+  return <main className="mx-auto max-w-7xl px-5 py-8 lg:px-16 lg:py-12"><div className="mb-8 flex items-center gap-2 text-xs text-ink-secondary"><Link href="/" className="hover:text-pitch">Trang chủ</Link><span aria-hidden="true">/</span><span>Dành cho chủ sân</span></div>{loadFailed ? <section className="rounded-card border border-hairline bg-card p-8"><h1 className="font-display text-2xl font-bold text-pitch">Chưa tải được hồ sơ của bạn</h1><p className="mt-3 text-ink-secondary">Hãy tải lại trang để kiểm tra lại trạng thái.</p></section> : !user ? <LoginCard /> : !approved ? <OwnerStatusOrForm profile={profile} resubmit={resubmit === '1'} /> : <ApprovedOwner venues={venues} />}</main>;
 }
 
-function OwnerStatusOrForm({ profile }: { profile: OwnerProfile | null }) {
-  if (profile?.owner_application_status === 'pending' || profile?.owner_application_status === 'rejected') return <OwnerStatusSteps status={profile.owner_application_status} />;
+function OwnerStatusOrForm({ profile, resubmit }: { profile: OwnerProfile | null; resubmit: boolean }) {
+  if (profile?.owner_application_status === 'pending') return <OwnerStatusSteps status="pending" />;
+  if (profile?.owner_application_status === 'rejected' && !resubmit) return <OwnerStatusSteps status="rejected" />;
   return <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10"><div><header className="mb-10 max-w-2xl"><p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Đồng hành cùng Sân Ngon</p><h1 className="font-display text-4xl font-extrabold leading-[1.12] tracking-tight text-pitch sm:text-5xl">Trở thành chủ sân.</h1><p className="mt-5 max-w-xl text-[15px] leading-7 text-ink-secondary">Gửi thông tin xác minh trước. Khi được duyệt, bạn mới tạo cụm sân và thêm các sân con.</p></header><RegisterForm defaultName={profile?.full_name} defaultPhone={profile?.phone} /></div><aside className="rounded-card bg-pitch p-7 text-pitch-ink"><span className="text-xs font-medium uppercase tracking-[0.16em] text-free-line">Quy trình đơn giản</span><h2 className="mt-4 font-display text-2xl font-bold">Duyệt tài khoản trước, đăng sân sau.</h2><p className="mt-3 text-sm leading-6 text-pitch-ink/75">Sân Ngon kiểm tra thông tin và giấy tờ. Sau đó bạn tự tạo từng cụm sân, môn thể thao và giá thuê.</p></aside></div>;
 }
 
