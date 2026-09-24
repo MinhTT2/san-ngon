@@ -1,0 +1,2 @@
+-- Migration version already applied to the linked Supabase project.
+-- The canonical business guards are in 20260924000004_venue_business_guards.sql.

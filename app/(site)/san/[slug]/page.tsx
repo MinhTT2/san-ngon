@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { VenueSchedule } from './venue-schedule';
 import { SPORT_LABELS } from '@/lib/constants';
+import { VenueGallery } from '@/components/venue-gallery';
 
 export default async function Page({
   params,
@@ -35,7 +36,7 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      {venue.images?.[0] && <div className="mb-6 h-48 rounded-card bg-cover bg-center sm:h-64" style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${venue.images[0]})` }} />}
+      <VenueGallery images={venue.images ?? []} name={venue.name} />
       <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="font-display text-2xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
       <p className="mt-1 flex flex-wrap gap-x-2 text-sm text-ink-secondary">
         <span>{venue.address} · {venue.district}</span>
