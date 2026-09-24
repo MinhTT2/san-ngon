@@ -34,6 +34,9 @@ export function VenueManagement({ initialVenues, selectedVenueId, defaultPhone }
   useEffect(() => {
     setVenues(initialVenues);
     setSelected(selectedVenueId && initialVenues.some((v) => v.id === selectedVenueId) ? selectedVenueId : initialVenues[0]?.id ?? '');
+    setEditingVenue(null);
+    setAddingCourt(null);
+    setEditingCourt(null);
   }, [initialVenues, selectedVenueId]);
 
   function showError(text: string, fields: Errors = {}) { setError(text); setMessage(null); setFormErrors(fields); }
