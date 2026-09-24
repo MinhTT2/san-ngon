@@ -2,10 +2,15 @@
 export function PitchThumb({
   width = 84,
   height = 66,
+  src,
+  alt = '',
 }: {
   width?: number | string;
   height?: number;
+  src?: string;
+  alt?: string;
 }) {
+  if (src) return <div role={alt ? 'img' : undefined} aria-label={alt || undefined} style={{ width, height, backgroundImage: `url(${src})` }} className="flex-none bg-cover bg-center bg-sunk" />;
   return (
     <svg
       width={width}

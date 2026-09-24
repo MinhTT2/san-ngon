@@ -16,7 +16,7 @@ export default async function Page({
 
   const { data: venue } = await supabase
     .from('venues')
-    .select('id, name, address, district, phone, open_time, close_time, deposit_pct, booking_horizon_days, amenities')
+    .select('id, name, address, district, phone, description, images, open_time, close_time, deposit_pct, booking_horizon_days, amenities')
     .eq('slug', slug)
     .eq('status', 'active')
     .single();
@@ -24,7 +24,7 @@ export default async function Page({
   if (!venue) notFound();
 
   const { data: courts } = await supabase
-    .from('courts').select('sport').eq('venue_id', venue.id).eq('is_active', true);
+    .from('courts').select('sport, name, surface, is_indoor').eq('venue_id', venue.id).eq('is_active', true);
 
   const sports = [...new Set((courts ?? []).map((c) => SPORT_LABELS[c.sport] ?? c.sport))];
 
@@ -35,7 +35,8 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <h1 className="font-display text-2xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
+      {venue.images?.[0] && <div className="mb-6 h-48 rounded-card bg-cover bg-center sm:h-64" style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${venue.images[0]})` }} />}
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="font-display text-2xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
       <p className="mt-1 flex flex-wrap gap-x-2 text-sm text-ink-secondary">
         <span>{venue.address} · {venue.district}</span>
         <span>· {sports.join(', ')}</span>
@@ -45,7 +46,10 @@ export default async function Page({
             · Gọi chủ sân {venue.phone}
           </a>
         )}
-      </p>
+      </p></div><span className="rounded-pill bg-sunk px-3 py-1 text-sm text-ink-secondary">{courts?.length ?? 0} sân đang mở</span></div>
+
+      {venue.description && <p className="mt-4 max-w-3xl text-[15px] leading-7 text-ink-secondary">{venue.description}</p>}
+      {venue.amenities?.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{venue.amenities.map((item: string) => <span key={item} className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">{item}</span>)}</div>}
 
       <section className="mt-5 flex flex-col gap-3 rounded-card border border-hairline bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
