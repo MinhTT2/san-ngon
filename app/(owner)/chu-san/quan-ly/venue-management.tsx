@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X } from 'lucide-react';
+import { OwnerVenuePicker } from '@/components/owner-venue-picker';
 import { DISTRICTS, SPORT_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
 import { OWNER_INPUT, OWNER_PRIMARY, OWNER_SECONDARY, OwnerField } from '@/components/owner-form-field';
 import { VenueForm } from '../../tao-cum-san/venue-form';
@@ -35,7 +36,6 @@ export function VenueManagement({ initialVenues, selectedVenueId, defaultPhone }
     setSelected(selectedVenueId && initialVenues.some((v) => v.id === selectedVenueId) ? selectedVenueId : initialVenues[0]?.id ?? '');
   }, [initialVenues, selectedVenueId]);
 
-  function selectVenue(id: string) { setSelected(id); setEditingVenue(null); setAddingCourt(null); setEditingCourt(null); router.replace(`/chu-san/quan-ly?venue=${id}`, { scroll: false }); }
   function showError(text: string, fields: Errors = {}) { setError(text); setMessage(null); setFormErrors(fields); }
   function showMessage(text: string) { setMessage(text); setError(null); setFormErrors({}); }
   async function request(url: string, method: 'PATCH' | 'POST' | 'DELETE', body?: unknown) {
@@ -61,7 +61,7 @@ export function VenueManagement({ initialVenues, selectedVenueId, defaultPhone }
     {creatingVenue && <CreateVenueModal defaultPhone={defaultPhone} onClose={() => setCreatingVenue(false)} onSuccess={(venueId) => { setCreatingVenue(false); if (venueId) router.replace(`/chu-san/quan-ly?venue=${venueId}`, { scroll: false }); router.refresh(); }} />}
     {!venue && <div className="rounded-card border border-dashed border-strong bg-card p-10 text-center"><p className="text-ink-secondary">Bạn chưa có cụm sân nào.</p><button type="button" onClick={() => setCreatingVenue(true)} className={`${OWNER_PRIMARY} mt-5`}>+ Tạo cụm sân</button></div>}
     {venue && <>
-    {venues.length > 1 && <div className="flex flex-wrap gap-2" aria-label="Chọn cụm sân">{venues.map((item) => <button key={item.id} type="button" onClick={() => selectVenue(item.id)} className={`rounded-control border px-4 py-3 text-sm font-semibold ${item.id === venue.id ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-pitch'}`}>{item.name}</button>)}</div>}
+    <OwnerVenuePicker venues={venues} selectedId={venue.id} pathname="/chu-san/quan-ly" />
     {(message || error) && <p role={error ? 'alert' : 'status'} className={`rounded-card border px-4 py-3 text-sm ${error ? 'border-danger bg-[#FFF5F5] text-danger' : 'border-free-line bg-free-fill text-free-ink'}`}>{error ?? message}</p>}
     <section className="overflow-hidden rounded-card border border-hairline bg-card"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-hairline p-5"><div><div className="flex flex-wrap items-center gap-3"><h2 className="font-display text-2xl font-bold text-pitch">{venue.name}</h2><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs">{VENUE_STATUS_LABELS[venue.status]}</span></div><p className="mt-1 text-sm text-ink-secondary">{venue.address} · {venue.district} · Mở {venue.open_time.slice(0, 5)}–{venue.close_time.slice(0, 5)}</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setEditingVenue(venue.id)} className={OWNER_SECONDARY}>Sửa cụm sân</button><button type="button" onClick={() => setCreatingVenue(true)} className={OWNER_PRIMARY}>+ Tạo cụm sân</button></div></div>{editingVenue === venue.id && <VenueEditor initial={toVenueDraft(venue)} errors={formErrors} onCancel={() => setEditingVenue(null)} onSave={(draft) => saveVenue(venue.id, draft)} />}
       <div className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display text-xl font-bold text-pitch">Sân con</h3><p className="mt-1 text-sm text-ink-secondary">{venue.courts.length} sân · mỗi sân có lịch và giá riêng.</p></div><button type="button" onClick={() => { setAddingCourt(venue.id); setEditingCourt(null); setError(null); setFormErrors({}); }} className={OWNER_PRIMARY}>+ Thêm sân</button></div>{addingCourt === venue.id && <CourtEditor venue={venue} initial={EMPTY_COURT} errors={formErrors} onCancel={() => setAddingCourt(null)} onSave={(draft, again) => saveCourt(venue.id, draft, undefined, again)} />}

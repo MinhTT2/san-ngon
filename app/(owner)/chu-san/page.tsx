@@ -8,6 +8,7 @@ import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booki
 import { TelegramConnect } from '@/components/telegram-connect';
 import { OwnerStatsPanel, PeriodLinks } from '@/components/stats-panels';
 import { parseOwnerStats } from '@/lib/stats';
+import { OwnerVenuePicker } from '@/components/owner-venue-picker';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,20 +88,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         <span className="text-sm text-ink-secondary">{dayLabel(new Date())}</span>
       </div>
 
-      {venues.length > 1 && (
-        <nav aria-label="Chọn cụm sân" className="mt-5 flex flex-wrap gap-2">
-          {venues.map((item) => (
-            <Link
-              key={item.id}
-              href={`/chu-san?venue=${item.id}`}
-              aria-current={item.id === venue.id ? 'page' : undefined}
-              className={`rounded-control border px-4 py-3 text-sm font-medium ${item.id === venue.id ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-ink hover:border-strong'}`}
-            >
-              {item.name}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <OwnerVenuePicker venues={venues} selectedId={venue.id} pathname="/chu-san" query={{ period: String(period) }} />
 
       {venue.status !== 'active' && (
         <p className="mt-5 rounded-card border border-peak-line bg-peak-fill p-4 text-sm leading-relaxed text-peak-ink">
