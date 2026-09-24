@@ -12,7 +12,7 @@ export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }
     return () => { document.removeEventListener('keydown', closeOnEscape); document.body.style.overflow = previousOverflow; };
   }, [onClose]);
 
-  return <div className="fixed inset-0 z-50 isolate flex h-dvh w-screen items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  return <div className="fixed inset-0 z-50 isolate flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div aria-hidden="true" className="fixed inset-0 bg-pitch/35" />
     <button type="button" aria-label="Đóng cửa sổ" onClick={onClose} className="absolute inset-0 z-0 h-full w-full cursor-default" />
     <section className={`relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full ${size} flex-col overflow-hidden rounded-card border border-hairline bg-card sm:max-h-[calc(100dvh-3rem)]`}>
