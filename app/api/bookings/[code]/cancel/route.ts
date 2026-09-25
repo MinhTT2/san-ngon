@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
  * Hủy đơn. RLS không cho người đặt update thẳng bảng bookings, nên đường hủy
  * duy nhất là hàm cancel_booking() — nó tự quyết cọc có được hoàn hay không.
  */
-export async function POST(_req: Request, { params }: { params: Promise<{ code: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
   const supabase = await createClient();
@@ -17,7 +17,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ code: 
     return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   }
 
-  const { data, error } = await supabase.rpc('cancel_booking', { p_code: code }).single();
+  const body = await req.json().catch(() => null);
+  const { data, error } = await supabase.rpc('cancel_booking', {
+    p_code: code, p_pending_only: body?.pending_only === true,
+  }).single();
 
   if (error) {
     const status = error.message.includes('BOOKING_NOT_FOUND') ? 404

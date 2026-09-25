@@ -51,8 +51,9 @@ export function SlotPickerMobile({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-end justify-between gap-3"><div><p className="text-sm font-semibold text-pitch">Chọn giờ trên lịch</p><p className="mt-1 text-xs text-ink-secondary">Chọn giờ liền nhau trên cùng một sân</p></div><span className="rounded-pill bg-free-fill px-3 py-1 text-xs font-semibold text-free-ink">{availableCount} giờ trống</span></div>
+      <div className="flex items-end justify-between gap-3"><div><p className="text-sm font-semibold text-pitch">Chọn giờ trên lịch</p><p className="mt-1 text-xs text-ink-secondary">Chọn giờ liền nhau trên cùng một sân</p></div><span className="rounded-pill bg-free-fill px-3 py-1 text-xs font-semibold text-free-ink">{availableCount} khung trống</span></div>
       <Legend />
+      <p className="text-xs leading-5 text-ink-secondary">Ô “Giữ chỗ” đang chờ cọc tối đa 15 phút; hết hạn sẽ mở lại.</p>
 
       <div className="overflow-x-auto rounded-card border border-hairline bg-card">
         <table className="w-full border-collapse text-sm">
@@ -118,7 +119,7 @@ function Legend() {
     <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-ink-secondary">
       <Item className="bg-free-fill border-free-line" label="Còn trống" />
       <Item className="bg-peak-fill border-peak-line" label="Giờ vàng" />
-      <Item className="bg-taken-fill border-hairline" label="Đã đặt" />
+      <Item className="bg-taken-fill border-hairline" label="Đã đặt / Đóng" />
     </div>
   );
 }

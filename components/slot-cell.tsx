@@ -25,7 +25,10 @@ export function SlotCell({
 
   const base = 'relative flex w-full items-center justify-center rounded-slot border text-xs font-semibold tabular-nums transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch disabled:cursor-default';
 
-  const tone = !slot.is_available
+  const unavailableLabel = slot.slot_status === 'held' ? 'Giữ chỗ' : slot.slot_status === 'booked' ? 'Đã đặt' : 'Đóng';
+  const tone = slot.slot_status === 'held'
+    ? 'bg-peak-fill border-peak-line border-dashed text-peak-ink'
+    : !slot.is_available
     ? 'bg-taken-fill border-hairline text-taken-ink'
     : selected
       ? 'bg-pitch border-pitch text-pitch-ink'
@@ -34,7 +37,7 @@ export function SlotCell({
         : 'bg-free-fill border-free-line text-free-ink hover:border-pitch';
 
   const label = `${slot.court_name} lúc ${hhmm(slot.starts_at)}${
-    slot.is_available ? `, ${vnd(slot.price)}` : ', đã có người đặt'
+    slot.is_available ? `, ${vnd(slot.price)}` : `, ${unavailableLabel.toLowerCase()}${slot.hold_expires_at ? ` đến ${hhmm(slot.hold_expires_at)}` : ''}`
   }`;
 
   return (
@@ -43,11 +46,12 @@ export function SlotCell({
       disabled={!slot.is_available}
       aria-pressed={selected}
       aria-label={label}
+      title={label}
       onClick={onClick}
       style={{ height }}
       className={`${base} ${tone}`}
     >
-      {slot.is_available ? <><span>{vndShort(slot.price)}</span>{selected && <span className="absolute right-1 top-1 text-[10px] leading-none">✓</span>}</> : '—'}
+      {slot.is_available ? <><span>{vndShort(slot.price)}</span>{selected && <span className="absolute right-1 top-1 text-[10px] leading-none">✓</span>}</> : unavailableLabel}
     </button>
   );
 }

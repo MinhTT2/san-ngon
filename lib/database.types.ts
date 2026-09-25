@@ -429,7 +429,7 @@ export type Database = {
         Returns: Json
       }
       cancel_booking: {
-        Args: { p_code: string }
+        Args: { p_code: string; p_pending_only?: boolean }
         Returns: {
           cancelled_at: string | null
           code: string
@@ -618,6 +618,8 @@ export type Database = {
           court_name: string
           ends_at: string
           is_available: boolean
+          slot_status: string
+          hold_expires_at: string | null
           price: number
           slot_minutes: number
           sport: Database["public"]["Enums"]["sport_type"]

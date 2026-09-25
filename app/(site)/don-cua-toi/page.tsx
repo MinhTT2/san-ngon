@@ -85,7 +85,7 @@ export default async function Page() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       {b.cancellable && (
-                        <CancelBookingButton code={b.code} refundable={b.refundable} />
+                        <CancelBookingButton code={b.code} refundable={b.refundable} pending={b.status === 'pending'} />
                       )}
                     </td>
                   </tr>
@@ -118,7 +118,7 @@ export default async function Page() {
                 </Link>
                 {b.cancellable && (
                   <div className="border-t border-hairline px-4 py-3">
-                    <CancelBookingButton code={b.code} refundable={b.refundable} />
+                    <CancelBookingButton code={b.code} refundable={b.refundable} pending={b.status === 'pending'} />
                   </div>
                 )}
               </li>

@@ -16,6 +16,8 @@ export type Slot = {
   ends_at: string;
   price: number;
   is_available: boolean;
+  slot_status?: 'available' | 'held' | 'booked' | 'unavailable';
+  hold_expires_at?: string | null;
 };
 
 export type Venue = {

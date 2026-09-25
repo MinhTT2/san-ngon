@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ymd } from '@/lib/format';
 import { MAX_SLOTS } from '@/lib/constants';
@@ -22,33 +22,68 @@ export function useAvailability(venueId: string, date: Date, live = true) {
   const [picked, setPicked] = useState<Slot[]>([]);
 
   const dateKey = ymd(date);
+  const requestId = useRef(0);
 
   const load = useCallback(async () => {
-    setFailed(false);
+    const request = ++requestId.current;
     const { data, error } = await supabase.rpc('get_venue_availability', {
       p_venue_id: venueId,
       p_date: dateKey,
     });
-    if (error) setFailed(true);
-    else setSlots((data ?? []) as Slot[]);
+    if (request !== requestId.current) return;
+    setFailed(Boolean(error));
+    if (!error) {
+      const next = (data ?? []) as Slot[];
+      setSlots(next);
+      setPicked((prev) => {
+        const updated = prev.map((picked) => next.find((slot) =>
+          slot.court_id === picked.court_id && slot.starts_at === picked.starts_at && slot.is_available));
+        return updated.every((slot): slot is Slot => Boolean(slot)) ? updated : [];
+      });
+    }
     setLoading(false);
   }, [supabase, venueId, dateKey]);
 
   useEffect(() => {
     setPicked([]);
     setLoading(true);
-    load();
+    void load();
+    return () => {
+      // This is a request generation counter, not a DOM ref.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      requestId.current++;
+    };
   }, [load]);
 
-  // Người khác vừa đặt → lưới tự xám đi. Khoảnh khắc ấn tượng nhất khi demo hai máy.
+  // RLS hides other customers' bookings, so their postgres_changes are not public.
+  // Refresh anonymous availability only; never expose booking rows to bypass RLS.
   useEffect(() => {
     if (!live) return;
+    const refresh = () => { if (document.visibilityState === 'visible') void load(); };
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', refresh);
     const channel = supabase
       .channel(`bookings:${venueId}:${instanceId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => load())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+      supabase.removeChannel(channel);
+    };
   }, [supabase, venueId, live, load, instanceId]);
+
+  useEffect(() => {
+    if (!live) return;
+    const expiries = slots.flatMap((slot) => slot.hold_expires_at ? [Date.parse(slot.hold_expires_at)] : []);
+    if (!expiries.length) return;
+    const timer = setTimeout(() => void load(), Math.max(1000, Math.min(...expiries) - Date.now() + 250));
+    return () => clearTimeout(timer);
+  }, [slots, live, load]);
 
   const courts = useMemo(() => {
     const seen = new Map<string, string>();

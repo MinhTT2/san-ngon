@@ -79,14 +79,14 @@ export function BookingForm({
           <div className="flex flex-col gap-1">
             <span className="font-display text-lg font-extrabold text-pitch">{selection.courtName}</span>
             <span className="text-sm text-ink-secondary">
-              {hhmm(selection.startsAt)} – {hhmm(selection.endsAt)} · {selection.slots.length} giờ
+              {hhmm(selection.startsAt)} – {hhmm(selection.endsAt)} · {selection.slots.length} khung
             </span>
           </div>
           <span className="rounded-pill bg-free-fill px-2.5 py-1 text-xs font-semibold text-free-ink">Giữ 15 phút</span>
         </div>
         <p className="text-sm leading-relaxed text-ink-secondary">
           {isAuthenticated
-            ? 'Kiểm tra thông tin liên hệ rồi thanh toán cọc để giữ sân.'
+            ? 'Tiếp tục sẽ giữ khung giờ 15 phút để bạn chuyển cọc. Chưa nhận cọc khi hết hạn, sân tự mở lại.'
             : 'Nhập thông tin để chủ sân biết ai đặt. Bạn chỉ cần xác thực email một lần bằng mã OTP.'}
         </p>
       </div>
@@ -144,7 +144,7 @@ export function BookingForm({
         </button>
         <button type="submit" disabled={busy}
           className="h-13 flex-[2] rounded-control bg-pitch font-semibold text-pitch-ink disabled:opacity-60">
-          {busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? `Đặt cọc ${vnd(deposit)}` : 'Tiếp tục xác thực'}
+          {busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? `Giữ chỗ · Cọc ${vnd(deposit)}` : 'Tiếp tục xác thực'}
         </button>
       </div>
 

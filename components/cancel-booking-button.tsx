@@ -11,11 +11,15 @@ import { CANCEL_WINDOW_HOURS } from '@/lib/constants';
 export function CancelBookingButton({
   code,
   refundable,
+  pending = false,
+  onCancelled,
   className = '',
 }: {
   code: string;
   /** Hủy bây giờ thì còn kịp mốc hoàn cọc không. */
   refundable: boolean;
+  pending?: boolean;
+  onCancelled?: () => void;
   className?: string;
 }) {
   const router = useRouter();
@@ -26,12 +30,26 @@ export function CancelBookingButton({
   async function cancel() {
     setBusy(true);
     setError(null);
-    const res = await fetch(`/api/bookings/${code}/cancel`, { method: 'POST' });
-    const json = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok) { setError(json.error ?? 'Không hủy được đơn.'); return; }
-    setArmed(false);
-    router.refresh();
+    try {
+      const res = await fetch(`/api/bookings/${code}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pending_only: pending }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(json.error ?? 'Không hủy được đơn.');
+        router.refresh();
+        return;
+      }
+      setArmed(false);
+      onCancelled?.();
+      router.refresh();
+    } catch {
+      setError('Mất kết nối. Vui lòng thử lại.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!armed) {
@@ -41,7 +59,7 @@ export function CancelBookingButton({
         onClick={() => setArmed(true)}
         className={`text-sm font-medium text-ink-secondary underline underline-offset-2 ${className}`}
       >
-        Hủy đơn
+        {pending ? 'Hủy giữ chỗ' : 'Hủy đơn'}
       </button>
     );
   }
@@ -49,7 +67,9 @@ export function CancelBookingButton({
   return (
     <span className="flex flex-wrap items-center gap-2">
       <span className="text-xs leading-snug text-ink-secondary">
-        {refundable
+        {pending
+          ? 'Hủy giữ chỗ để người khác đặt được khung giờ này. Nếu đã chuyển tiền, hãy chờ xác nhận hoặc liên hệ hỗ trợ.'
+          : refundable
           ? 'Hủy bây giờ, cọc được đánh dấu cần hoàn.'
           : `Còn dưới ${CANCEL_WINDOW_HOURS} tiếng — hủy bây giờ là mất cọc.`}
       </span>

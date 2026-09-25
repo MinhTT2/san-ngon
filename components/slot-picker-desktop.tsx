@@ -48,7 +48,8 @@ export function SlotPickerDesktop({
   return (
     <div className="flex flex-col gap-4 xl:flex-row">
       <div className="min-w-0 flex-1 rounded-card border border-hairline bg-card p-4 sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-semibold text-pitch">Lịch sân trong ngày</p><p className="mt-1 text-xs text-ink-secondary">Bấm các giờ liền nhau trên cùng một sân · tối đa 3 khung</p></div><span className="rounded-pill bg-free-fill px-3 py-1 text-xs font-semibold text-free-ink">{availableCount} giờ còn trống</span></div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-semibold text-pitch">Lịch sân trong ngày</p><p className="mt-1 text-xs text-ink-secondary">Bấm các giờ liền nhau trên cùng một sân · tối đa 3 khung</p></div><span className="rounded-pill bg-free-fill px-3 py-1 text-xs font-semibold text-free-ink">{availableCount} khung còn trống</span></div>
+        <p className="mb-3 text-xs leading-5 text-ink-secondary">Ô “Giữ chỗ” đang chờ cọc tối đa 15 phút; “Đã đặt” đã được xác nhận. Hết hạn giữ chỗ, khung giờ sẽ mở lại.</p>
         <div className="overflow-x-auto pb-2"><div className="min-w-[720px]">
         <div className="grid gap-1 pb-2" style={{ gridTemplateColumns: cols }}>
           <span className="flex items-end pb-1 text-[11px] font-semibold text-ink-secondary">Sân / giờ</span>
@@ -82,7 +83,7 @@ export function SlotPickerDesktop({
         <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch-ink/65">Tóm tắt đặt sân</p><h2 className="mt-2 font-display text-xl font-bold">{a.selection ? 'Sẵn sàng chốt kèo?' : 'Chọn giờ bạn muốn chơi'}</h2></div>{a.selection && <span className="grid size-8 place-items-center rounded-full bg-white/15 text-sm">✓</span>}</div>
         {!a.selection ? (
           <p className="mt-6 text-[13px] leading-relaxed text-pitch-ink/75">
-            Bấm vào ô màu xanh trên lịch. Bạn có thể chọn tối đa 3 giờ liền nhau trên cùng một sân.
+            Bấm vào ô màu xanh trên lịch. Bạn có thể chọn tối đa 3 khung liền nhau trên cùng một sân.
           </p>
         ) : (
           <div className="mt-6 flex flex-col gap-4">

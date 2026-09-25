@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, CheckCheck, Clock3, Copy, MapPin, QrCode, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, CheckCheck, Clock3, Copy, Home, MapPin, QrCode } from 'lucide-react';
+import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/client';
 import { vietQrUrl } from '@/lib/sepay';
@@ -30,14 +31,29 @@ export function PaymentPanel(p: {
     return () => clearInterval(t);
   }, [p.expiresAt]);
 
+  useEffect(() => { setStatus(p.status); }, [p.status]);
+
   useEffect(() => {
+    let active = true;
+    async function reconcile() {
+      const { data } = await supabase.from('bookings').select('status').eq('id', p.bookingId).single();
+      if (active && data) setStatus(data.status);
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') void reconcile(); };
+    window.addEventListener('online', reconcile);
+    document.addEventListener('visibilitychange', onVisible);
     const channel = supabase
       .channel(`booking:${p.bookingId}`)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${p.bookingId}` },
         (payload) => setStatus((payload.new as { status: BookingStatus }).status))
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+      .subscribe((state) => { if (state === 'SUBSCRIBED') void reconcile(); });
+    return () => {
+      active = false;
+      window.removeEventListener('online', reconcile);
+      document.removeEventListener('visibilitychange', onVisible);
+      supabase.removeChannel(channel);
+    };
   }, [supabase, p.bookingId]);
 
   const paid = status === 'confirmed' || status === 'completed';
@@ -52,7 +68,7 @@ export function PaymentPanel(p: {
       <div className="mb-8 flex items-center gap-2.5 sm:mb-12">
         <BrandMark size={32} />
         <span className="font-display text-xl font-extrabold tracking-tight text-pitch">Sân Ngon<span className="text-success">.</span></span>
-        <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-secondary"><ShieldCheck size={15} aria-hidden="true" /> Đặt sân trực tuyến</span>
+        <Link href="/" className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-control border border-hairline px-3 text-sm font-semibold text-pitch hover:bg-free-fill"><Home size={16} aria-hidden="true" /> Về trang chủ</Link>
       </div>
 
       <div className="grid items-start gap-7 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
@@ -63,7 +79,7 @@ export function PaymentPanel(p: {
               {paid ? 'Sân đã sẵn sàng cho bạn.' : closed ? 'Hẹn bạn ở kèo tiếp theo.' : <>Chốt sân.<br />Sẵn sàng ra sân.</>}
             </h1>
             <p className="mt-4 max-w-sm text-sm leading-7 text-ink-secondary">
-              {paid ? 'Đã nhận tiền cọc và gửi đơn đến chủ sân. Bạn có thể xem lại lịch hẹn bên dưới.' : closed ? 'Kiểm tra trạng thái đơn trước khi thực hiện chuyển khoản.' : 'Chỉ còn một bước chuyển cọc. Lịch hẹn của bạn sẽ được xác nhận ngay khi tiền vào.'}
+              {paid ? 'Đã nhận tiền cọc và gửi đơn đến chủ sân. Bạn có thể xem lại lịch hẹn bên dưới.' : closed ? 'Kiểm tra trạng thái đơn trước khi thực hiện chuyển khoản.' : 'Khung giờ đang được giữ tạm trong 15 phút, chưa phải đơn đã thanh toán. Hết hạn mà chưa nhận cọc, khung giờ sẽ mở lại.'}
             </p>
           </div>
 
@@ -140,6 +156,12 @@ export function PaymentPanel(p: {
                 <div><p className="text-sm font-semibold text-pitch">Đang chờ tiền cọc</p><p className="mt-1 text-xs leading-6 text-ink-secondary">Chuyển xong, giữ trang này mở. Hệ thống sẽ tự xác nhận khi nhận được tiền.</p></div>
               </div>
             </>
+          )}
+          {!paid && !closed && (
+            <div className="space-y-3 border-t border-hairline px-5 py-4 sm:px-7">
+              <p className="text-xs leading-6 text-ink-secondary">Về trang chủ vẫn giữ chỗ đến hết thời gian trên. Không đặt nữa? Hủy giữ chỗ để trả lịch ngay.</p>
+              <CancelBookingButton code={p.code} refundable={false} pending onCancelled={() => setStatus('cancelled')} />
+            </div>
           )}
         </section>
       </div>
