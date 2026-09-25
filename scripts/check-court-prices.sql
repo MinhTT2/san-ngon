@@ -13,6 +13,7 @@ declare
   calendar jsonb;
 begin
   insert into auth.users(id) values(owner_id);
+  update profiles set payout_bank = 'MB', payout_account = '1234567890', role = 'owner', owner_application_status = 'active' where id = owner_id;
   insert into venues(id, owner_id, slug, name, address, district, status, booking_horizon_days)
     values(venue_id, owner_id, 'price-check-' || venue_id, 'Rollback price check', 'Test', 'Test', 'active', 30);
   insert into courts(id, venue_id, name, sport) values(court_id, venue_id, 'Test', 'badminton');
