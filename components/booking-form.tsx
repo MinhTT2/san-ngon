@@ -86,7 +86,7 @@ export function BookingForm({
         </div>
         <p className="text-sm leading-relaxed text-ink-secondary">
           {isAuthenticated
-            ? 'Tiếp tục sẽ giữ khung giờ 15 phút để bạn chuyển cọc. Chưa nhận cọc khi hết hạn, sân tự mở lại.'
+            ? 'Bấm giữ chỗ sẽ tạo một mã đơn mới và giữ khung giờ 15 phút để bạn chuyển cọc. Chưa nhận cọc khi hết hạn, sân tự mở lại.'
             : 'Nhập thông tin để chủ sân biết ai đặt. Bạn chỉ cần xác thực email một lần bằng mã OTP.'}
         </p>
       </div>
