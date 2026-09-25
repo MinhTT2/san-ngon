@@ -91,7 +91,7 @@ export function SlotPickerMobile({
       </div>
 
       {a.selection ? (
-        <div className="sticky bottom-3 z-20 -mx-1 rounded-card border border-pitch bg-pitch px-4 pb-4 pt-4 text-pitch-ink">
+        <div className="pf-settle sticky bottom-3 z-20 -mx-1 rounded-card border border-pitch bg-pitch px-4 pb-4 pt-4 text-pitch-ink">
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-semibold">
@@ -101,8 +101,8 @@ export function SlotPickerMobile({
             </div>
             <span className="font-display text-xl font-bold">{vnd(a.selection.total)}</span>
           </div>
-          <button onClick={onConfirm} className="h-12 w-full rounded-control bg-white text-base font-semibold text-pitch transition-colors hover:bg-free-fill">
-            Tiếp tục đặt sân <span aria-hidden="true" className="ml-2">→</span>
+          <button onClick={onConfirm} className="pf-action h-12 w-full rounded-control bg-white text-base font-semibold text-pitch transition-colors hover:bg-free-fill">
+            Tiếp tục đặt sân <span aria-hidden="true" className="pf-arrow ml-2">→</span>
           </button>
         </div>
       ) : (

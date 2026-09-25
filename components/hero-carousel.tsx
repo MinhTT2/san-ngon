@@ -68,6 +68,7 @@ export function HeroCarousel() {
   return (
     <div
       data-hero-carousel=""
+      data-motion={autoplay}
       role="region"
       aria-roledescription="carousel"
       aria-label="Tìm cảm hứng ra sân"
@@ -100,30 +101,32 @@ export function HeroCarousel() {
               <Scene className="absolute inset-0 h-full w-full" />
               <div className={`absolute inset-0 ${overlay}`} />
             </div>
-            <div className="mx-auto flex min-h-[480px] w-full max-w-7xl items-center px-5 py-10 sm:min-h-[500px] lg:min-h-[540px] lg:px-16 lg:py-12">
+            <div className="mx-auto flex min-h-[480px] w-full max-w-7xl items-center px-5 pb-24 pt-10 sm:min-h-[500px] lg:min-h-[540px] lg:px-16 lg:py-12">
               <div className={`w-full ${layout}`}>
                 <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] sm:text-sm">
                   {label} <span aria-hidden="true" className="mx-2 opacity-50">/</span> {eyebrow}
                 </p>
-                <h2 className={`font-display font-extrabold leading-[1.06] tracking-[-0.035em] ${heading}`}>
+                <h2 className={`pf-hero-copy font-display font-extrabold leading-[1.06] tracking-[-0.035em] ${heading}`}>
                   {title}<br />
                   <span className={key === 'badminton' ? 'text-ink-secondary' : 'text-free-line'}>{accent}</span>
                 </h2>
-                <p className={`mt-5 max-w-lg text-[15px] leading-7 sm:text-base ${key === 'pickleball' ? 'mx-auto' : ''}`}>
+                <p className={`pf-hero-copy pf-hero-description mt-5 max-w-lg text-[15px] leading-7 sm:text-base ${key === 'pickleball' ? 'mx-auto' : ''}`}>
                   {description}
                 </p>
-                <Link
-                  href={href}
-                  className={`mt-7 inline-flex min-h-12 items-center justify-center gap-4 rounded-control border px-5 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 ${
-                    key === 'badminton'
-                      ? 'border-pitch bg-pitch text-white hover:bg-ink'
-                      : key === 'pickleball'
-                        ? 'border-free-line text-white hover:bg-pitch'
-                        : 'border-card bg-card text-pitch hover:bg-free-fill'
-                  }`}
-                >
-                  {cta}<span aria-hidden="true">↗</span>
-                </Link>
+                <div className="pf-hero-copy pf-hero-cta">
+                  <Link
+                    href={href}
+                    className={`pf-action mt-7 inline-flex min-h-12 items-center justify-center gap-4 rounded-control border px-5 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 ${
+                      key === 'badminton'
+                        ? 'border-pitch bg-pitch text-white hover:bg-ink'
+                        : key === 'pickleball'
+                          ? 'border-free-line text-white hover:bg-pitch'
+                          : 'border-card bg-card text-pitch hover:bg-free-fill'
+                    }`}
+                  >
+                    {cta}<span className="pf-arrow" aria-hidden="true">↗</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -134,7 +137,7 @@ export function HeroCarousel() {
         type="button"
         onClick={() => move(-1)}
         aria-label="Ảnh trước"
-        className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:left-6"
+        className="absolute bottom-4 left-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:bottom-auto lg:left-6 lg:top-1/2 lg:-translate-y-1/2"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="rotate-180">
           <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -144,7 +147,7 @@ export function HeroCarousel() {
         type="button"
         onClick={() => move(1)}
         aria-label="Ảnh tiếp theo"
-        className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:right-6"
+        className="absolute bottom-4 right-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:bottom-auto lg:right-6 lg:top-1/2 lg:-translate-y-1/2"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
           <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />

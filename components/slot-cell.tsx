@@ -23,7 +23,7 @@ export function SlotCell({
   const hour = hourOf(slot.starts_at);
   const isPeak = hour >= PEAK_FROM_HOUR && hour < PEAK_TO_HOUR;
 
-  const base = 'relative flex w-full items-center justify-center rounded-slot border text-xs font-semibold tabular-nums transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch disabled:cursor-default';
+  const base = 'relative flex w-full items-center justify-center rounded-slot border text-xs font-semibold tabular-nums transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch disabled:cursor-default';
 
   const unavailableLabel = slot.slot_status === 'held' ? 'Giữ chỗ' : slot.slot_status === 'booked' ? 'Đã đặt' : 'Đóng';
   const tone = slot.slot_status === 'held'
@@ -51,7 +51,7 @@ export function SlotCell({
       style={{ height }}
       className={`${base} ${tone}`}
     >
-      {slot.is_available ? <><span>{vndShort(slot.price)}</span>{selected && <span className="absolute right-1 top-1 text-[10px] leading-none">✓</span>}</> : unavailableLabel}
+      {slot.is_available ? <><span>{vndShort(slot.price)}</span>{selected && <span aria-hidden="true" className="pf-check-pop absolute right-1 top-1 text-[10px] leading-none">✓</span>}</> : unavailableLabel}
     </button>
   );
 }

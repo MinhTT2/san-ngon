@@ -80,21 +80,21 @@ export function SlotPickerDesktop({
       </div>
 
       <aside className="w-full flex-none rounded-card border border-pitch bg-pitch p-5 text-pitch-ink xl:sticky xl:top-5 xl:w-80 xl:self-start">
-        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch-ink/65">Tóm tắt đặt sân</p><h2 className="mt-2 font-display text-xl font-bold">{a.selection ? 'Sẵn sàng chốt kèo?' : 'Chọn giờ bạn muốn chơi'}</h2></div>{a.selection && <span className="grid size-8 place-items-center rounded-full bg-white/15 text-sm">✓</span>}</div>
+        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch-ink/65">Tóm tắt đặt sân</p><h2 className="mt-2 font-display text-xl font-bold">{a.selection ? 'Sẵn sàng chốt kèo?' : 'Chọn giờ bạn muốn chơi'}</h2></div>{a.selection && <span aria-hidden="true" className="pf-check-pop grid size-8 place-items-center rounded-full bg-white/15 text-sm">✓</span>}</div>
         {!a.selection ? (
           <p className="mt-6 text-[13px] leading-relaxed text-pitch-ink/75">
             Bấm vào ô màu xanh trên lịch. Bạn có thể chọn tối đa 3 khung liền nhau trên cùng một sân.
           </p>
         ) : (
-          <div className="mt-6 flex flex-col gap-4">
+          <div className="pf-settle mt-6 flex flex-col gap-4">
             <div className="rounded-control bg-white/10 p-3"><Row label="Sân" value={a.selection.courtName} /><div className="mt-2"><Row label="Thời gian" value={`${hhmm(a.selection.startsAt)} – ${hhmm(a.selection.endsAt)}`} /></div></div>
             <div className="flex items-baseline justify-between border-b border-white/20 pb-4">
               <span className="text-sm text-pitch-ink/75">Tổng tiền sân</span>
               <span className="font-display text-2xl font-bold">{vnd(a.selection.total)}</span>
             </div>
             <div className="flex flex-col gap-2 text-sm"><Row label={`Cọc trước ${depositPct}%`} value={vnd(deposit)} /><Row label="Trả tại sân" value={vnd(a.selection.total - deposit)} /></div>
-            <button onClick={onConfirm} className="h-12 rounded-control bg-white text-[15px] font-semibold text-pitch transition-colors hover:bg-free-fill">
-              Tiếp tục đặt sân <span aria-hidden="true" className="ml-2">→</span>
+            <button onClick={onConfirm} className="pf-action h-12 rounded-control bg-white text-[15px] font-semibold text-pitch transition-colors hover:bg-free-fill">
+              Tiếp tục đặt sân <span aria-hidden="true" className="pf-arrow ml-2">→</span>
             </button>
           </div>
         )}

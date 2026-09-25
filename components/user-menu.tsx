@@ -27,7 +27,7 @@ export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isO
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex h-11 items-center gap-2 rounded-pill border border-hairline pl-4 pr-2 text-sm"
+        className="pf-action flex h-11 items-center gap-2 rounded-pill border border-hairline pl-4 pr-2 text-sm hover:border-pitch"
       >
         <span className="hidden max-w-36 truncate sm:inline">{name}</span>
         <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-pitch text-xs font-semibold text-pitch-ink">
@@ -46,7 +46,7 @@ export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isO
           />
           <div
             role="menu"
-            className="absolute right-0 top-13 z-20 flex w-56 flex-col rounded-control border border-hairline bg-card py-1.5"
+            className="pf-menu absolute right-0 top-13 z-20 flex w-56 flex-col rounded-control border border-hairline bg-card py-1.5"
           >
             <Item href="/don-cua-toi" onNavigate={() => setOpen(false)}>Đơn của tôi</Item>
             {isOwner ? (

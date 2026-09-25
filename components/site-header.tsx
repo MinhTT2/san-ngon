@@ -51,19 +51,19 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
 
         <div className="flex flex-none items-center gap-3">
           {dashboard ? (
-            <Link href="/" className="hidden h-11 items-center rounded-control border border-hairline px-4 text-sm font-medium text-ink-secondary lg:flex">
-              Trang đặt sân <span aria-hidden="true" className="ml-2">↗</span>
+            <Link href="/" className="pf-action hidden h-11 items-center rounded-control border border-hairline px-4 text-sm font-medium text-ink-secondary lg:flex">
+              Trang đặt sân <span aria-hidden="true" className="pf-arrow ml-2">↗</span>
             </Link>
           ) : isAdmin ? (
-            <Link href="/admin" className="hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink md:flex">
-              Quản trị <span aria-hidden="true" className="ml-2">↗</span>
+            <Link href="/admin" className="pf-action hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink md:flex">
+              Quản trị <span aria-hidden="true" className="pf-arrow ml-2">↗</span>
             </Link>
           ) : isOwner ? (
-            <Link href="/chu-san" className="hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink lg:flex">
-              Dashboard <span aria-hidden="true" className="ml-2">↗</span>
+            <Link href="/chu-san" className="pf-action hidden h-11 items-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink lg:flex">
+              Dashboard <span aria-hidden="true" className="pf-arrow ml-2">↗</span>
             </Link>
           ) : (
-            <Link href="/dang-ky-san" className="hidden h-11 items-center rounded-control border border-hairline px-4 text-[15px] font-medium lg:flex">
+            <Link href="/dang-ky-san" className="pf-action hidden h-11 items-center rounded-control border border-hairline px-4 text-[15px] font-medium lg:flex">
               Đăng sân của bạn
             </Link>
           )}
@@ -82,7 +82,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
           {user ? (
             <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} isOwner={isOwner} isAdmin={isAdmin} />
           ) : (
-            <Link href="/dang-nhap" className="flex h-11 items-center rounded-control bg-pitch px-5 text-[15px] font-semibold text-pitch-ink">
+            <Link href="/dang-nhap" className="pf-action flex h-11 items-center rounded-control bg-pitch px-5 text-[15px] font-semibold text-pitch-ink">
               Đăng nhập
             </Link>
           )}

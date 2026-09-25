@@ -50,7 +50,7 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
         popoverTarget={id}
         onClick={() => router.refresh()}
         aria-label={unreadCount ? `Thông báo, ${unreadCount} chưa đọc` : 'Thông báo'}
-        className="relative flex size-11 items-center justify-center rounded-control border border-hairline text-ink transition-colors hover:bg-sunk focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch"
+        className="pf-action relative flex size-11 items-center justify-center rounded-control border border-hairline text-ink transition-colors hover:bg-sunk focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch"
       >
         <Bell size={20} strokeWidth={1.8} aria-hidden="true" />
         {unreadCount > 0 && (
@@ -66,7 +66,7 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
         popover="auto"
         role="region"
         aria-labelledby={`${id}-title`}
-        className="fixed inset-auto right-4 top-20 m-0 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[18px] border border-strong bg-card text-ink lg:right-[max(4rem,calc((100vw-1152px)/2))]"
+        className="pf-popover fixed inset-auto right-4 top-20 m-0 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[18px] border border-strong bg-card text-ink lg:right-[max(4rem,calc((100vw-1152px)/2))]"
       >
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <div>
@@ -120,8 +120,8 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
             </ul>
           )}
         </div>
-        <Link href="/thong-bao" onClick={() => panel.current?.hidePopover()} className="flex min-h-12 items-center justify-center border-t border-hairline text-sm font-semibold text-pitch hover:bg-free-fill">
-          Xem tất cả thông báo <span aria-hidden="true" className="ml-2">↗</span>
+        <Link href="/thong-bao" onClick={() => panel.current?.hidePopover()} className="pf-action flex min-h-12 items-center justify-center border-t border-hairline text-sm font-semibold text-pitch hover:bg-free-fill">
+          Xem tất cả thông báo <span aria-hidden="true" className="pf-arrow ml-2">↗</span>
         </Link>
       </div>
     </>

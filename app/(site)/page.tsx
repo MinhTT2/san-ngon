@@ -70,7 +70,7 @@ export default async function Page() {
           <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} />
         </Reveal>
       ) : null}
-      <Reveal><HowItWorks /></Reveal>
+      <HowItWorks />
       <Reveal><WhyDeposit /></Reveal>
       <Reveal><ForOwners /></Reveal>
       <Reveal><Faq /></Reveal>
@@ -163,8 +163,8 @@ function SearchBar() {
         <input id="ngay" name="ngay" type="date" min={today} defaultValue={today}
           className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]" />
       </div>
-      <button type="submit" className="mt-1 h-12 self-end rounded-[9px] bg-pitch px-6 text-[15px] font-semibold text-pitch-ink">
-        Xem sân trống
+      <button type="submit" className="pf-action mt-1 h-12 self-end rounded-[9px] bg-pitch px-6 text-[15px] font-semibold text-pitch-ink hover:bg-ink">
+        Xem sân trống <span className="pf-arrow ml-2" aria-hidden="true">→</span>
       </button>
     </form>
   );
@@ -200,33 +200,33 @@ function HowItWorks() {
 
   return (
     <section id="cach-hoat-dong" className="mx-auto max-w-7xl px-5 py-20 lg:px-16 lg:py-24">
-      <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+      <Reveal className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
         <div className="max-w-2xl">
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-secondary">Bớt hẹn qua điện thoại</p>
           <h2 className="font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">Ba bước đặt sân.<br /><span className="text-pitch">Còn lại là cuộc vui.</span></h2>
         </div>
-        <Link href="/tim-san" className="inline-flex min-h-11 items-center gap-5 self-start border-b border-pitch pb-2 text-sm font-semibold text-pitch lg:self-end">
-          Tìm sân cho kèo tiếp theo <span aria-hidden="true">↗</span>
+        <Link href="/tim-san" className="pf-action inline-flex min-h-11 items-center gap-5 self-start border-b border-pitch pb-2 text-sm font-semibold text-pitch lg:self-end">
+          Tìm sân cho kèo tiếp theo <span aria-hidden="true" className="pf-arrow">↗</span>
         </Link>
-      </div>
+      </Reveal>
 
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
         {steps.map(({ title, body, color, label }, i) => (
-          <Reveal key={title} delay={i * 90} className="flex">
+          <Reveal key={title} delay={i * 90} className="pf-story-step flex">
             <article className={`flex w-full flex-col overflow-hidden rounded-[24px] border border-ink/10 ${color}`}>
               <div className="px-7 pt-7">
                 <p className="text-xs font-semibold uppercase tracking-widest text-pitch">{label}</p>
                 <h3 className="mt-4 font-display text-2xl font-bold tracking-tight">{title}</h3>
                 <p className="mt-3 min-h-20 text-sm leading-6 text-ink-secondary">{body}</p>
               </div>
-              <div className="mx-5 mb-5 mt-6 flex min-h-48 flex-1 flex-col justify-center rounded-[18px] border border-white/70 bg-white/75 p-5">
+              <div className={`${i === 1 ? 'pf-story-hold ' : ''}mx-5 mb-5 mt-6 flex min-h-48 flex-1 flex-col justify-center rounded-[18px] border border-white/70 bg-white/75 p-5`}>
                 {i === 0 ? (
                   <>
                     <div className="mb-4 flex items-center justify-between text-xs"><span className="font-semibold">Giờ còn trống</span><span className="text-ink-secondary">Minh họa</span></div>
                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                       {['17:00', '18:00', '19:00'].map((time) => <span key={time} className="pb-1 text-ink-secondary">{time}</span>)}
                       {['Trống', 'Đã đặt', 'Trống', 'Đã đặt', 'Trống', 'Trống'].map((status, slot) => (
-                        <span key={slot} className={`rounded-slot border py-3 ${status === 'Trống' ? 'border-free-line bg-free-fill text-free-ink' : 'border-hairline bg-taken-fill text-taken-ink'}`}>{status}</span>
+                        <span key={slot} className={`rounded-slot border py-3 ${slot === 4 ? 'pf-story-selected' : status === 'Trống' ? 'border-free-line bg-free-fill text-free-ink' : 'border-hairline bg-taken-fill text-taken-ink'}`}>{slot === 4 ? 'Đã chọn' : status}</span>
                       ))}
                     </div>
                   </>
@@ -238,7 +238,7 @@ function HowItWorks() {
                   </>
                 ) : (
                   <>
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pitch text-2xl text-white" aria-hidden="true">✓</div>
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pitch text-white" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" className="size-8"><path className="pf-story-check" d="m12 25 8 8 17-18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
                     <span className="font-display text-2xl font-bold text-pitch">Hẹn nhau ở sân!</span>
                     <p className="mt-2 text-xs leading-5 text-ink-secondary">Nhận xác nhận đặt sân, yên tâm hẹn cả đội.</p>
                   </>
@@ -284,7 +284,7 @@ function WhyDeposit() {
               <p className="mt-2 font-display text-4xl font-extrabold tracking-tight text-pitch">21.000<span className="ml-1 text-xl">đ</span></p>
               <p className="mt-2 text-xs text-ink-secondary">Và 49.000đ khi tới sân.</p>
             </div>
-            <Link href="/chinh-sach-huy" className="mt-5 inline-flex min-h-11 items-center gap-3 text-xs font-semibold text-pitch underline underline-offset-4">Xem chính sách hủy và hoàn cọc <span aria-hidden="true">↗</span></Link>
+            <Link href="/chinh-sach-huy" className="pf-action mt-5 inline-flex min-h-11 items-center gap-3 text-xs font-semibold text-pitch underline underline-offset-4">Xem chính sách hủy và hoàn cọc <span aria-hidden="true" className="pf-arrow">↗</span></Link>
           </div>
         </div>
       </div>
@@ -315,8 +315,8 @@ function ForOwners() {
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn chăm sân.<br />Khách tự chốt kèo.</h2>
           <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn biết ngay khi có khách, nắm lịch và khoản cần thu thật gọn.</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link href="/dang-ky-san" className="inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng sân của bạn <span aria-hidden="true">↗</span></Link>
-            <Link href="/chu-san" className="inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Mở trang dành cho chủ sân</Link>
+            <Link href="/dang-ky-san" className="pf-action inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng sân của bạn <span aria-hidden="true" className="pf-arrow">↗</span></Link>
+            <Link href="/chu-san" className="pf-action inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Mở trang dành cho chủ sân</Link>
           </div>
         </div>
         <div className="relative z-10 flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
@@ -360,7 +360,7 @@ function Faq() {
         <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-secondary">Trước khi ra sân</p>
         <h2 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn hỏi.<br />Sân Ngon trả lời.</h2>
         <p className="mt-5 max-w-xs text-sm leading-6 text-ink-secondary">Một vài điều nhỏ để buổi chơi diễn ra suôn sẻ.</p>
-        <Link href="/lien-he" className="mt-5 inline-flex min-h-11 items-center gap-4 text-sm font-semibold text-pitch underline underline-offset-4">Cần hỗ trợ thêm <span aria-hidden="true">↗</span></Link>
+        <Link href="/lien-he" className="pf-action mt-5 inline-flex min-h-11 items-center gap-4 text-sm font-semibold text-pitch underline underline-offset-4">Cần hỗ trợ thêm <span aria-hidden="true" className="pf-arrow">↗</span></Link>
       </div>
       <div className="divide-y divide-hairline border-y border-hairline">
         {qa.map(([q, a], i) => (
