@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requestOrigin } from '@/lib/request-origin';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   // Chỉ nhận form gửi từ chính trang này.
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin) {
+  if (origin && origin !== requestOrigin(request)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
@@ -19,5 +20,5 @@ export async function POST(request: NextRequest) {
   await supabase.auth.signOut();
 
   // 303: trình duyệt đổi POST thành GET khi đi theo, không hỏi gửi lại form.
-  return NextResponse.redirect(new URL('/', request.url), { status: 303 });
+  return NextResponse.redirect(new URL('/', requestOrigin(request)), { status: 303 });
 }

@@ -41,37 +41,43 @@ export function BookingForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
 
-    const res = await fetch('/api/bookings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        court_id: selection.courtId,
-        starts_at: selection.startsAt,
-        ends_at: selection.endsAt,
-        customer_name: name || undefined,
-        customer_phone: phone,
-        note: note || undefined,
-      }),
-    });
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          court_id: selection.courtId,
+          starts_at: selection.startsAt,
+          ends_at: selection.endsAt,
+          customer_name: name || undefined,
+          customer_phone: phone,
+          note: note || undefined,
+        }),
+      });
 
-    if (res.status === 401) {
-      // Giữ cả form và khung đã chọn để đăng nhập xong quay lại đặt tiếp.
-      sessionStorage.setItem('san-ngon:booking-draft', JSON.stringify({
-        selection, name, phone, note, savedAt: Date.now(),
-      }));
-      router.push(`/dang-nhap?next=${encodeURIComponent(pathname)}`);
-      return;
+      if (res.status === 401) {
+        // Giữ cả form và khung đã chọn để đăng nhập xong quay lại đặt tiếp.
+        sessionStorage.setItem('san-ngon:booking-draft', JSON.stringify({
+          selection, name, phone, note, pathname, savedAt: Date.now(),
+        }));
+        router.push(`/dang-nhap?next=${encodeURIComponent(pathname + window.location.search)}`);
+        return;
+      }
+
+      const json = await res.json();
+
+      if (!res.ok) { setError(json.error ?? 'Không đặt được sân.'); return; }
+      sessionStorage.removeItem('san-ngon:booking-draft');
+      router.push(`/dat-san/${json.booking.code}`);
+    } catch {
+      setError('Không kết nối được. Kiểm tra mạng và thử lại.');
+    } finally {
+      setBusy(false);
     }
-
-    const json = await res.json();
-    setBusy(false);
-
-    if (!res.ok) { setError(json.error ?? 'Không đặt được sân.'); return; }
-    sessionStorage.removeItem('san-ngon:booking-draft');
-    router.push(`/dat-san/${json.booking.code}`);
   }
 
   return (
@@ -141,7 +147,7 @@ export function BookingForm({
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
       <div className="flex gap-3">
-        <button type="button" onClick={() => {
+        <button type="button" disabled={busy} onClick={() => {
           sessionStorage.removeItem('san-ngon:booking-draft');
           onCancel();
         }}

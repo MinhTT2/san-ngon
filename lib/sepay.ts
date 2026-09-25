@@ -30,12 +30,17 @@ export type SepayPayload = {
  * Ngân hàng hay chèn thêm chữ, bỏ dấu, đổi hoa thường — nên quét toàn bộ nội dung.
  */
 export function extractRefCode(payload: SepayPayload): string | null {
+  const codes = extractBookingCodes(payload);
+  return codes.length === 1 ? codes[0] : null;
+}
+
+export function extractBookingCodes(payload: SepayPayload): string[] {
   const haystack = [payload.content, payload.description, payload.code, payload.subAccount]
     .filter(Boolean)
     .join(' ')
     .toUpperCase();
-  const m = haystack.match(/SAN[A-Z0-9]{6}/);
-  return m ? m[0] : null;
+  const matches = [...haystack.matchAll(/SAN[A-HJ-NP-Z2-9]{6}(?![A-Z0-9])/g)].map(match => match[0]);
+  return [...new Set(matches)];
 }
 
 /** Website fees have their own reference, never a booking deposit reference. */

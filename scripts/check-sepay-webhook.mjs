@@ -33,6 +33,8 @@ for (const { name, auth, body, status, skipped } of [
   { name: 'Sai ngân hàng', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, gateway: 'wrong-test-bank', content: 'SANZZZZZZ' }), status: 200, skipped: 'wrong_receiver' },
   { name: 'Lẫn mã phí và mã đơn', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'PHIABCDEF12 SANZZZZZZ' }), status: 200, skipped: 'ambiguous_ref_code' },
   { name: 'Hai mã phí khác nhau', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'PHIABCDEF12 PHI12345678' }), status: 200, skipped: 'ambiguous_ref_code' },
+  { name: 'Hai mã đơn khác nhau', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'SANABC234 SANDEF567' }), status: 200, skipped: 'ambiguous_ref_code' },
+  { name: 'Mã đơn quá dài', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'SANABC2345' }), status: 200, skipped: 'no_ref_code' },
   { name: 'Không có mã đơn', auth: `Apikey ${key}`, body: JSON.stringify(incoming), status: 200, skipped: 'no_ref_code' },
 ]) {
   const response = await fetch(endpoint, { method: 'POST', headers: { authorization: auth, 'content-type': 'application/json' }, body });

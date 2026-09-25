@@ -7,6 +7,10 @@ for (const content of ['SANABC234', 'PHIABCDEF1', 'PHIABCDEF123', 'PHIABCDEFGH']
   assert.deepEqual(extractSubscriptionCodes({ ...payload, content }), []);
 }
 assert.equal(extractRefCode({ ...payload, content: 'PHIABCDEF12' }), null);
+assert.equal(extractRefCode({ ...payload, content: 'sanabc234', code: 'SANABC234' }), 'SANABC234');
+for (const content of ['SANABC234 SANDEF567', 'SANABC2345', 'SANABC01O']) {
+  assert.equal(extractRefCode({ ...payload, content }), null);
+}
 const qr = new URL(vietQrUrl('PHIABCDEF12', 299000, 'MBBank', '1234567890'));
 assert.equal(qr.searchParams.get('amount'), '299000');
 assert.equal(qr.searchParams.get('des'), 'PHIABCDEF12');

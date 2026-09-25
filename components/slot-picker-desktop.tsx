@@ -1,32 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
 import { SlotCell } from './slot-cell';
-import { useAvailability } from '@/lib/use-availability';
+import type { useAvailability } from '@/lib/use-availability';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
-import type { Selection } from '@/lib/types';
 
 /**
  * Desktop: sân theo hàng ngang, giờ là cột — cả ngày của cả cụm sân trong một khung hình.
  * Đây là bố cục khác hẳn bản điện thoại, không phải bản co giãn. Dữ liệu thì chung.
  */
 export function SlotPickerDesktop({
-  venueId,
-  date,
+  availability: a,
   depositPct,
-  onSelectionChange,
   onConfirm,
 }: {
-  venueId: string;
-  date: string;
+  availability: ReturnType<typeof useAvailability>;
   depositPct: number;
-  onSelectionChange?: (s: Selection | null) => void;
   onConfirm?: () => void;
 }) {
-  const a = useAvailability(venueId, date);
-
-  useEffect(() => { onSelectionChange?.(a.selection); }, [a.selection, onSelectionChange]);
-
   if (a.loading) return <div className="h-[30rem] animate-pulse rounded-card border border-hairline bg-sunk" aria-busy="true" />;
   if (a.failed) {
     return (

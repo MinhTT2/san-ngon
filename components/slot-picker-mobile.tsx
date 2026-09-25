@@ -1,30 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
 import { SlotCell } from './slot-cell';
-import { useAvailability } from '@/lib/use-availability';
+import type { useAvailability } from '@/lib/use-availability';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { MAX_SLOTS } from '@/lib/constants';
-import type { Selection } from '@/lib/types';
 
 /** Điện thoại: giờ theo hàng dọc, sân là cột. Dùng cho màn hình dưới 768px. */
 export function SlotPickerMobile({
-  venueId,
-  date,
+  availability: a,
   depositPct,
-  onSelectionChange,
   onConfirm,
 }: {
-  venueId: string;
-  date: string;
+  availability: ReturnType<typeof useAvailability>;
   depositPct: number;
-  onSelectionChange?: (s: Selection | null) => void;
   onConfirm?: () => void;
 }) {
-  const a = useAvailability(venueId, date);
-
-  useEffect(() => { onSelectionChange?.(a.selection); }, [a.selection, onSelectionChange]);
-
   if (a.loading) return <div className="h-96 animate-pulse rounded-card bg-sunk" aria-busy="true" />;
 
   if (a.failed) {

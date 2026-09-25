@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { subscriptionError } from '@/lib/subscriptions';
+import { requestOrigin } from '@/lib/request-origin';
 
 const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('invoice') }),
   z.object({ action: z.literal('set_fee'), owner_id: z.string().uuid(), required: z.boolean() }),
 ]);
 export async function POST(req: NextRequest) {
-  if (req.headers.get('origin') !== req.nextUrl.origin) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 403 });
+  if (req.headers.get('origin') !== requestOrigin(req)) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 403 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Thông tin không hợp lệ.' }, { status: 400 });
   const db = await createClient();

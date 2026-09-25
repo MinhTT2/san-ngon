@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { DISTRICTS } from '@/lib/constants';
 import { hhmm, vnd } from '@/lib/format';
+import { VenueSearchParams } from '@/lib/search-params';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,17 +17,17 @@ export default async function Page({
 }: {
   searchParams: Promise<{ sport?: string; q?: string; ngay?: string; district?: string; indoor?: string; available?: string; sort?: string; page?: string }>;
 }) {
-  const { sport, q, ngay, district, indoor, available, sort, page } = await searchParams;
+  const { sport, q, ngay, district, indoor, available, sort, page } = VenueSearchParams.parse(await searchParams);
   const supabase = await createClient();
 
-  const validSport = sport && sport in SPORT_LABELS ? sport : undefined;
+  const validSport = sport;
   const term = q?.trim() ?? '';
   const day = ngay && /^\d{4}-\d{2}-\d{2}$/.test(ngay) ? ngay : undefined;
   const { data: result, error } = await supabase.rpc('search_venues', {
     p_query: term, p_sport: validSport ?? null, p_district: district && DISTRICTS.includes(district) ? district : '',
     p_date: day ?? null, p_indoor: indoor === '1' ? true : indoor === '0' ? false : null,
     p_available: available === '1', p_sort: sort === 'price' || sort === 'availability' ? sort : 'name',
-    p_page: Math.max(1, Number(page) || 1),
+    p_page: page,
   });
   if (error) throw new Error('Không tải được danh sách sân.');
   const discovery = result as unknown as { date: string; today: string; last_date: string; total: number; page: number; pages: number; venues: Array<{ id: string; slug: string; name: string; address: string; district: string; images: string[]; amenities: string[]; court_count: number; sports: string[]; available_slots: number; min_price: number | null; next_slot: string | null }> };

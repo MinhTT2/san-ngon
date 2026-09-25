@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { safeNext } from '@/lib/safe-next';
 
 /** ?loi=1 là do /auth/callback đá về. */
 const CALLBACK_ERROR =
@@ -35,7 +36,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   const supabase = createClient();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') ?? '/';
+  const next = safeNext(params.get('next'));
   const hasBookingDraft = next.includes('/san/');
 
   const [email, setEmail] = useState('');

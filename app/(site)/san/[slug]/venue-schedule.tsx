@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { SlotPickerMobile } from '@/components/slot-picker-mobile';
 import { SlotPickerDesktop } from '@/components/slot-picker-desktop';
 import { BookingForm } from '@/components/booking-form';
+import { useAvailability } from '@/lib/use-availability';
 import type { Selection, VenueCalendar } from '@/lib/types';
 
 /**
@@ -27,8 +29,14 @@ export function VenueSchedule({
   isAuthenticated: boolean;
 }) {
   const date = calendar.date;
+  const pathname = usePathname();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const availability = useAvailability(venueId, date, !confirming);
+  const confirm = () => {
+    setSelection(availability.selection);
+    setConfirming(true);
+  };
   const [draftContact, setDraftContact] = useState<{ name?: string; phone?: string; note?: string } | null>(null);
 
   useEffect(() => {
@@ -36,8 +44,9 @@ export function VenueSchedule({
       const raw = sessionStorage.getItem('san-ngon:booking-draft');
       if (!raw) return;
       const draft = JSON.parse(raw) as {
-        selection?: Selection; name?: string; phone?: string; note?: string; savedAt?: number;
+        selection?: Selection; name?: string; phone?: string; note?: string; pathname?: string; savedAt?: number;
       };
+      if (draft.pathname !== pathname) return;
       sessionStorage.removeItem('san-ngon:booking-draft');
       if (!draft.selection || !draft.savedAt || Date.now() - draft.savedAt > 15 * 60_000) return;
       setDraftContact({ name: draft.name, phone: draft.phone, note: draft.note });
@@ -46,7 +55,7 @@ export function VenueSchedule({
     } catch {
       sessionStorage.removeItem('san-ngon:booking-draft');
     }
-  }, []);
+  }, [pathname]);
 
   if (confirming && selection) {
     return (
@@ -90,14 +99,12 @@ export function VenueSchedule({
 
       <div className="md:hidden">
         <SlotPickerMobile
-          venueId={venueId} date={date} depositPct={depositPct}
-          onSelectionChange={setSelection} onConfirm={() => setConfirming(true)}
+          availability={availability} depositPct={depositPct} onConfirm={confirm}
         />
       </div>
       <div className="hidden md:block">
         <SlotPickerDesktop
-          venueId={venueId} date={date} depositPct={depositPct}
-          onSelectionChange={setSelection} onConfirm={() => setConfirming(true)}
+          availability={availability} depositPct={depositPct} onConfirm={confirm}
         />
       </div>
     </div>
