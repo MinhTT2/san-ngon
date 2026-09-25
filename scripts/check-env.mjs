@@ -15,5 +15,9 @@ if (missingPayment.length) console.log(`Thanh toán chưa sẵn sàng: ${missing
 const telegram = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOT_USERNAME', 'TELEGRAM_WEBHOOK_SECRET'];
 const missingTelegram = telegram.filter((name) => !present(name));
 if (missingTelegram.length) console.log(`Telegram chưa sẵn sàng: ${missingTelegram.join(', ')}`);
+const missingEmail = ['RESEND_API_KEY', 'EMAIL_FROM'].filter((name) => !present(name));
+if (missingEmail.length) console.log(`Email chủ sân chưa sẵn sàng: ${missingEmail.join(', ')}`);
+else if (/@resend\.dev\b/i.test(process.env.EMAIL_FROM)) console.log('EMAIL_FROM đang dùng địa chỉ thử của Resend; cần tên miền đã xác minh để gửi cho chủ sân.');
+console.log('Email OTP dùng SMTP riêng trong Supabase: node scripts/configure-auth-email.mjs');
 console.log('NEXT_PUBLIC_SITE_URL: production phải dùng domain thật.');
 process.exitCode = missing.length ? 1 : 0;

@@ -20,6 +20,8 @@ function viError(raw: string) {
   if (s.includes('rate limit') || s.includes('too many requests')) {
     return 'Gửi quá nhiều lần rồi. Đợi ít phút rồi thử lại.';
   }
+  if (s.includes('error sending confirmation email') || s.includes('email address not authorized')) return 'Chưa gửi được email xác nhận. Vui lòng thử lại sau ít phút.';
+  if (s.includes('token has expired') || s.includes('otp expired') || s.includes('invalid otp')) return 'Mã xác nhận không đúng hoặc đã hết hạn. Kiểm tra email mới nhất hoặc gửi lại mã.';
   if (s.includes('invalid login credentials')) return 'Email hoặc mật khẩu chưa đúng.';
   if (s.includes('email not confirmed')) return 'Bạn chưa xác nhận email. Nhập mã OTP trong email rồi thử lại.';
   if (s.includes('user already registered')) return 'Email này đã có tài khoản. Hãy đăng nhập.';
@@ -42,6 +44,8 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   const [password, setPassword] = useState('');
   const [passwordAgain, setPasswordAgain] = useState('');
   const [sent, setSent] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [token, setToken] = useState('');
   const [busy, setBusy] = useState<'google' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(params.get('loi') ? CALLBACK_ERROR : null);
@@ -53,6 +57,12 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
     process.env.NEXT_PUBLIC_SITE_URL ??
     (typeof window === 'undefined' ? '' : window.location.origin);
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((seconds) => seconds - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
 
   // Khi người dùng vừa chọn giờ rồi mới đăng nhập, điền lại thông tin họ đã
   // nhập ở form đặt sân để không bắt họ gõ lần hai.
@@ -141,13 +151,23 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
       } else if (data.session) {
         router.push(next);
         router.refresh();
+      } else if (data.user?.identities?.length === 0) {
+        setError('Email này đã có tài khoản. Hãy đăng nhập.');
       } else {
         setSent(true);
+        setNotice('Đã gửi mã xác nhận. Mã có hiệu lực trong 10 phút.');
+        setResendSeconds(60);
       }
       return;
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error?.code === 'email_not_confirmed') {
+      setSent(true);
+      setNotice('Tài khoản chưa xác nhận email. Nhập mã đã nhận hoặc bấm Gửi lại mã.');
+      setBusy(null);
+      return;
+    }
     setBusy(null);
     if (error) setError(viError(error.message));
     else if (data.session) {
@@ -173,11 +193,18 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   }
 
   async function resend() {
+    if (busy || resendSeconds > 0) return;
     setBusy('email');
     setError(null);
+    setNotice('');
     const { error } = await supabase.auth.resend({ type: 'signup', email });
     setBusy(null);
     if (error) setError(viError(error.message));
+    else {
+      setToken('');
+      setNotice('Đã gửi lại mã. Dùng mã trong email mới nhất, có hiệu lực trong 10 phút.');
+      setResendSeconds(60);
+    }
   }
 
   if (sent) {
@@ -187,12 +214,13 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
         <div className="flex flex-col gap-2">
           <p className="text-[17px] font-semibold text-pitch">Nhập mã OTP</p>
           <p className="text-[15px] leading-relaxed">
-            Đã gửi mã xác nhận 6 số tới <strong className="break-all">{email}</strong>.
+            Nhập mã xác nhận 6 số gửi tới <strong className="break-all">{email}</strong>.
           </p>
           <p className="text-[13px] leading-relaxed text-[#2C4A3C]">
             Không thấy sau một phút thì xem thư mục spam. Mã chỉ dùng một lần.
           </p>
         </div>
+        {notice && <p role="status" className="text-sm leading-relaxed text-pitch">{notice}</p>}
         {error && <p role="alert" className="rounded-control border border-danger/30 bg-danger/5 p-3.5 text-sm leading-relaxed text-danger">{error}</p>}
         <form onSubmit={verify} className="flex flex-col gap-2.5">
           <label htmlFor="token" className="text-sm font-semibold">Mã OTP</label>
@@ -200,8 +228,8 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
           <button type="submit" disabled={busy !== null} className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60">{busy === 'email' ? 'Đang xác nhận…' : 'Xác nhận tài khoản'}</button>
         </form>
         <div className="flex gap-4 text-sm">
-          <button type="button" onClick={resend} disabled={busy !== null} className="font-semibold text-pitch underline underline-offset-2 disabled:opacity-60">Gửi lại mã</button>
-          <button type="button" onClick={() => { setSent(false); setError(null); setToken(''); }} className="font-semibold text-pitch underline underline-offset-2">Đổi email</button>
+          <button type="button" onClick={resend} disabled={busy !== null || resendSeconds > 0} className="font-semibold text-pitch underline underline-offset-2 disabled:opacity-60">{resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : 'Gửi lại mã'}</button>
+          <button type="button" disabled={busy !== null} onClick={() => { setSent(false); setError(null); setToken(''); setNotice(''); }} className="font-semibold text-pitch underline underline-offset-2 disabled:opacity-60">Đổi email</button>
         </div>
       </div>
     );

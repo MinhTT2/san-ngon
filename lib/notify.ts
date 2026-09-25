@@ -32,18 +32,19 @@ export async function sendTelegram(chatId: string | null | undefined, text: stri
 }
 
 /**
- * Email — Should, không phải Must. Bản MVP cắt email cho người chơi để lấy 1 ngày.
- * Hàm để sẵn, bật lại khi có thời gian.
+ * Email thông báo cho chủ sân. Email OTP do Supabase Auth gửi qua SMTP riêng.
  */
 export async function sendEmail(to: string, subject: string, html: string) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { ok: false, reason: 'NOT_CONFIGURED' };
+  const key = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.EMAIL_FROM?.trim();
+  if (!key || !from) return { ok: false, reason: 'NOT_CONFIGURED' };
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html }),
+      body: JSON.stringify({ from, to, subject, html }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       console.error('[email] gửi hỏng', res.status, await res.text());

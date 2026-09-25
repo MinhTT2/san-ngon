@@ -78,8 +78,31 @@ Trong **Authentication → Providers**:
 - trong **Email Templates → Confirm signup**, giữ `{{ .Token }}` trong nội dung
   thư để người dùng nhập mã 6 số; không dùng chỉ link `{{ .ConfirmationURL }}`;
 - bật Google nếu muốn nút đăng nhập Google hoạt động;
-- cấu hình SMTP riêng nếu cần gửi đủ email cho buổi demo, vì quota mặc định của
-  Supabase thấp.
+- đặt độ dài OTP là **6 số**, hết hạn sau **600 giây**;
+- cấu hình SMTP riêng trước khi mở đăng ký. SMTP mặc định chỉ gửi tới thành viên
+  được phép của project, giới hạn 2 email/giờ.
+
+Mẫu tiếng Việt nằm ở `supabase/templates/confirmation.html`. Kiểm tra cấu hình
+thật bằng `node scripts/configure-auth-email.mjs`; thêm `--apply` để đồng bộ
+mẫu thư, độ dài mã và thời hạn. Script dùng token từ `supabase login` hoặc
+`SUPABASE_ACCESS_TOKEN`, cùng project trong `.env.local`.
+
+Để dùng Resend cho cả OTP và thông báo chủ sân:
+
+1. Xác minh tên miền gửi trên Resend (các bản ghi DNS Resend cung cấp).
+2. Đặt `RESEND_API_KEY` và `EMAIL_FROM=San Ngon <no-reply@ten-mien-cua-ban>`
+   trong `.env.local`; đặt cùng hai biến trên Vercel production.
+3. Chạy `node scripts/configure-auth-email.mjs --apply`. Script cấu hình
+   `smtp.resend.com:465`, user `resend`, tên gửi Sân Ngon, giới hạn 30 email/giờ
+   và ít nhất 60 giây giữa hai lần gửi cho cùng người dùng.
+4. Đăng ký bằng email do bạn quản lý, nhận mã 6 số, xác nhận và thử đăng nhập.
+   Kiểm tra Resend Logs có trạng thái `delivered`; HTTP thành công chỉ chứng
+   minh nhà cung cấp đã nhận yêu cầu gửi.
+
+`onboarding@resend.dev` chỉ gửi thử tới email chủ tài khoản Resend; không dùng
+địa chỉ này cho đăng ký công khai. Script không đưa khóa vào log và không đổi
+cấu hình Google OAuth. Supabase Free không cho sửa mẫu thư khi còn dùng bộ gửi
+mặc định: nếu chưa có SMTP và khóa Resend, `--apply` dừng trước khi thay đổi.
 
 Trong **Authentication → URL Configuration**:
 
