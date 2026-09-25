@@ -17,7 +17,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
   const court = booking.courts as unknown as { name: string; venues: { name: string; address: string } };
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-10">
+    <main className="mx-auto max-w-6xl px-5 py-6 sm:px-8 sm:py-10 lg:py-12">
       <PaymentPanel
         bookingId={booking.id}
         code={booking.code}
