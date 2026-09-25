@@ -7,8 +7,8 @@ import { ownerErrorMessage } from '@/lib/constants';
 const Body = z.object({
   full_name: z.string().trim().min(2, 'Nhập họ và tên người đại diện.').max(120),
   phone: z.string().trim().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.'),
-  payout_bank: z.string().trim().min(2, 'Nhập tên ngân hàng.').max(60),
-  payout_account: z.string().trim().regex(/^\d{6,30}$/, 'Số tài khoản phải gồm 6 đến 30 chữ số.'),
+  payout_bank: z.string().trim().min(2, 'Nhập tên ngân hàng.').max(60).optional(),
+  payout_account: z.string().trim().regex(/^\d{6,30}$/, 'Số tài khoản phải gồm 6 đến 30 chữ số.').optional(),
 });
 
 const LICENSE_TYPES = new Map([['application/pdf', 'pdf'], ['image/jpeg', 'jpg'], ['image/png', 'png']]);
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     p_phone: parsed.data.phone,
     p_business_license_path: licensePath,
     p_business_license_name: license.name,
-    p_payout_bank: parsed.data.payout_bank,
-    p_payout_account: parsed.data.payout_account,
+    p_payout_bank: parsed.data.payout_bank ?? null,
+    p_payout_account: parsed.data.payout_account ?? null,
   });
   if (error) {
     await storage.remove([licensePath]);

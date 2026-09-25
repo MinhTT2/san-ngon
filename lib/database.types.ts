@@ -60,16 +60,19 @@ export type Database = {
         Row: {
           expires_at: string
           owner_id: string
+          return_to: string
           state_hash: string
         }
         Insert: {
           expires_at?: string
           owner_id: string
+          return_to?: string
           state_hash: string
         }
         Update: {
           expires_at?: string
           owner_id?: string
+          return_to?: string
           state_hash?: string
         }
         Relationships: [

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { ConnectionPanel, type ConnectionSummary } from './connection-panel';
+import { ConnectionPanel, type ConnectionSummary } from '@/components/sepay-connection-panel';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Tài khoản nhận cọc · Sân Ngon' };

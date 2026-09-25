@@ -13,8 +13,8 @@ type Account = { id: string; account_number: string; account_holder_name: string
 const STATUS = { setup: 'Chưa hoàn tất', ready: 'Đã kết nối', reconnect: 'Cần kết nối lại', disconnected: 'Đã ngắt kết nối' };
 const BUTTON = 'inline-flex min-h-12 items-center justify-center rounded-control border border-hairline px-5 text-sm font-semibold text-pitch disabled:opacity-50';
 
-export function ConnectionPanel({ connection: c, callbackError, justConnected }: {
-  connection: ConnectionSummary | null; callbackError?: string; justConnected: boolean;
+export function ConnectionPanel({ connection: c, callbackError, justConnected, returnTo = '/chu-san/thanh-toan', awaitingApproval = false }: {
+  connection: ConnectionSummary | null; callbackError?: string; justConnected: boolean; returnTo?: '/dang-ky-san' | '/chu-san/thanh-toan'; awaitingApproval?: boolean;
 }) {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -36,21 +36,21 @@ export function ConnectionPanel({ connection: c, callbackError, justConnected }:
     finally { if (!signal?.aborted) setBusy(false); }
   }
   useEffect(() => {
-    if (!c?.has_authorization || (c.status === 'ready' && !justConnected)) return;
+    if (callbackError || !c?.has_authorization || (c.status === 'ready' && !justConnected)) return;
     const controller = new AbortController();
     void loadAccounts(controller.signal);
     return () => controller.abort();
-  }, [c?.has_authorization, c?.status, justConnected]);
+  }, [c?.has_authorization, c?.status, justConnected, callbackError]);
 
   async function action(path: 'connect' | 'connection', method = 'POST', accountId?: string) {
     setBusy(true); setError('');
     try {
       const response = await fetch(`/api/sepay/${path}`, { method, headers: { 'Content-Type': 'application/json' },
-        body: accountId ? JSON.stringify({ account_id: accountId }) : undefined });
+        body: path === 'connect' ? JSON.stringify({ return_to: returnTo }) : accountId ? JSON.stringify({ account_id: accountId }) : undefined });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Chưa hoàn tất. Vui lòng thử lại.');
       if (data.url) { window.location.assign(data.url); return; }
-      setConfirmDisconnect(false); setLoaded(false); router.replace('/chu-san/thanh-toan'); router.refresh();
+      setConfirmDisconnect(false); setLoaded(false); router.replace(returnTo); router.refresh();
     } catch (error) { setError(error instanceof Error ? error.message : 'Không kết nối được.'); router.refresh(); }
     finally { setBusy(false); }
   }
@@ -60,11 +60,11 @@ export function ConnectionPanel({ connection: c, callbackError, justConnected }:
     {error && <p role="alert" className="mt-4 text-sm text-danger">{error}</p>}
     {c?.bank && <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-3">{[['Ngân hàng', c.bank], ['Số tài khoản', c.account_number], ['Người nhận', c.account_name]].map(([label, value]) => <div key={label}><dt className="text-ink-secondary">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}</dl>}
     {c?.status === 'ready' ? <>
-      <p className="mt-6 text-sm leading-7 text-ink-secondary">{c.rollout_enabled ? 'Các đơn mới sẽ chuyển cọc vào tài khoản trên. Khi nhận đủ cọc đúng mã đơn, lịch sân và trạng thái đơn tự cập nhật.' : 'Kết nối đã sẵn sàng. Sân Ngon sẽ mở nhận đơn sau khi hoàn tất kiểm tra chuyển khoản thử.'}</p>
+      <p className="mt-6 text-sm leading-7 text-ink-secondary">{awaitingApproval ? 'Tài khoản nhận cọc đã được lưu vào hồ sơ. Bạn sẽ nhận thông báo khi hồ sơ chủ sân được duyệt.' : c.rollout_enabled ? 'Các đơn mới sẽ chuyển cọc vào tài khoản trên. Khi nhận đủ cọc đúng mã đơn, lịch sân và trạng thái đơn tự cập nhật.' : 'Kết nối đã sẵn sàng. Sân Ngon sẽ mở nhận đơn sau khi hoàn tất kiểm tra chuyển khoản thử.'}</p>
       <div className="mt-3 space-y-1 text-xs text-ink-secondary">{c.checked_at && <p>Kiểm tra gần nhất: {dayLabel(new Date(c.checked_at))} · {hhmm(c.checked_at)}</p>}{c.last_webhook_at ? <p>Nhận thông báo ngân hàng gần nhất: {dayLabel(new Date(c.last_webhook_at))} · {hhmm(c.last_webhook_at)}</p> : <p>Chưa nhận thông báo giao dịch từ ngân hàng.</p>}</div>
       <div className="mt-6 flex flex-wrap gap-3"><button className={BUTTON} disabled={busy} onClick={() => action('connection', 'POST', c.bank_account_id!)}>Kiểm tra kết nối</button><button className={BUTTON} disabled={busy} onClick={() => setConfirmDisconnect(true)}>Ngắt kết nối</button></div>
     </> : <>
-      <ol className="mt-5 list-inside list-decimal space-y-2 text-sm leading-7 text-ink-secondary"><li>Đăng ký SePay và liên kết tài khoản ngân hàng của bạn.</li><li>Kết nối với Sân Ngon, sau đó chọn tài khoản nhận cọc.</li><li>Hoàn tất kết nối để bắt đầu nhận đơn tự động.</li></ol>
+      <ol className="mt-5 list-inside list-decimal space-y-2 text-sm leading-7 text-ink-secondary"><li>Đăng ký SePay và liên kết tài khoản ngân hàng của bạn.</li><li>Kết nối với Sân Ngon, sau đó chọn tài khoản nhận cọc.</li><li>Chọn một tài khoản nhận cọc cho tất cả cụm sân.</li></ol>
       <div className="mt-6 flex flex-wrap gap-3"><button className={`${BUTTON} bg-pitch text-pitch-ink`} disabled={busy} onClick={() => action('connect')}>{busy ? 'Đang xử lý…' : c?.has_authorization ? 'Kết nối lại SePay' : 'Kết nối SePay'}</button>{c?.status === 'disconnected' && c.has_authorization && <button className={BUTTON} disabled={busy} onClick={() => action('connection', 'DELETE')}>Thử lại ngắt kết nối</button>}<a href="https://my.sepay.vn" target="_blank" rel="noopener noreferrer" className={BUTTON}>Mở SePay</a>{c?.has_authorization && <button className={BUTTON} disabled={busy} onClick={() => loadAccounts()}>Tải lại tài khoản</button>}</div>
     </>}
     {loaded && c?.status !== 'ready' && <div className="mt-7 border-t border-hairline pt-6"><h3 className="font-semibold text-pitch">Chọn tài khoản nhận cọc</h3>

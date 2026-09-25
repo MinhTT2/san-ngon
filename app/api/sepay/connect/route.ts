@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -7,10 +8,12 @@ import { oauthConfig, requireSepayOwner, SEPAY_SCOPES, STATE_COOKIE, sepayErrorR
 export async function POST(req: NextRequest) {
   try {
     const ownerId = await requireSepayOwner(req);
+    const body = z.object({ return_to: z.enum(['/dang-ky-san', '/chu-san/thanh-toan']).default('/chu-san/thanh-toan') }).safeParse(await req.json().catch(() => ({})));
+    if (!body.success) throw new Error('INVALID_INPUT');
     const config = oauthConfig();
     const state = randomBytes(32).toString('hex');
     const { error } = await createAdminClient().from('sepay_oauth_states').upsert({
-      owner_id: ownerId, state_hash: secretHash(state), expires_at: new Date(Date.now() + 600000).toISOString(),
+      owner_id: ownerId, return_to: body.data.return_to, state_hash: secretHash(state), expires_at: new Date(Date.now() + 600000).toISOString(),
     }, { onConflict: 'owner_id' });
     if (error) throw new Error('DATABASE_ERROR');
     const url = new URL('https://my.sepay.vn/oauth/authorize');

@@ -1,35 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Check, ChevronDown, FileText, Search, UploadCloud, X } from 'lucide-react';
+import { Check, FileText, UploadCloud, X } from 'lucide-react';
 
-type Bank = { code: string; name: string; shortName: string; logo?: string };
-const STEPS = ['Người đại diện', 'Giấy tờ kinh doanh', 'Tài khoản nhận tiền'];
+const STEPS = ['Người đại diện', 'Giấy tờ kinh doanh', 'Tài khoản nhận cọc'];
 
 export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: string | null; defaultPhone?: string | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
-  const [banks, setBanks] = useState<Bank[]>([]);
-  const [selectedBankValue, setSelectedBankValue] = useState('');
-  const [bankSearch, setBankSearch] = useState('');
-  const [bankOpen, setBankOpen] = useState(false);
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
   const [licenseDragging, setLicenseDragging] = useState(false);
   const stepRefs = useRef<Array<HTMLFieldSetElement | null>>([]);
   const licenseInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    fetch('/api/banks').then((response) => response.json()).then((json: { banks?: Bank[] }) => setBanks(json.banks ?? [])).catch(() => setBanks([]));
-  }, []);
-
-  const selectedBank = banks.find((bank) => bank.shortName === selectedBankValue);
-
   function validateStep(index: number) {
-    if (index === 2 && !selectedBankValue) { setError('Chọn ngân hàng nhận tiền.'); return false; }
     const fields = stepRefs.current[index]?.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select') ?? [];
     const invalid = Array.from(fields).find((field) => !field.checkValidity());
     if (invalid) { invalid.reportValidity(); return false; }
@@ -58,8 +45,6 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
     payload.set('data', JSON.stringify({
       full_name: String(form.get('full_name') ?? ''),
       phone: String(form.get('phone') ?? ''),
-      payout_bank: String(form.get('payout_bank') ?? ''),
-      payout_account: String(form.get('payout_account') ?? ''),
     }));
     payload.set('business_license', license);
     try {
@@ -67,7 +52,7 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
       if (response.status === 401) { router.push('/dang-nhap?next=/dang-ky-san'); return; }
       const result = await response.json().catch(() => ({}));
       if (!response.ok) { setError(result.error ?? 'Không gửi được hồ sơ. Thử lại sau vài giây.'); return; }
-      router.refresh();
+      router.replace('/dang-ky-san'); router.refresh();
     } catch { setError('Không kết nối được. Kiểm tra mạng rồi thử lại.'); }
     finally { setBusy(false); }
   }
@@ -77,7 +62,7 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
       <div className="border-b border-hairline pb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Trở thành chủ sân</p>
         <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-pitch">Đăng ký tài khoản chủ sân</h2>
-        <p className="mt-2 text-sm leading-6 text-ink-secondary">Gửi thông tin để Sân Ngon xác minh. Sau khi được duyệt, bạn sẽ tạo cụm sân và thêm các sân con trong trang quản lý.</p>
+        <p className="mt-2 text-sm leading-6 text-ink-secondary">Điền thông tin, tải giấy tờ và kết nối tài khoản nhận cọc. Sân Ngon sẽ xác minh hồ sơ trước khi bạn đăng sân.</p>
       </div>
 
       <nav aria-label="Tiến độ đăng ký" className="mt-6 border-b border-hairline pb-6">
@@ -109,49 +94,16 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
           </Field>
         </Fieldset>
 
-        <Fieldset innerRef={(node) => { stepRefs.current[2] = node; }} hidden={step !== 2} number="03" legend="Tài khoản nhận tiền">
-          <div className="border-l-2 border-strong bg-sunk px-4 py-3 text-sm leading-6 text-ink-secondary">Thông tin phục vụ xét duyệt hồ sơ. Sau khi được duyệt, bạn cần kết nối SePay và chọn tài khoản nhận cọc để nhận đơn.</div>
-          <div className="grid gap-4 sm:grid-cols-2"><Field label="Ngân hàng" htmlFor="payout_bank_picker" required><BankPicker banks={banks} open={bankOpen} search={bankSearch} selected={selectedBank} value={selectedBankValue} onOpen={() => setBankOpen(true)} onClose={() => setBankOpen(false)} onSearch={setBankSearch} onSelect={(bank) => { setSelectedBankValue(bank.shortName); setBankSearch(''); setBankOpen(false); setError(null); }} /></Field><Field label="Số tài khoản" htmlFor="payout_account" required hint="6–30 chữ số."><input id="payout_account" name="payout_account" required minLength={6} maxLength={30} pattern="[0-9]{6,30}" inputMode="numeric" autoComplete="off" placeholder="0123456789" className={INPUT} /></Field></div>
-        </Fieldset>
+
       </div>
 
       {error && <p role="alert" className="mt-6 border-l-2 border-danger bg-[#FFF5F5] px-4 py-3 text-sm leading-6 text-danger">{error}</p>}
-      <div className="mt-8 flex flex-col items-start gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-xs text-xs leading-5 text-ink-secondary">Bằng việc gửi, bạn đồng ý để Sân Ngon liên hệ xác minh thông tin.</p><div className="flex w-full gap-3 sm:w-auto">{step > 0 && <button type="button" onClick={() => { setError(null); setStep((current) => current - 1); }} className="min-h-13 flex-1 rounded-control border border-hairline px-6 font-semibold text-pitch sm:flex-none">Quay lại</button>}{step < STEPS.length - 1 ? <button type="button" onClick={() => { setError(null); if (validateStep(step)) setStep((current) => current + 1); }} className="min-h-13 flex-1 rounded-control bg-pitch px-7 font-semibold text-pitch-ink sm:flex-none">Tiếp theo <span aria-hidden="true" className="ml-3">→</span></button> : <button type="submit" disabled={busy} className="min-h-13 flex-1 rounded-control bg-pitch px-7 font-semibold text-pitch-ink disabled:opacity-60 sm:flex-none">{busy ? 'Đang gửi hồ sơ…' : 'Gửi hồ sơ chủ sân'} <span aria-hidden="true" className="ml-3">→</span></button>}</div></div>
+      <div className="mt-8 flex flex-col items-start gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-xs text-xs leading-5 text-ink-secondary">Hồ sơ và giấy tờ sẽ được lưu trước khi bạn kết nối tài khoản nhận cọc.</p><div className="flex w-full gap-3 sm:w-auto">{step > 0 && <button type="button" onClick={() => { setError(null); setStep((current) => current - 1); }} className="min-h-13 flex-1 rounded-control border border-hairline px-6 font-semibold text-pitch sm:flex-none">Quay lại</button>}{step < 1 ? <button type="button" onClick={() => { setError(null); if (validateStep(step)) setStep((current) => current + 1); }} className="min-h-13 flex-1 rounded-control bg-pitch px-7 font-semibold text-pitch-ink sm:flex-none">Tiếp theo <span aria-hidden="true" className="ml-3">→</span></button> : <button type="submit" disabled={busy} className="min-h-13 flex-1 rounded-control bg-pitch px-7 font-semibold text-pitch-ink disabled:opacity-60 sm:flex-none">{busy ? 'Đang gửi hồ sơ…' : 'Tiếp tục: tài khoản nhận cọc'} <span aria-hidden="true" className="ml-3">→</span></button>}</div></div>
     </form>
   );
 }
 
 const INPUT = 'h-12 w-full rounded-control border border-hairline bg-page px-3.5 text-[15px] outline-none transition-colors placeholder:text-ink-secondary/70 focus:border-pitch focus:ring-2 focus:ring-strong';
 function formatFileSize(bytes: number) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`; }
-function BankPicker({ banks, open, search, selected, value, onOpen, onClose, onSearch, onSelect }: { banks: Bank[]; open: boolean; search: string; selected?: Bank; value: string; onOpen: () => void; onClose: () => void; onSearch: (value: string) => void; onSelect: (bank: Bank) => void }) {
-  const pickerRef = useRef<HTMLDivElement | null>(null);
-  const query = search.trim().toLocaleLowerCase('vi');
-  const filteredBanks = banks.filter((bank) => `${bank.shortName} ${bank.name} ${bank.code}`.toLocaleLowerCase('vi').includes(query));
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOnOutsideClick = (event: PointerEvent) => { if (!pickerRef.current?.contains(event.target as Node)) onClose(); };
-    document.addEventListener('pointerdown', closeOnOutsideClick);
-    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
-  }, [open, onClose]);
-
-  return <div ref={pickerRef} className="relative">
-    <input id="payout_bank" name="payout_bank" type="text" required value={value} onChange={() => undefined} tabIndex={-1} aria-hidden="true" className="pointer-events-none absolute size-px opacity-0" />
-    <button id="payout_bank_picker" type="button" aria-haspopup="listbox" aria-expanded={open} aria-controls="payout-bank-options" onClick={() => open ? onClose() : onOpen()} className={`${INPUT} flex items-center gap-3 text-left`}>
-      {selected ? <><BankLogo bank={selected} /><span className="min-w-0 flex-1 truncate">{selected.shortName}</span></> : <span className="flex-1 truncate text-ink-secondary">{banks.length ? 'Chọn ngân hàng' : 'Đang tải danh sách ngân hàng…'}</span>}
-      <ChevronDown className={`size-4 shrink-0 text-ink-secondary transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
-    </button>
-    {open && <div id="payout-bank-options" role="listbox" aria-label="Danh sách ngân hàng" className="absolute z-30 mt-2 w-full overflow-hidden rounded-control border border-hairline bg-card">
-      <div className="border-b border-hairline p-2"><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-secondary" aria-hidden="true" /><input autoFocus value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Tìm tên, mã ngân hàng…" className={`${INPUT} h-10 pl-9`} /></div></div>
-      <div className="max-h-64 overflow-y-auto p-1">
-        {filteredBanks.length ? filteredBanks.map((bank) => <button key={bank.code} type="button" role="option" aria-selected={bank.shortName === value} onClick={() => onSelect(bank)} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-sunk"><BankLogo bank={bank} /><span className="min-w-0"><span className="block truncate text-sm font-semibold text-pitch">{bank.shortName}</span><span className="block truncate text-xs text-ink-secondary">{bank.name}</span></span></button>) : <p className="px-3 py-4 text-center text-sm text-ink-secondary">Không tìm thấy ngân hàng.</p>}
-      </div>
-    </div>}
-  </div>;
-}
-function BankLogo({ bank }: { bank: Bank }) {
-  const [failed, setFailed] = useState(false);
-  return <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-white"><span className="text-[10px] font-bold text-pitch">{bank.shortName.slice(0, 3).toUpperCase()}</span>{bank.logo && !failed && <Image src={bank.logo} alt="" width={32} height={32} className="absolute size-8 object-contain" onError={() => setFailed(true)} />}</span>;
-}
 function Fieldset({ number, legend, children, hidden, innerRef }: { number: string; legend: string; children: ReactNode; hidden?: boolean; innerRef?: (node: HTMLFieldSetElement | null) => void }) { return <fieldset ref={innerRef} hidden={hidden} className="flex flex-col gap-4"><legend className="mb-1 flex items-center gap-3 text-base font-semibold text-pitch"><span className="flex size-7 items-center justify-center rounded-full bg-free-fill text-xs font-bold text-free-ink">{number}</span>{legend}</legend>{children}</fieldset>; }
 function Field({ label, htmlFor, hint, required, children }: { label: string; htmlFor: string; hint?: string; required?: boolean; children: ReactNode }) { return <div className="flex flex-col gap-1.5"><label htmlFor={htmlFor} className="text-sm font-semibold">{label}{required && <span className="ml-1 text-danger" aria-hidden="true">*</span>}</label>{children}{hint && <span className="text-xs text-ink-secondary">{hint}</span>}</div>; }

@@ -96,8 +96,15 @@ client secret/token vào chat, Git hay biến `NEXT_PUBLIC_*`. Khóa mã hóa
 `initialize_legacy_receiver(p_bank,p_account,p_name)` với đúng ba biến
 ngân hàng hiện tại. Không đổi tài khoản trong lúc chuyển đổi.
 
-Chủ sân đã được duyệt mở `/chu-san/thanh-toan`, cấp quyền SePay, chọn tài
-khoản đang hoạt động. Hệ thống tạo webhook có khóa riêng, đọc lại xác minh
+Đăng ký chủ sân gồm ba bước tại `/dang-ky-san`: thông tin đại diện, giấy
+tờ và kết nối tài khoản nhận cọc qua SePay. Hai bước đầu được lưu thành hồ
+sơ `pending` trước khi chuyển sang SePay; callback trở về bước 3. Người
+đăng ký không phải nhập lại ngân hàng thủ công. Thiết lập thành công lưu
+tài khoản đã xác minh vào hồ sơ nhưng không đổi role hoặc tự duyệt hồ sơ.
+Admin vẫn phải duyệt trước khi tạo sân và nhận đơn.
+
+Chủ sân đã được duyệt quản lý kết nối tại `/chu-san/thanh-toan`, cấp quyền
+SePay, chọn tài khoản đang hoạt động. Hệ thống tạo webhook có khóa riêng, đọc lại xác minh
 trước khi đánh dấu sẵn sàng. Thử lại sẽ tái sử dụng webhook đúng URL/khóa.
 Một chủ sân dùng một tài khoản; hiện chưa hỗ trợ đổi sang ngân hàng khác.
 Token hết hạn được refresh phía server; từ chối quyền hoặc refresh lỗi thì
@@ -120,6 +127,7 @@ Các kiểm tra tự động bổ sung:
 
 ```bash
 node scripts/check-sepay-crypto.mjs
+npx supabase db query --linked --file scripts/check-sepay-registration.sql
 npx supabase db query --linked --file scripts/check-booking-holds.sql
 ```
 

@@ -32,8 +32,9 @@ Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể h�
 ## Luồng sản phẩm hiện tại
 
 `/dang-ky-san` là đăng ký **tài khoản chủ sân**, không còn là form tạo cụm
-sân. Người dùng gửi thông tin đại diện, loại hình đăng ký, giấy tờ xác minh
-và tài khoản nhận tiền; admin duyệt trong `/admin`. Khi
+sân. Ba bước: thông tin đại diện → giấy tờ → kết nối SePay và chọn tài khoản
+nhận cọc. Hồ sơ được lưu `pending` trước khi rời trang để cấp quyền OAuth;
+callback đưa người dùng về bước 3, không mất giấy tờ. Admin duyệt trong `/admin`. Khi
 `owner_application_status = 'active'`, chủ sân mới được tạo cụm sân.
 
 `create_venue` tạo cụm ở trạng thái `draft`, cùng sân con và giá chung. Chủ
@@ -172,9 +173,12 @@ Idempotent theo `payments.bank_tx_id` unique; phải chịu được webhook g�
 
 Webhook luôn trả 200 khi bỏ qua giao dịch. Chỉ 401 khi sai API key, 500 khi database lỗi.
 
-**SePay đã cấp OAuth trong ticket #6725 ngày 25/09/2026.** Chủ sân được
-phê duyệt vào `/chu-san/thanh-toan`: cấp quyền → chọn tài khoản → hệ thống
-tạo và kiểm tra webhook. Scopes: `bank-account:read webhook:read webhook:write`.
+**SePay đã cấp OAuth trong ticket #6725 ngày 25/09/2026.** Hồ sơ `pending`
+được kết nối ngay tại bước 3 của `/dang-ky-san`; chủ sân đã duyệt quản lý
+kết nối tại `/chu-san/thanh-toan`: cấp quyền → chọn tài khoản → hệ thống
+tạo và kiểm tra webhook. Kết nối không tự duyệt hồ sơ hay đổi role. SQL vẫn
+chặn nhận đơn nếu chủ sân chưa được duyệt, kể cả kết nối đã sẵn sàng.
+OAuth state lưu đường về giới hạn ở hai trang này. Scopes: `bank-account:read webhook:read webhook:write`.
 Callback: `/api/sepay/callback`. Token và khóa webhook được mã hóa AES-256-GCM
 trong bảng riêng, không có quyền đọc từ trình duyệt. Khóa mã hóa phải được
 sao lưu và giữ ổn định giữa các lần deploy.

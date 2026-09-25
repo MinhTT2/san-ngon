@@ -4,7 +4,7 @@ import { secretHash } from '@/lib/sepay-crypto';
 import { encryptedTokens, exchangeToken, oauthConfig, requireSepayOwner, STATE_COOKIE, withSepayConnection } from '@/lib/sepay-oauth';
 
 export async function GET(req: NextRequest) {
-  const target = new URL('/chu-san/thanh-toan', req.url);
+  const target = new URL('/dang-ky-san', req.url);
   try {
     target.host = new URL(oauthConfig().origin).host;
     target.protocol = 'https:';
@@ -12,9 +12,10 @@ export async function GET(req: NextRequest) {
     const state = req.nextUrl.searchParams.get('state');
     if (!state || !/^[a-f0-9]{64}$/.test(state) || req.cookies.get(STATE_COOKIE)?.value !== state) throw new Error('INVALID_STATE');
     const { data, error } = await createAdminClient().from('sepay_oauth_states').delete()
-      .eq('owner_id', ownerId).eq('state_hash', secretHash(state)).gt('expires_at', new Date().toISOString()).select('owner_id').maybeSingle();
+      .eq('owner_id', ownerId).eq('state_hash', secretHash(state)).gt('expires_at', new Date().toISOString()).select('owner_id, return_to').maybeSingle();
     if (error) throw new Error('DATABASE_ERROR');
     if (!data) throw new Error('INVALID_STATE');
+    target.pathname = data.return_to === '/dang-ky-san' ? '/dang-ky-san' : '/chu-san/thanh-toan';
     if (req.nextUrl.searchParams.has('error')) throw new Error('ACCESS_DENIED');
     const code = req.nextUrl.searchParams.get('code');
     if (!code || code.length > 4096) throw new Error('INVALID_STATE');
