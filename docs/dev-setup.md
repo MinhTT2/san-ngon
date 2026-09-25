@@ -192,6 +192,10 @@ client hoặc commit vào git.
 
 ## 6. SePay
 
+**Hiện chỉ một chủ sân được nhận đơn.** Cấu hình `booking_operator` và nghiệm
+thu theo [hướng dẫn một chủ sân](sepay-single-owner.md). Chưa được SePay duyệt
+ứng dụng OAuth thì không triển khai kết nối nhiều tài khoản.
+
 Tài khoản ngân hàng nhận cọc là tài khoản của người sáng lập/dự án. Tài
 khoản trong hồ sơ chủ sân không thay QR trên checkout. Khi bàn giao, cập
 nhật ba biến QR, `SEPAY_WEBHOOK_API_KEY`, tài khoản được chọn trong SePay và
@@ -219,7 +223,7 @@ Cấu hình `.env.local` và các biến tương ứng trên Vercel:
 
 ```dotenv
 SEPAY_WEBHOOK_API_KEY=<key giống trong webhook SePay>
-NEXT_PUBLIC_SEPAY_BANK=<mã ngân hàng được SePay hỗ trợ, ví dụ MBBank>
+NEXT_PUBLIC_SEPAY_BANK=<tên ngân hàng khớp gateway SePay gửi, ví dụ MBBank>
 NEXT_PUBLIC_SEPAY_ACCOUNT=<số tài khoản nhận cọc>
 NEXT_PUBLIC_SEPAY_ACCOUNT_NAME=<tên chủ tài khoản>
 ```

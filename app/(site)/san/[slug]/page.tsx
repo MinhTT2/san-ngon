@@ -24,6 +24,9 @@ export default async function Page({
 
   if (!venue) notFound();
 
+  const { data: acceptsBookings, error: bookingAvailabilityError } = await supabase.rpc('venue_accepts_bookings', { p_venue_id: venue.id });
+  if (bookingAvailabilityError) throw new Error('Không kiểm tra được trạng thái nhận đặt sân.');
+
   const { data: courts } = await supabase
     .from('courts').select('sport, name, surface, is_indoor').eq('venue_id', venue.id).eq('is_active', true);
 
@@ -72,7 +75,7 @@ export default async function Page({
       </section>
 
       <div className="mt-6">
-        <VenueSchedule
+        {acceptsBookings ? <VenueSchedule
           initialDate={ngay}
           venueId={venue.id}
           depositPct={venue.deposit_pct}
@@ -80,7 +83,7 @@ export default async function Page({
           defaultName={profile?.full_name}
           defaultPhone={profile?.phone}
           isAuthenticated={!!user}
-        />
+        /> : <p role="status" className="rounded-card border border-hairline bg-card p-5 text-sm text-ink-secondary">Cụm sân này hiện chưa nhận đặt trực tuyến. Vui lòng liên hệ chủ sân để biết thêm thông tin.</p>}
       </div>
     </main>
   );

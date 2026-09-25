@@ -1,8 +1,8 @@
 /** Ảnh QR VietQR do SePay sinh sẵn. Không cần thư viện QR nào. */
 export function vietQrUrl(refCode: string, amount: number) {
   const params = new URLSearchParams({
-    acc: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT!,
-    bank: process.env.NEXT_PUBLIC_SEPAY_BANK!,
+    acc: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim() ?? '',
+    bank: process.env.NEXT_PUBLIC_SEPAY_BANK?.trim() ?? '',
     amount: String(amount),
     des: refCode,
     template: 'compact',
@@ -18,8 +18,8 @@ export type SepayPayload = {
   accountNumber?: string;
   subAccount?: string | null;
   code?: string | null;
-  content?: string;
-  description?: string;
+  content?: string | null;
+  description?: string | null;
   transferType: 'in' | 'out';
   transferAmount: number;
   referenceCode?: string;

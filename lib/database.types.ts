@@ -14,6 +14,20 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_operator: {
+        Row: { owner_id: string; singleton: boolean }
+        Insert: { owner_id: string; singleton?: boolean }
+        Update: { owner_id?: string; singleton?: boolean }
+        Relationships: [
+          {
+            foreignKeyName: "booking_operator_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancelled_at: string | null
@@ -420,6 +434,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      venue_accepts_bookings: {
+        Args: { p_venue_id: string }
+        Returns: boolean
+      }
       get_admin_stats: {
         Args: { p_from: string; p_to: string }
         Returns: Json

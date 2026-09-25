@@ -43,6 +43,11 @@ cục chính; điện thoại có bố cục rút gọn. Ưu tiên luồng đặ
 
 ## Đặt chỗ và thanh toán
 
+**Bản demo chỉ nhận đơn cho một chủ sân**, có thể quản lý nhiều cụm sân.
+SQL chặn chủ sân khác nhận đơn dùng chung tài khoản cọc. Kết nối SePay riêng
+cho nhiều chủ sân chỉ triển khai sau khi SePay duyệt ứng dụng OAuth. Xem
+[cấu hình và nghiệm thu](docs/sepay-single-owner.md).
+
 Một đơn chỉ gắn với **một sân con** (`courts`), không phải cả cụm (`venues`).
 Muốn đặt hai sân cùng giờ phải tạo hai đơn. Mỗi tài khoản có tối đa hai đơn
 chờ còn hạn. Cọc mặc định 30%, tùy cấu hình cụm sân, được làm tròn lên bội số

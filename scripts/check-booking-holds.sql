@@ -4,6 +4,8 @@ begin;
 insert into auth.users (id) values ('a0000000-0000-4000-8000-000000000001');
 update profiles set payout_bank = 'MB', payout_account = '1234567890'
   where id = 'a0000000-0000-4000-8000-000000000001';
+insert into booking_operator (owner_id) values ('a0000000-0000-4000-8000-000000000001')
+on conflict (singleton) do update set owner_id = excluded.owner_id;
 insert into venues (id, owner_id, slug, name, address, district, status)
 values ('a0000000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001',
   'check-holds-rollback', 'Hold check', 'Test', 'Test', 'active');
@@ -11,6 +13,19 @@ insert into courts (id, venue_id, name, sport)
 values ('a0000000-0000-4000-8000-000000000003', 'a0000000-0000-4000-8000-000000000002', 'Court', 'badminton');
 insert into price_rules (court_id, days, start_time, end_time, price_per_hour)
 values ('a0000000-0000-4000-8000-000000000003', '{0,1,2,3,4,5,6}', '05:00', '23:00', 100000);
+-- A second venue for the operator is allowed; another owner is not, even with the same bank account.
+insert into auth.users (id) values ('a0000000-0000-4000-8000-000000000004');
+update profiles set payout_bank = 'MB', payout_account = '1234567890'
+  where id = 'a0000000-0000-4000-8000-000000000004';
+insert into venues (id, owner_id, slug, name, address, district, status) values
+  ('a0000000-0000-4000-8000-000000000005', 'a0000000-0000-4000-8000-000000000004', 'check-other-rollback', 'Other owner', 'Test', 'Test', 'active'),
+  ('a0000000-0000-4000-8000-000000000007', 'a0000000-0000-4000-8000-000000000001', 'check-second-rollback', 'Second venue', 'Test', 'Test', 'active');
+insert into courts (id, venue_id, name, sport) values
+  ('a0000000-0000-4000-8000-000000000006', 'a0000000-0000-4000-8000-000000000005', 'Other court', 'badminton'),
+  ('a0000000-0000-4000-8000-000000000008', 'a0000000-0000-4000-8000-000000000007', 'Second court', 'badminton');
+insert into price_rules (court_id, days, start_time, end_time, price_per_hour) values
+  ('a0000000-0000-4000-8000-000000000006', '{0,1,2,3,4,5,6}', '05:00', '23:00', 100000),
+  ('a0000000-0000-4000-8000-000000000008', '{0,1,2,3,4,5,6}', '05:00', '23:00', 100000);
 select set_config('request.jwt.claim.sub', 'a0000000-0000-4000-8000-000000000001', true);
 
 do $$
@@ -21,6 +36,21 @@ declare
   v_venue uuid := 'a0000000-0000-4000-8000-000000000002';
   b bookings; replacement bookings; a record; result jsonb;
 begin
+  assert venue_accepts_bookings(v_venue), 'operator accepts bookings';
+  assert venue_accepts_bookings('a0000000-0000-4000-8000-000000000007'), 'operator can have multiple venues';
+  assert not venue_accepts_bookings('a0000000-0000-4000-8000-000000000005'), 'second owner cannot receive bookings';
+  assert not has_table_privilege('authenticated', 'booking_operator', 'UPDATE'), 'owner cannot change operator';
+  begin
+    insert into booking_operator (singleton, owner_id) values (false, 'a0000000-0000-4000-8000-000000000004');
+    raise exception 'CHECK_FAILED: second operator allowed';
+  exception when check_violation then null; end;
+  begin
+    perform create_booking('a0000000-0000-4000-8000-000000000006', v_start, v_start + interval '1 hour', 'Check', '0900000000');
+    raise exception 'CHECK_FAILED: second owner booking allowed';
+  exception when raise_exception then if sqlerrm <> 'VENUE_NOT_ACCEPTING_BOOKINGS' then raise; end if; end;
+  b := create_booking('a0000000-0000-4000-8000-000000000008', v_start, v_start + interval '1 hour', 'Check', '0900000000');
+  perform cancel_booking(b.code, true);
+
   b := create_booking(v_court, v_start, v_start + interval '1 hour', 'Check', '0900000000');
   assert b.total_amount = 100000 and b.deposit_amount = 30000, 'server price';
   assert b.status = 'pending' and b.expires_at = now() + interval '15 minutes', '15 minute hold';
@@ -52,10 +82,14 @@ begin
   assert result->>'reason' = 'BOOKING_CANCELLED', 'late payment cannot revive';
   assert (select refund_status = 'needed' from bookings where id = b.id), 'late payment needs refund';
   assert (select status = 'pending' from bookings where id = replacement.id), 'replacement untouched';
+  result := confirm_payment(replacement.code, 29000, 'check-holds-underpaid', '{}');
+  assert result->>'reason' = 'UNDERPAID', 'underpaid cannot confirm';
+  assert (select status = 'pending' from bookings where id = replacement.id), 'underpaid holds stay pending';
   result := confirm_payment(replacement.code, 30000, 'check-holds-paid', '{}');
   assert result->>'reason' = 'CONFIRMED', 'valid payment confirms';
   result := confirm_payment(replacement.code, 30000, 'check-holds-paid', '{}');
   assert result->>'reason' = 'ALREADY_PROCESSED', 'webhook retry idempotent';
+  assert (select count(*) = 2 from notifications where booking_id = replacement.id), 'retry does not duplicate notifications';
   update bookings set expires_at = now() - interval '1 second' where id = replacement.id;
   select * into a from get_venue_availability(v_venue, v_date) where starts_at = v_start;
   assert not a.is_available and a.slot_status = 'booked' and a.hold_expires_at is null, 'paid booking stays blocked';
@@ -77,6 +111,10 @@ set local role authenticated;
 do $$
 declare b bookings; v_start timestamptz := (((now() at time zone 'Asia/Ho_Chi_Minh')::date + 1) + time '10:00') at time zone 'Asia/Ho_Chi_Minh';
 begin
+  begin
+    perform create_booking('a0000000-0000-4000-8000-000000000006', v_start, v_start + interval '1 hour', 'Check', '0900000000');
+    raise exception 'CHECK_FAILED: authenticated second owner booking allowed';
+  exception when raise_exception then if sqlerrm <> 'VENUE_NOT_ACCEPTING_BOOKINGS' then raise; end if; end;
   b := create_booking('a0000000-0000-4000-8000-000000000003', v_start, v_start + interval '1 hour', 'Check', '0900000000');
   perform cancel_booking(b.code, true);
   begin

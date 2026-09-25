@@ -179,6 +179,21 @@ Khi bàn giao, cập nhật cả tài khoản, key, cấu hình webhook rồi de
 Tài khoản lưu trong hồ sơ chủ sân phục vụ vận hành/đối soát, chưa tự thay QR.
 Hoàn cọc và chuyển tiền cho chủ sân là thao tác thủ công, không tự động.
 
+## Giới hạn SePay trước khi được duyệt OAuth
+
+Demo chỉ nhận đơn cho **một chủ sân**, có thể có nhiều cụm sân. Bảng
+`booking_operator` cố định chủ sân đó bằng SQL; không tự mở nhận đơn cho chủ
+sân khác. Một tài khoản ngân hàng và một webhook vẫn dùng biến môi trường.
+Thông tin QR phải đúng bên nhận cọc thực tế. `NEXT_PUBLIC_SEPAY_BANK` phải
+khớp trường `gateway` SePay gửi (ví dụ `MBBank`, không dùng `MB`).
+
+**Chỉ triển khai nhiều tài khoản sau khi SePay phê duyệt ứng dụng OAuth**,
+cấp `client_id`, `client_secret` và quyền đọc tài khoản, đọc/ghi webhook.
+Trước đó không xây giao diện OAuth, endpoint kết nối hoặc migration nhiều
+tài khoản; không thay bằng cấu hình thủ công nhiều chủ sân. Giới hạn service
+role hiện tại giữ nguyên. Ngoại lệ cho route OAuth chỉ áp dụng khi bắt đầu
+giai đoạn đã được duyệt. Xem [vận hành một chủ sân](docs/sepay-single-owner.md).
+
 ## Hằng số
 
 | Thứ | Giá trị | Ở đâu |

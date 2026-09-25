@@ -57,10 +57,10 @@ export function PaymentPanel(p: {
 
   const paid = status === 'confirmed' || status === 'completed';
   const closed = status === 'cancelled' || status === 'no_show' || left <= 0;
-  const account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT ?? '';
-  const bank = process.env.NEXT_PUBLIC_SEPAY_BANK ?? '';
-  const accountName = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NAME ?? '';
-  const paymentReady = Boolean(bank && accountName && account && !/^0+$/.test(account));
+  const account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim() ?? '';
+  const bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim() ?? '';
+  const accountName = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NAME?.trim() ?? '';
+  const paymentReady = Boolean(bank && accountName && /^\d{6,30}$/.test(account) && !/^0+$/.test(account));
 
   return (
     <div className="checkout min-h-dvh">

@@ -43,6 +43,7 @@ export const BOOKING_STATUS_LABELS: Record<string, string> = {
 
 /** Lỗi từ create_booking, dịch sang câu người dùng đọc được. */
 export const BOOKING_ERRORS: Record<string, string> = {
+  VENUE_NOT_ACCEPTING_BOOKINGS: 'Cụm sân này hiện chưa nhận đặt trực tuyến. Vui lòng liên hệ chủ sân.',
   AUTH_REQUIRED: 'Bạn cần đăng nhập để đặt sân.',
   SLOT_TAKEN: 'Khung giờ này vừa có người đặt. Chọn giờ khác giúp bạn nhé.',
   SLOT_IN_PAST: 'Khung giờ đã qua rồi.',

@@ -12,6 +12,13 @@ if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
 if (missing.length) console.error(`Chưa chạy được app: ${missing.join(', ')}`); else console.log('Đủ cấu hình Supabase cho app.');
 const missingPayment = payment.filter((name) => !present(name));
 if (missingPayment.length) console.log(`Thanh toán chưa sẵn sàng: ${missingPayment.join(', ')}`);
+const account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim();
+if (account && (!/^\d{6,30}$/.test(account) || /^0+$/.test(account))) {
+  console.error('NEXT_PUBLIC_SEPAY_ACCOUNT phải là số tài khoản nhận cọc thật, gồm 6–30 chữ số.');
+  missing.push('NEXT_PUBLIC_SEPAY_ACCOUNT (không hợp lệ)');
+}
+console.log('Demo chỉ nhận đơn cho một chủ sân trong booking_operator; đối chiếu ngân hàng, số tài khoản và tên người nhận trước khi nhận tiền thật.');
+console.log('NEXT_PUBLIC_SEPAY_BANK phải khớp gateway trong payload SePay. OAuth nhiều chủ sân chỉ triển khai sau khi SePay duyệt ứng dụng.');
 const telegram = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOT_USERNAME', 'TELEGRAM_WEBHOOK_SECRET'];
 const missingTelegram = telegram.filter((name) => !present(name));
 if (missingTelegram.length) console.log(`Telegram chưa sẵn sàng: ${missingTelegram.join(', ')}`);

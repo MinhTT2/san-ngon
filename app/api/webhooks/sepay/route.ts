@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { extractRefCode, type SepayPayload } from '@/lib/sepay';
+import { extractRefCode } from '@/lib/sepay';
 import { sendTelegram, ownerBookingMessage } from '@/lib/notify';
 import type { ConfirmPaymentResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const IncomingTransfer = z.object({
+  id: z.union([z.number().int().positive().safe(), z.string().regex(/^[1-9]\d*$/)]),
+  gateway: z.string().trim().min(1),
+  accountNumber: z.string().trim().regex(/^\d{6,30}$/),
+  transferType: z.literal('in'),
+  transferAmount: z.number().int().positive().max(2147483647),
+  content: z.string().nullish(),
+  description: z.string().nullish(),
+  code: z.string().nullish(),
+  subAccount: z.string().nullish(),
+}).passthrough();
 
 /**
  * Cửa duy nhất từ bên ngoài vào hệ thống, và nó luôn mở.
@@ -18,23 +31,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  let body: SepayPayload;
+  let raw: unknown;
   try {
-    body = await req.json();
+    raw = await req.json();
   } catch {
     return NextResponse.json({ success: true, ok: true, skipped: 'bad_json' });
   }
 
-  if (body.transferType !== 'in') {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return NextResponse.json({ success: true, ok: true, skipped: 'invalid_payload' });
+  }
+  if ('transferType' in raw && raw.transferType === 'out') {
     return NextResponse.json({ success: true, ok: true, skipped: 'not_incoming' });
   }
 
-  const amount = Math.round(Number(body.transferAmount ?? 0));
-  const bankTxId = String(body.id ?? body.referenceCode ?? '');
+  const parsed = IncomingTransfer.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ success: true, ok: true, skipped: 'invalid_payload' });
+  }
+  const body = parsed.data;
+  // Only the configured receiver can confirm a deposit in the single-owner demo.
+  const bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim().toLowerCase();
+  const account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim();
+  if (!bank || !account || /^0+$/.test(account)) {
+    return NextResponse.json({ success: true, ok: true, skipped: 'receiver_not_configured' });
+  }
+  if (body.gateway.toLowerCase() !== bank || body.accountNumber !== account) {
+    return NextResponse.json({ success: true, ok: true, skipped: 'wrong_receiver' });
+  }
+
+  const amount = body.transferAmount;
+  const bankTxId = String(body.id);
   const refCode = extractRefCode(body);
 
-  if (!refCode || !bankTxId || amount <= 0) {
-    console.warn('[sepay] không tìm thấy mã đơn', { content: body.content, bankTxId, amount });
+  if (!refCode) {
     return NextResponse.json({ success: true, ok: true, skipped: 'no_ref_code' });
   }
 
