@@ -126,3 +126,11 @@ npx supabase db query --linked --file scripts/check-booking-holds.sql
 SQL rollback kiểm tra hai chủ sân, snapshot người nhận, webhook A không
 xác nhận B, retry cả thiếu cọc, chặn đọc token/sửa kết nối, không quay lại
 luồng cũ khi ngắt OAuth, và cờ nghiệm thu trước mở nhiều chủ sân.
+
+### Khác biệt API đã kiểm chứng ngày 25/09/2026
+
+OAuth thực tế trả ID webhook mới trong `data.id`; parser cũng hỗ trợ `id`
+ở gốc như tài liệu cũ. Khi tạo/cập nhật, gửi
+`retry_conditions: ["non_2xx_status_code"]`; dạng object trong ví dụ tài
+liệu trả HTTP 500 với body rỗng. API đọc lại vẫn trả dạng object.
+Chạy `node scripts/check-sepay-provider.mjs` để kiểm tra parser.

@@ -1,10 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { CreatedWebhook, Webhook, WEBHOOK_RETRY_CONDITIONS } from '@/lib/sepay-provider';
 import { decryptSepaySecret } from '@/lib/sepay-crypto';
 import { BankAccount, ID, newWebhookKey, oauthConfig, requireSepayOwner, sepayErrorResponse, withSepayConnection } from '@/lib/sepay-oauth';
 
-const Webhook = z.object({ id: ID, bank_account_id: ID, webhook_url: z.string(), active: z.union([z.boolean(), z.literal(0), z.literal(1)]),
-  authen_type: z.string(), event_type: z.string(), api_key: z.string().optional(), request_content_type: z.string().optional() });
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,10 +30,10 @@ export async function POST(req: NextRequest) {
       }
       const config = { bank_account_id: Number(bank.id), name: 'Sân Ngon — nhận cọc', event_type: 'In_only', authen_type: 'Api_Key',
         webhook_url: url, is_verify_payment: 1, skip_if_no_code: 0, only_va: 0, active: 1,
-        api_key: key, request_content_type: 'Json', retry_conditions: { non_2xx_status_code: 1 } };
+        api_key: key, request_content_type: 'Json', retry_conditions: WEBHOOK_RETRY_CONDITIONS };
       if (c.webhook_id) await api(`/webhooks/${c.webhook_id}`, 'PATCH', config);
       else {
-        const created = z.object({ id: ID }).parse(await api('/webhooks', 'POST', config));
+        const created = CreatedWebhook.parse(await api('/webhooks', 'POST', config));
         await save({ webhook_id: created.id });
       }
       const verified = z.object({ data: Webhook }).parse(await api(`/webhooks/${c.webhook_id}`)).data;

@@ -9,12 +9,7 @@ import { encryptSepaySecret, decryptSepaySecret, secretHash } from '@/lib/sepay-
 export const SEPAY_SCOPES = ['bank-account:read', 'webhook:read', 'webhook:write'];
 export const STATE_COOKIE = 'sepay_oauth_state';
 const API = 'https://my.sepay.vn/api/v1';
-export const ID = z.union([z.number().int().positive().safe(), z.string().regex(/^[1-9]\d*$/)]).transform(String);
-export const BankAccount = z.object({
-  id: ID, active: z.union([z.boolean(), z.literal(0), z.literal(1)]),
-  account_number: z.string().regex(/^\d{6,30}$/), account_holder_name: z.string().trim().min(1),
-  bank: z.object({ short_name: z.string().trim().min(1) }),
-});
+export { ID, BankAccount } from '@/lib/sepay-provider';
 const Token = z.object({
   access_token: z.string().min(1), refresh_token: z.string().min(1),
   expires_in: z.number().positive(), scope: z.string().optional(),
