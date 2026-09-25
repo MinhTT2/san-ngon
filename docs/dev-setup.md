@@ -173,6 +173,19 @@ Với Google OAuth, Authorized redirect URI ở Google Cloud là
 Callback của app là `/auth/callback`. Tham số `next` chỉ chấp nhận đường dẫn
 nội bộ để không tạo open redirect.
 
+Luồng quên mật khẩu: `/quen-mat-khau` gửi email qua Supabase Auth; giữ
+`{{ .ConfirmationURL }}` trong mẫu **Reset password**. Link quay về
+`/auth/callback?next=/dat-lai-mat-khau` để đổi code PKCE lấy phiên rồi nhập
+mật khẩu mới. Phải mở email bằng chính trình duyệt đã yêu cầu; link hết hạn,
+đã dùng hoặc thiếu phiên sẽ hướng dẫn yêu cầu email mới. Trang đặt mật khẩu
+không cho khách chưa xác thực sửa mật khẩu.
+
+Chạy `node scripts/check-password-reset.mjs` để kiểm tra lỗi mạng, hết phiên,
+giới hạn gửi lại và cập nhật mật khẩu bằng mô phỏng (không gửi thư thật).
+Sau khi có SMTP riêng, dùng tài khoản thử do bạn quản lý để nghiệm thu nhận
+thư, đổi mật khẩu và đăng nhập lại. Khi chưa có SMTP, tính năng vẫn chịu giới
+hạn người nhận của bộ gửi mặc định Supabase.
+
 ## 5. Biến môi trường
 
 | Nhóm | Biến | Bắt buộc khi nào |

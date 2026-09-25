@@ -43,6 +43,8 @@ export default async function Page({
             <LoginForm />
           </Suspense>
 
+          <Link href="/quen-mat-khau" className="text-sm font-semibold text-pitch underline underline-offset-2">Quên mật khẩu?</Link>
+
           <p className="border-t border-hairline pt-5 text-[13px] leading-relaxed text-ink-secondary">
             Chưa có tài khoản?{' '}
             <Link href={signupHref} className="font-semibold text-pitch underline underline-offset-2">

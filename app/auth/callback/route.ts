@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     if (!error) return NextResponse.redirect(`${origin}${next}`);
     console.error('[auth] đổi code lấy phiên hỏng', error.message);
   }
-  return NextResponse.redirect(`${origin}/dang-nhap?loi=1`);
+  return NextResponse.redirect(`${origin}${next === '/dat-lai-mat-khau' ? '/quen-mat-khau' : '/dang-nhap'}?loi=1`);
 }
 
 /**
