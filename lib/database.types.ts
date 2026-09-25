@@ -14,10 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
+      sepay_events: {
+        Row: {
+          amount: number
+          booking_id: string
+          connection_id: string | null
+          created_at: string
+          raw: Json
+          transaction_key: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          connection_id?: string | null
+          created_at?: string
+          raw: Json
+          transaction_key: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          connection_id?: string | null
+          created_at?: string
+          raw?: Json
+          transaction_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sepay_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sepay_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sepay_oauth_states: {
+        Row: {
+          expires_at: string
+          owner_id: string
+          state_hash: string
+        }
+        Insert: {
+          expires_at?: string
+          owner_id: string
+          state_hash: string
+        }
+        Update: {
+          expires_at?: string
+          owner_id?: string
+          state_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sepay_oauth_states_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sepay_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          account_name: string | null
+          account_number: string | null
+          bank: string | null
+          bank_account_id: string | null
+          checked_at: string | null
+          created_at: string
+          id: string
+          last_webhook_at: string | null
+          operation_expires_at: string | null
+          operation_token: string | null
+          owner_id: string
+          refresh_token_encrypted: string | null
+          status: string
+          token_expires_at: string | null
+          webhook_id: string | null
+          webhook_key_encrypted: string | null
+          webhook_key_hash: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          account_name?: string | null
+          account_number?: string | null
+          bank?: string | null
+          bank_account_id?: string | null
+          checked_at?: string | null
+          created_at?: string
+          id?: string
+          last_webhook_at?: string | null
+          operation_expires_at?: string | null
+          operation_token?: string | null
+          owner_id: string
+          refresh_token_encrypted?: string | null
+          status?: string
+          token_expires_at?: string | null
+          webhook_id?: string | null
+          webhook_key_encrypted?: string | null
+          webhook_key_hash?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          account_name?: string | null
+          account_number?: string | null
+          bank?: string | null
+          bank_account_id?: string | null
+          checked_at?: string | null
+          created_at?: string
+          id?: string
+          last_webhook_at?: string | null
+          operation_expires_at?: string | null
+          operation_token?: string | null
+          owner_id?: string
+          refresh_token_encrypted?: string | null
+          status?: string
+          token_expires_at?: string | null
+          webhook_id?: string | null
+          webhook_key_encrypted?: string | null
+          webhook_key_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sepay_connections_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_operator: {
-        Row: { owner_id: string; singleton: boolean }
-        Insert: { owner_id: string; singleton?: boolean }
-        Update: { owner_id?: string; singleton?: boolean }
+        Row: {
+          accepts_new_bookings: boolean
+          account_name: string | null
+          account_number: string | null
+          bank: string | null
+          multi_owner_enabled: boolean
+          owner_id: string
+          singleton: boolean
+        }
+        Insert: {
+          accepts_new_bookings?: boolean
+          account_name?: string | null
+          account_number?: string | null
+          bank?: string | null
+          multi_owner_enabled?: boolean
+          owner_id: string
+          singleton?: boolean
+        }
+        Update: {
+          accepts_new_bookings?: boolean
+          account_name?: string | null
+          account_number?: string | null
+          bank?: string | null
+          multi_owner_enabled?: boolean
+          owner_id?: string
+          singleton?: boolean
+        }
         Relationships: [
           {
             foreignKeyName: "booking_operator_owner_id_fkey"
@@ -42,6 +205,11 @@ export type Database = {
           id: string
           note: string | null
           paid_at: string | null
+          payment_account: string | null
+          payment_account_name: string | null
+          payment_bank: string | null
+          payment_connection_id: string | null
+          payment_owner_id: string | null
           refund_status: Database["public"]["Enums"]["refund_status"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -61,6 +229,11 @@ export type Database = {
           id?: string
           note?: string | null
           paid_at?: string | null
+          payment_account?: string | null
+          payment_account_name?: string | null
+          payment_bank?: string | null
+          payment_connection_id?: string | null
+          payment_owner_id?: string | null
           refund_status?: Database["public"]["Enums"]["refund_status"] | null
           starts_at: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -80,6 +253,11 @@ export type Database = {
           id?: string
           note?: string | null
           paid_at?: string | null
+          payment_account?: string | null
+          payment_account_name?: string | null
+          payment_bank?: string | null
+          payment_connection_id?: string | null
+          payment_owner_id?: string | null
           refund_status?: Database["public"]["Enums"]["refund_status"] | null
           starts_at?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -92,6 +270,20 @@ export type Database = {
             columns: ["court_id"]
             isOneToOne: false
             referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_payment_connection_id_fkey"
+            columns: ["payment_connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_payment_owner_id_fkey"
+            columns: ["payment_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -434,10 +626,49 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      venue_accepts_bookings: {
-        Args: { p_venue_id: string }
-        Returns: boolean
+      initialize_legacy_receiver: {
+        Args: { p_account: string; p_bank: string; p_name: string }
+        Returns: undefined
       }
+      get_my_sepay_connection: { Args: never; Returns: Json }
+      disconnect_sepay_connection: {
+        Args: { p_operation: string; p_owner_id: string }
+        Returns: undefined
+      }
+      claim_sepay_connection: {
+        Args: { p_operation: string; p_owner_id: string }
+        Returns: {
+          access_token_encrypted: string | null
+          account_name: string | null
+          account_number: string | null
+          bank: string | null
+          bank_account_id: string | null
+          checked_at: string | null
+          created_at: string
+          id: string
+          last_webhook_at: string | null
+          operation_expires_at: string | null
+          operation_token: string | null
+          owner_id: string
+          refresh_token_encrypted: string | null
+          status: string
+          token_expires_at: string | null
+          webhook_id: string | null
+          webhook_key_encrypted: string | null
+          webhook_key_hash: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sepay_connections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      activate_sepay_connection: {
+        Args: { p_operation: string; p_owner_id: string }
+        Returns: undefined
+      }
+      venue_accepts_bookings: { Args: { p_venue_id: string }; Returns: boolean }
       get_admin_stats: {
         Args: { p_from: string; p_to: string }
         Returns: Json
@@ -475,15 +706,28 @@ export type Database = {
         }
       }
       complete_past_bookings: { Args: never; Returns: number }
-      confirm_payment: {
-        Args: {
-          p_amount: number
-          p_bank_tx_id: string
-          p_raw: Json
-          p_ref_code: string
-        }
-        Returns: Json
-      }
+      confirm_payment:
+        | {
+            Args: {
+              p_amount: number
+              p_bank_tx_id: string
+              p_raw: Json
+              p_ref_code: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_bank_tx_id: string
+              p_connection_id: string
+              p_raw: Json
+              p_receiver_account: string
+              p_receiver_bank: string
+              p_ref_code: string
+            }
+            Returns: Json
+          }
       confirm_payment_manual: {
         Args: { p_code: string }
         Returns: {

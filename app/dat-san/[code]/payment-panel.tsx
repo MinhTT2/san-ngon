@@ -16,6 +16,7 @@ export function PaymentPanel(p: {
   startsAt: string; endsAt: string; expiresAt: string; initialSeconds: number;
   total: number; deposit: number;
   courtName: string; venueName: string; venueAddress: string;
+  bank: string; account: string; accountName: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [status, setStatus] = useState<BookingStatus>(p.status);
@@ -57,9 +58,7 @@ export function PaymentPanel(p: {
 
   const paid = status === 'confirmed' || status === 'completed';
   const closed = status === 'cancelled' || status === 'no_show' || left <= 0;
-  const account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim() ?? '';
-  const bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim() ?? '';
-  const accountName = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT_NAME?.trim() ?? '';
+  const { account, bank, accountName } = p;
   const paymentReady = Boolean(bank && accountName && /^\d{6,30}$/.test(account) && !/^0+$/.test(account));
 
   return (
@@ -166,7 +165,7 @@ export function PaymentPanel(p: {
                         <span className="checkout-corner absolute -bottom-px -right-px size-7 rounded-br-2xl border-b-[3px] border-r-[3px] border-pitch" aria-hidden="true" />
                         {qrFailed ? <p className="px-3 text-sm leading-6 text-ink-secondary">Không tải được mã QR. Bạn có thể chuyển khoản theo thông tin bên cạnh hoặc bên dưới.</p> : (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={vietQrUrl(p.code, p.deposit)} alt={`Mã QR chuyển khoản cọc cho đơn ${p.code}`} width={240} height={240} className="h-auto w-full" onError={() => setQrFailed(true)} />
+                          <img src={vietQrUrl(p.code, p.deposit, bank, account)} alt={`Mã QR chuyển khoản cọc cho đơn ${p.code}`} width={240} height={240} className="h-auto w-full" onError={() => setQrFailed(true)} />
                         )}
                       </div>
                       <p className="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-pitch"><Smartphone size={15} aria-hidden="true" />Mở app ngân hàng để quét mã</p>

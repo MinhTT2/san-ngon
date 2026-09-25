@@ -1,5 +1,6 @@
 import { SiteHeader } from '@/components/site-header';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
+import { OwnerBookingRefresh } from '@/components/owner-booking-refresh';
 
 /**
  * Khu chủ sân có shell riêng: không dùng footer và nav của trang đặt sân.
@@ -8,6 +9,7 @@ import { DashboardSidebar } from '@/components/dashboard-sidebar';
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-sunk">
+      <OwnerBookingRefresh />
       <SiteHeader variant="dashboard" />
       <div className="flex flex-grow flex-col lg:flex-row">
         <DashboardSidebar role="owner" />

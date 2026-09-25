@@ -110,7 +110,7 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
         </Fieldset>
 
         <Fieldset innerRef={(node) => { stepRefs.current[2] = node; }} hidden={step !== 2} number="03" legend="Tài khoản nhận tiền">
-          <div className="border-l-2 border-strong bg-sunk px-4 py-3 text-sm leading-6 text-ink-secondary">Tiền cọc sẽ được chuyển vào tài khoản này. Đây là thông tin bắt buộc để hồ sơ được duyệt.</div>
+          <div className="border-l-2 border-strong bg-sunk px-4 py-3 text-sm leading-6 text-ink-secondary">Thông tin phục vụ xét duyệt hồ sơ. Sau khi được duyệt, bạn cần kết nối SePay và chọn tài khoản nhận cọc để nhận đơn.</div>
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Ngân hàng" htmlFor="payout_bank_picker" required><BankPicker banks={banks} open={bankOpen} search={bankSearch} selected={selectedBank} value={selectedBankValue} onOpen={() => setBankOpen(true)} onClose={() => setBankOpen(false)} onSearch={setBankSearch} onSelect={(bank) => { setSelectedBankValue(bank.shortName); setBankSearch(''); setBankOpen(false); setError(null); }} /></Field><Field label="Số tài khoản" htmlFor="payout_account" required hint="6–30 chữ số."><input id="payout_account" name="payout_account" required minLength={6} maxLength={30} pattern="[0-9]{6,30}" inputMode="numeric" autoComplete="off" placeholder="0123456789" className={INPUT} /></Field></div>
         </Fieldset>
       </div>

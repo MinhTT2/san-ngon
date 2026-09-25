@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
+import { encryptSepaySecret, decryptSepaySecret, secretHash } from '../lib/sepay-crypto.ts';
+import { vietQrUrl } from '../lib/sepay.ts';
+
+process.env.SEPAY_TOKEN_ENCRYPTION_KEY = randomBytes(32).toString('hex');
+const encrypted = encryptSepaySecret('test-secret', 'owner-a');
+assert.equal(decryptSepaySecret(encrypted, 'owner-a'), 'test-secret');
+assert.notEqual(encrypted, encryptSepaySecret('test-secret', 'owner-a'));
+assert.throws(() => decryptSepaySecret(encrypted, 'owner-b'));
+const damaged = Buffer.from(encrypted, 'base64url');
+damaged[damaged.length - 1] ^= 1;
+assert.throws(() => decryptSepaySecret(damaged.toString('base64url'), 'owner-a'));
+assert.equal(secretHash('same-key'), secretHash('same-key'));
+assert.notEqual(secretHash('same-key'), secretHash('another-key'));
+const qrA = new URL(vietQrUrl('SANABC234', 30000, 'MBBank', '1234567890'));
+const qrB = new URL(vietQrUrl('SANABC235', 60000, 'Vietcombank', '2345678901'));
+assert.equal(qrA.searchParams.get('acc'), '1234567890');
+assert.equal(qrB.searchParams.get('acc'), '2345678901');
+assert.equal(qrB.searchParams.get('bank'), 'Vietcombank');
+assert.equal(qrB.searchParams.get('des'), 'SANABC235');
+assert.equal(qrB.searchParams.get('amount'), '60000');
+console.log('OK: encrypted tokens are authenticated, bound to owner, and QR uses each booking receiver.');

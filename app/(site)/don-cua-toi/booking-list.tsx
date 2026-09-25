@@ -34,7 +34,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
     const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
     const channel = supabase.channel(`my-bookings:${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${userId}` }, refresh)
-      .subscribe();
+      .subscribe(status => { if (status === 'SUBSCRIBED') refresh(); });
     window.addEventListener('focus', refresh);
     window.addEventListener('online', refresh);
     document.addEventListener('visibilitychange', onVisible);

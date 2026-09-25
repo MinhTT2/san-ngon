@@ -1,8 +1,8 @@
-# SePay: vận hành một chủ sân trước khi được duyệt OAuth
+# SePay: demo một chủ sân và chuyển sang OAuth
 
 Hiện chỉ **một chủ sân** được nhận đơn, có thể có nhiều cụm sân. Tiền cọc
-được chuyển vào một tài khoản, nhận giao dịch qua một webhook SePay. Chưa
-cần OAuth để chạy demo ngày 28/09/2026.
+được chuyển vào một tài khoản, nhận giao dịch qua một webhook SePay. SePay đã cấp OAuth trong ticket #6725 ngày 25/09/2026. Demo vẫn chạy luồng
+cũ cho đến khi chủ sân hoàn tất kết nối.
 
 ## Chọn chủ sân vận hành
 
@@ -81,22 +81,48 @@ Nghiệm thu thực tế trên môi trường thử:
    khi đã kiểm tra tiền vào và đơn còn thời gian giữ chỗ.
 
 Chuyển khoản thật do người giữ tài khoản thực hiện. Các script không thay
-thế bước này. Realtime bổ sung cho danh sách đơn/lịch chủ sân thuộc giai
-đoạn sau, không phải điều kiện chạy bản demo một chủ sân hiện tại.
+thế bước này. Danh sách đơn và lịch chủ sân đã có realtime, tải lại khi nối
+mạng hoặc quay lại tab.
 
-## Giai đoạn chờ phê duyệt
+## OAuth đã được duyệt
 
-Chỉ bắt đầu tính năng mỗi chủ sân kết nối riêng khi SePay đã phê duyệt ứng
-dụng, cấp `client_id`, `client_secret`, cùng quyền `bank-account:read`,
-`webhook:read`, `webhook:write`. Theo [tài liệu SePay](https://docs.sepay.vn/oauth2/dang-ky-ung-dung.html),
-cần liên hệ SePay để được hỗ trợ phê duyệt ứng dụng.
+Scopes: `bank-account:read webhook:read webhook:write`.
+Redirect đăng ký: `https://san-ngon.vercel.app/api/sepay/callback`.
+Bốn biến server trong `.env.example` phải có trên production. Không đưa
+client secret/token vào chat, Git hay biến `NEXT_PUBLIC_*`. Khóa mã hóa
+64 ký tự hex phải được sao lưu; đổi khóa sẽ làm token hiện tại không đọc được.
 
-Trước đó không xây UI, endpoint hoặc migration OAuth; không thay bằng
-cấu hình thủ công nhiều chủ sân. Giới hạn service role vẫn chỉ ở webhook.
+Áp dụng migration `20260925000002_sepay_oauth.sql`, rồi gọi RPC quản trị
+`initialize_legacy_receiver(p_bank,p_account,p_name)` với đúng ba biến
+ngân hàng hiện tại. Không đổi tài khoản trong lúc chuyển đổi.
 
-Sau khi được duyệt mới triển khai OAuth, chọn một tài khoản mỗi chủ sân,
-tự tạo webhook, lưu token mã hóa phía server, đóng băng người nhận theo
-đơn, đối soát đúng chủ sân/tài khoản và realtime danh sách đơn/lịch chủ sân.
-Khi đó mới áp dụng ngoại lệ service role riêng cho route SePay phía server,
-kiểm thử hai chủ sân không xác nhận chéo đơn và chuyển chủ sân hiện tại
-sang OAuth trước khi bỏ giới hạn demo. Luồng cũ vẫn xử lý đơn cũ còn liên quan.
+Chủ sân đã được duyệt mở `/chu-san/thanh-toan`, cấp quyền SePay, chọn tài
+khoản đang hoạt động. Hệ thống tạo webhook có khóa riêng, đọc lại xác minh
+trước khi đánh dấu sẵn sàng. Thử lại sẽ tái sử dụng webhook đúng URL/khóa.
+Một chủ sân dùng một tài khoản; hiện chưa hỗ trợ đổi sang ngân hàng khác.
+Token hết hạn được refresh phía server; từ chối quyền hoặc refresh lỗi thì
+chủ sân kết nối lại. Ngắt kết nối bị chặn khi còn đơn chờ cọc còn hạn.
+
+Chủ sân demo tiếp tục hoạt động qua cấu hình cũ đến khi tự kết nối OAuth.
+Các chủ sân khác chưa nhận đơn dù đã kết nối: cờ `multi_owner_enabled`
+mặc định tắt. Sau kiểm thử SQL, OAuth thực tế, QR và chuyển khoản thật đạt,
+quản trị mới chạy:
+
+```sql
+update public.booking_operator set multi_owner_enabled = true where singleton;
+```
+
+Muốn dừng nhận đơn mới từ chủ sân thứ hai, đặt cờ lại false. Không xóa
+kết nối, token hoặc webhook để các đơn đã tạo tiếp tục đối soát. Giữ
+webhook cũ và cấu hình cũ đến khi xử lý xong mọi đơn/giao dịch cũ.
+
+Các kiểm tra tự động bổ sung:
+
+```bash
+node scripts/check-sepay-crypto.mjs
+npx supabase db query --linked --file scripts/check-booking-holds.sql
+```
+
+SQL rollback kiểm tra hai chủ sân, snapshot người nhận, webhook A không
+xác nhận B, retry cả thiếu cọc, chặn đọc token/sửa kết nối, không quay lại
+luồng cũ khi ngắt OAuth, và cờ nghiệm thu trước mở nhiều chủ sân.

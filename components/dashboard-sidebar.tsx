@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Users,
+  WalletCards,
 } from 'lucide-react';
 
 type DashboardRole = 'owner' | 'admin';
@@ -16,6 +17,7 @@ const OWNER_LINKS = [
   { href: '/chu-san', label: 'Tổng quan', icon: LayoutDashboard },
   { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
+  { href: '/chu-san/thanh-toan', label: 'Tài khoản nhận cọc', icon: WalletCards },
 ] as const;
 
 const ADMIN_LINKS = [

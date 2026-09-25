@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useBookingUpdates } from '@/lib/use-booking-updates';
 import { OWNER_INPUT, OWNER_PRIMARY, OWNER_SECONDARY } from '@/components/owner-form-field';
 import { Modal } from '@/components/modal';
 import { hhmm, ymd } from '@/lib/format';
@@ -20,13 +21,15 @@ export function CourtCalendar({ courtId }: { courtId: string }) {
   const [end, setEnd] = useState('');
   const [closeOpen, setCloseOpen] = useState(false);
 
-  async function load(nextDate = date) {
+  const load = useCallback(async (nextDate = date) => {
     const response = await fetch(`/api/courts/${courtId}/schedule?date=${nextDate}`);
     const result = await response.json();
     if (!response.ok) { setError(result.error ?? 'Không tải được lịch.'); return; }
     setSchedule(result.schedule); setError('');
-  }
-  useEffect(() => { load(); }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [courtId, date]);
+  const refresh = useCallback(() => { void load(); }, [load]);
+  useEffect(refresh, [refresh]);
+  useBookingUpdates(refresh, courtId);
   const days = useMemo(() => schedule?.days ?? [], [schedule]);
   async function close() {
     setBusy(true); setError('');

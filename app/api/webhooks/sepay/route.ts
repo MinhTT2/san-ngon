@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { extractRefCode } from '@/lib/sepay';
+import { secretHash } from '@/lib/sepay-crypto';
 import { sendTelegram, ownerBookingMessage } from '@/lib/notify';
 import type { ConfirmPaymentResult } from '@/lib/types';
 
@@ -26,8 +27,20 @@ const IncomingTransfer = z.object({
  */
 export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization') ?? '';
-  const expected = `Apikey ${process.env.SEPAY_WEBHOOK_API_KEY}`;
-  if (!process.env.SEPAY_WEBHOOK_API_KEY || auth !== expected) {
+  const connectionId = req.nextUrl.searchParams.get('connection');
+  const supabase = createAdminClient();
+  let bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim().toLowerCase();
+  let account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim();
+  if (connectionId !== null) {
+    if (!z.string().uuid().safeParse(connectionId).success || !auth.startsWith('Apikey ') || auth.length > 256) {
+      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+    }
+    const { data, error } = await supabase.from('sepay_connections').select('bank, account_number')
+      .eq('id', connectionId).eq('webhook_key_hash', secretHash(auth.slice(7))).maybeSingle();
+    if (error) return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
+    if (!data) return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+    bank = data.bank?.trim().toLowerCase(); account = data.account_number;
+  } else if (!process.env.SEPAY_WEBHOOK_API_KEY || auth !== `Apikey ${process.env.SEPAY_WEBHOOK_API_KEY}`) {
     return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
@@ -50,9 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, ok: true, skipped: 'invalid_payload' });
   }
   const body = parsed.data;
-  // Only the configured receiver can confirm a deposit in the single-owner demo.
-  const bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim().toLowerCase();
-  const account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim();
+  // Identify the receiver using the authenticated connection, never the booking code.
   if (!bank || !account || /^0+$/.test(account)) {
     return NextResponse.json({ success: true, ok: true, skipped: 'receiver_not_configured' });
   }
@@ -68,12 +79,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, ok: true, skipped: 'no_ref_code' });
   }
 
-  const supabase = createAdminClient();
+  if (connectionId) {
+    const { error } = await supabase.from('sepay_connections').update({ last_webhook_at: new Date().toISOString() }).eq('id', connectionId);
+    if (error) return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
+  }
   const { data, error } = await supabase.rpc('confirm_payment', {
     p_ref_code: refCode,
     p_amount: amount,
     p_bank_tx_id: bankTxId,
     p_raw: body,
+    p_connection_id: connectionId,
+    p_receiver_bank: body.gateway,
+    p_receiver_account: body.accountNumber,
   });
 
   if (error) {

@@ -1,8 +1,8 @@
 /** Ảnh QR VietQR do SePay sinh sẵn. Không cần thư viện QR nào. */
-export function vietQrUrl(refCode: string, amount: number) {
+export function vietQrUrl(refCode: string, amount: number, bank: string, account: string) {
   const params = new URLSearchParams({
-    acc: process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim() ?? '',
-    bank: process.env.NEXT_PUBLIC_SEPAY_BANK?.trim() ?? '',
+    acc: account,
+    bank,
     amount: String(amount),
     des: refCode,
     template: 'compact',

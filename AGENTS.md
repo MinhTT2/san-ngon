@@ -22,7 +22,7 @@ Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể h�
 
 4. **Mọi quy đổi múi giờ nằm trong SQL** bằng `at time zone 'Asia/Ho_Chi_Minh'`. Database lưu `timestamptz` UTC. Frontend chỉ format, tuyệt đối không cộng trừ giờ bằng JavaScript.
 
-5. **Client dùng `SUPABASE_SERVICE_ROLE_KEY` chỉ được gọi từ `app/api/webhooks/sepay/route.ts`.** Khởi tạo trong `lib/supabase/admin.ts`; nó bỏ qua toàn bộ RLS. Trang admin dùng phiên người dùng và RPC kiểm tra quyền, không dùng service role.
+5. **Client dùng `SUPABASE_SERVICE_ROLE_KEY` chỉ được gọi từ `app/api/webhooks/sepay/route.ts` và các route `app/api/sepay/*`.** Khởi tạo trong `lib/supabase/admin.ts`; nó bỏ qua toàn bộ RLS. Trang admin dùng phiên người dùng và RPC kiểm tra quyền, không dùng service role.
 
 6. **Người đặt không được `update` thẳng bảng `bookings`.** Policy chỉ cho chủ
    sân sửa, và có cả `with check`. Thiếu `with check` thì từ trình duyệt khách
@@ -172,27 +172,31 @@ Idempotent theo `payments.bank_tx_id` unique; phải chịu được webhook g�
 
 Webhook luôn trả 200 khi bỏ qua giao dịch. Chỉ 401 khi sai API key, 500 khi database lỗi.
 
-**Tài khoản nhận cọc là của dự án/người sáng lập.** Checkout dùng
-`NEXT_PUBLIC_SEPAY_BANK`, `NEXT_PUBLIC_SEPAY_ACCOUNT` và
-`NEXT_PUBLIC_SEPAY_ACCOUNT_NAME`; webhook dùng `SEPAY_WEBHOOK_API_KEY`.
-Khi bàn giao, cập nhật cả tài khoản, key, cấu hình webhook rồi deploy lại.
-Tài khoản lưu trong hồ sơ chủ sân phục vụ vận hành/đối soát, chưa tự thay QR.
-Hoàn cọc và chuyển tiền cho chủ sân là thao tác thủ công, không tự động.
+**SePay đã cấp OAuth trong ticket #6725 ngày 25/09/2026.** Chủ sân được
+phê duyệt vào `/chu-san/thanh-toan`: cấp quyền → chọn tài khoản → hệ thống
+tạo và kiểm tra webhook. Scopes: `bank-account:read webhook:read webhook:write`.
+Callback: `/api/sepay/callback`. Token và khóa webhook được mã hóa AES-256-GCM
+trong bảng riêng, không có quyền đọc từ trình duyệt. Khóa mã hóa phải được
+sao lưu và giữ ổn định giữa các lần deploy.
 
-## Giới hạn SePay trước khi được duyệt OAuth
+Một chủ sân dùng một tài khoản cho tất cả cụm sân. SQL đóng băng kết nối,
+ngân hàng, số tài khoản và tên người nhận vào từng đơn; checkout tạo QR từ
+snapshot đó. Không đổi người nhận trên đơn cũ. `sepay_events` giữ mã giao
+dịch unique theo kết nối, kể cả giao dịch thiếu cọc. Webhook cũ tiếp tục
+xử lý đơn cũ qua các biến `SEPAY_WEBHOOK_API_KEY` và `NEXT_PUBLIC_SEPAY_*`.
 
-Demo chỉ nhận đơn cho **một chủ sân**, có thể có nhiều cụm sân. Bảng
-`booking_operator` cố định chủ sân đó bằng SQL; không tự mở nhận đơn cho chủ
-sân khác. Một tài khoản ngân hàng và một webhook vẫn dùng biến môi trường.
-Thông tin QR phải đúng bên nhận cọc thực tế. `NEXT_PUBLIC_SEPAY_BANK` phải
-khớp trường `gateway` SePay gửi (ví dụ `MBBank`, không dùng `MB`).
+`booking_operator` giữ chủ sân demo. Sau khi áp dụng migration OAuth, gọi
+`initialize_legacy_receiver` bằng quyền quản trị với tài khoản đang cấu hình.
+Chủ sân này tiếp tục luồng cũ cho đến khi chủ sân hoàn tất kết nối OAuth;
+khi đó SQL tắt nhận đơn mới qua tài khoản cũ, không tự quay lại khi ngắt OAuth.
 
-**Chỉ triển khai nhiều tài khoản sau khi SePay phê duyệt ứng dụng OAuth**,
-cấp `client_id`, `client_secret` và quyền đọc tài khoản, đọc/ghi webhook.
-Trước đó không xây giao diện OAuth, endpoint kết nối hoặc migration nhiều
-tài khoản; không thay bằng cấu hình thủ công nhiều chủ sân. Giới hạn service
-role hiện tại giữ nguyên. Ngoại lệ cho route OAuth chỉ áp dụng khi bắt đầu
-giai đoạn đã được duyệt. Xem [vận hành một chủ sân](docs/sepay-single-owner.md).
+**Chưa mở nhiều chủ sân trước khi nghiệm thu chuyển khoản thật.** Cờ riêng
+`booking_operator.multi_owner_enabled` mặc định false, chỉ quản trị SQL được
+bật sau nghiệm thu. Chủ sân khác có thể thiết lập OAuth nhưng chưa nhận đơn.
+Không dùng cấu hình thủ công nhiều tài khoản. Xem [vận hành SePay](docs/sepay-single-owner.md).
+
+Checkout, danh sách đơn người chơi, danh sách và lịch chủ sân dùng realtime;
+tự đồng bộ khi kết nối lại hoặc quay về tab. Hoàn tiền vẫn thực hiện thủ công.
 
 ## Hằng số
 
