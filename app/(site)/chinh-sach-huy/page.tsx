@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 export default function Page() {
   const rules: [string, string][] = [
     [
-      `Hủy trước giờ đá từ ${CANCEL_WINDOW_HOURS} tiếng trở lên`,
-      'Cọc được đánh dấu cần hoàn. Chủ sân chuyển lại vào tài khoản bạn đã chuyển đi.',
+      `Hủy trước giờ chơi từ ${CANCEL_WINDOW_HOURS} tiếng trở lên`,
+      'Đơn được đánh dấu cần hoàn cọc. Liên hệ chủ sân kèm mã đơn để đối soát và xác nhận thông tin nhận lại tiền. Việc hoàn tiền được xử lý thủ công.',
     ],
     [
       `Hủy muộn hơn ${CANCEL_WINDOW_HOURS} tiếng`,
@@ -28,8 +28,8 @@ export default function Page() {
       `Không mất gì. Đơn tự hủy sau ${HOLD_MINUTES} phút và khung giờ mở lại cho người khác.`,
     ],
     [
-      'Trời mưa, sân không đá được',
-      'Gọi chủ sân theo số trên trang sân. Thường sẽ đổi sang khung khác và cọc chuyển thẳng sang giờ mới. Không đổi được thì hoàn cọc.',
+      'Trời mưa, sân không chơi được',
+      'Liên hệ chủ sân theo số trên trang sân để thống nhất cách xử lý. Website không tự đổi giờ hoặc chuyển cọc sang đơn mới. Nếu chủ sân hủy đơn đã nhận cọc, đơn được đánh dấu cần hoàn.',
     ],
     [
       'Chủ sân hủy đơn của bạn',
@@ -47,8 +47,9 @@ export default function Page() {
         Chính sách hủy
       </h1>
       <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
-        Sân Ngon không giữ tiền của ai. Cọc chuyển thẳng từ bạn sang tài khoản chủ sân, nên việc
-        hoàn cọc cũng do chủ sân thực hiện.
+        Chuyển cọc theo đúng tài khoản, số tiền và nội dung trên trang thanh toán của đơn.
+        Khi đủ điều kiện hoàn cọc, đơn được đánh dấu cần hoàn để đối soát; tiền không tự động
+        chuyển về tài khoản. Bạn có thể theo dõi trong Đơn của tôi và liên hệ chủ sân kèm mã đơn.
       </p>
 
       <dl className="mt-9 flex flex-col">

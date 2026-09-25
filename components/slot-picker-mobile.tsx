@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { SlotCell } from './slot-cell';
 import { useAvailability } from '@/lib/use-availability';
-import { hhmm, vnd } from '@/lib/format';
+import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { MAX_SLOTS } from '@/lib/constants';
 import type { Selection } from '@/lib/types';
 
@@ -94,6 +94,7 @@ export function SlotPickerMobile({
         <div className="pf-settle sticky bottom-3 z-20 -mx-1 rounded-card border border-pitch bg-pitch px-4 pb-4 pt-4 text-pitch-ink">
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-pitch-ink/75">{dayLabel(new Date(a.selection.startsAt))}</span>
               <span className="text-sm font-semibold">
                 {a.selection.courtName} · {hhmm(a.selection.startsAt)}–{hhmm(a.selection.endsAt)}
               </span>

@@ -275,9 +275,9 @@ email kết quả duyệt hồ sơ chủ sân đã có. Cập nhật mục này 
 ## Việc cần chốt trước demo
 
 - Chốt mốc hủy được hoàn cọc với chủ sân; hiện cả SQL và giao diện dùng 2 giờ.
-- Đồng bộ nội dung `/chinh-sach-huy` với checkout: trang này còn nói cọc
-  chuyển thẳng cho chủ sân, trong khi QR dùng tài khoản của dự án. Chốt người
-  thực hiện hoàn/chuyển tiền và cách đối soát trước khi nhận tiền thật.
+- `/chinh-sach-huy` đã hướng dẫn chuyển theo tài khoản hiển thị trên từng
+  đơn và nói rõ hoàn tiền thủ công. Vẫn cần chốt người thực hiện hoàn/chuyển
+  tiền và cách đối soát trước khi nhận tiền thật.
 - Kiểm tra luồng xác minh → tạo cụm nháp → lưu ảnh → tìm sân → đặt/cọc → hủy
   và hoàn theo [hướng dẫn demo](docs/dev-setup.md#8-chạy-và-kiểm-tra).
 - Hoàn tất và kiểm tra các task bảng giá/tài khoản/email đang làm trước khi

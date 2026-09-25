@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { hhmm, hourOf, vndShort, dayLabel } from '@/lib/format';
+import { hhmm, hourOf, vndShort, dayLabel, ymd } from '@/lib/format';
 import { PEAK_FROM_HOUR, PEAK_TO_HOUR } from '@/lib/constants';
 import type { Slot } from '@/lib/types';
 
@@ -31,7 +31,7 @@ export function HeroGrid({
 
   return (
     <Link
-      href={`/san/${venueSlug}`}
+      href={`/san/${venueSlug}?ngay=${ymd(date)}`}
       aria-label={`Xem lịch đầy đủ của ${venueName}`}
       className="flex flex-col gap-2.5 rounded-card bg-card p-4 lg:p-5"
     >
@@ -103,8 +103,8 @@ export function HeroGridPlaceholder() {
   return (
     <div className="flex flex-col gap-2.5 rounded-card bg-card p-4 lg:p-5">
       <div className="flex items-baseline justify-between">
-        <span className="text-sm font-semibold">Sân Mỹ Đình · thứ năm 18/09</span>
-        <span className="hidden text-xs text-ink-secondary sm:inline">lịch mẫu</span>
+        <span className="text-sm font-semibold">Cách đọc lịch sân</span>
+        <span className="text-xs text-ink-secondary">Minh họa</span>
       </div>
 
       <Row cols={hours.length}>

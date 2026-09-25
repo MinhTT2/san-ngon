@@ -116,22 +116,24 @@ async function loadHeroSlots(
 
 function Hero({ grid }: { grid: React.ReactNode }) {
   return (
-    <section className="bg-pitch">
-      <h1 className="sr-only">Sân Ngon — Đặt sân thể thao ở Hà Nội</h1>
-      <HeroCarousel />
-      <div className="border-t border-hairline bg-free-fill">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16">
-          <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold text-ink">Chọn sân cho cuộc vui sắp tới</h2>
+    <section>
+      <div className="border-b border-hairline bg-free-fill">
+        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-12">
+          <div className="flex min-w-0 flex-col gap-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Đặt sân thể thao ở Hà Nội</p>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-pitch sm:text-5xl">Tìm sân trống.<br />Chọn giờ, ra sân.</h1>
+            <p className="text-sm leading-6 text-ink-secondary">Xem lịch và giá trước khi đặt. Cọc qua QR, phần còn lại trả tại sân.</p>
             <SearchBar />
             <p className="text-xs leading-5 text-ink-secondary">Tìm sân miễn phí · Chỉ cần đăng nhập khi đặt</p>
           </div>
           <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold text-ink">Xem giờ sân còn trống</h2>
+            <h2 className="text-sm font-semibold text-ink">Xem nhanh lịch sân</h2>
             {grid}
+            <Link href="/tim-san" className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-pitch underline underline-offset-4">Xem tất cả sân <span aria-hidden="true">→</span></Link>
           </div>
         </div>
       </div>
+      <HeroCarousel />
     </section>
   );
 }
@@ -145,7 +147,7 @@ function SearchBar() {
   return (
     <form action="/tim-san" className="grid grid-cols-1 gap-2.5 rounded-card bg-card p-4 sm:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-1.5">
-        <label htmlFor="sport" className="text-xs font-semibold text-ink-secondary">Môn</label>
+        <label htmlFor="sport" className="text-xs font-semibold text-ink-secondary">Môn thể thao</label>
         <select id="sport" name="sport" defaultValue="" className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]">
           {/* Rỗng = mọi môn. Bỏ mục này thì ai bấm luôn cũng bị lọc về bóng đá 5. */}
           <option value="">Tất cả các môn</option>
@@ -155,11 +157,11 @@ function SearchBar() {
         </select>
       </div>
       <div className="flex min-w-0 flex-col gap-1.5">
-        <label htmlFor="q" className="text-xs font-semibold text-ink-secondary">Khu vực</label>
-        <input id="q" name="q" placeholder="Nam Từ Liêm" className="h-12 rounded-[9px] border border-hairline bg-page px-3 text-[15px]" />
+        <label htmlFor="q" className="text-xs font-semibold text-ink-secondary">Tên sân hoặc khu vực</label>
+        <input id="q" name="q" placeholder="VD: Cầu Giấy" className="h-12 rounded-[9px] border border-hairline bg-page px-3 text-[15px]" />
       </div>
       <div className="flex min-w-0 flex-col gap-1.5">
-        <label htmlFor="ngay" className="text-xs font-semibold text-ink-secondary">Ngày</label>
+        <label htmlFor="ngay" className="text-xs font-semibold text-ink-secondary">Ngày chơi</label>
         <input id="ngay" name="ngay" type="date" min={today} defaultValue={today}
           className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]" />
       </div>
@@ -315,7 +317,7 @@ function ForOwners() {
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn chăm sân.<br />Khách tự chốt kèo.</h2>
           <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn biết ngay khi có khách, nắm lịch và khoản cần thu thật gọn.</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link href="/dang-ky-san" className="pf-action inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng sân của bạn <span aria-hidden="true" className="pf-arrow">↗</span></Link>
+            <Link href="/dang-ky-san" className="pf-action inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng ký làm chủ sân <span aria-hidden="true" className="pf-arrow">↗</span></Link>
             <Link href="/chu-san" className="pf-action inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Mở trang dành cho chủ sân</Link>
           </div>
         </div>

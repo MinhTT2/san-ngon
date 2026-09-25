@@ -38,29 +38,24 @@ export default async function Page({
     : { data: null };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6">
-      <VenueGallery images={venue.images ?? []} name={venue.name} />
+    <main className="mx-auto max-w-7xl px-5 py-6 lg:px-16">
+      <Link href={ngay ? `/tim-san?ngay=${encodeURIComponent(ngay)}` : '/tim-san'} className="mb-4 inline-flex min-h-11 items-center text-sm font-semibold text-pitch">← Tìm sân khác</Link>
       <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="font-display text-2xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
       <p className="mt-1 flex flex-wrap gap-x-2 text-sm text-ink-secondary">
         <span>{venue.address} · {venue.district}</span>
         <span>· {sports.join(', ')}</span>
         <span>· Mở {venue.open_time.slice(0, 5)}–{venue.close_time.slice(0, 5)}</span>
-        {venue.phone && (
-          <a href={`tel:${venue.phone}`} className="font-semibold text-pitch underline underline-offset-2">
-            · Gọi chủ sân {venue.phone}
-          </a>
-        )}
-      </p></div><span className="rounded-pill bg-sunk px-3 py-1 text-sm text-ink-secondary">{courts?.length ?? 0} sân đang mở</span></div>
+      </p></div>{acceptsBookings && <a href="#lich-san" className="inline-flex min-h-12 items-center justify-center rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">Chọn giờ đặt sân ↓</a>}</div>
+
+      <div className="mt-5"><VenueGallery images={venue.images ?? []} name={venue.name} /></div>
 
       {venue.description && <p className="mt-4 max-w-3xl text-[15px] leading-7 text-ink-secondary">{venue.description}</p>}
       {venue.amenities?.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{venue.amenities.map((item: string) => <span key={item} className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">{item}</span>)}</div>}
 
-      <section className="mt-5 flex flex-col gap-3 rounded-card border border-hairline bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+      <section className="mt-5 flex flex-col gap-3 border-y border-hairline py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold text-pitch">Thông tin liên hệ chủ sân</h2>
-          <address className="not-italic text-sm leading-relaxed text-ink-secondary">
-            {venue.address} · {venue.district}, Hà Nội
-          </address>
+          <h2 className="text-sm font-semibold text-pitch">{courts?.length ?? 0} sân · Cọc trước {venue.deposit_pct}%</h2>
+          <p className="text-sm leading-relaxed text-ink-secondary">Chọn giờ trên lịch để xem tổng tiền và số tiền cần cọc.</p>
           {!venue.phone && (
             <p className="text-xs text-ink-secondary">
               Chủ sân chưa công khai số điện thoại. <Link href="/lien-he" className="font-semibold text-pitch underline">Liên hệ Sân Ngon</Link> để được hỗ trợ.
@@ -68,13 +63,13 @@ export default async function Page({
           )}
         </div>
         {venue.phone && (
-          <a href={`tel:${venue.phone}`} className="inline-flex h-11 items-center justify-center rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">
-            Gọi chủ sân · {venue.phone}
+          <a href={`tel:${venue.phone}`} className="inline-flex min-h-11 items-center justify-center rounded-control border border-hairline px-4 text-sm font-semibold text-pitch">
+            Hỏi chủ sân · {venue.phone}
           </a>
         )}
       </section>
 
-      <div className="mt-6">
+      <div id="lich-san" className="mt-6 scroll-mt-5">
         {acceptsBookings ? <VenueSchedule
           initialDate={ngay}
           venueId={venue.id}

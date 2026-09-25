@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { hhmm, vnd } from '@/lib/format';
+import { dayLabel, hhmm, vnd } from '@/lib/format';
+import { CANCEL_WINDOW_HOURS } from '@/lib/constants';
 import type { Selection } from '@/lib/types';
 
 /**
@@ -74,20 +76,22 @@ export function BookingForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4 rounded-card border border-strong bg-card p-5">
+      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Bước 2 · Thông tin đặt sân</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Kiểm tra trước khi giữ chỗ</h2></div>
       <div className="flex flex-col gap-3 border-b border-hairline pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <span className="font-display text-lg font-extrabold text-pitch">{selection.courtName}</span>
+            <span className="text-sm font-semibold text-pitch">{dayLabel(new Date(selection.startsAt))}</span>
             <span className="text-sm text-ink-secondary">
               {hhmm(selection.startsAt)} – {hhmm(selection.endsAt)} · {selection.slots.length} khung
             </span>
           </div>
-          <span className="rounded-pill bg-free-fill px-2.5 py-1 text-xs font-semibold text-free-ink">Giữ 15 phút</span>
+          <span className="shrink-0 rounded-pill bg-sunk px-2.5 py-1 text-xs text-ink-secondary">Chưa giữ chỗ</span>
         </div>
         <p className="text-sm leading-relaxed text-ink-secondary">
           {isAuthenticated
             ? 'Bấm giữ chỗ sẽ tạo một mã đơn mới và giữ khung giờ 15 phút để bạn chuyển cọc. Chưa nhận cọc khi hết hạn, sân tự mở lại.'
-            : 'Nhập thông tin để chủ sân biết ai đặt. Bạn chỉ cần xác thực email một lần bằng mã OTP.'}
+            : 'Nhập thông tin liên hệ, sau đó đăng nhập để tiếp tục đặt sân. Khung giờ chưa được giữ ở bước này.'}
         </p>
       </div>
 
@@ -101,7 +105,7 @@ export function BookingForm({
       <div className="flex flex-col gap-1.5">
         <label htmlFor="sdt" className="text-sm font-semibold">Số điện thoại</label>
         <input id="sdt" type="tel" required inputMode="numeric" pattern="0\d{9}"
-          autoComplete="tel" placeholder="0912 345 678"
+          autoComplete="tel" placeholder="0912345678"
           value={phone} onChange={(e) => setPhone(e.target.value)}
           className="h-12 rounded-control border border-hairline px-3.5 focus:border-pitch focus:outline-none" />
         <span className="text-xs text-ink-secondary">Chủ sân gọi số này nếu có thay đổi.</span>
@@ -120,7 +124,7 @@ export function BookingForm({
         <div className="flex gap-3 rounded-control border border-strong bg-free-fill p-3.5 text-sm text-free-ink">
           <span aria-hidden="true" className="mt-0.5 text-base">✦</span>
           <p className="leading-relaxed">
-            Chưa có tài khoản? Bước tiếp theo bạn sẽ tạo mật khẩu và nhập mã OTP gửi qua email.
+            Bước tiếp theo: đăng nhập bằng Google hoặc email. Thông tin vừa nhập được giữ lại để bạn tiếp tục đặt sân.
           </p>
         </div>
       )}
@@ -132,7 +136,9 @@ export function BookingForm({
         <Row label="Trả tại sân" value={vnd(selection.total - deposit)} />
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      <p className="text-xs leading-5 text-ink-secondary">Theo chính sách hiện tại, hủy trước giờ chơi ít nhất {CANCEL_WINDOW_HOURS} tiếng được hoàn cọc; hoàn tiền được xử lý thủ công. <Link href="/chinh-sach-huy" target="_blank" rel="noopener noreferrer" className="font-semibold text-pitch underline underline-offset-2">Xem chính sách (mở tab mới)</Link>.</p>
+
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
       <div className="flex gap-3">
         <button type="button" onClick={() => {
@@ -144,11 +150,11 @@ export function BookingForm({
         </button>
         <button type="submit" disabled={busy}
           className="h-13 flex-[2] rounded-control bg-pitch font-semibold text-pitch-ink disabled:opacity-60">
-          {busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? `Giữ chỗ · Cọc ${vnd(deposit)}` : 'Tiếp tục xác thực'}
+          {busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? `Giữ chỗ · Cọc ${vnd(deposit)}` : 'Đăng nhập để tiếp tục'}
         </button>
       </div>
 
-      <p className="text-center text-xs text-ink-secondary">Sân được giữ 15 phút để bạn chuyển khoản.</p>
+      <p className="text-center text-xs leading-5 text-ink-secondary">Sau khi tạo đơn, bạn có 15 phút để chuyển cọc. Lịch đặt chỉ được xác nhận khi đã nhận đủ cọc.</p>
     </form>
   );
 }

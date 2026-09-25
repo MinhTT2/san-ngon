@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { SlotCell } from './slot-cell';
 import { useAvailability } from '@/lib/use-availability';
-import { hhmm, vnd } from '@/lib/format';
+import { dayLabel, hhmm, vnd } from '@/lib/format';
 import type { Selection } from '@/lib/types';
 
 /**
@@ -83,10 +83,11 @@ export function SlotPickerDesktop({
         <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch-ink/65">Tóm tắt đặt sân</p><h2 className="mt-2 font-display text-xl font-bold">{a.selection ? 'Sẵn sàng chốt kèo?' : 'Chọn giờ bạn muốn chơi'}</h2></div>{a.selection && <span aria-hidden="true" className="pf-check-pop grid size-8 place-items-center rounded-full bg-white/15 text-sm">✓</span>}</div>
         {!a.selection ? (
           <p className="mt-6 text-[13px] leading-relaxed text-pitch-ink/75">
-            Bấm vào ô màu xanh trên lịch. Bạn có thể chọn tối đa 3 khung liền nhau trên cùng một sân.
+            Bấm vào ô còn trống có hiển thị giá. Bạn có thể chọn tối đa 3 khung liền nhau trên cùng một sân.
           </p>
         ) : (
           <div className="pf-settle mt-6 flex flex-col gap-4">
+            <p className="text-sm font-semibold">{dayLabel(new Date(a.selection.startsAt))}</p>
             <div className="rounded-control bg-white/10 p-3"><Row label="Sân" value={a.selection.courtName} /><div className="mt-2"><Row label="Thời gian" value={`${hhmm(a.selection.startsAt)} – ${hhmm(a.selection.endsAt)}`} /></div></div>
             <div className="flex items-baseline justify-between border-b border-white/20 pb-4">
               <span className="text-sm text-pitch-ink/75">Tổng tiền sân</span>
