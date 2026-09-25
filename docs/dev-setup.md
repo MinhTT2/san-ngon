@@ -1,23 +1,23 @@
 # Thiết lập và vận hành bản demo
 
 Tài liệu này dành cho người dựng một môi trường Sân Ngon mới. Dự án dùng
-Supabase từ xa; không cần Docker để phát triển. Docker chỉ là lựa chọn khi muốn
-chạy bản Next.js production cục bộ.
+Supabase từ xa; luồng chính không cần Docker. Tài liệu này mô tả cách dựng
+môi trường theo migrations và luồng sản phẩm hiện tại, không xác nhận cấu
+hình nào đã được áp dụng trên production.
 
 ## 1. Chuẩn bị
 
 - Node.js 24.x
-- Một project Supabase
+- Một project Supabase, ưu tiên region Singapore
 - Supabase CLI 2.x (`npm run db:*` dùng CLI trong devDependencies)
 - Vercel CLI nếu cần kéo biến môi trường production
-- Docker Desktop chỉ khi chạy `docker compose`
 
 Clone repo và cài dependency:
 
 ```bash
-git clone <repository-url>
+git clone git@github.com:MinhTT2/san-ngon.git
 cd san-ngon
-npm install
+npm ci
 cp .env.example .env.local
 ```
 
@@ -34,41 +34,99 @@ Kiểm tra cấu hình:
 npm run setup:check
 ```
 
-Lệnh này bắt buộc Supabase URL/key, đồng thời chỉ báo các nhóm thanh toán và
-Telegram còn thiếu; thiếu các nhóm tuỳ chọn không chặn `npm run dev`.
+Lệnh này bắt buộc Supabase URL/key, đồng thời báo các nhóm thanh toán,
+Telegram và email còn thiếu; thiếu các nhóm tuỳ chọn không chặn `npm run dev`.
 
 ## 2. Áp dụng database
 
-Link CLI với project Supabase rồi xem trước migration:
+Bật `pg_cron` trong **Supabase → Database → Extensions** trước khi áp dụng
+migration giữ chỗ ngày 25/09. Link CLI với đúng project rồi xem trước migration:
 
 ```bash
 npm run db:login       # chỉ cần chạy một lần
 npm run db:link        # nhập project ref khi được hỏi
+npm run db:status
 npm run db:dry
 npm run db:push
 npm run db:types
 ```
 
-Migration tạo schema, RLS, storage bucket `venue-documents`, functions nghiệp vụ
-và quyền admin. Khi database đã có dữ liệu, chỉ chạy các migration mới bằng
-`npm run db:push`; không chạy lại bộ SQL thủ công theo số thứ tự.
+Migrations tạo schema, RLS, functions nghiệp vụ, quyền admin và hai bucket:
+`venue-documents` riêng tư cho giấy tờ, `venue-photos` công khai cho ảnh sân.
+Kiểm tra danh sách migration trước khi push; không áp dụng file thuộc task
+local chưa hoàn tất vào môi trường dùng chung. `db:types` sinh lại
+`lib/database.types.ts`, cần xem diff trước khi commit.
 
-Sau đó bật `pg_cron` trong **Supabase → Database → Extensions**, rồi chạy
-`supabase/05_cron.sql` trong SQL Editor. Script này đăng ký:
+Migration `20260925000000_booking_holds.sql` đăng ký dọn đơn hết hạn **mỗi
+phút**. Không chạy lại nguyên file `supabase/05_cron.sql` sau đó: file cũ sẽ
+đổi lịch này về mỗi hai phút. Để bổ sung job hoàn tất đơn và realtime trên
+môi trường mới, chạy phần sau trong SQL Editor:
 
-- tự hết hạn đơn chờ thanh toán mỗi 2 phút;
-- tự chuyển đơn đã qua giờ sang `completed` mỗi giờ;
-- realtime cho `bookings` và `notifications`.
+```sql
+select cron.schedule(
+  'complete-past-bookings', '15 * * * *',
+  'select public.complete_past_bookings()'
+);
+
+do $$
+declare t text;
+begin
+  foreach t in array array['bookings', 'notifications'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
+
+select jobname, schedule, active from cron.job
+where jobname in ('expire-pending-bookings', 'complete-past-bookings');
+
+select tablename from pg_publication_tables
+where pubname = 'supabase_realtime' and schemaname = 'public';
+```
+
+Kết quả cần có `expire-pending-bookings` chạy `* * * * *`,
+`complete-past-bookings` chạy `15 * * * *`, cùng hai bảng realtime. Lịch trống
+vẫn bỏ qua giữ chỗ hết hạn ngay cả khi cron chậm; cron cập nhật trạng thái
+đơn để danh sách và sự kiện realtime theo kịp.
+
+`supabase/01_schema.sql`–`04_seed.sql` là bộ dựng cũ, không chạy cùng
+migrations. `supabase/demo-seed.sql` cũng chưa theo kịp điều kiện hồ sơ nhận
+tiền và luồng ảnh bắt buộc; dùng giao diện để tạo dữ liệu demo bên dưới.
 
 ## 3. Tài khoản và dữ liệu demo
 
-Trong **Supabase → Authentication → Users**, tạo hai user khác nhau: một admin
-và một chủ sân. Sửa hai email ở đầu `supabase/demo-roles.sql`, rồi chạy file đó
-trong SQL Editor để gán role. Tiếp theo sửa email chủ sân ở đầu
-`supabase/demo-seed.sql` và chạy file để tạo cụm sân demo, sân con và bảng giá.
+Sau khi cấu hình Auth ở mục 4, chuẩn bị ba tài khoản do bạn quản lý: admin,
+chủ sân và người chơi. Dùng tài khoản tách biệt để kiểm tra đúng quyền.
 
-Không lưu mật khẩu hoặc dữ liệu tài khoản thật trong repository. Các script demo
-không ghi đè cụm sân nếu chủ sân đã có dữ liệu.
+Trong **Supabase → Authentication → Users**, tạo admin đầu tiên. Lấy UUID
+của user đó và chạy trong SQL Editor (thay giá trị mẫu trước khi chạy):
+
+```sql
+insert into public.profiles (id, role)
+values ('<UUID của admin trong auth.users>'::uuid, 'admin')
+on conflict (id) do update set role = excluded.role;
+```
+
+Sau đó đi theo luồng thật:
+
+1. Đăng ký tài khoản chủ sân qua `/dang-ky`, xác nhận OTP rồi gửi hồ sơ tại
+   `/dang-ky-san`. Điền tài khoản nhận tiền và giấy tờ xác minh phù hợp.
+2. Đăng nhập admin, mở `/admin?view=owners`, xem giấy tờ rồi duyệt hồ sơ.
+3. Đăng nhập lại chủ sân, vào `/chu-san/quan-ly` tạo cụm và sân con. Cụm mới
+   là `draft`, chưa xuất hiện công khai.
+4. Thêm **3–8 ảnh thật** rồi lưu bộ ảnh để cụm thành `active`. Mỗi ảnh là
+   JPEG/PNG/WebP, tối đa 5 MiB. Kiểm tra giờ hoạt động, môn, giá chung và cọc.
+5. Dùng tài khoản người chơi tìm cụm ở `/tim-san` và đặt một khung tương lai.
+
+`supabase/demo-roles.sql` có thể gán nhanh admin/chủ sân trong môi trường
+riêng, nhưng nó bỏ qua bước duyệt hồ sơ và chưa điền thông tin nhận tiền.
+Không dùng nó để chứng minh luồng onboarding đã hoạt động. Không lưu mật
+khẩu, giấy tờ hay dữ liệu tài khoản thật trong repository.
 
 ## 4. Cấu hình Supabase Auth
 
@@ -87,7 +145,7 @@ thật bằng `node scripts/configure-auth-email.mjs`; thêm `--apply` để đ�
 mẫu thư, độ dài mã và thời hạn. Script dùng token từ `supabase login` hoặc
 `SUPABASE_ACCESS_TOKEN`, cùng project trong `.env.local`.
 
-Để dùng Resend cho cả OTP và thông báo chủ sân:
+Để dùng Resend cho OTP và email kết quả duyệt hồ sơ chủ sân:
 
 1. Xác minh tên miền gửi trên Resend (các bản ghi DNS Resend cung cấp).
 2. Đặt `RESEND_API_KEY` và `EMAIL_FROM=San Ngon <no-reply@ten-mien-cua-ban>`
@@ -125,7 +183,7 @@ nội bộ để không tạo open redirect.
 | QR chuyển khoản | `NEXT_PUBLIC_SEPAY_ACCOUNT`, `NEXT_PUBLIC_SEPAY_BANK`, `NEXT_PUBLIC_SEPAY_ACCOUNT_NAME` | Hiển thị checkout |
 | Site | `NEXT_PUBLIC_SITE_URL` | Nên điền domain thật khi deploy |
 | Telegram | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | Báo đơn mới cho chủ sân |
-| Email chủ sân | `RESEND_API_KEY`, `EMAIL_FROM` | Tuỳ chọn; gửi email khi tiền cọc được xác nhận |
+| Email | `RESEND_API_KEY`, `EMAIL_FROM` | Email duyệt hồ sơ; script có thể dùng để cấu hình SMTP Auth |
 | Supabase CLI | `SUPABASE_PROJECT_REF` | Tiện cho CLI/MCP, không phải secret của app |
 
 Chỉ biến có tiền tố `NEXT_PUBLIC_` mới được đưa xuống trình duyệt. Đặc biệt,
@@ -134,8 +192,14 @@ client hoặc commit vào git.
 
 ## 6. SePay
 
-Tài khoản ngân hàng nhận cọc là tài khoản của người sáng lập/dự án. Khi bàn
-giao, chỉ thay biến môi trường; không sửa logic đối soát trong code.
+Tài khoản ngân hàng nhận cọc là tài khoản của người sáng lập/dự án. Tài
+khoản trong hồ sơ chủ sân không thay QR trên checkout. Khi bàn giao, cập
+nhật ba biến QR, `SEPAY_WEBHOOK_API_KEY`, tài khoản được chọn trong SePay và
+URL webhook; deploy lại để biến public được đưa vào bundle.
+
+Hoàn cọc và chuyển tiền cho chủ sân chưa tự động. Cần thống nhất người thực
+hiện và cách đối soát; nội dung `/chinh-sach-huy` hiện còn mô tả tiền vào
+thẳng chủ sân, cần đồng bộ trước khi nhận tiền thật.
 
 Ứng dụng dùng **API Key của webhook**, không cần API Token dùng để gọi API
 truy vấn giao dịch của SePay.
@@ -202,8 +266,11 @@ Chủ sân vào `/chu-san`, bấm **Tạo link kết nối**, mở link Telegram
 **Start**. Link hết hạn sau 10 phút và chỉ dùng một lần. Chưa cấu hình Telegram
 không làm hỏng việc xác nhận thanh toán.
 
-Nếu có `RESEND_API_KEY`, webhook cũng gửi email báo đơn mới cho chủ sân. Người
-chơi vẫn xem thông báo trong app; MVP chưa gửi email cho người chơi.
+Email kết quả duyệt hồ sơ chủ sân dùng `RESEND_API_KEY` và `EMAIL_FROM`.
+Tại lần rà ngày 25/09/2026, phần gửi email báo đơn mới từ webhook SePay còn
+là thay đổi local chưa commit; chỉ đưa vào kịch bản sau khi task đó đã được
+kiểm tra và push. Người chơi xem thông báo đơn trên website; email xác thực
+Auth là luồng riêng, vẫn cần SMTP.
 
 ## 8. Chạy và kiểm tra
 
@@ -215,20 +282,39 @@ npm run build
 npm run ci
 ```
 
-Chạy Docker production cục bộ nếu cần:
+`npm run ci` chạy cả lint, typecheck và build. Với thay đổi chỉ tài liệu,
+kiểm tra diff, đường dẫn và lệnh được nhắc đến; không cần chạy lại build app.
+Repo chưa có bộ test nghiệp vụ tự động. Trước demo, kiểm tra thủ công trong
+môi trường thử:
 
-```bash
-cp .env.example .env.docker
-# điền biến vào .env.docker
-docker compose --env-file .env.docker up --build
-```
+| Luồng | Kết quả cần thấy |
+| --- | --- |
+| Đăng ký/đăng nhập/đăng xuất | OTP xác nhận email hoạt động; Google nếu bật; đăng xuất xóa phiên |
+| Hồ sơ chủ sân | Người chưa duyệt chưa tạo được cụm; admin đọc được giấy tờ và duyệt/từ chối |
+| Tạo cụm và ảnh | Nháp chưa hiện ở tìm sân; lưu 3–8 ảnh thật thì công khai, có sân con và giá |
+| Tìm và đặt | Bộ lọc/số khung trống khớp lịch ngày đã chọn; tiền cọc khớp giá SQL |
+| Hai người chọn cùng khung | Chỉ một đơn giữ chỗ thành công; người còn lại nhận thông báo chọn giờ khác |
+| Giữ chỗ hết hạn | Sau 15 phút, khung mở lại; về trang chủ không hủy, nút hủy trả lịch ngay |
+| Tiền cọc | Đủ tiền và đúng mã xác nhận đơn; gửi lại cùng mã giao dịch không tạo thanh toán trùng |
+| Tiền đến muộn/thiếu | Muộn không khôi phục đơn và có khoản cần hoàn; thiếu không xác nhận đơn |
+| Xác nhận tay | Chủ sân xác nhận được đơn còn hạn sau khi kiểm tra tiền; đơn hết hạn bị từ chối |
+| Hủy và hoàn | Trước mốc 2 giờ có khoản cần hoàn, muộn không; đánh dấu đã hoàn chỉ sau khi chuyển tiền |
+| Khóa lịch | Khung khóa không đặt được; không khóa khoảng đang có đơn; mở lại trả lịch trống |
+| Thông báo | Checkout cập nhật realtime; thông báo của đúng tài khoản; Telegram tới chủ sân đã kết nối |
 
-Các biến `NEXT_PUBLIC_*` được nhúng lúc build image, nên đổi chúng phải chạy
-lại `up --build`. `.env.docker` không được commit.
+Mốc hủy 2 giờ là giá trị tạm, chưa được chủ sân chốt. Các thử nghiệm thanh
+toán dùng ngân hàng/môi trường thử đã thống nhất và lưu mã đơn để đối soát.
+HTTP 200 từ webhook chỉ chứng minh đã nhận request, không chứng minh đơn
+được xác nhận: cần đọc `result.reason` và xem trạng thái đơn.
+
+Repo có Dockerfile/Compose phụ trợ, nhưng luồng phát triển và deploy demo
+trong tài liệu này dùng Node.js, Supabase từ xa và Vercel.
 
 ## 9. Deploy Vercel
 
-Link project rồi kéo biến development bằng Vercel CLI nếu cần:
+Link project rồi kéo biến development bằng Vercel CLI nếu cần.
+Trước khi chạy `env:pull`, lưu bản cấu hình local cần giữ: lệnh ghi vào
+`.env.local`. Không đưa file này vào git.
 
 ```bash
 npm run vercel:login
@@ -239,3 +325,8 @@ npm run env:pull
 Trên Vercel, khai báo các biến runtime tương ứng trong `.env.example`, đặt
 `NEXT_PUBLIC_SITE_URL` là domain thật và cập nhật Supabase Redirect URLs. Sau
 khi deploy, cập nhật URL webhook SePay và Telegram về domain production.
+
+Trình tự triển khai: xem `db:status`/`db:dry`, áp dụng migrations đã duyệt,
+kiểm tra cron/realtime, khai báo biến trên Vercel, deploy rồi kiểm tra đăng
+nhập → tìm sân → đặt → nhận cọc trên domain thật. Không coi build thành công
+là bằng chứng Auth, Storage hay webhook đã được cấu hình đúng.
