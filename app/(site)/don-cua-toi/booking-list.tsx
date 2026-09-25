@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, CalendarDays, Clock3, History, Plus } from 'lucide-react';
 import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { StatusBadge } from '@/components/status-badge';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import { CANCEL_WINDOW_HOURS, HOLD_MINUTES, SPORT_LABELS } from '@/lib/constants';
 import type { Booking } from '@/lib/types';
@@ -33,13 +33,13 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
     const refresh = () => { setClock(Date.now()); router.refresh(); };
     const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
     const channel = supabase.channel(`my-bookings:${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${userId}` }, refresh)
-      .subscribe(status => { if (status === 'SUBSCRIBED') refresh(); });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${userId}` }, refresh);
+    const unsubscribe = subscribeWithSession(supabase, channel, status => { if (status === 'SUBSCRIBED') refresh(); });
     window.addEventListener('focus', refresh);
     window.addEventListener('online', refresh);
     document.addEventListener('visibilitychange', onVisible);
     return () => {
-      void supabase.removeChannel(channel);
+      unsubscribe();
       window.removeEventListener('focus', refresh);
       window.removeEventListener('online', refresh);
       document.removeEventListener('visibilitychange', onVisible);

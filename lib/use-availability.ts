@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { ymd } from '@/lib/format';
 import { MAX_SLOTS } from '@/lib/constants';
 import type { Slot, Selection } from '@/lib/types';
@@ -66,14 +66,14 @@ export function useAvailability(venueId: string, date: Date, live = true) {
     document.addEventListener('visibilitychange', refresh);
     const channel = supabase
       .channel(`bookings:${venueId}:${instanceId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => load())
-      .subscribe();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => load());
+    const unsubscribe = subscribeWithSession(supabase, channel);
     return () => {
       clearInterval(timer);
       window.removeEventListener('focus', refresh);
       window.removeEventListener('online', refresh);
       document.removeEventListener('visibilitychange', refresh);
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [supabase, venueId, live, load, instanceId]);
 

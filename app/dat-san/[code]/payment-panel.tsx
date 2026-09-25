@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, Copy, MapPin, QrCode, ShieldCheck, Smartphone } from 'lucide-react';
 import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { BrandMark } from '@/components/brand-mark';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { vietQrUrl } from '@/lib/sepay';
 import { countdown, dayLabel, hhmm, vnd } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
@@ -46,13 +46,13 @@ export function PaymentPanel(p: {
       .channel(`booking:${p.bookingId}`)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${p.bookingId}` },
-        (payload) => setStatus((payload.new as { status: BookingStatus }).status))
-      .subscribe((state) => { if (state === 'SUBSCRIBED') void reconcile(); });
+        (payload) => setStatus((payload.new as { status: BookingStatus }).status));
+    const unsubscribe = subscribeWithSession(supabase, channel, state => { if (state === 'SUBSCRIBED') void reconcile(); });
     return () => {
       active = false;
       window.removeEventListener('online', reconcile);
       document.removeEventListener('visibilitychange', onVisible);
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [supabase, p.bookingId]);
 
