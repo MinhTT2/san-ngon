@@ -15,18 +15,18 @@ export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization') ?? '';
   const expected = `Apikey ${process.env.SEPAY_WEBHOOK_API_KEY}`;
   if (!process.env.SEPAY_WEBHOOK_API_KEY || auth !== expected) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
   let body: SepayPayload;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: true, skipped: 'bad_json' });
+    return NextResponse.json({ success: true, ok: true, skipped: 'bad_json' });
   }
 
   if (body.transferType !== 'in') {
-    return NextResponse.json({ ok: true, skipped: 'not_incoming' });
+    return NextResponse.json({ success: true, ok: true, skipped: 'not_incoming' });
   }
 
   const amount = Math.round(Number(body.transferAmount ?? 0));
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   if (!refCode || !bankTxId || amount <= 0) {
     console.warn('[sepay] không tìm thấy mã đơn', { content: body.content, bankTxId, amount });
-    return NextResponse.json({ ok: true, skipped: 'no_ref_code' });
+    return NextResponse.json({ success: true, ok: true, skipped: 'no_ref_code' });
   }
 
   const supabase = createAdminClient();
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[sepay] confirm_payment lỗi', refCode, error.message);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, ok: false, error: error.message }, { status: 500 });
   }
 
   const result = data as ConfirmPaymentResult;
@@ -77,10 +77,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, result });
+  return NextResponse.json({ success: true, ok: true, result });
 }
 
 /** SePay ping GET khi bấm "Kiểm tra" trong dashboard. */
 export async function GET() {
-  return NextResponse.json({ ok: true, service: 'sepay-webhook' });
+  return NextResponse.json({ success: true, ok: true, service: 'sepay-webhook' });
 }

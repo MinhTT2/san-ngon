@@ -114,15 +114,45 @@ client hoặc commit vào git.
 Tài khoản ngân hàng nhận cọc là tài khoản của người sáng lập/dự án. Khi bàn
 giao, chỉ thay biến môi trường; không sửa logic đối soát trong code.
 
-Trong SePay, tạo webhook tiền vào:
+Ứng dụng dùng **API Key của webhook**, không cần API Token dùng để gọi API
+truy vấn giao dịch của SePay.
 
-```text
-https://<domain>/api/webhooks/sepay
+1. Trong SePay, liên kết tài khoản ngân hàng nhận cọc nếu chưa có.
+2. Vào **Webhooks → + Thêm webhook**. Đặt tên `Sân Ngon`, chọn sự kiện
+   **Có tiền vào** và URL `https://<domain>/api/webhooks/sepay`.
+3. Chọn đúng tài khoản ngân hàng nhận cọc. Có thể để trống bộ lọc mã thanh
+   toán: ứng dụng tự dò mã `SANxxxxxx` trong nội dung chuyển khoản.
+4. Ở bước **Bảo mật**, chọn **API Key**. Dùng cùng một chuỗi bí mật cho key
+   trong SePay và biến `SEPAY_WEBHOOK_API_KEY` của ứng dụng. Có thể tự sinh
+   chuỗi bằng `openssl rand -hex 32`; không thêm tiền tố `Apikey` vào biến.
+5. Hoàn tất cấu hình cảnh báo và nhấn **Thêm**. SePay sẽ gửi header
+   `Authorization: Apikey <chuỗi bí mật>`.
+
+Cấu hình `.env.local` và các biến tương ứng trên Vercel:
+
+```dotenv
+SEPAY_WEBHOOK_API_KEY=<key giống trong webhook SePay>
+NEXT_PUBLIC_SEPAY_BANK=<mã ngân hàng được SePay hỗ trợ, ví dụ MBBank>
+NEXT_PUBLIC_SEPAY_ACCOUNT=<số tài khoản nhận cọc>
+NEXT_PUBLIC_SEPAY_ACCOUNT_NAME=<tên chủ tài khoản>
 ```
 
-Dùng API key tương ứng với `SEPAY_WEBHOOK_API_KEY`. Webhook trả `200` cho giao
-dịch không liên quan để SePay không retry vô ích; chỉ trả `401` khi sai key và
-`500` khi database không xác nhận được.
+Khởi động lại app khi đổi `.env.local`; trên Vercel cần deploy lại, đặc biệt
+với các biến `NEXT_PUBLIC_` được đóng vào bundle lúc build. Không commit key.
+
+Trong chi tiết webhook, bấm **Gửi thử**, rồi xem **Nhật ký webhooks**. Phản hồi
+thành công phải có HTTP `200` và JSON `success: true`. Payload mẫu không khớp
+mã đơn sẽ được bỏ qua, nên bước này chỉ kiểm tra kết nối và xác thực, chưa
+chứng minh đã thanh toán một đơn thật. Sai key trả `401`, database lỗi trả
+`500` để SePay thử lại.
+
+Kiểm tra các phản hồi webhook an toàn, không xác nhận đơn hay chuyển tiền:
+
+```bash
+node scripts/check-sepay-webhook.mjs http://localhost:3000
+```
+
+Nguồn: [Hướng dẫn webhook SePay](https://docs.sepay.vn/tich-hop-webhooks.html).
 
 Test local bằng ngrok:
 
