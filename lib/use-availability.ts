@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
-import { ymd } from '@/lib/format';
 import { MAX_SLOTS } from '@/lib/constants';
 import type { Slot, Selection } from '@/lib/types';
 
@@ -11,7 +10,7 @@ import type { Slot, Selection } from '@/lib/types';
  * Bản điện thoại xếp giờ theo hàng dọc, bản desktop xếp sân theo hàng ngang —
  * hai component riêng, nhưng dùng chung hook này.
  */
-export function useAvailability(venueId: string, date: Date, live = true) {
+export function useAvailability(venueId: string, dateKey: string, live = true) {
   const supabase = useMemo(() => createClient(), []);
   // Bản mobile và bản desktop cùng mount (một cái bị CSS ẩn), nên tên channel
   // phải khác nhau — hai subscription trùng topic thì removeChannel gỡ nhầm.
@@ -21,7 +20,6 @@ export function useAvailability(venueId: string, date: Date, live = true) {
   const [failed, setFailed] = useState(false);
   const [picked, setPicked] = useState<Slot[]>([]);
 
-  const dateKey = ymd(date);
   const requestId = useRef(0);
 
   const load = useCallback(async () => {

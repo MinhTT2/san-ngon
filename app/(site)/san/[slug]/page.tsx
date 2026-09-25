@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import type { VenueCalendar } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -23,6 +25,13 @@ export default async function Page({
     .single();
 
   if (!venue) notFound();
+
+  const parsedDate = z.string().date().safeParse(ngay);
+  const { data: calendarData, error: calendarError } = await supabase.rpc('get_venue_calendar', {
+    p_venue_id: venue.id, p_date: parsedDate.success ? parsedDate.data : null,
+  });
+  if (calendarError || !calendarData) throw new Error('Không tải được ngày đặt sân. Vui lòng thử lại.');
+  const calendar = calendarData as unknown as VenueCalendar;
 
   const { data: acceptsBookings, error: bookingAvailabilityError } = await supabase.rpc('venue_accepts_bookings', { p_venue_id: venue.id });
   if (bookingAvailabilityError) throw new Error('Không kiểm tra được trạng thái nhận đặt sân.');
@@ -71,10 +80,10 @@ export default async function Page({
 
       <div id="lich-san" className="mt-6 scroll-mt-5">
         {acceptsBookings ? <VenueSchedule
-          initialDate={ngay}
+          key={calendar.date}
+          calendar={calendar}
           venueId={venue.id}
           depositPct={venue.deposit_pct}
-          horizonDays={venue.booking_horizon_days}
           defaultName={profile?.full_name}
           defaultPhone={profile?.phone}
           isAuthenticated={!!user}

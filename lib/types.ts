@@ -104,3 +104,11 @@ export type OwnerVenue = Pick<
   Venue,
   'id' | 'slug' | 'name' | 'address' | 'district' | 'phone' | 'status'
 >;
+
+/** Ngày và giới hạn đặt trước do SQL tính theo giờ Việt Nam. */
+export type VenueCalendar = {
+  today: string;
+  last_date: string;
+  date: string;
+  days: { date: string; weekday: number }[];
+};

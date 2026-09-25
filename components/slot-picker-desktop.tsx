@@ -18,7 +18,7 @@ export function SlotPickerDesktop({
   onConfirm,
 }: {
   venueId: string;
-  date: Date;
+  date: string;
   depositPct: number;
   onSelectionChange?: (s: Selection | null) => void;
   onConfirm?: () => void;
