@@ -307,4 +307,10 @@ và dữ liệu demo theo [docs/dev-setup.md](docs/dev-setup.md).
 
 ## Quy trình giao việc
 
+Khi kiểm tra giao diện bằng Playwright, dùng Chromium riêng chạy **headless**
+với profile/context cô lập. Không mở hoặc kết nối vào Chrome cá nhân của
+người dùng, không dùng tab, cookie hay phiên đăng nhập đang có của họ.
+Không dùng Playwright MCP nếu nó đang gắn với Chrome cá nhân; chạy Playwright
+riêng qua CLI/script. Chỉ dùng trình duyệt cá nhân khi người dùng yêu cầu rõ.
+
 Khi hoàn thành một task và các kiểm tra cần thiết đều đạt, commit thay đổi rồi push ngay lên `origin/main`. Không để task đã xong nằm lại chỉ ở máy local.
