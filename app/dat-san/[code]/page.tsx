@@ -17,20 +17,19 @@ export default async function Page({ params }: { params: Promise<{ code: string 
   const court = booking.courts as unknown as { name: string; venues: { name: string; address: string } };
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-6 sm:px-8 sm:py-10 lg:py-12">
-      <PaymentPanel
-        bookingId={booking.id}
-        code={booking.code}
-        status={booking.status}
-        startsAt={booking.starts_at}
-        endsAt={booking.ends_at}
-        expiresAt={booking.expires_at}
-        total={booking.total_amount}
-        deposit={booking.deposit_amount}
-        courtName={court?.name ?? ''}
-        venueName={court?.venues?.name ?? ''}
-        venueAddress={court?.venues?.address ?? ''}
-      />
-    </main>
+    <PaymentPanel
+      bookingId={booking.id}
+      code={booking.code}
+      status={booking.status}
+      startsAt={booking.starts_at}
+      endsAt={booking.ends_at}
+      expiresAt={booking.expires_at}
+      initialSeconds={Math.floor((new Date(booking.expires_at).getTime() - Date.now()) / 1000)}
+      total={booking.total_amount}
+      deposit={booking.deposit_amount}
+      courtName={court?.name ?? ''}
+      venueName={court?.venues?.name ?? ''}
+      venueAddress={court?.venues?.address ?? ''}
+    />
   );
 }

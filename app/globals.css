@@ -118,3 +118,34 @@ button:disabled,
   .pf-spin { animation: none; }
   .pf-ambient-video { display: none; }
 }
+
+/* Checkout: chuyển động ngắn, QR đứng yên để máy ảnh đọc dễ dàng. */
+@keyframes checkout-settle {
+  from { transform: translateY(10px); }
+  to { transform: none; }
+}
+
+@keyframes checkout-pulse {
+  50% { opacity: 0.4; }
+}
+
+@keyframes checkout-check {
+  from { stroke-dashoffset: 48; }
+  to { stroke-dashoffset: 0; }
+}
+
+.checkout :is(a, button):focus-visible {
+  outline: 2px solid var(--color-success);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .checkout-enter { animation: checkout-settle 0.55s ease-out; }
+  .checkout-corner { animation: checkout-pulse 1.5s ease-in-out 2; }
+  .checkout-wait { animation: checkout-pulse 1.4s ease-in-out 3; }
+  .checkout-success { animation: checkout-settle 0.5s ease-out; }
+  .checkout-check {
+    stroke-dasharray: 48;
+    animation: checkout-check 0.65s ease-out;
+  }
+}

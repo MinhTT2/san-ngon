@@ -49,7 +49,7 @@ app/
   auth/dang-xuat/route.ts          POST, xoá phiên phía server
 ```
 
-**Trang thanh toán không có header và footer.** Đó là lựa chọn, không phải quên: trang checkout bớt đường thoát càng tốt. Đừng "sửa" bằng cách kéo nó vào nhóm `(site)`.
+**Trang thanh toán có header riêng gọn: logo, tiến trình đặt sân và nút về trang chủ; không có footer.** Vẫn đặt ngoài nhóm `(site)`, không dùng header điều hướng đầy đủ của website. Về trang chủ không hủy giữ chỗ; muốn trả lịch ngay phải dùng nút hủy.
 
 ## Thư viện dùng chung
 
