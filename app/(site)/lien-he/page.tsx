@@ -35,7 +35,9 @@ export default function Page() {
             <Link href="/dang-ky-san" className="font-semibold text-pitch underline underline-offset-2">
               Đăng sân
             </Link>
-            . Chúng tôi gọi lại trong một ngày làm việc. Miễn phí, không ràng buộc.
+            . Chúng tôi gọi lại trong một ngày làm việc. Mặc định tài khoản được miễn phí;
+            nếu áp dụng phí sử dụng website, mức phí là 299.000đ/tháng cho tất cả cụm sân
+            của một chủ sân và được hiển thị trong trang quản lý.
           </p>
         </Card>
 

@@ -265,12 +265,13 @@ JS mới giấu đi — không thì JS hỏng là nội dung tàng hình.
 con; upload ảnh thật; khóa lịch; thống kê; lọc sân và số khung trống; hủy đơn;
 đăng xuất; thông báo; xác nhận tiền tay; danh sách và xác nhận hoàn cọc.
 
-Tại lần rà tài liệu **25/09/2026**, giao diện bảng giá theo ngày/giờ ở
-`/chu-san/bang-gia/[id]`, quản lý tài khoản ở `/admin/users` và email báo đơn
-mới từ webhook còn có thay đổi local chưa commit. Không coi các phần này đã
-bàn giao chỉ vì có file trên máy. Giá chung đã sửa được trong quản lý sân;
-email kết quả duyệt hồ sơ chủ sân đã có. Cập nhật mục này khi các task đó
-được kiểm tra và push.
+Ngày **25/09/2026**, bảng giá theo ngày/giờ ở `/chu-san/bang-gia/[id]`
+và quản lý tài khoản ở `/admin/users` đã được kiểm tra và push lên
+`origin/main` (các commit `f3dd3b2`, `ba1d26c`). Email báo đơn mới từ webhook
+còn có thay đổi local chưa commit. Không coi các phần này đã bàn giao chỉ
+vì có file trên máy. Email kết quả duyệt hồ sơ chủ sân đã có trong code;
+SMTP và cấu hình gửi thư vẫn cần nghiệm thu theo
+[checklist MVP](docs/mvp-acceptance.md).
 
 ## Việc cần chốt trước demo
 
