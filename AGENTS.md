@@ -202,6 +202,32 @@ Không dùng cấu hình thủ công nhiều tài khoản. Xem [vận hành SePa
 Checkout, danh sách đơn người chơi, danh sách và lịch chủ sân dùng realtime;
 tự đồng bộ khi kết nối lại hoặc quay về tab. Hoàn tiền vẫn thực hiện thủ công.
 
+## Phí sử dụng website
+
+Admin chọn từng chủ sân phải đóng phí tại `/admin/phi-dich-vu`. Mặc định
+mọi tài khoản được miễn phí; bật thu phí không tự ghi nhận đã nhận tiền.
+Phí cố định 299.000đ cho một tháng và tất cả cụm sân của một chủ sân.
+`owner_subscriptions` giữ công tắc và hạn đã đóng; trình duyệt chỉ đọc,
+admin thay đổi qua `set_owner_subscription_fee` có kiểm tra quyền SQL.
+
+Chủ sân thanh toán tại `/chu-san/phi-dich-vu`, mã riêng `PHI` + 8 ký tự hex.
+`subscription_receiver` giữ tài khoản SePay của dự án tại thời điểm triển
+khai, không tự đổi khi thay chủ sân demo. Mỗi `subscription_invoices` đóng
+băng người nhận và 299.000đ, chỉ có một kỳ chờ mỗi chủ sân. Webhook dùng
+`confirm_subscription_payment` (chỉ service role): đúng kết nối/tài khoản,
+đủ tiền trong một giao dịch mới gia hạn. Retry không gia hạn lặp; chuyển
+thiếu, thừa và chuyển trùng kỳ phí được ghi để admin đối soát. Không cộng
+dồn các khoản thiếu; không hoàn tiền tự động.
+
+Gia hạn sớm cộng một tháng vào hạn cũ; hết hạn thì tính từ lúc nhận tiền.
+Tháng lịch và múi giờ Việt Nam tính trong SQL. Hết hạn chặn đăng cụm/sân con,
+công khai sân nháp và nhận đơn mới, kể cả gọi RPC trực tiếp. Sửa thông tin,
+xử lý cọc/hủy/hoàn của đơn cũ vẫn chạy. Miễn phí không xóa hạn đã đóng.
+Không cần cron để khóa hết hạn. Giao diện theo dõi realtime và tải lại khi
+nối mạng/quay lại tab. Tài khoản đang nhận phí không được ngắt webhook qua
+nút ngắt kết nối; muốn đổi phải đối soát kỳ chờ và cấu hình SQL có kiểm soát.
+Phí dịch vụ không vượt qua cờ nghiệm thu `multi_owner_enabled`.
+
 ## Hằng số
 
 | Thứ | Giá trị | Ở đâu |

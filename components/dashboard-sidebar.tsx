@@ -17,6 +17,7 @@ const OWNER_LINKS = [
   { href: '/chu-san', label: 'Tổng quan', icon: LayoutDashboard },
   { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
+  { href: '/chu-san/phi-dich-vu', label: 'Phí sử dụng website', icon: WalletCards },
   { href: '/chu-san/thanh-toan', label: 'Tài khoản nhận cọc', icon: WalletCards },
 ] as const;
 
@@ -25,6 +26,7 @@ const ADMIN_LINKS = [
   { href: '/admin?view=owners', label: 'Hồ sơ chủ sân', icon: ShieldCheck },
   { href: '/admin?view=venues', label: 'Hồ sơ sân', icon: Building2 },
   { href: '/admin?view=bookings', label: 'Đơn đặt sân', icon: ClipboardList },
+  { href: '/admin/phi-dich-vu', label: 'Phí chủ sân', icon: WalletCards },
   { href: '/admin/users', label: 'Người dùng', icon: Users },
 ] as const;
 

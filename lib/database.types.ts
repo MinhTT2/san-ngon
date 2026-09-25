@@ -14,6 +14,175 @@ export type Database = {
   }
   public: {
     Tables: {
+      subscription_payment_events: {
+        Row: {
+          amount: number
+          created_at: string
+          invoice_id: string
+          outcome: string
+          raw: Json
+          transaction_key: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          invoice_id: string
+          outcome?: string
+          raw: Json
+          transaction_key: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          invoice_id?: string
+          outcome?: string
+          raw?: Json
+          transaction_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payment_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_invoices: {
+        Row: {
+          account_name: string
+          account_number: string
+          amount: number
+          bank: string
+          code: string
+          connection_id: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          amount?: number
+          bank: string
+          code: string
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          amount?: number
+          bank?: string
+          code?: string
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_invoices_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_invoices_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_receiver: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank: string
+          connection_id: string | null
+          singleton: boolean
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank: string
+          connection_id?: string | null
+          singleton?: boolean
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank?: string
+          connection_id?: string | null
+          singleton?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_receiver_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_subscriptions: {
+        Row: {
+          fee_required: boolean
+          owner_id: string
+          paid_until: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          fee_required?: boolean
+          owner_id: string
+          paid_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          fee_required?: boolean
+          owner_id?: string
+          paid_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_subscriptions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_subscriptions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sepay_events: {
         Row: {
           amount: number
@@ -629,6 +798,62 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_subscriptions: {
+        Args: never
+        Returns: {
+          active: boolean
+          fee_required: boolean
+          full_name: string
+          owner_id: string
+          paid_until: string
+          phone: string
+        }[]
+      }
+      confirm_subscription_payment: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+          p_ref_code: string
+        }
+        Returns: Json
+      }
+      create_subscription_invoice: {
+        Args: never
+        Returns: {
+          account_name: string
+          account_number: string
+          amount: number
+          bank: string
+          code: string
+          connection_id: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_owner_subscription_fee: {
+        Args: { p_owner_id: string; p_required: boolean }
+        Returns: undefined
+      }
+      get_my_subscription: { Args: never; Returns: Json }
+      owner_subscription_allows: {
+        Args: { p_owner_id: string }
+        Returns: boolean
+      }
       initialize_legacy_receiver: {
         Args: { p_account: string; p_bank: string; p_name: string }
         Returns: undefined

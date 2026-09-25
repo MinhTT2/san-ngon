@@ -37,3 +37,10 @@ export function extractRefCode(payload: SepayPayload): string | null {
   const m = haystack.match(/SAN[A-Z0-9]{6}/);
   return m ? m[0] : null;
 }
+
+/** Website fees have their own reference, never a booking deposit reference. */
+export function extractSubscriptionCodes(payload: SepayPayload): string[] {
+  const text = [payload.content, payload.description, payload.code, payload.subAccount].filter(Boolean).join(' ').toUpperCase();
+  const matches = [...text.matchAll(/PHI[A-F0-9]{8}(?![A-Z0-9])/g)].map(match => match[0]);
+  return [...new Set(matches)];
+}

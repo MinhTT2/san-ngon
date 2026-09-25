@@ -51,7 +51,7 @@ export async function DELETE(req: NextRequest) {
     const ownerId = await requireSepayOwner(req);
     await withSepayConnection(ownerId, async ({ connection, operation, db, api, save }) => {
       const { error } = await db.rpc('disconnect_sepay_connection', { p_owner_id: ownerId, p_operation: operation });
-      if (error) throw new Error(error.message.includes('PENDING_PAYMENTS') ? 'PENDING_PAYMENTS' : 'DATABASE_ERROR');
+      if (error) throw new Error(error.message.includes('PENDING_PAYMENTS') ? 'PENDING_PAYMENTS' : error.message.includes('SUBSCRIPTION_RECEIVER_IN_USE') ? 'SUBSCRIPTION_RECEIVER_IN_USE' : 'DATABASE_ERROR');
       connection.status = 'disconnected';
       if (connection.webhook_id) await api(`/webhooks/${connection.webhook_id}`, 'PATCH', { active: 0 });
       await save({ access_token_encrypted: null, refresh_token_encrypted: null, token_expires_at: null });

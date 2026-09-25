@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { extractRefCode } from '@/lib/sepay';
+import { extractRefCode, extractSubscriptionCodes } from '@/lib/sepay';
 import { secretHash } from '@/lib/sepay-crypto';
 import { sendTelegram, ownerBookingMessage } from '@/lib/notify';
 import type { ConfirmPaymentResult } from '@/lib/types';
@@ -74,6 +74,21 @@ export async function POST(req: NextRequest) {
   const amount = body.transferAmount;
   const bankTxId = String(body.id);
   const refCode = extractRefCode(body);
+
+  const subscriptionCodes = extractSubscriptionCodes(body);
+  const subscriptionCode = subscriptionCodes[0];
+  if (subscriptionCodes.length > 1 || (subscriptionCode && refCode)) return NextResponse.json({ success: true, skipped: 'ambiguous_ref_code' });
+  if (subscriptionCode) {
+    const { data, error } = await supabase.rpc('confirm_subscription_payment', {
+      p_ref_code: subscriptionCode, p_amount: amount, p_bank_tx_id: bankTxId, p_raw: body,
+      p_connection_id: connectionId, p_receiver_bank: body.gateway, p_receiver_account: body.accountNumber,
+    });
+    if (error) {
+      console.error('[sepay] subscription payment failed', error.message);
+      return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, reason: data.reason });
+  }
 
   if (!refCode) {
     return NextResponse.json({ success: true, ok: true, skipped: 'no_ref_code' });

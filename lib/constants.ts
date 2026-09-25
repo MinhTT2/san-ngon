@@ -65,6 +65,7 @@ export const CANCEL_ERRORS: Record<string, string> = {
 
 /** Lỗi từ create_venue. */
 export const VENUE_ERRORS: Record<string, string> = {
+  OWNER_SUBSCRIPTION_DUE: 'Bạn cần thanh toán phí sử dụng website. Mở mục Phí sử dụng website để gia hạn.',
   AUTH_REQUIRED: 'Bạn cần đăng nhập để đăng sân.',
   OWNER_NOT_APPROVED: 'Tài khoản chủ sân chưa được duyệt.',
   NAME_REQUIRED: 'Nhập tên cụm sân.',
@@ -99,6 +100,7 @@ export const VENUE_ERRORS: Record<string, string> = {
 };
 
 export const COURT_ERRORS: Record<string, string> = {
+  OWNER_SUBSCRIPTION_DUE: VENUE_ERRORS.OWNER_SUBSCRIPTION_DUE,
   AUTH_REQUIRED: 'Bạn cần đăng nhập để quản lý sân.',
   VENUE_NOT_FOUND: 'Không tìm thấy cụm sân.',
   COURT_NOT_FOUND: 'Không tìm thấy sân con.',

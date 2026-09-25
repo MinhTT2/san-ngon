@@ -118,6 +118,7 @@ export function newWebhookKey(ownerId: string) {
 }
 
 const ERRORS: Record<string, string> = {
+  SUBSCRIPTION_RECEIVER_IN_USE: 'Tài khoản đang nhận phí sử dụng website. Liên hệ quản trị viên để chuyển tài khoản nhận phí trước khi ngắt kết nối.',
   AUTH_REQUIRED: 'Bạn cần đăng nhập lại.', OWNER_NOT_APPROVED: 'Gửi hồ sơ đăng ký chủ sân trước khi kết nối SePay.',
   INVALID_ORIGIN: 'Mở trang Sân Ngon chính thức để kết nối SePay.', SEPAY_NOT_CONFIGURED: 'Kết nối SePay đang được thiết lập. Vui lòng thử lại sau.',
   CONNECTION_BUSY: 'Một thao tác kết nối đang chạy. Chờ ít phút rồi thử lại.',
