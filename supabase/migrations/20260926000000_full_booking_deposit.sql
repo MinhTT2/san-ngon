@@ -3,6 +3,8 @@ begin;
 
 alter table public.venues alter column deposit_pct set default 100;
 update public.venues set deposit_pct = 100 where deposit_pct <> 100;
+-- Flush deferred venue/court checks before the following ALTER TABLE.
+set constraints all immediate;
 alter table public.venues add constraint venues_full_deposit check (deposit_pct = 100);
 
 create or replace function create_booking(
