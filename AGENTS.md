@@ -233,7 +233,7 @@ Phí dịch vụ không vượt qua cờ nghiệm thu `multi_owner_enabled`.
 | Thứ | Giá trị | Ở đâu |
 | --- | --- | --- |
 | Giữ chỗ | 15 phút | `bookings.expires_at`, `HOLD_MINUTES` |
-| Cọc | mặc định 30%, làm tròn lên bội số 1.000 đồng | `venues.deposit_pct`, theo từng cụm sân |
+| Cọc | 100%, bằng đúng tổng tiền sân | `venues.deposit_pct = 100`, áp dụng cho đơn mới |
 | Khung liền nhau tối đa | 3 | `MAX_SLOTS` và `use-availability` |
 | Đơn chờ tối đa mỗi người | 2 | `MAX_PENDING` và `create_booking` |
 | Đặt trước | mặc định 30 ngày, cấu hình 1–180 ngày | `venues.booking_horizon_days` |

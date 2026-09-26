@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     'Tìm sân bóng, cầu lông, pickleball, tennis còn chỗ ở Hà Nội. Xem lịch, biết giá, đặt cọc dễ dàng bằng chuyển khoản.',
   openGraph: {
     title: 'Tối nay chơi gì? Chọn sân, hẹn bạn, lên đường',
-    description: 'Chọn sân gần bạn, giữ giờ đẹp, cọc nhanh qua QR — phần còn lại thanh toán tại sân.',
+    description: 'Chọn sân gần bạn, giữ giờ đẹp, cọc 100% qua QR, thanh toán trọn tiền sân khi đặt.',
     locale: 'vi_VN',
     type: 'website',
   },
@@ -117,12 +117,13 @@ async function loadHeroSlots(
 function Hero({ grid }: { grid: React.ReactNode }) {
   return (
     <section>
+      <HeroCarousel />
       <div className="border-b border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-12">
           <div className="flex min-w-0 flex-col gap-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Đặt sân thể thao ở Hà Nội</p>
             <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-pitch sm:text-5xl">Tìm sân trống.<br />Chọn giờ, ra sân.</h1>
-            <p className="text-sm leading-6 text-ink-secondary">Xem lịch và giá trước khi đặt. Cọc qua QR, phần còn lại trả tại sân.</p>
+            <p className="text-sm leading-6 text-ink-secondary">Xem lịch và giá trước khi đặt. Cọc 100% qua QR, thanh toán trọn tiền sân khi đặt.</p>
             <SearchBar />
             <p className="text-xs leading-5 text-ink-secondary">Tìm sân miễn phí · Chỉ cần đăng nhập khi đặt</p>
           </div>
@@ -133,7 +134,6 @@ function Hero({ grid }: { grid: React.ReactNode }) {
           </div>
         </div>
       </div>
-      <HeroCarousel />
     </section>
   );
 }
@@ -262,13 +262,13 @@ function WhyDeposit() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Một khoản cọc. Một lời hẹn.</p>
             <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Sân giữ cho bạn.<br />Bạn giữ lời hẹn.</h2>
-            <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Cọc trước một phần để chủ sân giữ đúng khung giờ cho cả đội. Phần còn lại, thanh toán khi tới sân.</p>
+            <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Cọc trước 100% tiền sân để chủ sân giữ đúng khung giờ cho cả đội. Đến sân, sẵn sàng vào trận.</p>
           </div>
-          <div className="grid grid-cols-[3fr_7fr] gap-2" aria-label="Ví dụ: cọc trước 30%, trả tại sân 70%">
-            <div className="border-t-4 border-free-line pt-4"><p className="font-display text-4xl font-bold">30<span className="text-xl">%</span></p><p className="mt-1 text-xs text-free-line">Cọc trước</p></div>
-            <div className="border-t-4 border-white/25 pt-4"><p className="font-display text-4xl font-bold">70<span className="text-xl">%</span></p><p className="mt-1 text-xs text-free-line">Trả tại sân</p></div>
+          <div className="grid grid-cols-2 gap-6" aria-label="Cọc trước 100%, trả tại sân 0%">
+            <div className="border-t-4 border-free-line pt-4"><p className="font-display text-4xl font-bold">100<span className="text-xl">%</span></p><p className="mt-1 text-xs text-free-line">Cọc trước</p></div>
+            <div className="border-t-4 border-white/25 pt-4"><p className="font-display text-4xl font-bold">0<span className="text-xl">%</span></p><p className="mt-1 text-xs text-free-line">Trả tại sân</p></div>
           </div>
-          <p className="text-xs leading-5 text-free-line">Tỷ lệ minh họa. Mức cọc cụ thể được hiển thị khi đặt từng sân.</p>
+          <p className="text-xs leading-5 text-free-line">Thanh toán trước toàn bộ tiền sân. Tổng tiền được hiển thị rõ trước khi đặt.</p>
         </div>
         <div className="flex items-center bg-free-line/10 p-5 sm:p-10 lg:p-12">
           <div className="w-full rounded-[20px] bg-page p-6 sm:p-8">
@@ -278,13 +278,13 @@ function WhyDeposit() {
             </div>
             <div className="space-y-4 py-6 text-sm">
               <Line label="Tổng tiền sân" value="700.000đ" />
-              <Line label="Cọc trước qua QR" value="210.000đ" />
-              <Line label="Trả tại sân" value="490.000đ" />
+              <Line label="Cọc trước qua QR" value="700.000đ" />
+              <Line label="Trả tại sân" value="0đ" />
             </div>
             <div className="rounded-control bg-story-teal p-5">
               <p className="text-xs font-medium text-pitch">Mỗi người chỉ cần góp trước</p>
-              <p className="mt-2 font-display text-4xl font-extrabold tracking-tight text-pitch">21.000<span className="ml-1 text-xl">đ</span></p>
-              <p className="mt-2 text-xs text-ink-secondary">Và 49.000đ khi tới sân.</p>
+              <p className="mt-2 font-display text-4xl font-extrabold tracking-tight text-pitch">70.000<span className="ml-1 text-xl">đ</span></p>
+              <p className="mt-2 text-xs text-ink-secondary">Đã đủ tiền sân, không cần góp thêm khi tới sân.</p>
             </div>
             <Link href="/chinh-sach-huy" className="pf-action mt-5 inline-flex min-h-11 items-center gap-3 text-xs font-semibold text-pitch underline underline-offset-4">Xem chính sách hủy và hoàn cọc <span aria-hidden="true" className="pf-arrow">↗</span></Link>
           </div>
@@ -352,7 +352,7 @@ function Faq() {
   const qa = [
     ['Xem lịch có phải đăng nhập không?', 'Không. Bạn cứ xem lịch thoải mái; chỉ cần đăng nhập khi đặt để giữ chỗ và nhận hỗ trợ khi cần.'],
     ['Trời mưa không chơi được thì sao?', 'Liên hệ chủ sân để được hỗ trợ. Việc đổi giờ hoặc hoàn cọc tùy theo chính sách của từng sân.'],
-    ['Tôi có cần trả hết tiền khi đặt không?', 'Bạn chỉ cần cọc trước một phần, phần còn lại trả tại sân. Tiền cọc và tổng tiền đều được ghi rõ trước khi bạn chuyển khoản.'],
+    ['Tôi có cần trả hết tiền khi đặt không?', 'Có. Bạn cọc trước 100% tiền sân qua chuyển khoản. Tổng tiền được ghi rõ trước khi thanh toán và không còn tiền sân phải trả khi đến.'],
     ['Đặt xong mà không chuyển khoản?', 'Sau 15 phút, chỗ giữ tạm hết hạn và giờ đó mở lại cho người khác. Bạn không mất phí.'],
   ];
 

@@ -36,7 +36,7 @@ export function SlotPickerMobile({
     );
   }
 
-  const deposit = a.selection ? Math.ceil((a.selection.total * depositPct) / 100 / 1000) * 1000 : 0;
+  const deposit = a.selection ? Math.min(a.selection.total, Math.ceil((a.selection.total * depositPct) / 100 / 1000) * 1000) : 0;
   const availableCount = a.slots.filter((slot) => slot.is_available).length;
 
   return (

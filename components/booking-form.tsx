@@ -37,7 +37,7 @@ export function BookingForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deposit = Math.ceil((selection.total * depositPct) / 100 / 1000) * 1000;
+  const deposit = Math.min(selection.total, Math.ceil((selection.total * depositPct) / 100 / 1000) * 1000);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

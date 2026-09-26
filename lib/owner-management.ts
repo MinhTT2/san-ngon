@@ -32,7 +32,7 @@ export const VenueCreateBody = VenueShape.extend({
 }).superRefine(validateHours);
 
 export const VenueManagementBody = VenueShape.extend({
-  deposit_pct: z.number().int().min(0, 'Tỷ lệ cọc từ 0 đến 100%.').max(100, 'Tỷ lệ cọc từ 0 đến 100%.'),
+  deposit_pct: z.literal(100, { errorMap: () => ({ message: 'Tiền cọc bằng 100% tiền sân.' }) }),
   booking_horizon_days: z.number().int().min(1, 'Nhận đặt trước từ 1 đến 180 ngày.').max(180, 'Nhận đặt trước từ 1 đến 180 ngày.'),
 }).superRefine(validateHours);
 

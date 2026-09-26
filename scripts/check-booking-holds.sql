@@ -54,7 +54,7 @@ begin
   perform cancel_booking(b.code, true);
 
   b := create_booking(v_court, v_start, v_start + interval '1 hour', 'Check', '0900000000');
-  assert b.total_amount = 100000 and b.deposit_amount = 30000, 'server price';
+  assert b.total_amount = 100000 and b.deposit_amount = 100000, 'server price and full deposit';
   assert b.status = 'pending' and b.expires_at = now() + interval '15 minutes', '15 minute hold';
   select * into a from get_venue_availability(v_venue, v_date) where starts_at = v_start;
   assert not a.is_available and a.slot_status = 'held' and a.hold_expires_at = b.expires_at, 'hold visible';
@@ -80,16 +80,16 @@ begin
   exception when raise_exception then if sqlerrm <> 'NOT_PENDING' then raise; end if; end;
   replacement := create_booking(v_court, v_start, v_start + interval '1 hour', 'Check', '0900000000');
   assert (select status = 'cancelled' from bookings where id = b.id), 'stale GiST entry cleared';
-  result := confirm_payment(b.code, 30000, 'check-holds-late', '{"gateway":"MBBank","accountNumber":"1234567890"}');
+  result := confirm_payment(b.code, b.deposit_amount, 'check-holds-late', '{"gateway":"MBBank","accountNumber":"1234567890"}');
   assert result->>'reason' = 'BOOKING_CANCELLED', 'late payment cannot revive';
   assert (select refund_status = 'needed' from bookings where id = b.id), 'late payment needs refund';
   assert (select status = 'pending' from bookings where id = replacement.id), 'replacement untouched';
-  result := confirm_payment(replacement.code, 29000, 'check-holds-underpaid', '{"gateway":"MBBank","accountNumber":"1234567890"}');
+  result := confirm_payment(replacement.code, 30000, 'check-holds-underpaid', '{"gateway":"MBBank","accountNumber":"1234567890"}');
   assert result->>'reason' = 'UNDERPAID', 'underpaid cannot confirm';
   assert (select status = 'pending' from bookings where id = replacement.id), 'underpaid holds stay pending';
-  result := confirm_payment(replacement.code, 30000, 'check-holds-paid', '{"gateway":"MBBank","accountNumber":"1234567890"}');
+  result := confirm_payment(replacement.code, replacement.deposit_amount, 'check-holds-paid', '{"gateway":"MBBank","accountNumber":"1234567890"}');
   assert result->>'reason' = 'CONFIRMED', 'valid payment confirms';
-  result := confirm_payment(replacement.code, 30000, 'check-holds-paid', '{"gateway":"MBBank","accountNumber":"1234567890"}');
+  result := confirm_payment(replacement.code, replacement.deposit_amount, 'check-holds-paid', '{"gateway":"MBBank","accountNumber":"1234567890"}');
   assert result->>'reason' = 'ALREADY_PROCESSED', 'webhook retry idempotent';
   assert (select count(*) = 2 from notifications where booking_id = replacement.id), 'retry does not duplicate notifications';
   update bookings set expires_at = now() - interval '1 second' where id = replacement.id;
@@ -101,10 +101,18 @@ begin
   exception when raise_exception then if sqlerrm <> 'NOT_CANCELLABLE' then raise; end if; end;
   perform cancel_booking(replacement.code);
 
+  -- Full deposits must not round above prices that are not multiples of 1,000.
+  update price_rules set price_per_hour = 100500 where court_id = v_court;
+  b := create_booking(v_court, v_start, v_start + interval '1 hour', 'Check', '0900000000');
+  assert b.total_amount = 100500 and b.deposit_amount = b.total_amount, 'exact full deposit without rounding';
+  assert (select amount = 100500 from payments where booking_id = b.id), 'payment matches full deposit';
+  perform cancel_booking(b.code, true);
+  update price_rules set price_per_hour = 100000 where court_id = v_court;
+
   -- Late payment also rejected if cron/another customer has not touched the row yet.
   b := create_booking(v_court, v_start, v_start + interval '1 hour', 'Check', '0900000000');
   update bookings set expires_at = now() - interval '1 second' where id = b.id;
-  result := confirm_payment(b.code, 30000, 'check-holds-late-pending', '{"gateway":"MBBank","accountNumber":"1234567890"}');
+  result := confirm_payment(b.code, b.deposit_amount, 'check-holds-late-pending', '{"gateway":"MBBank","accountNumber":"1234567890"}');
   assert result->>'reason' = 'BOOKING_CANCELLED', 'late pending payment rejected';
   assert (select is_available from get_venue_availability(v_venue, v_date) where starts_at = v_start), 'late payment leaves slot free';
 end $$;
@@ -168,9 +176,9 @@ begin
   other := create_booking('a0000000-0000-4000-8000-000000000006',t,t+interval '1 hour','Check','0900000000');
   assert b.payment_connection_id=a.id and b.payment_account='1111111111', 'A snapshot';
   assert other.payment_connection_id=c.id and other.payment_account='2222222222', 'B snapshot';
-  result := confirm_payment(other.code,30000,'same-id','{}',a.id,'ACB','2222222222');
+  result := confirm_payment(other.code, other.deposit_amount,'same-id','{}',a.id,'ACB','2222222222');
   assert result->>'reason'='WRONG_RECEIVER', 'A cannot confirm B even with B bank and code';
-  result := confirm_payment(other.code,30000,'same-id','{}',c.id,'MBBank','1111111111');
+  result := confirm_payment(other.code, other.deposit_amount,'same-id','{}',c.id,'MBBank','1111111111');
   assert result->>'reason'='WRONG_RECEIVER', 'wrong bank rejected';
   assert not exists(select 1 from sepay_events where booking_id=other.id), 'wrong receiver creates no event';
   begin
@@ -179,18 +187,18 @@ begin
   exception when raise_exception then if sqlerrm <> 'PENDING_PAYMENTS' then raise; end if; end;
   result := confirm_payment(b.code,1000,'underpaid','{}',a.id,'MBBank','1111111111');
   assert result->>'reason'='UNDERPAID', 'OAuth underpaid';
-  result := confirm_payment(b.code,30000,'same-id','{}',a.id,'MBBank','1111111111');
+  result := confirm_payment(b.code, b.deposit_amount,'same-id','{}',a.id,'MBBank','1111111111');
   assert result->>'reason'='CONFIRMED', 'A confirms A';
-  result := confirm_payment(other.code,30000,'same-id','{}',c.id,'ACB','2222222222');
+  result := confirm_payment(other.code, other.deposit_amount,'same-id','{}',c.id,'ACB','2222222222');
   assert result->>'reason'='CONFIRMED', 'B transaction namespace independent';
   result := confirm_payment(b.code,1000,'underpaid','{}',a.id,'MBBank','1111111111');
   assert result->>'reason'='ALREADY_PROCESSED', 'underpaid retry remains consumed after confirmation';
-  result := confirm_payment(other.code,30000,'same-id','{}',c.id,'ACB','2222222222');
+  result := confirm_payment(other.code, other.deposit_amount,'same-id','{}',c.id,'ACB','2222222222');
   assert result->>'reason'='ALREADY_PROCESSED', 'OAuth retry';
   assert (select count(*)=2 from notifications where booking_id=other.id), 'OAuth no duplicate notifications';
   perform disconnect_sepay_connection(a.owner_id,op);
   assert not venue_accepts_bookings('a0000000-0000-4000-8000-000000000002'), 'disconnect has no legacy fallback';
-  result := confirm_payment(legacy.code,30000,'legacy-after-oauth','{"gateway":"MBBank","accountNumber":"1234567890"}');
+  result := confirm_payment(legacy.code, legacy.deposit_amount,'legacy-after-oauth','{"gateway":"MBBank","accountNumber":"1234567890"}');
   assert result->>'reason'='BOOKING_CANCELLED', 'legacy late payment still processed after migration';
   assert not has_table_privilege('authenticated','sepay_connections','SELECT'), 'tokens private';
   assert not has_table_privilege('authenticated','sepay_oauth_states','SELECT'), 'states private';

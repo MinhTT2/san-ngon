@@ -22,7 +22,7 @@ cục chính; điện thoại có bố cục rút gọn. Ưu tiên luồng đặ
 3. Nhập thông tin liên hệ, tạo đơn và chuyển khoản theo QR/mã `SANxxxxxx`.
    Giá và tiền cọc do SQL tính, đóng băng vào đơn.
 4. Theo dõi thanh toán, xem lại đơn, hủy theo chính sách và nhận thông báo
-   trên website. Phần tiền còn lại thanh toán tại sân.
+   trên website. Đơn mới thanh toán trước 100% tiền sân.
 
 ### Chủ sân và admin
 
@@ -50,8 +50,7 @@ cho nhiều chủ sân chỉ triển khai sau khi SePay duyệt ứng dụng OAu
 
 Một đơn chỉ gắn với **một sân con** (`courts`), không phải cả cụm (`venues`).
 Muốn đặt hai sân cùng giờ phải tạo hai đơn. Mỗi tài khoản có tối đa hai đơn
-chờ còn hạn. Cọc mặc định 30%, tùy cấu hình cụm sân, được làm tròn lên bội số
-1.000 đồng. Thời hạn đặt trước mặc định 30 ngày, có thể cấu hình theo cụm.
+chờ còn hạn. Cọc 100%, bằng đúng tổng tiền sân, không làm tròn thêm. Thời hạn đặt trước mặc định 30 ngày, có thể cấu hình theo cụm.
 
 Đơn `pending` giữ chỗ 15 phút. Hết hạn thì khung được coi là trống ngay trong
 SQL, không phải chờ cron; tạo đơn mới cũng giải phóng giữ chỗ đã hết hạn trước
