@@ -2,23 +2,17 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
-import { MAX_SLOTS } from '@/lib/constants';
 import type { Slot, Selection } from '@/lib/types';
 
-/**
- * Một nguồn dữ liệu cho cả hai bố cục lưới lịch.
- * Bản điện thoại xếp giờ theo hàng dọc, bản desktop xếp sân theo hàng ngang —
- * hai component riêng, nhưng dùng chung hook này.
- */
+/** Shared live availability and the concrete court selected for booking. */
 export function useAvailability(venueId: string, dateKey: string, live = true) {
   const supabase = useMemo(() => createClient(), []);
-  // Bản mobile và bản desktop cùng mount (một cái bị CSS ẩn), nên tên channel
-  // phải khác nhau — hai subscription trùng topic thì removeChannel gỡ nhầm.
   const instanceId = useId();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [picked, setPicked] = useState<Slot[]>([]);
+  const [selectionLost, setSelectionLost] = useState(false);
 
   const requestId = useRef(0);
 
@@ -35,8 +29,11 @@ export function useAvailability(venueId: string, dateKey: string, live = true) {
       setSlots(next);
       setPicked((prev) => {
         const updated = prev.map((picked) => next.find((slot) =>
-          slot.court_id === picked.court_id && slot.starts_at === picked.starts_at && slot.is_available));
-        return updated.every((slot): slot is Slot => Boolean(slot)) ? updated : [];
+          slot.court_id === picked.court_id && slot.starts_at === picked.starts_at
+          && slot.ends_at === picked.ends_at && slot.sport === picked.sport && slot.is_available));
+        if (updated.every((slot): slot is Slot => Boolean(slot))) return updated;
+        setSelectionLost(true);
+        return [];
       });
     }
     setLoading(false);
@@ -44,6 +41,7 @@ export function useAvailability(venueId: string, dateKey: string, live = true) {
 
   useEffect(() => {
     setPicked([]);
+    setSelectionLost(false);
     setLoading(true);
     void load();
     return () => {
@@ -83,38 +81,9 @@ export function useAvailability(venueId: string, dateKey: string, live = true) {
     return () => clearTimeout(timer);
   }, [slots, live, load]);
 
-  const courts = useMemo(() => {
-    const seen = new Map<string, string>();
-    slots.forEach((s) => seen.set(s.court_id, s.court_name));
-    return [...seen].map(([id, name]) => ({ id, name }));
-  }, [slots]);
-
-  const times = useMemo(
-    () => [...new Set(slots.map((s) => s.starts_at))].sort(),
-    [slots]
-  );
-
-  const byKey = useMemo(() => {
-    const m = new Map<string, Slot>();
-    slots.forEach((s) => m.set(`${s.court_id}|${s.starts_at}`, s));
-    return m;
-  }, [slots]);
-
-  /** Chỉ cho chọn tối đa MAX_SLOTS khung liền nhau trên cùng một sân. */
-  const toggle = useCallback((slot: Slot) => {
-    if (!slot.is_available) return;
-    setPicked((prev) => {
-      if (prev.length && prev[0].court_id !== slot.court_id) return [slot];
-      const exists = prev.some((s) => s.starts_at === slot.starts_at);
-      const next = exists
-        ? prev.filter((s) => s.starts_at !== slot.starts_at)
-        : [...prev, slot].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-      if (!exists && next.length > MAX_SLOTS) return prev;
-      for (let i = 1; i < next.length; i++) {
-        if (next[i - 1].ends_at !== next[i].starts_at) return [slot];
-      }
-      return next;
-    });
+  const choose = useCallback((choice: Selection | null) => {
+    setPicked(choice?.slots ?? []);
+    setSelectionLost(false);
   }, []);
 
   const selection: Selection | null = useMemo(() => {
@@ -129,10 +98,5 @@ export function useAvailability(venueId: string, dateKey: string, live = true) {
     };
   }, [picked]);
 
-  const pickedKeys = useMemo(
-    () => new Set(picked.map((s) => `${s.court_id}|${s.starts_at}`)),
-    [picked]
-  );
-
-  return { slots, courts, times, byKey, picked, pickedKeys, selection, toggle, loading, failed, reload: load };
+  return { slots, selection, choose, selectionLost, loading, failed, reload: load };
 }

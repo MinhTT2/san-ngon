@@ -3,16 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SlotPickerMobile } from '@/components/slot-picker-mobile';
-import { SlotPickerDesktop } from '@/components/slot-picker-desktop';
+import { VenueTimePicker } from '@/components/venue-time-picker';
 import { BookingForm } from '@/components/booking-form';
 import { useAvailability } from '@/lib/use-availability';
 import type { Selection, VenueCalendar } from '@/lib/types';
 
-/**
- * Hai bố cục lưới, một nguồn dữ liệu. Không phải một component co giãn —
- * điện thoại xếp giờ theo hàng dọc, desktop xếp sân theo hàng ngang.
- */
 export function VenueSchedule({
   venueId,
   depositPct,
@@ -97,16 +92,7 @@ export function VenueSchedule({
         </div>
       </div>
 
-      <div className="md:hidden">
-        <SlotPickerMobile
-          availability={availability} depositPct={depositPct} onConfirm={confirm}
-        />
-      </div>
-      <div className="hidden md:block">
-        <SlotPickerDesktop
-          availability={availability} depositPct={depositPct} onConfirm={confirm}
-        />
-      </div>
+      <VenueTimePicker availability={availability} depositPct={depositPct} onConfirm={confirm} />
     </div>
   );
 }

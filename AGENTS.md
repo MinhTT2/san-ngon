@@ -54,7 +54,7 @@ app/
   (site)/                      header/footer của website
     page.tsx                   landing page
     tim-san/                   tìm kiếm, bộ lọc, số khung trống, phân trang
-    san/[slug]/                lịch sân con và form đặt
+    san/[slug]/                chọn giờ còn sân của cụm và form đặt
     don-cua-toi/                đơn của người chơi
     tai-khoan/                 sửa họ tên, số điện thoại (+84 → 0), ảnh đại diện
     dang-nhap/, dang-ky/        Google hoặc email/mật khẩu; OTP khi đăng ký
@@ -89,7 +89,7 @@ lib/
   format.ts        tiền, giờ, ngày — chỉ format, không tính
   sepay.ts         URL ảnh QR, dò mã đơn trong nội dung chuyển khoản
   notify.ts        Telegram và email, không bao giờ ném lỗi
-  use-availability.ts  một nguồn dữ liệu cho cả hai bố cục lưới
+  use-availability.ts  lịch trống realtime và sân được chọn để đặt
   owner-management.ts  xác thực đầu vào quản lý cụm/sân con
   stats.ts        đọc kết quả thống kê SQL
   supabase/        client, server, admin
@@ -100,9 +100,7 @@ components/
   pitch-scenes.tsx         bóng đá / cầu lông / pickleball — THAY BẰNG ẢNH THẬT
   reveal.tsx               hiện dần khi cuộn tới (IntersectionObserver)
   count-up.tsx             số đếm tăng dần
-  slot-cell.tsx            ô khung giờ, 4 trạng thái
-  slot-picker-mobile.tsx   giờ theo hàng dọc
-  slot-picker-desktop.tsx  sân theo hàng ngang, cả ngày một khung hình
+  venue-time-picker.tsx   chọn môn/thời lượng, giờ còn sân của cả cụm; gợi ý sân rồi cho đổi
   booking-form.tsx         tên, số điện thoại, ghi chú
   site-header.tsx          header trắng dùng chung, có mark
   site-footer.tsx
@@ -122,6 +120,11 @@ sân nằm trên `profiles`; trạng thái hồ sơ và trạng thái cụm sân
 khác nhau.
 
 Đơn gắn vào **sân con** (`courts`), không phải cụm sân — khung giờ bị chiếm là của một sân cụ thể. Muốn biết đơn thuộc cụm nào thì đi qua `courts.venue_id`.
+
+Lịch người chơi gộp theo giờ bắt đầu, không liệt kê từng sân con. Chọn môn
+và thời lượng rồi xem giờ còn sân; chỉ gợi ý sân trống liên tục suốt khoảng
+chơi, ưu tiên tổng giá thấp nhất và cho đổi sân trước khi xác nhận. SQL vẫn
+kiểm tra lịch và tính giá khi tạo đơn.
 
 Một đơn đặt **đúng một sân**. Nhóm muốn hai sân cùng giờ phải tạo hai đơn. Đây là giới hạn có chủ đích của MVP.
 
