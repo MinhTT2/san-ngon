@@ -1,137 +1,186 @@
+<p align="center">
+  <img src="app/icon.svg" width="72" height="72" alt="Logo Sân Ngon">
+</p>
+
 # Sân Ngon
 
-Sân Ngon là website đặt sân thể thao tại Hà Nội: bóng đá 5/7/11 người, cầu
-lông và pickleball. Người chơi xem lịch từng sân, chọn giờ, giữ chỗ
-15 phút và chuyển khoản tiền cọc. Chủ sân quản lý cụm sân, lịch đặt và các
-khoản cần hoàn trong cùng một nơi.
+**Tìm giờ còn sân. Đặt chỗ trực tuyến. Quản lý lịch tập trung.**
 
-MVP phục vụ demo ngày **28/09/2026**, do một người phát triển. Desktop là bố
-cục chính; điện thoại có bố cục rút gọn. Ưu tiên luồng đặt sân và vận hành ít
-điểm hỏng, chưa mở rộng thành hệ thống quản trị toàn diện.
+Website kết nối người chơi và chủ sân thể thao tại Hà Nội, hỗ trợ **bóng đá, cầu lông và pickleball**. Người chơi chọn thời gian, xem sân còn trống và thanh toán qua chuyển khoản. Chủ sân quản lý sân, bảng giá, lịch đặt và các khoản cần hoàn trong cùng một nơi.
 
-## Luồng sản phẩm
+[Truy cập website](https://san-ngon.vercel.app) · [Hướng dẫn thiết lập](docs/dev-setup.md) · [Tài liệu thuyết trình](docs/thuyet-trinh-ky-thuat-de-hieu.md)
 
-### Người chơi
+Sân Ngon được phát triển dưới dạng MVP cho đồ án khởi nghiệp, với bản demo ngày **28/09/2026**. Giao diện ưu tiên trải nghiệm trên máy tính và thích ứng với điện thoại. Kiến trúc hướng tới một nhóm phát triển nhỏ: tập trung vào luồng đặt sân, tính đúng của giao dịch và khả năng vận hành.
 
-1. Tìm cụm sân theo tên/địa chỉ, khu vực, môn, ngày chơi, trong/ngoài nhà và
-   tình trạng còn chỗ. Thẻ sân hiển thị số khung trống, giờ trống sớm nhất và
-   giá từ theo bộ lọc; có sắp xếp và phân trang.
-2. Mở lịch sân con, chọn tối đa ba khung liền nhau trên cùng một sân. Xem lịch
-   không cần tài khoản; đăng nhập khi đặt bằng Google hoặc email/mật khẩu.
-   Đăng ký email cần xác nhận mã OTP.
-3. Nhập thông tin liên hệ, tạo đơn và chuyển khoản theo QR/mã `SANxxxxxx`.
-   Giá và tiền cọc do SQL tính, đóng băng vào đơn.
-4. Theo dõi thanh toán, xem lại đơn, hủy theo chính sách và nhận thông báo
-   trên website. Đơn mới thanh toán trước 100% tiền sân.
+## Trải nghiệm sản phẩm
 
-### Chủ sân và admin
+| Người sử dụng | Chức năng |
+| --- | --- |
+| **Người chơi** | Tìm sân theo khu vực, môn và ngày chơi; xem ảnh thật; chọn giờ còn sân; đặt và thanh toán; theo dõi, hủy đơn; quản lý hồ sơ và ảnh đại diện |
+| **Chủ sân** | Đăng ký xác minh; kết nối tài khoản nhận tiền; quản lý cụm sân, sân con và ảnh; đặt giá theo ngày/giờ; khóa lịch; theo dõi đơn, thống kê và hoàn cọc |
+| **Quản trị viên** | Duyệt hồ sơ chủ sân, xem giấy tờ riêng tư, quản lý tài khoản và thiết lập phí dịch vụ |
 
-1. Người dùng gửi **hồ sơ chủ sân** tại `/dang-ky-san`: thông tin đại diện,
-   loại hình đăng ký, giấy tờ xác minh và tài khoản nhận tiền.
-2. Admin xem hồ sơ, mở giấy tờ qua signed URL rồi duyệt hoặc từ chối. Người
-   bị từ chối có thể gửi lại; người được duyệt mới tạo cụm sân.
-3. Chủ sân tạo cụm sân và sân con trong khu quản lý. Cụm mới ở trạng thái
-   `draft`; lưu **3–8 ảnh thật** qua luồng quản lý ảnh sẽ chuyển sang `active`
-   để xuất hiện ở trang tìm sân. Luồng này không yêu cầu duyệt lại từng cụm;
-   admin vẫn có công cụ xử lý hồ sơ cụm sân `pending` từ luồng cũ.
-4. Chủ sân sửa thông tin cụm/sân con, giá chung, giờ hoạt động; khóa/mở lại
-   lịch theo ngày hoặc khoảng giờ. SQL chặn thay đổi ảnh hưởng đơn đã đặt.
-5. Chủ sân xem lịch bảy ngày, danh sách đơn, thống kê và khoản cần hoàn;
-   xác nhận tay đơn còn hạn khi đã kiểm tra tiền vào, đánh dấu đã hoàn sau
-   khi chuyển tiền thủ công. Telegram báo đơn mới khi đã kết nối bot;
-   email kết quả duyệt hồ sơ dùng Resend nếu được cấu hình.
+### Từ tìm sân đến xác nhận đặt chỗ
 
-## Đặt chỗ và thanh toán
+1. **Tìm địa điểm phù hợp.** Lọc theo tên/địa chỉ, khu vực, môn, ngày chơi, trong/ngoài nhà và tình trạng còn chỗ. Kết quả có giá từ, thông tin khung trống, sắp xếp và phân trang.
+2. **Chọn giờ chơi.** Chọn môn và thời lượng để xem các giờ còn sân của cả cụm. Hệ thống gợi ý sân trống liên tục trong khoảng đã chọn, ưu tiên tổng giá thấp nhất và cho đổi sân trước khi xác nhận.
+3. **Tạo đơn.** Đăng nhập bằng Google hoặc email/mật khẩu; đăng ký email có xác nhận OTP. Hệ thống kiểm tra lịch, tính lại giá và giữ chỗ **15 phút**.
+4. **Chuyển khoản.** QR hiển thị số tiền, tài khoản nhận và mã đơn. Đơn mới thanh toán trước **100% tiền sân**; hệ thống đối chiếu thông báo từ SePay trước khi xác nhận.
+5. **Theo dõi và quản lý.** Checkout và danh sách đơn cập nhật qua realtime, đồng bộ lại khi kết nối trở lại hoặc quay về tab. Người chơi xem đơn, hủy theo chính sách và nhận thông báo trên website.
 
-**Bản demo chỉ nhận đơn cho một chủ sân**, có thể quản lý nhiều cụm sân.
-SQL chặn chủ sân khác nhận đơn dùng chung tài khoản cọc. Kết nối SePay riêng
-cho nhiều chủ sân chỉ triển khai sau khi SePay duyệt ứng dụng OAuth. Xem
-[cấu hình và nghiệm thu](docs/sepay-single-owner.md).
+### Từ đăng ký chủ sân đến công khai địa điểm
 
-Một đơn chỉ gắn với **một sân con** (`courts`), không phải cả cụm (`venues`).
-Muốn đặt hai sân cùng giờ phải tạo hai đơn. Mỗi tài khoản có tối đa hai đơn
-chờ còn hạn. Cọc 100%, bằng đúng tổng tiền sân, không làm tròn thêm. Thời hạn đặt trước mặc định 30 ngày, có thể cấu hình theo cụm.
+**Thông tin đại diện → Giấy tờ → Kết nối SePay → Duyệt tài khoản → Tạo cụm sân → Bổ sung ảnh thật.**
 
-Đơn `pending` giữ chỗ 15 phút. Hết hạn thì khung được coi là trống ngay trong
-SQL, không phải chờ cron; tạo đơn mới cũng giải phóng giữ chỗ đã hết hạn trước
-khi ghi đơn. GiST trên `bookings` là lớp chống đặt trùng cuối cùng.
+Hồ sơ được lưu trước khi chuyển sang SePay cấp quyền, nên người đăng ký có thể quay lại hoàn thành bước kết nối mà không mất giấy tờ. Kết nối thanh toán không tự duyệt tài khoản; quản trị viên vẫn kiểm tra hồ sơ trước khi chủ sân được tạo cụm.
 
-Tiền cọc hiện vào **tài khoản ngân hàng của dự án/người sáng lập**, lấy từ
-biến môi trường trên checkout. Tài khoản trong hồ sơ chủ sân phục vụ vận
-hành và đối soát, chưa tự quyết định QR của từng cụm sân. Chuyển tiền cho chủ
-sân và hoàn cọc đều cần xử lý thủ công.
+Cụm mới ở trạng thái nháp. Lưu **3–8 ảnh thật** sẽ công khai cụm, không cần thêm một vòng duyệt từng địa điểm. Việc nhận đơn còn phụ thuộc điều kiện thanh toán, phí dịch vụ và phạm vi vận hành đang được mở.
 
-SePay gọi `/api/webhooks/sepay` với API key; `confirm_payment` đối chiếu mã,
-số tiền và mã giao dịch. `payments.bank_tx_id` unique chống xử lý lại cùng
-giao dịch. Checkout theo dõi realtime trên dòng đơn, không polling trạng
-thái thanh toán. Webhook đến sau hạn không khôi phục đơn, mà đánh dấu cần
-hoàn; chuyển thiếu không xác nhận đơn.
+Chủ sân có lịch vận hành, bảng giá theo ngày/giờ, khóa/mở khung giờ, danh sách đơn và thống kê. Có thể xác nhận cọc thủ công cho đơn còn hạn sau khi kiểm tra tiền vào; các khoản hoàn được theo dõi và đánh dấu sau khi chuyển hoàn thực tế. Telegram báo đơn mới khi chủ sân đã kết nối bot.
 
-Người chơi hủy trước giờ chơi từ hai giờ trở lên được đánh dấu cần hoàn cọc;
-hủy muộn mất cọc. Chủ sân hủy đơn của khách thì khách được hoàn. **Mốc hai giờ
-vẫn chờ thống nhất với chủ sân**, phải sửa đồng thời SQL, hằng số và nội dung
-chính sách khi chốt. Xem các điểm cần xử lý trước demo trong
-[AGENTS.md](AGENTS.md#việc-cần-chốt-trước-demo).
+## Những quyết định kỹ thuật chính
+
+| Bài toán | Cách Sân Ngon xử lý |
+| --- | --- |
+| Hai người đặt cùng một sân, cùng giờ | Ràng buộc loại trừ **GiST trong PostgreSQL** chặn thời gian chồng lấn ngay khi ghi đơn |
+| Giá hiển thị bị sửa ở trình duyệt | Hàm SQL tra bảng giá, tính tiền và lưu giá vào đơn; API không nhận số tiền do khách quyết định |
+| Giữ chỗ nhưng không thanh toán | Đơn chờ hết hạn sau 15 phút; SQL giải phóng giữ chỗ hết hạn trước khi tạo đơn mới |
+| Webhook bị gửi lại | Kiểm tra mã giao dịch để tránh ghi nhận thanh toán trùng |
+| Thay đổi tài khoản nhận tiền | Lưu bản chụp thông tin người nhận vào từng đơn; đơn cũ giữ nguyên người nhận |
+| Người dùng truy cập dữ liệu của nhau | Supabase Auth, RLS và các hàm SQL kiểm tra vai trò, quyền sở hữu |
+| Sai lệch giờ giữa các thiết bị | Lưu thời gian UTC, xử lý quy đổi sang giờ Việt Nam trong SQL; giao diện chỉ định dạng |
+
+Một cụm sân có thể chứa nhiều sân thuộc các môn khác nhau. **Mỗi đơn gắn với đúng một sân con**; cùng giờ vẫn có thể đặt các sân khác nhau. Mỗi tài khoản có tối đa hai đơn chờ còn hạn. Thời hạn đặt trước mặc định 30 ngày, cấu hình theo cụm trong khoảng 1–180 ngày.
+
+## Kiến trúc
+
+```mermaid
+flowchart LR
+    Browser["Trình duyệt"] -->|"Yêu cầu đặt và quản lý sân"| Next["Next.js · API"]
+    Next -->|"Gọi hàm SQL theo quyền người dùng"| DB["PostgreSQL · Nghiệp vụ và RLS"]
+    Browser <-->|"Đăng nhập, tệp và cập nhật trạng thái"| Services["Supabase · Auth, Storage, Realtime"]
+    DB -->|"Thay đổi dữ liệu"| Services
+    SePay["SePay"] -->|"Webhook giao dịch"| Next
+```
+
+**Nghiệp vụ nằm trong PostgreSQL:** tính giá, kiểm tra lịch, tạo/hủy đơn và xác nhận thanh toán. Next.js xác thực người dùng, kiểm tra đầu vào, gọi hàm SQL và chuyển lỗi thành thông báo tiếng Việt. Dự án gọi Supabase/RPC trực tiếp, không dùng ORM.
+
+Giấy tờ chủ sân nằm trong bucket riêng tư; quản trị viên đọc qua liên kết có thời hạn. Ảnh sân nằm trong bucket công khai riêng. Token và khóa webhook SePay được mã hóa AES-256-GCM khi lưu. Client có quyền service role chỉ dùng trong các route tích hợp SePay và webhook SePay; trang admin dùng phiên người dùng với RPC kiểm tra quyền.
+
+| Thành phần | Công nghệ |
+| --- | --- |
+| Website và API | Next.js 15 App Router, React 19, TypeScript |
+| Giao diện | Tailwind CSS v4, Bricolage Grotesque, Be Vietnam Pro |
+| Dữ liệu và dịch vụ nền | Supabase: PostgreSQL, Auth, Realtime, Storage |
+| Thanh toán | SePay OAuth, QR chuyển khoản, webhook xác nhận giao dịch |
+| Thông báo | Thông báo trong website, Telegram; email qua Resend khi được cấu hình |
+| Môi trường chạy | Node.js 24.x, Vercel; Supabase từ xa, ưu tiên region Singapore |
+
+## Thanh toán và phí dịch vụ
+
+### Tiền đặt sân
+
+SePay đã cấp OAuth; chủ sân kết nối tại bước cuối của `/dang-ky-san` hoặc quản lý kết nối tại `/chu-san/thanh-toan`. Một chủ sân sử dụng một tài khoản nhận cọc cho tất cả cụm sân. Hệ thống lưu kết nối, ngân hàng, số tài khoản và tên người nhận vào đơn để tạo QR và đối soát.
+
+Webhook dùng API key để xác thực. Hệ thống kiểm tra mã đơn `SANxxxxxx`, người nhận, số tiền và mã giao dịch trước khi xác nhận. Chuyển thiếu không xác nhận đơn; tiền đến sau khi đơn hết hạn không khôi phục lịch mà được ghi nhận để xử lý hoàn. Checkout nhận thay đổi qua realtime, không polling trạng thái thanh toán. Lịch chọn sân có thêm tải lại định kỳ và khi quay lại tab.
+
+**Phạm vi demo mặc định chỉ mở nhận đơn cho một chủ sân.** Kết nối OAuth đã có trong code; cờ `multi_owner_enabled` chỉ được bật sau khi nghiệm thu OAuth, QR và chuyển khoản thật. Chủ sân demo tiếp tục dùng cấu hình cũ cho đến khi hoàn tất kết nối OAuth; webhook cũ được giữ để đối soát các đơn cũ. Xem [hướng dẫn SePay hiện hành](docs/sepay-single-owner.md) để cấu hình và chuyển đổi.
+
+Hoàn tiền thực hiện thủ công. Chính sách hiện dùng mốc hủy trước giờ chơi từ **hai giờ** trở lên để xét hoàn cọc; mốc này còn chờ thống nhất với chủ sân. Chủ sân hủy đơn của khách thì khách được hoàn. Về trang chủ hoặc đóng checkout không hủy giữ chỗ; nút hủy giúp trả lịch ngay.
+
+### Phí sử dụng website
+
+Mặc định chủ sân được miễn phí. Quản trị viên có thể bật mức **299.000đ/tháng/chủ sân**, áp dụng cho toàn bộ cụm sân của tài khoản đó. Chủ sân thanh toán tại `/chu-san/phi-dich-vu` với mã `PHIxxxxxxxx`, tách biệt với tiền đặt sân.
+
+SePay xác nhận khoản phí hợp lệ để gia hạn; gửi lại giao dịch không gia hạn lặp. Khi phí hết hạn, hệ thống chặn đăng sân và nhận đơn mới nhưng vẫn cho xử lý đơn cũ. Chi tiết tại [tài liệu phí dịch vụ](docs/owner-subscriptions.md).
 
 ## Chạy dự án
 
-Cần Node.js **24.x** và project Supabase từ xa, ưu tiên region Singapore.
-Không cần Docker cho luồng phát triển chính.
+Cần **Node.js 24.x**, npm và một project **Supabase từ xa**. Docker không bắt buộc.
 
 ```bash
+git clone https://github.com/MinhTT2/san-ngon.git
+cd san-ngon
 npm ci
 cp .env.example .env.local
-# Điền biến Supabase theo .env.example
+```
+
+Điền `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` vào `.env.local`, rồi kiểm tra cấu hình:
+
+```bash
 npm run setup:check
+```
+
+Với project Supabase mới, hoàn tất database, Auth, Storage và realtime theo [hướng dẫn thiết lập](docs/dev-setup.md) trước khi thử luồng đặt sân. **`supabase/migrations/` là nguồn schema và hàm hiện tại**; không dùng bộ SQL đánh số cũ hoặc seed cũ để thay thế migrations.
+
+```bash
 npm run dev
 ```
 
-Mở <http://localhost:3000>. Hai biến Supabase chỉ đủ kết nối app; database,
-Auth và thanh toán cần được thiết lập theo [docs/dev-setup.md](docs/dev-setup.md).
+Mở **http://localhost:3000**. Hai biến Supabase chỉ cung cấp kết nối cơ bản; OAuth, webhook, email và Telegram cần cấu hình tương ứng trong [.env.example](.env.example). Phần thanh toán dùng [hướng dẫn SePay hiện hành](docs/sepay-single-owner.md), bao gồm các biến OAuth và cách giữ kết nối cũ. `setup:check` hỗ trợ kiểm tra biến môi trường, không thay thế nghiệm thu tích hợp.
+
+### Kiểm tra chất lượng
 
 ```bash
-npm run ci  # lint, typecheck, build
+npm run ci
 ```
 
-CI chạy cùng lệnh khi push `main` hoặc mở PR. Chưa có bộ test tự động nghiệp
-vụ; các bước kiểm tra demo thủ công nằm trong hướng dẫn thiết lập.
+Lệnh chạy **ESLint → TypeScript → production build**, cũng được thực thi trong GitHub Actions khi push `main` hoặc mở pull request.
 
-## Các route chính
+Repo có các script kiểm tra riêng trong [`scripts/`](scripts/) cho giữ chỗ, bảng giá, quyền truy cập, SePay, phí dịch vụ và giao diện. Các script SQL tạo dữ liệu thử trong transaction rồi rollback; chúng không tự chạy trong `npm run ci`. Luồng trên trình duyệt, email và chuyển khoản thật cần nghiệm thu theo [checklist MVP](docs/mvp-acceptance.md).
 
-| Route | Mục đích |
+## Cấu trúc mã nguồn
+
+```text
+app/
+  (site)/               Trang công khai, tìm sân, tài khoản, đơn người chơi
+  (owner)/              Quản lý sân, lịch, giá, kết nối thanh toán và phí
+  admin/                Duyệt hồ sơ, quản lý tài khoản và phí dịch vụ
+  dat-san/[code]/       Checkout và theo dõi thanh toán
+  api/                  Xác thực đầu vào, gọi RPC và tích hợp dịch vụ
+  auth/                 Callback đăng nhập và đăng xuất
+components/             Thành phần giao diện dùng chung
+lib/                    Kiểu dữ liệu, Supabase client và các tiện ích
+supabase/migrations/    Schema, RLS và hàm nghiệp vụ theo phiên bản
+scripts/                Kiểm tra và hỗ trợ vận hành
+docs/                   Hướng dẫn thiết lập, nghiệm thu và thuyết trình
+```
+
+<details>
+<summary><strong>Các đường dẫn chính</strong></summary>
+
+| Đường dẫn | Chức năng |
 | --- | --- |
-| `/`, `/tim-san`, `/san/[slug]` | Trang chủ, tìm cụm sân, lịch và đặt sân con |
-| `/dang-nhap`, `/dang-ky` | Đăng nhập, đăng ký tài khoản người dùng |
-| `/dat-san/[code]` | QR, đếm ngược giữ chỗ và trạng thái thanh toán |
-| `/don-cua-toi`, `/thong-bao` | Đơn và thông báo của người dùng |
-| `/dang-ky-san` | Gửi/theo dõi hồ sơ chủ sân |
-| `/chu-san` | Tổng quan, thống kê, lịch bảy ngày và khoản cần hoàn |
-| `/chu-san/quan-ly`, `/tao-cum-san` | Quản lý cụm/sân con, ảnh và tạo cụm mới |
-| `/chu-san/lich`, `/chu-san/don` | Lịch vận hành, khóa lịch và danh sách đơn |
-| `/admin`, `/admin/owners/[id]` | Tổng quan vận hành và duyệt hồ sơ chủ sân |
+| `/`, `/tim-san`, `/san/[slug]` | Trang chủ, tìm sân, ảnh và chọn giờ |
+| `/dang-nhap`, `/dang-ky`, `/quen-mat-khau` | Đăng nhập, đăng ký, khôi phục mật khẩu |
+| `/tai-khoan` | Họ tên, số điện thoại và ảnh đại diện |
+| `/dat-san/[code]` | Thanh toán và trạng thái giữ chỗ |
+| `/don-cua-toi`, `/thong-bao` | Đơn và thông báo người chơi |
+| `/dang-ky-san` | Hồ sơ xác minh chủ sân và kết nối SePay |
+| `/chu-san` | Tổng quan, thống kê và khoản cần hoàn |
+| `/chu-san/quan-ly`, `/tao-cum-san` | Quản lý cụm, sân con và ảnh |
+| `/chu-san/lich`, `/chu-san/don` | Lịch vận hành và danh sách đơn |
+| `/chu-san/bang-gia/[id]` | Giá theo ngày và khung giờ |
+| `/chu-san/thanh-toan`, `/chu-san/phi-dich-vu` | Kết nối SePay và thanh toán phí website |
+| `/admin`, `/admin/owners/[id]`, `/admin/users` | Duyệt hồ sơ và quản lý tài khoản |
+| `/admin/phi-dich-vu` | Bật/tắt thu phí và theo dõi phí chủ sân |
 | `/chinh-sach-huy`, `/lien-he` | Chính sách và hỗ trợ |
 
-Checkout có header gọn, nút về trang chủ và không có footer. Về trang chủ
-không hủy giữ chỗ; dùng nút hủy để trả lịch ngay. Khu chủ sân và admin có bố
-cục quản lý riêng.
+</details>
 
-## Kiến trúc và tài liệu
+## Phạm vi và nghiệm thu
 
-- Next.js 15 App Router, React 19, TypeScript, Tailwind CSS v4 và Supabase
-  (Postgres, Auth, Realtime, Storage).
-- SQL giữ logic giá, lịch, tạo/hủy đơn, thanh toán và quyền vận hành. Next.js
-  kiểm tra đầu vào, xác thực, gọi RPC và dịch lỗi tiếng Việt.
-- Giá do server tính; database lưu `timestamptz` UTC, quy đổi giờ Hà Nội trong
-  SQL. Frontend format giờ, không tự cộng/trừ múi giờ.
-- RLS giới hạn dữ liệu theo người dùng; service role chỉ dùng trong webhook
-  SePay. Không ORM, state manager, thư viện form hay animation riêng.
-- [supabase/migrations/](supabase/migrations/) là nguồn schema/functions hiện
-  tại. Không dựng môi trường mới bằng bộ `01_schema.sql`–`04_seed.sql` cũ.
-- [AGENTS.md](AGENTS.md) ghi nguyên tắc phát triển, thiết kế và phần còn thiếu.
-- [docs/dev-setup.md](docs/dev-setup.md) hướng dẫn database, Auth, webhook,
-  dữ liệu demo và deploy Vercel.
+Luồng hiện có bao gồm xác minh chủ sân, quản lý sân và ảnh thật, bảng giá, khóa lịch, đặt sân, thanh toán, hủy/hoàn, thống kê, hồ sơ cá nhân và phí dịch vụ. Trước khi mở vận hành rộng, cần hoàn tất nghiệm thu chuyển khoản thật, cấu hình gửi email và thống nhất quy trình hoàn tiền. Có chức năng trong mã nguồn không đồng nghĩa dịch vụ bên ngoài đã được cấu hình và kiểm tra trên môi trường triển khai.
 
-Bản đồ, đánh giá sao, tìm đối, ví nội bộ, hoàn tiền tự động, Zalo OA, email
-thông báo đơn cho người chơi và ứng dụng native nằm ngoài MVP. Email xác
-thực tài khoản vẫn có. Upload ảnh sân và trang admin tối thiểu đã nằm trong
-sản phẩm hiện tại.
+Bản đồ, đánh giá sao, tìm đối ghép kèo, ví nội bộ, hoàn tiền tự động, Zalo OA, email thông báo đơn cho người chơi và ứng dụng native nằm ngoài MVP. Email xác thực tài khoản vẫn thuộc phạm vi sản phẩm.
+
+## Tài liệu
+
+| Tài liệu | Dành cho |
+| --- | --- |
+| [Thuyết trình kỹ thuật dễ hiểu](docs/thuyet-trinh-ky-thuat-de-hieu.md) | Người giới thiệu sản phẩm, có bài nói mẫu và câu hỏi thường gặp |
+| [Thiết lập và vận hành](docs/dev-setup.md) | Người dựng môi trường, cấu hình Auth/database và triển khai |
+| [SePay: cấu hình, OAuth và nghiệm thu](docs/sepay-single-owner.md) | Người thiết lập và đối soát thanh toán |
+| [Phí dịch vụ chủ sân](docs/owner-subscriptions.md) | Người vận hành tính năng thu phí tháng |
+| [Checklist nghiệm thu MVP](docs/mvp-acceptance.md) | Người kiểm tra luồng thực tế trước khi đưa vào sử dụng |
+| [Nguyên tắc phát triển](AGENTS.md) | Người tiếp tục phát triển hoặc bảo trì dự án |
