@@ -1186,6 +1186,7 @@ export type Database = {
         Args: { p_status: string; p_venue_id: string }
         Returns: undefined
       }
+      set_profile_avatar: { Args: { p_path: string }; Returns: Json }
       slugify: { Args: { p_text: string }; Returns: string }
       unaccent_vi: { Args: { p_text: string }; Returns: string }
       update_court: {

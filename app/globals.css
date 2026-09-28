@@ -211,3 +211,25 @@ button:disabled,
     animation: checkout-check 0.65s ease-out;
   }
 }
+
+/* Hồ sơ: nền phẳng, chuyển động ngắn; nội dung luôn hiện khi JS chưa chạy. */
+.profile-page :is(button, a):focus-visible { outline: 2px solid var(--color-pitch); outline-offset: 4px; }
+@keyframes profile-enter { from { transform: translateY(16px); } to { transform: none; } }
+@keyframes profile-court { from { transform: scale(1.08) rotate(-3deg); } to { transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: no-preference) {
+  .profile-enter { animation: profile-enter 650ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+  .profile-delay-1 { animation-delay: 60ms; }
+  .profile-delay-2 { animation-delay: 130ms; }
+  .profile-delay-3 { animation-delay: 200ms; }
+  .profile-court { animation: profile-court 1.2s ease-out; }
+  .profile-input, .profile-upload { transition: border-color 180ms, background-color 180ms; }
+  .profile-upload-icon, .profile-link-arrow { transition: transform 220ms ease-out; }
+  .profile-shortcut { transition: transform 220ms ease-out, border-color 220ms; }
+  .profile-feedback { animation: pf-settle 240ms ease-out; }
+}
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .profile-upload:hover .profile-upload-icon { transform: translateY(-3px) rotate(-8deg); }
+  .profile-shortcut:hover { transform: translateY(-3px); border-color: var(--color-pitch); }
+  .profile-shortcut:hover .profile-link-arrow { transform: translate(2px, -2px); }
+  .profile-save:hover { background-color: var(--color-success); }
+}

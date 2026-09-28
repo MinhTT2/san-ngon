@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { UserAvatar } from './user-avatar';
 
 /**
  * Menu tài khoản. Thông báo có nút chuông riêng trên header để không lặp lại
@@ -10,7 +11,7 @@ import Link from 'next/link';
  * Nút đăng xuất là <form method="post"> chứ không phải onClick: cookie phiên
  * do server xoá, nên vẫn chạy kể cả khi JavaScript chưa kịp tải.
  */
-export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isOwner: boolean; isAdmin?: boolean }) {
+export function UserMenu({ name, avatar = null, isOwner, isAdmin = false }: { name: string; avatar?: string | null; isOwner: boolean; isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -31,9 +32,7 @@ export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isO
         className="pf-action flex h-11 items-center gap-2 rounded-pill border border-hairline pl-4 pr-2 text-sm hover:border-pitch"
       >
         <span className="hidden max-w-36 truncate sm:inline">{name}</span>
-        <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-pitch text-xs font-semibold text-pitch-ink">
-          {name.slice(0, 1).toUpperCase()}
-        </span>
+        <UserAvatar name={name} avatar={avatar} className="size-7 text-xs" />
       </button>
 
       {open && (

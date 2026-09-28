@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { normalizePhone } from '@/lib/profile';
 
 const Body = z.object({
   full_name: z.string().trim().min(2, 'Họ tên cần ít nhất 2 ký tự.').max(100, 'Họ tên không quá 100 ký tự.'),
-  phone: z.string().trim().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.'),
+  phone: z.string().max(30).transform(normalizePhone).pipe(z.string().regex(/^0\d{9}$/)),
 }).strict();
 
 export async function PATCH(req: NextRequest) {
