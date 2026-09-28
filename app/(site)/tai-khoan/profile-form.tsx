@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Camera, Check, CheckCheck, CircleUserRound, ImagePlus, LoaderCircle, LockKeyhole, Mail, Phone, Save, Ticket, Trash2, UserRound } from 'lucide-react';
+import { ArrowUpRight, Camera, Check, CheckCheck, CircleUserRound, LoaderCircle, LockKeyhole, Mail, Phone, Save, Ticket, Trash2, UserRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { normalizePhone } from '@/lib/profile';
 import { UserAvatar } from '@/components/user-avatar';
@@ -24,7 +24,6 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
   const [photo, setPhoto] = useState(avatar);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoMessage, setPhotoMessage] = useState<string | null>(null);
   const roleLabel = role === 'admin' ? 'Quản trị viên' : role === 'owner' ? 'Chủ sân' : 'Người chơi';
@@ -97,7 +96,7 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
           <div className="-mt-12 flex items-end justify-between gap-3">
             <div className="group relative rounded-full border-[6px] border-card bg-card">
               <UserAvatar name={name} avatar={preview ?? photo} className={`size-24 text-4xl ${uploading ? 'opacity-60' : ''}`} />
-              <button type="button" aria-label="Đổi ảnh đại diện" disabled={uploading} onClick={() => fileInput.current?.click()}
+              <button type="button" aria-label="Chọn ảnh đại diện" title="Chọn ảnh đại diện" disabled={uploading} onClick={() => fileInput.current?.click()}
                 className="pf-action absolute -bottom-1 -right-1 grid size-9 place-items-center rounded-full border-[3px] border-card bg-pitch text-pitch-ink disabled:opacity-60">
                 {uploading ? <LoaderCircle aria-hidden="true" className="pf-spin size-4" /> : <Camera aria-hidden="true" className="size-4" />}
               </button>
@@ -109,16 +108,7 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
           <div className="my-5 h-px bg-hairline" />
           <input ref={fileInput} type="file" aria-label="Chọn ảnh đại diện" accept="image/jpeg,image/png,image/webp" hidden
             onChange={(event) => { const file = event.target.files?.[0]; if (file) void changePhoto(file); }} />
-          <button type="button" disabled={uploading} onClick={() => fileInput.current?.click()}
-            onDragOver={(event) => { event.preventDefault(); if (!uploading) setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files[0]; if (file) void changePhoto(file); }}
-            className={`profile-upload group flex w-full flex-col items-center rounded-control border border-dashed px-4 py-5 disabled:opacity-60 ${dragging ? 'border-pitch bg-free-fill' : 'border-strong bg-page hover:border-pitch hover:bg-free-fill'}`}>
-            <ImagePlus aria-hidden="true" className="profile-upload-icon mb-2.5 size-6 text-pitch" strokeWidth={1.5} />
-            <span className="text-sm font-semibold text-pitch">{uploading ? 'Đang cập nhật ảnh…' : 'Thêm một chút cá tính'}</span>
-            <span className="mt-1 text-xs leading-5 text-ink-secondary">Kéo thả hoặc bấm để chọn ảnh</span>
-            <span className="mt-2 text-[10px] text-ink-secondary">JPG, PNG, WebP · Tối đa 5 MB</span>
-          </button>
+          <p className="text-center text-[11px] text-ink-secondary">JPG, PNG, WebP · Tối đa 5 MB</p>
           {photo && <button type="button" disabled={uploading} onClick={() => void changePhoto(null)} className="pf-action mx-auto mt-3 flex items-center gap-1.5 rounded-control px-3 py-2 text-xs text-ink-secondary hover:text-danger disabled:opacity-50"><Trash2 aria-hidden="true" className="size-3.5" />Xóa ảnh đại diện</button>}
           <p className="mt-3 text-center text-[11px] leading-5 text-ink-secondary">Ảnh được lưu ngay và hiển thị trên tài khoản.</p>
           {photoError && <p role="alert" className="mt-3 text-sm leading-5 text-danger">{photoError}</p>}

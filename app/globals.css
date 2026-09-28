@@ -222,13 +222,12 @@ button:disabled,
   .profile-delay-2 { animation-delay: 130ms; }
   .profile-delay-3 { animation-delay: 200ms; }
   .profile-court { animation: profile-court 1.2s ease-out; }
-  .profile-input, .profile-upload { transition: border-color 180ms, background-color 180ms; }
-  .profile-upload-icon, .profile-link-arrow { transition: transform 220ms ease-out; }
+  .profile-input { transition: border-color 180ms, background-color 180ms; }
+  .profile-link-arrow { transition: transform 220ms ease-out; }
   .profile-shortcut { transition: transform 220ms ease-out, border-color 220ms; }
   .profile-feedback { animation: pf-settle 240ms ease-out; }
 }
 @media (prefers-reduced-motion: no-preference) and (hover: hover) {
-  .profile-upload:hover .profile-upload-icon { transform: translateY(-3px) rotate(-8deg); }
   .profile-shortcut:hover { transform: translateY(-3px); border-color: var(--color-pitch); }
   .profile-shortcut:hover .profile-link-arrow { transform: translate(2px, -2px); }
   .profile-save:hover { background-color: var(--color-success); }
