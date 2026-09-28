@@ -16,7 +16,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
   const [{ count: unreadCount }, { data: profile }, { data: notifications, error: notificationsError }] = user
     ? await Promise.all([
       supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null),
-      supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('role, full_name').eq('id', user.id).maybeSingle(),
       supabase.from('notifications').select('id, title, body, read_at, created_at, booking_id')
         .eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
     ])
@@ -80,7 +80,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
           )}
 
           {user ? (
-            <UserMenu name={user.user_metadata?.full_name ?? user.email ?? 'Tài khoản'} isOwner={isOwner} isAdmin={isAdmin} />
+            <UserMenu name={profile?.full_name || user.user_metadata?.full_name || user.email || 'Tài khoản'} isOwner={isOwner} isAdmin={isAdmin} />
           ) : (
             <Link href="/dang-nhap" className="pf-action flex h-11 items-center rounded-control bg-pitch px-5 text-[15px] font-semibold text-pitch-ink">
               Đăng nhập

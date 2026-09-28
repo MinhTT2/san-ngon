@@ -26,6 +26,7 @@ export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isO
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-label={`Menu tài khoản: ${name}`}
         aria-haspopup="menu"
         className="pf-action flex h-11 items-center gap-2 rounded-pill border border-hairline pl-4 pr-2 text-sm hover:border-pitch"
       >
@@ -48,6 +49,7 @@ export function UserMenu({ name, isOwner, isAdmin = false }: { name: string; isO
             role="menu"
             className="pf-menu absolute right-0 top-13 z-20 flex w-56 flex-col rounded-control border border-hairline bg-card py-1.5"
           >
+            <Item href="/tai-khoan" onNavigate={() => setOpen(false)}>Thông tin tài khoản</Item>
             <Item href="/don-cua-toi" onNavigate={() => setOpen(false)}>Đơn của tôi</Item>
             {isOwner ? (
               <Item href="/chu-san" onNavigate={() => setOpen(false)}>Trang quản lý</Item>

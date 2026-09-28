@@ -1221,6 +1221,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      update_profile: {
+        Args: { p_full_name: string; p_phone: string }
+        Returns: Json
+      }
       update_venue: {
         Args: {
           p_address: string

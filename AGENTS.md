@@ -56,6 +56,7 @@ app/
     tim-san/                   tìm kiếm, bộ lọc, số khung trống, phân trang
     san/[slug]/                lịch sân con và form đặt
     don-cua-toi/                đơn của người chơi
+    tai-khoan/                 sửa họ tên, số điện thoại của tài khoản
     dang-nhap/, dang-ky/        Google hoặc email/mật khẩu; OTP khi đăng ký
     dang-ky-san/               gửi và theo dõi hồ sơ chủ sân
     thong-bao/                 thông báo trong website
@@ -136,6 +137,7 @@ Một đơn đặt **đúng một sân**. Nhóm muốn hai sân cùng giờ ph�
 | `get_venue_availability` | anon, authenticated | lịch trống cả cụm; chỉ trả trạng thái, không lộ thông tin khách |
 | `create_booking` | authenticated | tạo đơn, tự tính giá |
 | `cancel_booking` | authenticated | hủy đơn, tự quyết cọc có được hoàn |
+| `update_profile` | authenticated, RLS hồ sơ của chính mình | sửa họ tên và số điện thoại |
 | `register_owner` | authenticated | gửi hồ sơ xác minh chủ sân |
 | `review_owner`, `review_venue` | authenticated, kiểm tra admin trong SQL | duyệt hồ sơ chủ sân/cụm sân |
 | `create_venue`, `update_venue`, `delete_venue` | authenticated, kiểm tra quyền trong SQL | quản lý cụm sân |
