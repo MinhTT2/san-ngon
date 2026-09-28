@@ -4,7 +4,7 @@
 
 ## Sản phẩm
 
-Marketplace hai phía đặt sân thể thao ở Hà Nội: bóng đá, cầu lông, pickleball, tennis. Người chơi xem lịch trống theo thời gian thực rồi chốt sân bằng tiền cọc chuyển khoản. Chủ sân không phải nghe điện thoại.
+Marketplace hai phía đặt sân thể thao ở Hà Nội: bóng đá, cầu lông, pickleball. Người chơi xem lịch trống theo thời gian thực rồi chốt sân bằng tiền cọc chuyển khoản. Chủ sân không phải nghe điện thoại.
 
 **Đây là sản phẩm web, không phải app.** Bố cục desktop là bố cục chính, điện thoại là bản rút gọn. Viết Tailwind theo hướng mobile-first nhưng thiết kế nghĩ từ desktop xuống.
 

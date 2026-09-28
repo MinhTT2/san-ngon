@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Sân Ngon — Đặt sân thể thao ở Hà Nội',
   description:
-    'Tìm sân bóng, cầu lông, pickleball, tennis còn chỗ ở Hà Nội. Xem lịch, biết giá, đặt cọc dễ dàng bằng chuyển khoản.',
+    'Tìm sân bóng, cầu lông, pickleball còn chỗ ở Hà Nội. Xem lịch, biết giá, đặt cọc dễ dàng bằng chuyển khoản.',
   openGraph: {
     title: 'Tối nay chơi gì? Chọn sân, hẹn bạn, lên đường',
     description: 'Chọn sân gần bạn, giữ giờ đẹp, cọc 100% qua QR, thanh toán trọn tiền sân khi đặt.',

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const VenueSearchParams = z.object({
   q: z.string().trim().max(100).catch(''),
-  sport: z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball', 'tennis']).optional().catch(undefined),
+  sport: z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball']).optional().catch(undefined),
   ngay: z.string().date().refine(value => !value.startsWith('0000')).optional().catch(undefined),
   district: z.string().optional().catch(undefined),
   indoor: z.enum(['0', '1']).optional().catch(undefined),

@@ -1,7 +1,7 @@
 # Sân Ngon
 
 Sân Ngon là website đặt sân thể thao tại Hà Nội: bóng đá 5/7/11 người, cầu
-lông, pickleball và tennis. Người chơi xem lịch từng sân, chọn giờ, giữ chỗ
+lông và pickleball. Người chơi xem lịch từng sân, chọn giờ, giữ chỗ
 15 phút và chuyển khoản tiền cọc. Chủ sân quản lý cụm sân, lịch đặt và các
 khoản cần hoàn trong cùng một nơi.
 

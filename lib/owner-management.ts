@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const Time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Nhập giờ hợp lệ.');
-const Sport = z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball', 'tennis']);
+const Sport = z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball']);
 const Price = z.number().int('Giá phải là số nguyên.').min(1000, 'Nhập giá từ 1.000 đồng/giờ.').max(10_000_000, 'Giá tối đa 10.000.000 đồng/giờ.');
 const VenueShape = z.object({
   name: z.string().trim().min(3, 'Nhập tên cụm sân, ít nhất 3 ký tự.').max(120, 'Tên cụm sân không quá 120 ký tự.'),
@@ -25,7 +25,7 @@ export const VenueCreateBody = VenueShape.extend({
     sport: Sport,
     court_count: z.number().int('Nhập số sân nguyên.').min(1, 'Cần ít nhất 1 sân.').max(20, 'Tối đa 20 sân.'),
     price_per_hour: Price,
-  })).min(1, 'Chọn ít nhất một môn thể thao.').max(6).superRefine((sports, ctx) => {
+  })).min(1, 'Chọn ít nhất một môn thể thao.').max(5).superRefine((sports, ctx) => {
     if (new Set(sports.map((item) => item.sport)).size !== sports.length) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Mỗi môn thể thao chỉ chọn một lần.' });
     if (sports.reduce((total, item) => total + item.court_count, 0) > 20) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tổng số sân con không được quá 20 sân.' });
   }),

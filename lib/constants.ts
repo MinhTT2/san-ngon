@@ -30,7 +30,6 @@ export const SPORT_LABELS: Record<string, string> = {
   football11: 'Bóng đá 11 người',
   badminton: 'Cầu lông',
   pickleball: 'Pickleball',
-  tennis: 'Tennis',
 };
 
 export const BOOKING_STATUS_LABELS: Record<string, string> = {
