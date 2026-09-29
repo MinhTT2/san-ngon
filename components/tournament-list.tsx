@@ -8,7 +8,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   let query = db.from('tournaments').select('*', { count: 'exact' }).order('created_at', { ascending: false });
-  if (mode === 'public') query = query.eq('status', 'published');
+  if (mode === 'public') query = query.eq('status', status === 'completed' ? 'completed' : 'published');
   else if (Object.hasOwn(tournamentStatuses, status)) query = query.eq('status', status as 'pending');
   if (mode === 'mine') query = query.eq('manager_id', user?.id ?? '00000000-0000-0000-0000-000000000000');
   if (mode === 'owner' && user) {

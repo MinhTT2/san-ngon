@@ -44,7 +44,7 @@ export default async function Page() {
               className={`group rounded-card border p-4 ${notification.read_at ? 'border-hairline bg-card' : 'border-strong bg-free-fill'}`}
             >
               <div className="flex items-start justify-between gap-4">
-                <Link
+                <a
                   href={`/api/notifications/${notification.id}/open`}
                   className="min-w-0 flex-1 rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-pitch"
                   aria-label={`Mở thông báo: ${notification.title}`}
@@ -54,7 +54,7 @@ export default async function Page() {
                   <p className="mt-2 text-xs text-ink-secondary">
                     {dayLabel(new Date(notification.created_at))} · {hhmm(notification.created_at)}
                   </p>
-                </Link>
+                </a>
                 {!notification.read_at && (
                   <form action={`/api/notifications/${notification.id}/read`} method="post" className="flex-none">
                     <button type="submit" className="text-xs font-semibold text-pitch underline underline-offset-2">

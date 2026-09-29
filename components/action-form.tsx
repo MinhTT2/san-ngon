@@ -25,8 +25,8 @@ export function ActionForm({ children, payload = {}, nested = false, endpoint = 
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Chưa lưu được.');
       setMessage(successMessage);
-      if (successHref) router.push(successHref === 'tournament' ? `/giai-dau/${result.data}` : successHref);
-      router.refresh();
+      if (successHref) window.location.assign(successHref === 'tournament' ? `/giai-dau/${result.data}` : successHref);
+      else router.refresh();
     } catch (error) { setFailed(true); setMessage(error instanceof Error ? error.message : 'Không kết nối được. Thử lại nhé.'); }
     finally { setBusy(false); }
   }

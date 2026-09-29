@@ -218,9 +218,28 @@ tự đồng bộ khi kết nối lại hoặc quay về tab. Hoàn tiền vẫn
 đóng băng khi duyệt đăng ký. `sepay_transfer_claims` chống một giao dịch
 được dùng lại giữa các luồng sân/giải/phí. Hoàn tiền vẫn thủ công.
 
+Hạn nhận/duyệt đăng ký và hạn thanh toán giải tách riêng; SQL đóng băng hạn
+cọc từng suất, mặc định 24 giờ sau duyệt và không vượt hạn cuối của giải.
+Cron `tournament-deadlines` dọn suất hết hạn và hoàn tất giải, nhưng kiểm tra
+quy mô/nhận tiền không phụ thuộc cron. Đăng ký lại tạo bản ghi và mã mới.
+Người đề xuất sửa/gửi lại giải chờ hoặc bị từ chối, không sửa giải công khai.
+
+Chính sách giải mới đã chốt: tự hủy trước ít nhất 24 giờ hoàn toàn bộ cọc,
+muộn hơn không hoàn; ban tổ chức hủy suất/giải hoàn toàn bộ. Giải cũ giữ
+chính sách đã công bố; hạn hoàn nằm trên từng đăng ký. Quy tắc này riêng
+với giải đấu, không thay mốc 2 giờ của đơn đặt sân thường.
+
+Admin ghi thỏa thuận tiền thuê sân trước khi công khai giải. Chủ sân thu
+cọc/phần còn lại, ghi chứng từ; SQL tính số dư quyết toán sau giải và sau
+khi hoàn tiền. Bên trả ghi đã chuyển, bên nhận xác nhận đã nhận; không tự
+chuyển tiền. Sổ quyết toán riêng tư, trình duyệt không được ghi trực tiếp.
+Thông báo giải dùng inbox hiện có và dẫn về đúng giải.
+
 `/ket-noi` là danh bạ người chơi tự liên hệ, không phải ghép đối hay chat.
 Hồ sơ `community_profiles` mặc định ẩn, chỉ công khai khi người dùng đồng ý;
-ảnh dùng avatar hiện có. Không mở quyền đọc công khai bảng `profiles`.
+ảnh dùng avatar hiện có. Từng kênh liên hệ có công tắc công khai riêng;
+RPC phải ẩn giá trị kênh không được chọn ngay trong SQL. Giờ thường chơi
+là mô tả, không phải lịch trống. Không mở quyền đọc công khai bảng `profiles`.
 Xem [luồng và kiểm tra giải đấu/kết nối](docs/tournaments-community.md).
 
 ## Phí sử dụng website

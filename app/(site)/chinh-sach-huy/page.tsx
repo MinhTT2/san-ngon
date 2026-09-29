@@ -52,7 +52,8 @@ export default function Page() {
         chuyển về tài khoản. Bạn có thể theo dõi trong Đơn của tôi và liên hệ chủ sân kèm mã đơn.
       </p>
 
-      <dl className="mt-9 flex flex-col">
+      <h2 className="mt-9 font-display text-2xl font-bold text-pitch">Đặt sân thông thường</h2>
+      <dl className="mt-5 flex flex-col">
         {rules.map(([q, a], i) => (
           <div
             key={q}
@@ -68,6 +69,16 @@ export default function Page() {
         Mốc {CANCEL_WINDOW_HOURS} tiếng đang được thống nhất lại với các chủ sân đầu tiên. Nếu có
         thay đổi, chính sách áp dụng cho đơn đặt sau ngày công bố, không hồi tố.
       </p>
+      <section className="mt-10 rounded-card border border-strong bg-free-fill p-6">
+        <h2 className="font-display text-2xl font-bold text-pitch">Đăng ký giải đấu</h2>
+        <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-7">
+          <li>Người chơi tự hủy trước giờ thi đấu ít nhất 24 giờ được hoàn 100% cọc. Hủy muộn hơn không hoàn cọc; sau giờ bắt đầu, liên hệ ban tổ chức.</li>
+          <li>Ban tổ chức hủy suất hoặc hủy cả giải: hoàn toàn bộ tiền đã nhận, gồm cọc và phần lệ phí còn lại đã thu.</li>
+          <li>Hạn cọc tính từ lúc được duyệt, theo số giờ ghi trên giải và không vượt hạn thanh toán cuối cùng. Hết hạn chưa đủ cọc thì suất được trả lại.</li>
+          <li>Chuyển vào mã đăng ký cũ, chuyển thiếu, thừa hoặc trùng được ghi để đối soát. Mỗi lần đăng ký lại có mã chuyển khoản mới.</li>
+          <li>Chủ sân thực hiện hoàn tiền thủ công. Mở chi tiết giải để xem giao dịch và trạng thái hoàn. Giải cũ giữ chính sách đã công bố; mốc cụ thể hiển thị trên từng đăng ký.</li>
+        </ul>
+      </section>
     </main>
   );
 }

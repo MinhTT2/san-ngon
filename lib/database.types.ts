@@ -67,10 +67,14 @@ export type Database = {
           is_public: boolean
           location: string
           phone: string
+          show_facebook: boolean
+          show_phone: boolean
+          show_zalo: boolean
           skill_level: string
           sport: Database["public"]["Enums"]["sport_type"]
           updated_at: string
           user_id: string
+          usual_play_times: string
           zalo_phone: string
         }
         Insert: {
@@ -80,10 +84,14 @@ export type Database = {
           is_public?: boolean
           location: string
           phone: string
+          show_facebook?: boolean
+          show_phone?: boolean
+          show_zalo?: boolean
           skill_level: string
           sport: Database["public"]["Enums"]["sport_type"]
           updated_at?: string
           user_id: string
+          usual_play_times?: string
           zalo_phone?: string
         }
         Update: {
@@ -93,10 +101,14 @@ export type Database = {
           is_public?: boolean
           location?: string
           phone?: string
+          show_facebook?: boolean
+          show_phone?: boolean
+          show_zalo?: boolean
           skill_level?: string
           sport?: Database["public"]["Enums"]["sport_type"]
           updated_at?: string
           user_id?: string
+          usual_play_times?: string
           zalo_phone?: string
         }
         Relationships: [
@@ -170,7 +182,17 @@ export type Database = {
           account_name: string | null
           account_number: string | null
           address: string
+          balance_receipt: string | null
+          balance_received_at: string | null
+          balance_received_by: string | null
+          balance_refund_due: number
+          balance_refund_receipt: string | null
+          balance_refunded_at: string | null
+          balance_refunded_by: string | null
+          balance_waived_at: string | null
           bank: string | null
+          cancellation_kind: string | null
+          cancelled_at: string | null
           code: string
           connection_id: string | null
           created_at: string
@@ -180,8 +202,11 @@ export type Database = {
           id: string
           note: string
           paid_at: string | null
+          payment_expires_at: string | null
           payment_owner_id: string | null
           phone: string
+          refund_deadline: string | null
+          reminder_sent_at: string | null
           review_note: string
           status: string
           team_name: string
@@ -192,7 +217,17 @@ export type Database = {
           account_name?: string | null
           account_number?: string | null
           address: string
+          balance_receipt?: string | null
+          balance_received_at?: string | null
+          balance_received_by?: string | null
+          balance_refund_due?: number
+          balance_refund_receipt?: string | null
+          balance_refunded_at?: string | null
+          balance_refunded_by?: string | null
+          balance_waived_at?: string | null
           bank?: string | null
+          cancellation_kind?: string | null
+          cancelled_at?: string | null
           code: string
           connection_id?: string | null
           created_at?: string
@@ -202,8 +237,11 @@ export type Database = {
           id?: string
           note?: string
           paid_at?: string | null
+          payment_expires_at?: string | null
           payment_owner_id?: string | null
           phone: string
+          refund_deadline?: string | null
+          reminder_sent_at?: string | null
           review_note?: string
           status?: string
           team_name?: string
@@ -214,7 +252,17 @@ export type Database = {
           account_name?: string | null
           account_number?: string | null
           address?: string
+          balance_receipt?: string | null
+          balance_received_at?: string | null
+          balance_received_by?: string | null
+          balance_refund_due?: number
+          balance_refund_receipt?: string | null
+          balance_refunded_at?: string | null
+          balance_refunded_by?: string | null
+          balance_waived_at?: string | null
           bank?: string | null
+          cancellation_kind?: string | null
+          cancelled_at?: string | null
           code?: string
           connection_id?: string | null
           created_at?: string
@@ -224,8 +272,11 @@ export type Database = {
           id?: string
           note?: string
           paid_at?: string | null
+          payment_expires_at?: string | null
           payment_owner_id?: string | null
           phone?: string
+          refund_deadline?: string | null
+          reminder_sent_at?: string | null
           review_note?: string
           status?: string
           team_name?: string
@@ -233,6 +284,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tournament_registrations_balance_received_by_fkey"
+            columns: ["balance_received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_balance_refunded_by_fkey"
+            columns: ["balance_refunded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tournament_registrations_connection_id_fkey"
             columns: ["connection_id"]
@@ -266,6 +331,8 @@ export type Database = {
       tournaments: {
         Row: {
           address: string
+          cancel_window_hours: number
+          cancelled_by: string | null
           capacity: number
           court_id: string | null
           created_at: string
@@ -275,6 +342,8 @@ export type Database = {
           entry_fee: number
           id: string
           manager_id: string
+          payment_deadline: string
+          payment_hold_hours: number
           registration_deadline: string
           review_note: string
           reviewed_by: string | null
@@ -285,6 +354,8 @@ export type Database = {
         }
         Insert: {
           address: string
+          cancel_window_hours?: number
+          cancelled_by?: string | null
           capacity: number
           court_id?: string | null
           created_at?: string
@@ -294,6 +365,8 @@ export type Database = {
           entry_fee: number
           id?: string
           manager_id: string
+          payment_deadline: string
+          payment_hold_hours?: number
           registration_deadline: string
           review_note?: string
           reviewed_by?: string | null
@@ -304,6 +377,8 @@ export type Database = {
         }
         Update: {
           address?: string
+          cancel_window_hours?: number
+          cancelled_by?: string | null
           capacity?: number
           court_id?: string | null
           created_at?: string
@@ -313,6 +388,8 @@ export type Database = {
           entry_fee?: number
           id?: string
           manager_id?: string
+          payment_deadline?: string
+          payment_hold_hours?: number
           registration_deadline?: string
           review_note?: string
           reviewed_by?: string | null
@@ -322,6 +399,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tournaments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tournaments_court_id_fkey"
             columns: ["court_id"]
@@ -860,6 +944,7 @@ export type Database = {
           read_at: string | null
           sent_at: string | null
           title: string
+          tournament_id: string | null
           user_id: string
         }
         Insert: {
@@ -873,6 +958,7 @@ export type Database = {
           read_at?: string | null
           sent_at?: string | null
           title: string
+          tournament_id?: string | null
           user_id: string
         }
         Update: {
@@ -886,6 +972,7 @@ export type Database = {
           read_at?: string | null
           sent_at?: string | null
           title?: string
+          tournament_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -894,6 +981,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
             referencedColumns: ["id"]
           },
           {
@@ -1124,6 +1218,117 @@ export type Database = {
           },
         ]
       }
+
+      tournament_settlements: {
+        Row: {
+          agreed_at: string | null
+          agreed_by: string | null
+          cancellation_venue_fee: number
+          due_at: string
+          owner_id: string
+          terms_note: string
+          tournament_id: string
+          venue_fee: number | null
+        }
+        Insert: {
+          agreed_at?: string | null
+          agreed_by?: string | null
+          cancellation_venue_fee?: number
+          due_at: string
+          owner_id: string
+          terms_note?: string
+          tournament_id: string
+          venue_fee?: number | null
+        }
+        Update: {
+          agreed_at?: string | null
+          agreed_by?: string | null
+          cancellation_venue_fee?: number
+          due_at?: string
+          owner_id?: string
+          terms_note?: string
+          tournament_id?: string
+          venue_fee?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_settlements_agreed_by_fkey"
+            columns: ["agreed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_settlements_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_settlements_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: true
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          receipt: string
+          received_at: string | null
+          received_by: string | null
+          recorded_by: string
+          tournament_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          receipt: string
+          received_at?: string | null
+          received_by?: string | null
+          recorded_by: string
+          tournament_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          receipt?: string
+          received_at?: string | null
+          received_by?: string | null
+          recorded_by?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_transfers_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_transfers_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_transfers_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1164,9 +1369,13 @@ export type Database = {
       review_tournament: {
         Args: {
           p_approve: boolean
+          p_cancellation_venue_fee?: number
           p_court_id: string
           p_id: string
           p_note?: string
+          p_terms_confirmed?: boolean
+          p_terms_note?: string
+          p_venue_fee?: number
         }
         Returns: undefined
       }
@@ -1651,6 +1860,49 @@ export type Database = {
           isSetofReturn: false
         }
       }
+
+      tournament_notice: {
+        Args: { p_body: string; p_id: string; p_title: string; p_user: string }
+        Returns: undefined
+      }
+      refresh_tournament: { Args: { p_id: string }; Returns: undefined }
+      resubmit_tournament: {
+        Args: { p_data: Json; p_id: string }
+        Returns: string
+      }
+      process_tournament_deadlines: { Args: never; Returns: undefined }
+      get_tournament_proposal: { Args: { p_id: string }; Returns: Json }
+      get_tournament_registrations: { Args: { p_id: string }; Returns: Json }
+      get_my_tournament_registrations: {
+        Args: { p_page?: number }
+        Returns: Json
+      }
+      set_tournament_terms: {
+        Args: {
+          p_cancellation_venue_fee?: number
+          p_id: string
+          p_note: string
+          p_venue_fee: number
+        }
+        Returns: undefined
+      }
+      record_tournament_balance: {
+        Args: { p_id: string; p_receipt: string; p_refund: boolean }
+        Returns: undefined
+      }
+      get_tournament_settlement: { Args: { p_id: string }; Returns: Json }
+      record_tournament_transfer: {
+        Args: { p_expected_balance: number; p_id: string; p_receipt: string }
+        Returns: string
+      }
+      confirm_tournament_transfer: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      waive_tournament_balance: {
+        Args: { p_id: string; p_note: string }
+        Returns: undefined
+      }
     }
     Enums: {
       booking_status:
@@ -1667,6 +1919,7 @@ export type Database = {
         | "rescheduled"
         | "venue_approved"
         | "owner_application"
+        | "tournament"
       refund_status: "none" | "needed" | "done"
       sport_type:
         | "football5"
@@ -1819,6 +2072,7 @@ export const Constants = {
         "rescheduled",
         "venue_approved",
         "owner_application",
+        "tournament",
       ],
       refund_status: ["none", "needed", "done"],
       sport_type: [

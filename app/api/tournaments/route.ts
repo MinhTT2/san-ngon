@@ -8,7 +8,13 @@ const approve = z.union([z.boolean(), z.enum(['true', 'false']).transform(value 
 const id = z.string().uuid();
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('submit'), data: tournamentSchema }),
-  z.object({ action: z.literal('review'), id, approve, court_id: z.union([id, z.literal('').transform(() => null), z.null()]), note: z.string().trim().max(1000) }),
+  z.object({ action: z.literal('resubmit'), id, data: tournamentSchema }),
+  z.object({ action: z.literal('terms'), id, venue_fee: z.coerce.number().int().min(0).max(100000000), cancellation_venue_fee: z.coerce.number().int().min(0).max(100000000), terms_note: z.string().trim().min(10).max(1000) }),
+  z.object({ action: z.literal('balance'), id, refund: approve, receipt: z.string().trim().min(3).max(300) }),
+  z.object({ action: z.literal('waive_balance'), id, note: z.string().trim().min(3).max(300) }),
+  z.object({ action: z.literal('transfer'), id, expected_balance: z.number().int().safe(), receipt: z.string().trim().min(3).max(300) }),
+  z.object({ action: z.literal('receive_transfer'), id }),
+  z.object({ action: z.literal('review'), id, approve, court_id: z.union([id, z.literal('').transform(() => null), z.null()]), note: z.string().trim().max(1000), venue_fee: z.coerce.number().int().min(0).max(100000000), cancellation_venue_fee: z.coerce.number().int().min(0).max(100000000), terms_note: z.string().trim().max(1000), terms_confirmed: z.boolean() }),
   z.object({ action: z.literal('register'), id, data: participantSchema }),
   z.object({ action: z.literal('review_registration'), id, approve, note: z.string().trim().max(1000) }),
   z.object({ action: z.literal('cancel_registration'), id }),
@@ -24,7 +30,13 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Kiểm tra các trường thông tin, thời gian và mức cọc không vượt lệ phí.' }, { status: 400 });
   const body = parsed.data;
   const result = body.action === 'submit' ? await db.rpc('submit_tournament', { p_data: body.data })
-    : body.action === 'review' ? await db.rpc('review_tournament', { p_id: body.id, p_approve: body.approve, p_court_id: body.court_id, p_note: body.note })
+    : body.action === 'review' ? await db.rpc('review_tournament', { p_id: body.id, p_approve: body.approve, p_court_id: body.court_id, p_note: body.note, p_venue_fee: body.venue_fee, p_cancellation_venue_fee: body.cancellation_venue_fee, p_terms_note: body.terms_note, p_terms_confirmed: body.terms_confirmed })
+    : body.action === 'resubmit' ? await db.rpc('resubmit_tournament', { p_id: body.id, p_data: body.data })
+    : body.action === 'terms' ? await db.rpc('set_tournament_terms', { p_id: body.id, p_venue_fee: body.venue_fee, p_cancellation_venue_fee: body.cancellation_venue_fee, p_note: body.terms_note })
+    : body.action === 'balance' ? await db.rpc('record_tournament_balance', { p_id: body.id, p_refund: body.refund, p_receipt: body.receipt })
+    : body.action === 'waive_balance' ? await db.rpc('waive_tournament_balance', { p_id: body.id, p_note: body.note })
+    : body.action === 'transfer' ? await db.rpc('record_tournament_transfer', { p_id: body.id, p_expected_balance: body.expected_balance, p_receipt: body.receipt })
+    : body.action === 'receive_transfer' ? await db.rpc('confirm_tournament_transfer', { p_id: body.id })
     : body.action === 'register' ? await db.rpc('register_tournament', { p_id: body.id, p_data: body.data })
     : body.action === 'review_registration' ? await db.rpc('review_tournament_registration', { p_id: body.id, p_approve: body.approve, p_note: body.note })
     : body.action === 'cancel_registration' ? await db.rpc('cancel_tournament_registration', { p_id: body.id })

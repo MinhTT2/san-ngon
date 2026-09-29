@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data: notification } = await supabase
     .from('notifications')
-    .select('booking:bookings(code)')
+    .select('tournament_id,booking:bookings(code)')
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -25,5 +25,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const bookingData = notification?.booking as unknown;
   const booking = (Array.isArray(bookingData) ? bookingData[0] : bookingData) as { code: string } | null | undefined;
-  return NextResponse.redirect(new URL(booking?.code ? `/dat-san/${booking.code}` : '/thong-bao', req.url));
+  return NextResponse.redirect(new URL(notification?.tournament_id ? `/giai-dau/${notification.tournament_id}` : booking?.code ? `/dat-san/${booking.code}` : '/thong-bao', req.url));
 }

@@ -17,7 +17,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
     ? await Promise.all([
       supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null),
       supabase.from('profiles').select('role, full_name, avatar_url').eq('id', user.id).maybeSingle(),
-      supabase.from('notifications').select('id, title, body, read_at, created_at, booking_id')
+      supabase.from('notifications').select('id, title, body, read_at, created_at, booking_id, tournament_id')
         .eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
     ])
     : [{ count: 0 }, { data: null }, { data: null, error: null }];

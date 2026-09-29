@@ -40,7 +40,7 @@ end $$;
 reset role;
 select set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000001',true);
 set local role authenticated;
-select review_tournament(current_setting('test.tournament')::uuid,true,'e2900000-0000-4000-8000-000000000011','Đã xác nhận sân');
+select review_tournament(current_setting('test.tournament')::uuid,true,'e2900000-0000-4000-8000-000000000011','Đã xác nhận sân',50000,'Hai bên đồng ý: chủ sân thu phí, thuê sân 50.000đ và đối soát trong 7 ngày.',true);
 reset role;
 do $$ begin
  assert exists(select 1 from court_closures where tournament_id=current_setting('test.tournament')::uuid),'reserved court';
@@ -117,7 +117,7 @@ do $$ declare r tournament_registrations; result jsonb; inv uuid; begin
  insert into subscription_payment_events(transaction_key,invoice_id,amount,raw) values('testbank:123456789:29009',inv,299000,'{}');
  result:=confirm_tournament_payment(r.code,100000,'29009','{}',r.connection_id,r.bank,r.account_number);
  assert result->>'reason'='ALREADY_PROCESSED';
- update tournaments set registration_deadline=now()-interval '1 second' where id=r.tournament_id;
+ update tournament_registrations set payment_expires_at=now()-interval '1 second' where id=r.id;
  result:=confirm_tournament_payment(r.code,100000,'29010','{}',r.connection_id,r.bank,r.account_number);
  assert result->>'reason'='LATE_OR_CANCELLED';
  assert (select paid_at is null from tournament_registrations where id=r.id);
@@ -165,4 +165,154 @@ do $$ begin
  begin perform count(*) from tournament_registrations; raise exception 'TEST: anon sees contacts'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
+-- Independent retry/expiry, policy and settlement checks using the same rolled-back fixture actors.
+reset role;
+select set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+do $$ declare tid uuid; rid uuid; old_id uuid; result jsonb; old_code text; r tournament_registrations; balance jsonb; transfer uuid; begin
+ tid:=submit_tournament(jsonb_build_object('title','Giải vận hành thử','description','Thể lệ vận hành thử đầy đủ','sport','badminton','court_id','','address','Hà Nội thử nghiệm',
+ 'starts_at',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '10 days','YYYY-MM-DD"T"10:00'),
+ 'ends_at',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '10 days','YYYY-MM-DD"T"12:00'),
+ 'registration_deadline',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '9 days','YYYY-MM-DD"T"10:00'),
+ 'payment_deadline',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '10 days','YYYY-MM-DD"T"09:00'),
+ 'payment_hold_hours',24,'capacity',2,'entry_fee',200000,'deposit_amount',100000));
+ perform set_config('test.operations',tid::text,true);
+ assert (select cancel_window_hours=24 from tournaments where id=tid);
+ -- Refused proposals can be corrected without changing their identity or bypassing review.
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000001',true);
+ perform review_tournament(tid,false,null,'Cần bổ sung thể lệ');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ result:=get_tournament_proposal(tid);
+ assert resubmit_tournament(tid,result||jsonb_build_object('title','Giải đã sửa','court_id',''))=tid;
+ assert (select status='pending' from tournaments where id=tid);
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000001',true);
+ begin perform review_tournament(tid,true,'e2900000-0000-4000-8000-000000000011',''); raise exception 'TEST: missing terms accepted';
+ exception when raise_exception then if sqlerrm<>'TERMS_REQUIRED' then raise; end if; end;
+ perform review_tournament(tid,true,'e2900000-0000-4000-8000-000000000011','',50000,'Đã thống nhất tiền thuê sân, cách thu và hoàn phí với cả hai bên.',true);
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ old_id:=register_tournament(tid,'{"full_name":"Người thử vận hành","phone":"0900000004","address":"Hà Nội"}');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform review_tournament_registration(old_id,true,'');
+ select * into r from tournament_registrations where id=old_id;
+ assert r.payment_expires_at=now()+interval '24 hours';
+ assert r.refund_deadline=(select starts_at-interval '24 hours' from tournaments where id=tid);
+ old_code:=r.code;
+ update tournament_registrations set payment_expires_at=now()-interval '1 second' where id=old_id;
+ assert get_tournament_capacity(tid)=0,'expired QR must not reserve capacity before cron';
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ rid:=register_tournament(tid,'{"full_name":"Đăng ký lần hai","phone":"0900000004","address":"Hà Nội"}');
+ assert rid<>old_id;
+ assert (select status='expired' from tournament_registrations where id=old_id);
+ assert (select code<>old_code from tournament_registrations where id=rid);
+ result:=confirm_tournament_payment(old_code,100000,'ops-late','{}',r.connection_id,r.bank,r.account_number);
+ assert result->>'reason'='LATE_OR_CANCELLED';
+ assert (select paid_at is null from tournament_registrations where id=rid),'old code cannot pay new attempt';
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform review_tournament_registration(rid,true,'');
+ select * into r from tournament_registrations where id=rid;
+ perform confirm_tournament_payment(r.code,100000,'ops-paid','{}',r.connection_id,r.bank,r.account_number);
+ -- An on-time self cancellation refunds; retry keeps the previous receipt.
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ perform cancel_tournament_registration(rid);
+ assert (select refund_amount=100000 from tournament_payment_events where transaction_key='testbank:123456789:ops-paid');
+ rid:=register_tournament(tid,'{"full_name":"Đăng ký lần ba","phone":"0900000004","address":"Hà Nội"}');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform review_tournament_registration(rid,true,'');
+ select * into r from tournament_registrations where id=rid;
+ perform confirm_tournament_payment(r.code,100000,'ops-late-cancel','{}',r.connection_id,r.bank,r.account_number);
+ update tournament_registrations set refund_deadline=now()-interval '1 second' where id=rid;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ perform cancel_tournament_registration(rid);
+ assert (select refund_amount=0 from tournament_payment_events where transaction_key='testbank:123456789:ops-late-cancel'),'late self cancel forfeits deposit';
+ perform cancel_tournament_registration(rid);
+ assert (select refund_amount=0 from tournament_payment_events where transaction_key='testbank:123456789:ops-late-cancel'),'retry must not turn self cancellation into organizer refund';
+ -- Final active entrant pays; owner must record only the SQL-calculated remainder.
+ rid:=register_tournament(tid,'{"full_name":"Người chơi cuối","phone":"0900000004","address":"Hà Nội"}');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform review_tournament_registration(rid,true,'');
+ select * into r from tournament_registrations where id=rid;
+ perform confirm_tournament_payment(r.code,100000,'ops-final','{}',r.connection_id,r.bank,r.account_number);
+ begin perform record_tournament_balance(rid,false,'Chưa có quyền thu'); raise exception 'TEST: organizer recorded owner cash';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+ begin perform record_tournament_balance(rid,false,'Chưa đến ngày'); raise exception 'TEST: early cash accepted';
+ exception when raise_exception then if sqlerrm<>'BALANCE_NOT_COLLECTIBLE' then raise; end if; end;
+ update tournaments set starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour',registration_deadline=now()-interval '3 hours',payment_deadline=now()-interval '2 hours' where id=tid;
+ perform process_tournament_deadlines();
+ assert (select status='completed' from tournaments where id=tid);
+ perform record_tournament_balance(rid,false,'Tiền mặt phiếu 123');
+ begin perform record_tournament_balance(rid,false,'Ghi thu trùng'); raise exception 'TEST: duplicate cash accepted';
+ exception when raise_exception then if sqlerrm<>'BALANCE_NOT_COLLECTIBLE' then raise; end if; end;
+ balance:=get_tournament_settlement(tid);
+ assert (balance->>'bank_received')::int=400000;
+ assert (balance->>'balance_received')::int=100000;
+ assert (balance->>'can_settle')::boolean=false,'unrefunded receipts block settlement';
+ perform mark_tournament_refund('testbank:123456789:ops-late',100000);
+ perform mark_tournament_refund('testbank:123456789:ops-paid',100000);
+ balance:=get_tournament_settlement(tid);
+ assert (balance->>'balance')::bigint=250000,'net bank + cash - refunds - rental';
+ assert (balance->>'can_settle')::boolean;
+ begin perform record_tournament_transfer(tid,250001,'Sai số dư'); raise exception 'TEST: arbitrary payout accepted';
+ exception when raise_exception then if sqlerrm<>'SETTLEMENT_CHANGED' then raise; end if; end;
+ transfer:=record_tournament_transfer(tid,250000,'BANK-QUYET-TOAN-123');
+ begin perform confirm_tournament_transfer(transfer); raise exception 'TEST: payer self-acknowledged';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform confirm_tournament_transfer(transfer);
+ balance:=get_tournament_settlement(tid);
+ assert (balance->>'balance')::bigint=0 and (balance->>'pending_transfer')::bigint=0;
+ assert exists(select 1 from notifications where tournament_id=tid and title='Đã nhận cọc giải đấu');
+ assert exists(select 1 from notifications where tournament_id=tid and title='Đã xác nhận nhận tiền quyết toán');
+end $$;
+
+reset role;
+do $$ declare tid uuid; rid uuid; first_rid uuid; r tournament_registrations; s jsonb; begin
+ insert into tournaments(manager_id,court_id,title,description,sport,address,starts_at,ends_at,registration_deadline,payment_deadline,capacity,entry_fee,deposit_amount,status)
+ values('e2900000-0000-4000-8000-000000000003','e2900000-0000-4000-8000-000000000011','Giải hoàn tiền thử','Thể lệ kiểm tra hoàn tiền','badminton','Hà Nội thử nghiệm',now()+interval '2 hours',now()+interval '4 hours',now()+interval '1 hour',now()+interval '2 hours',2,200000,100000,'published') returning id into tid;
+ insert into tournament_settlements(tournament_id,owner_id,venue_fee,terms_note,agreed_by,agreed_at,due_at) values(tid,'e2900000-0000-4000-8000-000000000002',50000,'Thỏa thuận thử nghiệm','e2900000-0000-4000-8000-000000000001',now(),now()+interval '7 days');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ rid:=register_tournament(tid,'{"full_name":"Người thử hoàn tiền","phone":"0900000004","address":"Hà Nội"}');first_rid:=rid;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform review_tournament_registration(rid,true,'');select * into r from tournament_registrations where id=rid;
+ perform confirm_tournament_payment(r.code,100000,'cancel-original','{}',r.connection_id,r.bank,r.account_number);
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ perform cancel_tournament_registration(rid);
+ assert (select refund_amount=0 from tournament_payment_events where registration_id=rid),'within 24h forfeits cọc';
+ rid:=register_tournament(tid,'{"full_name":"Người thử hoàn lần hai","phone":"0900000004","address":"Hà Nội"}');
+ assert (get_my_tournament_registrations(1)->>'total')::int=3,'one row per tournament, not attempt';
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform review_tournament_registration(rid,true,'');select * into r from tournament_registrations where id=rid;
+ perform confirm_tournament_payment(r.code,100000,'cancel-second','{}',r.connection_id,r.bank,r.account_number);
+ update tournaments set starts_at=now()-interval '1 hour',registration_deadline=now()-interval '2 hours',payment_deadline=now()-interval '1 hour' where id=tid;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+ perform record_tournament_balance(rid,false,'Phiếu thu trước hủy');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ perform cancel_tournament_registration(rid);
+ assert (select refund_amount=100000 from tournament_payment_events where registration_id=rid),'organizer cancellation refunds deposit even after start';
+ assert (select balance_refund_due=100000 from tournament_registrations where id=rid),'refund remainder too';
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+ perform record_tournament_balance(rid,true,'BANK-HOAN-LE-PHI');
+ assert (select balance_refund_receipt='BANK-HOAN-LE-PHI' and balance_refunded_at is not null from tournament_registrations where id=rid);
+ perform mark_tournament_refund('testbank:123456789:cancel-second',100000);
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ update tournament_settlements set cancellation_venue_fee=25000 where tournament_id=tid;
+ perform cancel_tournament(tid);
+ assert (select refund_amount=100000 from tournament_payment_events where registration_id=first_rid),'whole cancellation restores previously forfeited deposit';
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+ perform mark_tournament_refund('testbank:123456789:cancel-original',100000);
+ s:=get_tournament_settlement(tid);
+ assert (s->>'effective_venue_fee')::int=25000 and (s->>'balance')::int=-25000 and (s->>'can_settle')::boolean,'organizer still owes agreed cancellation rental after all player refunds';
+ -- Venue-initiated cancellation waives rental, separately from organizer cancellation.
+ update tournaments set status='published',cancelled_by=null where id=tid;
+ perform cancel_tournament(tid);
+ s:=get_tournament_settlement(tid);
+ assert (s->>'effective_venue_fee')::int=0 and (s->>'balance')::int=0,'venue cancellation does not charge organizer rental';
+ -- Public contacts and private operational ledgers stay separate.
+ assert not has_function_privilege('anon','get_tournament_settlement(uuid)','EXECUTE');
+ assert not has_function_privilege('authenticated','process_tournament_deadlines()','EXECUTE');
+ assert not has_table_privilege('authenticated','tournament_transfers','INSERT');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+ begin perform get_tournament_settlement(tid); raise exception 'TEST: participant saw private settlement';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+end $$;
+
 rollback;

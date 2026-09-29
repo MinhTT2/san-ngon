@@ -1,8 +1,9 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { Bell, X } from 'lucide-react';
 
 type Notification = {
@@ -11,6 +12,7 @@ type Notification = {
   body: string | null;
   read_at: string | null;
   booking_id: string | null;
+  tournament_id: string | null;
   timeLabel: string;
 };
 
@@ -25,6 +27,18 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const db = createClient();
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => router.refresh(), 150); };
+    const visible = () => { if (document.visibilityState === 'visible') refresh(); };
+    const channel = db.channel('inbox-updates').on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, refresh);
+    const stop = subscribeWithSession(db, channel, status => { if (status === 'SUBSCRIBED') refresh(); });
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => { stop(); clearTimeout(refreshTimer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', visible); };
+  }, [router]);
 
   async function markRead(notificationId: string) {
     setPending(notificationId);
@@ -86,7 +100,7 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
             <div className="px-6 py-10 text-center">
               <Bell className="mx-auto mb-4 text-free-line" size={32} aria-hidden="true" />
               <p className="text-sm font-semibold">Chưa có thông báo nào</p>
-              <p className="mt-2 text-xs leading-5 text-ink-secondary">Thông tin về đơn đặt sân sẽ xuất hiện ở đây.</p>
+              <p className="mt-2 text-xs leading-5 text-ink-secondary">Thông tin về đơn đặt sân và giải đấu sẽ xuất hiện ở đây.</p>
             </div>
           ) : (
             <ul className="divide-y divide-hairline">
@@ -95,7 +109,7 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
                   <div className="flex items-start gap-3">
                     {!notification.read_at && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-pitch" aria-label="Chưa đọc" />}
                     <div className="min-w-0 flex-1">
-                      {notification.booking_id ? (
+                      {notification.booking_id || notification.tournament_id ? (
                         // Route mở đơn có cập nhật read_at, không prefetch link này.
                         <a href={`/api/notifications/${notification.id}/open`} className="block rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-pitch">
                           <p className="text-sm font-semibold">{notification.title}</p>
