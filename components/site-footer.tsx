@@ -28,7 +28,7 @@ export function SiteFooter() {
           </div>
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-9 text-sm sm:grid-cols-3">
-            <FooterGroup title="Người chơi" links={[["Tìm sân", '/tim-san'], ['Đơn của tôi', '/don-cua-toi'], ['Tài khoản', '/tai-khoan']]} />
+            <FooterGroup title="Người chơi" links={[["Tìm sân", '/tim-san'], ['Giải đấu', '/giai-dau'], ['Kết nối', '/ket-noi'], ['Đơn của tôi', '/don-cua-toi']]} />
             <FooterGroup title="Chủ sân" links={[["Đăng ký chủ sân", '/dang-ky-san'], ['Trang quản lý', '/chu-san'], ['Tài khoản', '/tai-khoan']]} />
             <FooterGroup title="Hỗ trợ" links={[["Cách hoạt động", '/#cach-hoat-dong'], ['Chính sách hủy', '/chinh-sach-huy'], ['Liên hệ', '/lien-he']]} />
           </div>
