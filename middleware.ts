@@ -1,3 +1,4 @@
+import { safeNext } from '@/lib/safe-next';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -36,6 +37,18 @@ export async function middleware(request: NextRequest) {
       target.searchParams.set('error', 'account_banned');
       target.searchParams.set('next', request.nextUrl.pathname);
       return NextResponse.redirect(target);
+    }
+  }
+  if (user && ['/dang-nhap', '/dang-ky'].includes(request.nextUrl.pathname)
+    && request.nextUrl.searchParams.get('error') !== 'account_banned') {
+    const { data: profile } = await supabase.from('profiles').select('banned_until').eq('id', user.id).maybeSingle();
+    const banned = profile?.banned_until && (profile.banned_until === 'infinity' || new Date(profile.banned_until).getTime() > Date.now());
+    if (!banned) {
+      const target = new URL(safeNext(request.nextUrl.searchParams.get('next')), request.url);
+      if (['/dang-nhap', '/dang-ky'].includes(target.pathname)) target.pathname = '/';
+      const redirect = NextResponse.redirect(target);
+      response.cookies.getAll().forEach(cookie => redirect.cookies.set(cookie));
+      return redirect;
     }
   }
   return response;

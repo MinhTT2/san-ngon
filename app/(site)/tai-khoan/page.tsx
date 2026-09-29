@@ -22,6 +22,7 @@ export default async function Page() {
         <div><p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-secondary">Không gian của bạn</p><h1 className="font-display text-4xl font-extrabold tracking-tight text-pitch sm:text-5xl">Hồ sơ của bạn<span className="text-success">.</span></h1><p className="mt-4 max-w-lg text-sm leading-6 text-ink-secondary">Một chút về bạn. Sẵn sàng cho những cuộc hẹn trên sân.</p></div>
         <span className="hidden pb-1 font-display text-sm font-bold text-pitch md:block">Gặp nhau trên sân ↗</span>
       </header>
+      <Link href="/ket-noi/ho-so" className="mb-6 block text-sm font-semibold text-pitch underline">Thiết lập hồ sơ kết nối cộng đồng →</Link>
       {error || !profile ? (
         <p role="alert" className="mt-8 rounded-card border border-hairline bg-card p-6 text-sm text-danger">
           Chưa tải được thông tin tài khoản. Vui lòng tải lại trang.

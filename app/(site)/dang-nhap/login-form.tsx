@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/safe-next';
 
@@ -34,7 +34,6 @@ function viError(raw: string) {
 export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
   const signup = mode === 'signup';
   const supabase = createClient();
-  const router = useRouter();
   const params = useSearchParams();
   const next = safeNext(params.get('next'));
   const hasBookingDraft = next.includes('/san/');
@@ -123,88 +122,100 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy('email');
-    setError(null);
-    if (signup) {
-      if (password.length < 8) {
-        setBusy(null);
-        setError('Mật khẩu cần ít nhất 8 ký tự.');
-        return;
-      }
-      if (password !== passwordAgain) {
-        setBusy(null);
-        setError('Mật khẩu nhập lại chưa khớp.');
-        return;
-      }
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            ...(name.trim() ? { full_name: name.trim() } : {}),
-            ...(phone.trim() ? { phone: phone.trim() } : {}),
+    try {
+      setBusy('email');
+      setError(null);
+      if (signup) {
+        if (password.length < 8) {
+          setBusy(null);
+          setError('Mật khẩu cần ít nhất 8 ký tự.');
+          return;
+        }
+        if (password !== passwordAgain) {
+          setBusy(null);
+          setError('Mật khẩu nhập lại chưa khớp.');
+          return;
+        }
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              ...(name.trim() ? { full_name: name.trim() } : {}),
+              ...(phone.trim() ? { phone: phone.trim() } : {}),
+            },
           },
-        },
-      });
-      setBusy(null);
-      if (error) {
-        setError(viError(error.message));
-      } else if (data.session) {
-        router.push(next);
-        router.refresh();
-      } else if (data.user?.identities?.length === 0) {
-        setError('Email này đã có tài khoản. Hãy đăng nhập.');
-      } else {
-        setSent(true);
-        setNotice('Đã gửi mã xác nhận. Mã có hiệu lực trong 10 phút.');
-        setResendSeconds(60);
+        });
+        setBusy(null);
+        if (error) {
+          setError(viError(error.message));
+        } else if (data.session) {
+          window.location.assign(next);
+        } else if (data.user?.identities?.length === 0) {
+          setError('Email này đã có tài khoản. Hãy đăng nhập.');
+        } else {
+          setSent(true);
+          setNotice('Đã gửi yêu cầu xác nhận. Kiểm tra email mới nhất để lấy mã.');
+          setResendSeconds(60);
+        }
+        return;
       }
-      return;
-    }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error?.code === 'email_not_confirmed') {
-      setSent(true);
-      setNotice('Tài khoản chưa xác nhận email. Nhập mã đã nhận hoặc bấm Gửi lại mã.');
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error?.code === 'email_not_confirmed') {
+        setSent(true);
+        setNotice('Tài khoản chưa xác nhận email. Nhập mã đã nhận hoặc bấm Gửi lại mã.');
+        setBusy(null);
+        return;
+      }
       setBusy(null);
-      return;
-    }
-    setBusy(null);
-    if (error) setError(viError(error.message));
-    else if (data.session) {
-      router.push(next);
-      router.refresh();
+      if (error) setError(viError(error.message));
+      else if (data.session) {
+        window.location.assign(next);
+      }
+    } catch {
+      setError('Không kết nối được. Kiểm tra mạng rồi thử lại.');
+      setBusy(null);
     }
   }
 
   async function verify(e: React.FormEvent) {
     e.preventDefault();
-    setBusy('email');
-    setError(null);
-    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
-    setBusy(null);
-    if (error) {
-      setError(viError(error.message));
-      return;
-    }
-    if (data.session) {
-      router.push(next);
-      router.refresh();
+    try {
+      setBusy('email');
+      setError(null);
+      const { data, error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'signup' });
+      setBusy(null);
+      if (error) {
+        setError(viError(error.message));
+        return;
+      }
+      if (data.session) {
+        window.location.assign(next);
+      }
+    } catch {
+      setError('Không kết nối được. Kiểm tra mạng rồi thử lại.');
+      setBusy(null);
     }
   }
 
   async function resend() {
     if (busy || resendSeconds > 0) return;
-    setBusy('email');
-    setError(null);
-    setNotice('');
-    const { error } = await supabase.auth.resend({ type: 'signup', email });
-    setBusy(null);
-    if (error) setError(viError(error.message));
-    else {
-      setToken('');
-      setNotice('Đã gửi lại mã. Dùng mã trong email mới nhất, có hiệu lực trong 10 phút.');
-      setResendSeconds(60);
+    try {
+      setBusy('email');
+      setError(null);
+      setNotice('');
+      const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() });
+      setBusy(null);
+      if (error) setError(viError(error.message));
+      else {
+        setToken('');
+        setNotice('Đã gửi lại yêu cầu. Dùng mã trong email mới nhất.');
+        setResendSeconds(60);
+      }
+    } catch {
+      setError('Không kết nối được. Kiểm tra mạng rồi thử lại.');
+      setBusy(null);
     }
   }
 
@@ -215,7 +226,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
         <div className="flex flex-col gap-2">
           <p className="text-[17px] font-semibold text-pitch">Nhập mã OTP</p>
           <p className="text-[15px] leading-relaxed">
-            Nhập mã xác nhận 6 số gửi tới <strong className="break-all">{email}</strong>.
+            Nhập mã xác nhận trong email gửi tới <strong className="break-all">{email}</strong>.
           </p>
           <p className="text-[13px] leading-relaxed text-[#2C4A3C]">
             Không thấy sau một phút thì xem thư mục spam. Mã chỉ dùng một lần.
@@ -225,7 +236,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
         {error && <p role="alert" className="rounded-control border border-danger/30 bg-danger/5 p-3.5 text-sm leading-relaxed text-danger">{error}</p>}
         <form onSubmit={verify} className="flex flex-col gap-2.5">
           <label htmlFor="token" className="text-sm font-semibold">Mã OTP</label>
-          <input id="token" type="text" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={token} onChange={(e) => setToken(e.target.value.replace(/\D/g, ''))} placeholder="123456" className="h-13 rounded-control border border-hairline bg-page px-4 text-center text-xl tracking-[0.35em] focus:border-pitch focus:outline-none" />
+          <input id="token" type="text" required inputMode="numeric" pattern="[0-9]{6,8}" maxLength={8} autoComplete="one-time-code" value={token} onChange={(e) => setToken(e.target.value.replace(/\D/g, ''))} placeholder="123456" className="h-13 rounded-control border border-hairline bg-page px-4 text-center text-xl tracking-[0.35em] focus:border-pitch focus:outline-none" />
           <button type="submit" disabled={busy !== null} className="h-13 rounded-control bg-pitch text-base font-semibold text-pitch-ink disabled:opacity-60">{busy === 'email' ? 'Đang xác nhận…' : 'Xác nhận tài khoản'}</button>
         </form>
         <div className="flex gap-4 text-sm">

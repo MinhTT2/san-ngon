@@ -42,8 +42,10 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
               {admin ? 'Quản trị Sân Ngon' : 'Dashboard chủ sân'}
             </span>
           ) : (
-            <nav className="hidden gap-8 md:flex">
+            <nav className="hidden gap-4 xl:gap-6 md:flex">
               <NavLink href="/tim-san" label="Tìm sân" />
+              <NavLink href="/giai-dau" label="Giải đấu" />
+              <NavLink href="/ket-noi" label="Kết nối" />
               <NavLink href="/don-cua-toi" label="Đơn của tôi" />
             </nav>
           )}
@@ -91,6 +93,8 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
       {!dashboard && (
         <nav aria-label="Điều hướng chính trên điện thoại" className="flex gap-4 overflow-x-auto border-t border-hairline px-5 text-sm md:hidden">
           <NavLink compact href="/tim-san" label="Tìm sân" />
+          <NavLink compact href="/giai-dau" label="Giải đấu" />
+          <NavLink compact href="/ket-noi" label="Kết nối" />
           <NavLink compact href="/don-cua-toi" label="Đơn của tôi" />
           <NavLink compact href={isAdmin ? '/admin' : isOwner ? '/chu-san' : '/dang-ky-san'} label={isAdmin ? 'Quản trị' : isOwner ? 'Quản lý sân' : 'Chủ sân'} />
         </nav>

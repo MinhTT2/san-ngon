@@ -35,14 +35,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   if (!venues?.length) return <NoVenue />;
   const venue = venues.find((item) => item.id === selectedVenueId) ?? venues[0];
 
-  const statsTo = new Date();
-  const statsFrom = new Date();
-  statsFrom.setDate(statsFrom.getDate() - period + 1);
-  const { data: statsData } = await supabase.rpc('get_owner_stats', {
+  const { data: statsData, error: statsError } = await supabase.rpc('get_owner_period_stats', {
     p_venue_id: venue.id,
-    p_from: ymd(statsFrom),
-    p_to: ymd(statsTo),
+    p_days: period,
   });
+  if (statsError) throw new Error('Không tải được thống kê. Vui lòng thử lại.');
   const stats = parseOwnerStats(statsData);
 
   const from = new Date();

@@ -1,10 +1,11 @@
+import Link from 'next/link';
 import { Activity, ArrowUpRight, BarChart3, CalendarCheck, Clock3, Target, TrendingUp, Users } from 'lucide-react';
 import { vnd } from '@/lib/format';
 import type { AdminStats, OwnerStats, StatsPoint } from '@/lib/stats';
 
 export function PeriodLinks({ path, period }: { path: string; period: number }) {
   return <nav aria-label="Khoảng thời gian thống kê" className="flex items-center gap-1 rounded-control border border-hairline bg-card p-1 text-xs font-semibold">
-    {[7, 30, 90].map((days) => <a key={days} href={`${path}?period=${days}`} className={`rounded-control px-3 py-2 ${period === days ? 'bg-pitch text-pitch-ink' : 'text-ink-secondary hover:bg-sunk'}`}>{days} ngày</a>)}
+    {[7, 30, 90].map((days) => <Link key={days} href={`${path}${path.includes('?') ? '&' : '?'}period=${days}`} aria-current={period === days ? 'page' : undefined} className={`rounded-control px-3 py-2 ${period === days ? 'bg-pitch text-pitch-ink' : 'text-ink-secondary hover:bg-sunk'}`}>{days} ngày</Link>)}
   </nav>;
 }
 

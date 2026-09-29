@@ -208,6 +208,21 @@ Không dùng cấu hình thủ công nhiều tài khoản. Xem [vận hành SePa
 Checkout, danh sách đơn người chơi, danh sách và lịch chủ sân dùng realtime;
 tự đồng bộ khi kết nối lại hoặc quay về tab. Hoàn tiền vẫn thực hiện thủ công.
 
+## Giải đấu và kết nối (29/09/2026)
+
+`/giai-dau` và `/giai-dau/tao` cho chủ sân/người chơi đề xuất giải;
+`/admin/giai-dau` duyệt và bố trí sân. Duyệt khóa lịch sân bằng
+`court_closures`, giao quyền quản lý riêng cho người đề xuất, không đổi role.
+`/chu-san/giai-dau` theo dõi giải ở sân và duyệt người tham gia. Cọc dùng mã
+`GIAI` + 12 ký tự hex, nhận tự động qua SePay vào tài khoản chủ sân được
+đóng băng khi duyệt đăng ký. `sepay_transfer_claims` chống một giao dịch
+được dùng lại giữa các luồng sân/giải/phí. Hoàn tiền vẫn thủ công.
+
+`/ket-noi` là danh bạ người chơi tự liên hệ, không phải ghép đối hay chat.
+Hồ sơ `community_profiles` mặc định ẩn, chỉ công khai khi người dùng đồng ý;
+ảnh dùng avatar hiện có. Không mở quyền đọc công khai bảng `profiles`.
+Xem [luồng và kiểm tra giải đấu/kết nối](docs/tournaments-community.md).
+
 ## Phí sử dụng website
 
 Admin chọn từng chủ sân phải đóng phí tại `/admin/phi-dich-vu`. Mặc định

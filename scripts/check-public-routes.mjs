@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 const origin = process.argv[2] ?? 'http://localhost:3000';
 for (const path of ['/', '/tim-san', '/dang-nhap', '/dang-ky', '/dang-ky-san', '/lien-he', '/chinh-sach-huy',
-  '/tim-san?page=1.5', '/tim-san?page=Infinity', '/tim-san?sport=toString', '/tim-san?q=a&q=b', '/tim-san?ngay=2026-99-99']) {
+  '/giai-dau', '/ket-noi', '/giai-dau?sport=toString', '/ket-noi?page=Infinity', '/tim-san?page=1.5', '/tim-san?page=Infinity', '/tim-san?sport=toString', '/tim-san?q=a&q=b', '/tim-san?ngay=2026-99-99']) {
   const response = await fetch(origin + path);
   const html = await response.text();
   assert.equal(response.status, 200, path);
   assert.match(html, /<h1[\s>]/, path);
   assert.doesNotMatch(html, /"digest":/, `${path}: server render failed`);
 }
-for (const path of ['/don-cua-toi', '/thong-bao', '/chu-san', '/chu-san/quan-ly', '/chu-san/don', '/chu-san/lich', '/chu-san/thanh-toan', '/chu-san/phi-dich-vu', '/tao-cum-san', '/admin', '/admin/users', '/admin/phi-dich-vu']) {
+for (const path of ['/don-cua-toi', '/thong-bao', '/chu-san', '/chu-san/quan-ly', '/chu-san/don', '/chu-san/lich', '/chu-san/thanh-toan', '/chu-san/phi-dich-vu', '/tao-cum-san', '/giai-dau/tao', '/ket-noi/ho-so', '/chu-san/giai-dau', '/admin/giai-dau', '/admin', '/admin/users', '/admin/phi-dich-vu']) {
   const response = await fetch(origin + path);
   const html = await response.text();
   // App Router can send the redirect as streamed HTML after the layout starts.
@@ -17,6 +17,7 @@ for (const path of ['/don-cua-toi', '/thong-bao', '/chu-san', '/chu-san/quan-ly'
   }
 }
 for (const [path, body, status] of [
+  ['/api/tournaments', { action: 'cancel', id: 'e2900000-0000-4000-8000-000000000001' }, 401], ['/api/community', {}, 401],
   ['/api/bookings', {}, 400], ['/api/courts', {}, 400], ['/api/venues', {}, 400],
   ['/api/admin/users', {}, 401], ['/api/subscriptions', { action: 'invoice' }, 401],
   ['/api/bookings/SANABC234/cancel', {}, 401],
@@ -26,8 +27,8 @@ for (const [path, body, status] of [
   assert.equal(response.status, status, path);
   assert.equal(typeof (await response.json()).error, 'string', path);
 }
-console.log('OK: 12 public pages/search cases, 12 authentication redirects, 7 API validation/auth cases.');
-for (const path of ['/api/subscriptions', '/auth/dang-xuat']) {
+console.log('OK: public pages, search cases, authentication redirects, API validation/auth.');
+for (const path of ['/api/subscriptions', '/api/tournaments', '/api/community', '/auth/dang-xuat']) {
   const response = await fetch(origin + path, { method: 'POST', headers: { origin: 'https://untrusted.example', 'content-type': 'application/json' }, body: '{"action":"invoice"}' });
   assert.equal(response.status, 403, `${path}: cross-origin request`);
 }

@@ -1,0 +1,11 @@
+export const dynamic = 'force-dynamic';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { TournamentList } from '@/components/tournament-list';
+export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const db = await createClient(); const { data: { user } } = await db.auth.getUser();
+  if (!user) redirect('/dang-nhap?next=/admin/giai-dau');
+  const { data: admin } = await db.rpc('is_admin'); if (!admin) redirect('/');
+  const params = await searchParams; const page = /^\d+$/.test(params.page ?? '') ? Math.max(1,Math.min(10000,Number(params.page))) : 1;
+  return <main className="mx-auto max-w-7xl px-5 py-10 lg:px-12"><h1 className="font-display text-3xl font-extrabold text-pitch">Duyệt giải đấu</h1><p className="mt-3 text-sm text-ink-secondary">Mở đề xuất để kiểm tra thể lệ, bố trí sân và trao quyền quản lý cho người đề xuất.</p><TournamentList mode="admin" page={page} /></main>;
+}

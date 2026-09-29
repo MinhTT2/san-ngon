@@ -49,3 +49,9 @@ export function extractSubscriptionCodes(payload: SepayPayload): string[] {
   const matches = [...text.matchAll(/PHI[A-F0-9]{8}(?![A-Z0-9])/g)].map(match => match[0]);
   return [...new Set(matches)];
 }
+
+/** Tournament deposits use a separate reference from court bookings and website fees. */
+export function extractTournamentCodes(payload: SepayPayload): string[] {
+  const text = [payload.content, payload.description, payload.code, payload.subAccount].filter(Boolean).join(' ').toUpperCase();
+  return [...new Set([...text.matchAll(/GIAI[A-F0-9]{12}(?![A-Z0-9])/g)].map(match => match[0]))];
+}

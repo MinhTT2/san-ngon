@@ -14,6 +14,337 @@ export type Database = {
   }
   public: {
     Tables: {
+      court_closures: {
+        Row: {
+          court_id: string
+          created_at: string
+          ends_at: string
+          id: string
+          reason: string | null
+          starts_at: string
+          tournament_id: string | null
+        }
+        Insert: {
+          court_id: string
+          created_at?: string
+          ends_at: string
+          id?: string
+          reason?: string | null
+          starts_at: string
+          tournament_id?: string | null
+        }
+        Update: {
+          court_id?: string
+          created_at?: string
+          ends_at?: string
+          id?: string
+          reason?: string | null
+          starts_at?: string
+          tournament_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_closures_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "court_closures_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: true
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_profiles: {
+        Row: {
+          bio: string
+          display_name: string
+          facebook_url: string
+          is_public: boolean
+          location: string
+          phone: string
+          skill_level: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          updated_at: string
+          user_id: string
+          zalo_phone: string
+        }
+        Insert: {
+          bio?: string
+          display_name: string
+          facebook_url?: string
+          is_public?: boolean
+          location: string
+          phone: string
+          skill_level: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          updated_at?: string
+          user_id: string
+          zalo_phone?: string
+        }
+        Update: {
+          bio?: string
+          display_name?: string
+          facebook_url?: string
+          is_public?: boolean
+          location?: string
+          phone?: string
+          skill_level?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          updated_at?: string
+          user_id?: string
+          zalo_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sepay_transfer_claims: {
+        Row: {
+          transaction_key: string
+        }
+        Insert: {
+          transaction_key: string
+        }
+        Update: {
+          transaction_key?: string
+        }
+        Relationships: []
+      }
+      tournament_payment_events: {
+        Row: {
+          amount: number
+          created_at: string
+          outcome: string
+          raw: Json
+          refund_amount: number
+          refund_status: string
+          refunded_amount: number
+          registration_id: string
+          transaction_key: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          outcome?: string
+          raw: Json
+          refund_amount?: number
+          refund_status?: string
+          refunded_amount?: number
+          registration_id: string
+          transaction_key: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          outcome?: string
+          raw?: Json
+          refund_amount?: number
+          refund_status?: string
+          refunded_amount?: number
+          registration_id?: string
+          transaction_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_payment_events_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_registrations: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          address: string
+          bank: string | null
+          code: string
+          connection_id: string | null
+          created_at: string
+          deposit_amount: number
+          entry_fee: number
+          full_name: string
+          id: string
+          note: string
+          paid_at: string | null
+          payment_owner_id: string | null
+          phone: string
+          review_note: string
+          status: string
+          team_name: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          address: string
+          bank?: string | null
+          code: string
+          connection_id?: string | null
+          created_at?: string
+          deposit_amount: number
+          entry_fee: number
+          full_name: string
+          id?: string
+          note?: string
+          paid_at?: string | null
+          payment_owner_id?: string | null
+          phone: string
+          review_note?: string
+          status?: string
+          team_name?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          address?: string
+          bank?: string | null
+          code?: string
+          connection_id?: string | null
+          created_at?: string
+          deposit_amount?: number
+          entry_fee?: number
+          full_name?: string
+          id?: string
+          note?: string
+          paid_at?: string | null
+          payment_owner_id?: string | null
+          phone?: string
+          review_note?: string
+          status?: string
+          team_name?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_registrations_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_payment_owner_id_fkey"
+            columns: ["payment_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          address: string
+          capacity: number
+          court_id: string | null
+          created_at: string
+          deposit_amount: number
+          description: string
+          ends_at: string
+          entry_fee: number
+          id: string
+          manager_id: string
+          registration_deadline: string
+          review_note: string
+          reviewed_by: string | null
+          sport: Database["public"]["Enums"]["sport_type"]
+          starts_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          address: string
+          capacity: number
+          court_id?: string | null
+          created_at?: string
+          deposit_amount: number
+          description: string
+          ends_at: string
+          entry_fee: number
+          id?: string
+          manager_id: string
+          registration_deadline: string
+          review_note?: string
+          reviewed_by?: string | null
+          sport: Database["public"]["Enums"]["sport_type"]
+          starts_at: string
+          status?: string
+          title: string
+        }
+        Update: {
+          address?: string
+          capacity?: number
+          court_id?: string | null
+          created_at?: string
+          deposit_amount?: number
+          description?: string
+          ends_at?: string
+          entry_fee?: number
+          id?: string
+          manager_id?: string
+          registration_deadline?: string
+          review_note?: string
+          reviewed_by?: string | null
+          sport?: Database["public"]["Enums"]["sport_type"]
+          starts_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_payment_events: {
         Row: {
           amount: number
@@ -798,6 +1129,57 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_tournament: { Args: { p_id: string }; Returns: undefined }
+      cancel_tournament_registration: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      confirm_tournament_payment: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+          p_ref_code: string
+        }
+        Returns: Json
+      }
+      get_community_profile: { Args: { p_id: string }; Returns: Json }
+      get_owner_period_stats: {
+        Args: { p_days?: number; p_venue_id: string }
+        Returns: Json
+      }
+      get_tournament_capacity: { Args: { p_id: string }; Returns: number }
+      manages_tournament: { Args: { p_id: string }; Returns: boolean }
+      mark_tournament_refund: {
+        Args: { p_expected_amount: number; p_transaction_key: string }
+        Returns: undefined
+      }
+      register_tournament: {
+        Args: { p_data: Json; p_id: string }
+        Returns: string
+      }
+      review_tournament: {
+        Args: {
+          p_approve: boolean
+          p_court_id: string
+          p_id: string
+          p_note?: string
+        }
+        Returns: undefined
+      }
+      review_tournament_registration: {
+        Args: { p_approve: boolean; p_id: string; p_note?: string }
+        Returns: undefined
+      }
+      search_community: {
+        Args: { p_location?: string; p_page?: number; p_sport?: string }
+        Returns: Json
+      }
+      set_community_profile: { Args: { p_data: Json }; Returns: undefined }
+      submit_tournament: { Args: { p_data: Json }; Returns: string }
       get_admin_subscriptions: {
         Args: never
         Returns: {
