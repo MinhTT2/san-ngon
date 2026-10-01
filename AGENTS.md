@@ -210,8 +210,9 @@ tự đồng bộ khi kết nối lại hoặc quay về tab. Hoàn tiền vẫn
 
 ## Giải đấu và kết nối (29/09/2026)
 
-`/giai-dau` và `/giai-dau/tao` cho chủ sân/người chơi đề xuất giải;
-`/admin/giai-dau` duyệt và bố trí sân. Duyệt khóa lịch sân bằng
+`/giai-dau` và `/giai-dau/tao`: chủ sân chọn sân của mình để công khai giải
+ngay, không cần admin duyệt; người chơi gửi đề xuất để `/admin/giai-dau`
+duyệt và bố trí sân. Công khai khóa lịch sân bằng
 `court_closures`, giao quyền quản lý riêng cho người đề xuất, không đổi role.
 `/chu-san/giai-dau` theo dõi giải ở sân và duyệt người tham gia. Cọc dùng mã
 `GIAI` + 12 ký tự hex, nhận tự động qua SePay vào tài khoản chủ sân được
@@ -229,7 +230,9 @@ muộn hơn không hoàn; ban tổ chức hủy suất/giải hoàn toàn bộ. 
 chính sách đã công bố; hạn hoàn nằm trên từng đăng ký. Quy tắc này riêng
 với giải đấu, không thay mốc 2 giờ của đơn đặt sân thường.
 
-Admin ghi thỏa thuận tiền thuê sân trước khi công khai giải. Chủ sân thu
+Giải của người chơi cần admin ghi thỏa thuận tiền thuê trước khi công khai.
+Chủ sân tự tổ chức tại sân mình thì tiền thuê nội bộ bằng 0, không quyết toán
+giữa hai bên. Chủ sân thu
 cọc/phần còn lại, ghi chứng từ; SQL tính số dư quyết toán sau giải và sau
 khi hoàn tiền. Bên trả ghi đã chuyển, bên nhận xác nhận đã nhận; không tự
 chuyển tiền. Sổ quyết toán riêng tư, trình duyệt không được ghi trực tiếp.

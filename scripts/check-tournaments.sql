@@ -315,4 +315,94 @@ do $$ declare tid uuid; rid uuid; first_rid uuid; r tournament_registrations; s 
  exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
 end $$;
 
+-- Owners publish their own courts atomically; neither players nor unrelated owners can bypass review.
+reset role;
+select set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+set local role authenticated;
+do $$ declare data jsonb; tid uuid; rid uuid; begin
+ data:=jsonb_build_object('title','Giải chủ sân tự tổ chức','description','Thể lệ kiểm tra công khai trực tiếp','sport','badminton',
+ 'court_id','e2900000-0000-4000-8000-000000000011','address','Địa chỉ từ trình duyệt',
+ 'starts_at',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '20 days','YYYY-MM-DD"T"10:00'),
+ 'ends_at',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '20 days','YYYY-MM-DD"T"12:00'),
+ 'registration_deadline',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '19 days','YYYY-MM-DD"T"10:00'),
+ 'capacity',2,'entry_fee',200000,'deposit_amount',100000);
+ perform set_config('test.owner_data',data::text,true);
+ assert not has_function_privilege('authenticated','create_tournament_proposal(jsonb)','EXECUTE');
+ assert not has_function_privilege('anon','create_tournament_proposal(jsonb)','EXECUTE');
+ begin perform submit_tournament(data||'{"court_id":""}'::jsonb); raise exception 'TEST: owner omitted court';
+ exception when raise_exception then if sqlerrm<>'COURT_REQUIRED' then raise; end if; end;
+ begin perform submit_tournament(data||'{"sport":"pickleball"}'::jsonb); raise exception 'TEST: wrong sport accepted';
+ exception when raise_exception then if sqlerrm<>'COURT_INVALID' then raise; end if; end;
+ tid:=submit_tournament(data);
+ perform set_config('test.owner_tournament',tid::text,true);
+ assert (select status='published' and manager_id=auth.uid() and address='Địa chỉ kiểm tra' from tournaments where id=tid);
+ assert exists(select 1 from court_closures where tournament_id=tid);
+ assert (get_tournament_settlement(tid)->>'venue_fee')::int=0;
+ assert (get_tournament_settlement(tid)->>'balance')::int=0;
+ begin perform submit_tournament(data); raise exception 'TEST: conflicting tournament published';
+ exception when raise_exception then if sqlerrm<>'SLOT_TAKEN' then raise; end if; end;
+ begin perform resubmit_tournament(tid,data); raise exception 'TEST: published tournament editable';
+ exception when raise_exception then if sqlerrm<>'TOURNAMENT_NOT_EDITABLE' then raise; end if; end;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ begin perform submit_tournament(data); raise exception 'TEST: player published another owner court';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+ rid:=register_tournament(tid,'{"full_name":"Tham gia giải chủ sân","phone":"0900000003","address":"Hà Nội"}');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+ perform review_tournament_registration(rid,true);
+ assert (select payment_owner_id=auth.uid() and bank='TestBank' and deposit_amount=100000 from tournament_registrations where id=rid);
+ perform cancel_tournament(tid);
+ assert not exists(select 1 from court_closures where tournament_id=tid);
+end $$;
+reset role;
+do $$ declare data jsonb:=current_setting('test.owner_data')::jsonb; tid uuid; before_count int; begin
+ assert not exists(select 1 from notifications where tournament_id=current_setting('test.owner_tournament')::uuid and title='Có đề xuất giải cần duyệt');
+ assert (select count(*)=1 from tournaments where title=data->>'title'),'failed publishes leave no draft';
+ -- Old rejected owner proposals keep their ID and acquire one closure/settlement on resubmission.
+ insert into tournaments(manager_id,title,description,sport,address,starts_at,ends_at,registration_deadline,payment_deadline,capacity,entry_fee,deposit_amount,status)
+ select manager_id,title,description,sport,address,starts_at,ends_at,registration_deadline,payment_deadline,capacity,entry_fee,deposit_amount,'rejected'
+ from tournaments where id=current_setting('test.owner_tournament')::uuid returning id into tid;
+ perform set_config('test.owner_resubmit',tid::text,true);
+ select count(*) into before_count from tournaments;
+ assert resubmit_tournament(tid,data)=tid;
+ assert (select status='published' from tournaments where id=tid);
+ assert (select count(*)=before_count from tournaments),'resubmit must remove intermediate draft';
+ assert (select count(*)=1 from court_closures where tournament_id=tid);
+ assert (select count(*)=1 from tournament_settlements where tournament_id=tid);
+ assert not exists(select 1 from notifications where tournament_id=tid and title='Có đề xuất giải cần duyệt');
+ perform cancel_tournament(tid);
+ -- Reject live customer bookings, unready receivers, unverified/banned owners and inactive courts.
+ insert into bookings(code,user_id,court_id,starts_at,ends_at,status,total_amount,deposit_amount,customer_phone)
+ select 'SANZZZZZZ',manager_id,court_id,starts_at,ends_at,'confirmed',200000,200000,'0900000002'
+ from tournaments where id=tid;
+ begin perform submit_tournament(data); raise exception 'TEST: booking overlap accepted';
+ exception when raise_exception then if sqlerrm<>'SLOT_TAKEN' then raise; end if; end;
+ delete from bookings where code='SANZZZZZZ';
+ update sepay_connections set status='disconnected' where id='e2900000-0000-4000-8000-000000000020';
+ begin perform submit_tournament(data); raise exception 'TEST: receiver guard bypassed';
+ exception when raise_exception then if sqlerrm<>'RECEIVER_NOT_READY' then raise; end if; end;
+ update sepay_connections set status='ready' where id='e2900000-0000-4000-8000-000000000020';
+ update courts set is_active=false where id='e2900000-0000-4000-8000-000000000011';
+ begin perform submit_tournament(data); raise exception 'TEST: inactive court accepted';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+ update courts set is_active=true where id='e2900000-0000-4000-8000-000000000011';
+ update profiles set owner_application_status='pending' where id=auth.uid();
+ begin perform submit_tournament(data); raise exception 'TEST: unverified owner accepted';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+ update profiles set owner_application_status='active',banned_at=now(),banned_until=now()+interval '1 day' where id=auth.uid();
+ begin perform submit_tournament(data); raise exception 'TEST: banned owner accepted';
+ exception when raise_exception then if sqlerrm<>'ACCOUNT_BANNED' then raise; end if; end;
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000001',true);
+ update profiles set banned_at=null,banned_until=null where id='e2900000-0000-4000-8000-000000000002';
+ -- Owning the venue does not let its owner approve a player's proposal.
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000003',true);
+ tid:=submit_tournament(data||'{"court_id":""}'::jsonb);
+ assert (select status='pending' from tournaments where id=tid);
+ assert exists(select 1 from notifications where tournament_id=tid and title='Có đề xuất giải cần duyệt');
+ perform set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000002',true);
+ begin perform review_tournament(tid,true,'e2900000-0000-4000-8000-000000000011'); raise exception 'TEST: owner approved player proposal';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+ begin perform resubmit_tournament(tid,data); raise exception 'TEST: owner hijacked player proposal';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+end $$;
+
 rollback;

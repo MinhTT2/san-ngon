@@ -5,11 +5,11 @@ Yêu cầu: [tài liệu ngày 29/09/2026](https://docs.google.com/document/d/10
 ## Giải đấu
 
 - `/giai-dau`: xem, lọc môn, phân trang, theo dõi các giải đã đề xuất và đăng ký.
-- `/giai-dau/tao`: chủ sân chọn sân của mình; người chơi mô tả địa điểm mong muốn để admin bố trí.
+- `/giai-dau/tao`: chủ sân phải chọn sân của mình để công khai ngay, không cần admin duyệt; người chơi mô tả địa điểm mong muốn để admin bố trí và duyệt. Công khai và khóa lịch là một giao dịch SQL, vẫn kiểm tra đúng môn, lịch trống và điều kiện nhận cọc.
 - `/admin/giai-dau`: admin mở đề xuất, chọn sân đúng môn, duyệt hoặc từ chối kèm lý do. Duyệt khóa lịch sân bằng `court_closures`; không thể duyệt trùng đơn đặt hoặc khung đã khóa. Người đề xuất nhận quyền quản lý giải, không được đổi role tài khoản.
 - `/chu-san/giai-dau`: chủ sân thấy giải ở sân mình và giải mình đề xuất. Trang chi tiết dùng chung cho chủ sân, người tổ chức, admin và người tham gia; SQL quyết định quyền.
 - Mỗi tài khoản đăng ký một suất, có họ tên, điện thoại, địa chỉ, tên đội và ghi chú. Thể lệ ghi rõ suất là một người hay một đội. Duyệt đăng ký giữ suất đến hạn cọc riêng; hết hạn chưa trả tiền sẽ trả suất. Số suất còn hiệu lực không vượt quy mô.
-- Sau khi duyệt tham gia, hệ thống cấp QR nếu giải yêu cầu cọc. Cọc và lệ phí lấy từ giải đã được admin duyệt; không nhận số tiền do người tham gia gửi lên. Phần còn lại thu tại giải.
+- Sau khi duyệt tham gia, hệ thống cấp QR nếu giải yêu cầu cọc. Cọc và lệ phí lấy từ giải đã công khai; không nhận số tiền do người tham gia gửi lên. Phần còn lại thu tại giải.
 - Hủy giải trả lịch sân và ghi nhận cần hoàn các khoản đã nhận. Với giải mới, tự hủy suất trước ít nhất 24 giờ được hoàn cọc; muộn hơn không hoàn. Ban tổ chức hủy suất hoàn toàn bộ. Chủ sân thực hiện hoàn qua ngân hàng rồi đánh dấu; người tổ chức được admin giao quản lý không thể tự xác nhận chủ sân đã hoàn tiền.
 
 ## Cọc SePay
@@ -56,13 +56,15 @@ Các kiểm tra SQL dùng dữ liệu tạm rồi rollback. Kiểm tra luồng c
 - Tách hạn nhận/duyệt đăng ký với hạn thanh toán cuối cùng. Thời gian cọc sau duyệt mặc định 24 giờ (người đề xuất chọn 1–72 giờ); SQL lấy mốc sớm hơn giữa thời gian này và hạn cuối của giải. Không dùng giờ từ trình duyệt để quyết định nhận tiền.
 - Suất chưa trả cọc hết hạn không chiếm quy mô, kể cả cron chưa chạy. Cron `tournament-deadlines` mỗi phút dọn trạng thái, nhắc cọc khi còn tối đa một giờ và chuyển giải qua `completed` sau giờ kết thúc. Giải miễn cọc giữ suất sau khi duyệt.
 - Người dùng đã hủy/hết hạn/bị từ chối có thể gửi lại nếu giải còn nhận người. Mỗi lần là một bản ghi và mã thanh toán riêng; lịch sử ngân hàng/hoàn tiền giữ nguyên. Tab Đã đăng ký chỉ hiện lần gần nhất của mỗi giải.
-- Người đề xuất sửa và gửi lại giải `pending`/`rejected`, vẫn phải qua admin duyệt. Không sửa lịch, giá hay chính sách của giải đã công khai.
+- Người đề xuất sửa và gửi lại giải `pending`/`rejected`, người chơi vẫn phải qua admin duyệt, chủ sân chọn sân của mình thì công khai ngay trên mã giải cũ. Không sửa lịch, giá hay chính sách của giải đã công khai.
 - Chính sách đã chốt: giải mới, người chơi tự hủy ít nhất **24 giờ** trước lúc bắt đầu được hoàn toàn bộ cọc; muộn hơn không hoàn cọc. Nếu người quản lý tự hủy suất của chính mình, vẫn là hủy cá nhân. Ban tổ chức hủy suất người khác hoặc hủy cả giải thì hoàn 100%. Hủy cả giải hoàn cả cọc đã giữ do người chơi hủy muộn trước đó. Giải cũ giữ mốc 0 giờ đã công bố; mốc hoàn được đóng băng trên từng đăng ký.
 - Thông báo trong website cho đề xuất mới, kết quả duyệt, đăng ký mới, duyệt suất, hết hạn, sắp hết hạn cọc, nhận cọc, hủy, khoản cần hoàn, xác nhận hoàn và quyết toán. Hộp thư cập nhật realtime, quay lại tab hoặc có mạng. Mở thông báo đưa đến đúng giải. Không bổ sung email người chơi.
 
 ### Quyết toán thủ công
 
-Admin chỉ công khai giải sau khi ghi **tiền thuê sân đã thỏa thuận**, nội dung và xác nhận chủ sân/người tổ chức đã đồng ý. Đây là giá thỏa thuận của giải, không phải giá đơn đặt sân thường. Thỏa thuận cố định sau khi công khai; giải cũ chưa có thỏa thuận được admin bổ sung một lần. Người tham gia không được sửa bất kỳ số tiền nào.
+Với giải do chủ sân tổ chức tại sân mình, hệ thống ghi tiền thuê và tiền thuê khi hủy bằng 0; chủ sân tự thu/hoàn lệ phí, không phát sinh quyết toán giữa hai bên.
+
+Với đề xuất của người chơi, admin chỉ công khai giải sau khi ghi **tiền thuê sân đã thỏa thuận**, nội dung và xác nhận chủ sân/người tổ chức đã đồng ý. Đây là giá thỏa thuận của giải, không phải giá đơn đặt sân thường. Thỏa thuận cố định sau khi công khai; giải cũ chưa có thỏa thuận được admin bổ sung một lần. Người tham gia không được sửa bất kỳ số tiền nào.
 
 Chủ sân nhận toàn bộ cọc và phần lệ phí còn lại. Phần còn lại dùng tiền mặt hoặc nội dung chuyển khoản riêng, không dùng lại mã GIAI của cọc (webhook sẽ coi đó là chuyển cọc trùng và ghi phải hoàn). Từ giờ bắt đầu, chủ sân ghi nhận đã thu phần còn lại (SQL tính bằng lệ phí trừ cọc), kèm chứng từ. Không ghi thu hai lần; không được ghi thu phần còn lại khi chưa đủ cọc. Người vắng mặt hoặc được miễn phần còn lại phải có ghi chú riêng để kết thúc đối soát. Nếu ban tổ chức hủy sau khi đã thu phần còn lại, phần này được ghi phải hoàn riêng với cọc.
 

@@ -32,6 +32,7 @@ export function tournamentError(code: string) {
     REFUND_CHANGED_OR_FORBIDDEN: 'Số tiền cần hoàn đã thay đổi hoặc bạn không có quyền. Tải lại trang và đối soát trước khi xác nhận.',
     FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.', AUTH_REQUIRED: 'Bạn cần đăng nhập.', ACCOUNT_BANNED: 'Tài khoản đang bị khóa.',
     TOURNAMENT_DATE_INVALID: 'Kiểm tra thời gian diễn ra, hạn đăng ký và trạng thái sân.', TOURNAMENT_NOT_PENDING: 'Giải này đã được xử lý.',
+    COURT_REQUIRED: 'Chủ sân cần chọn sân của mình để công khai giải.',
     COURT_INVALID: 'Chọn sân đang hoạt động và đúng môn thi đấu.', SLOT_TAKEN: 'Khung giờ này đã có đơn đặt sân hoặc đã bị khóa.',
     RECEIVER_NOT_READY: 'Chủ sân chưa sẵn sàng nhận cọc qua SePay. Kiểm tra kết nối, phí dịch vụ và điều kiện mở nhận đơn.',
     REGISTRATION_CLOSED: 'Giải đã đóng đăng ký hoặc đã hủy.', TOURNAMENT_FULL: 'Giải đã đủ số người / đội được duyệt.',
