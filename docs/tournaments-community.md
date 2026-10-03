@@ -93,3 +93,10 @@ Không dùng `app/(site)/loading.tsx` bọc toàn bộ website: Next.js 15 có l
 - Kịch bản tạo tài khoản/sân/kết nối **kiểm thử**, đi qua UI và API thật: chủ sân công khai → khóa sân → người chơi đăng ký → duyệt → webhook cọc giả lập/retry → realtime → hủy/ghi nhận hoàn → trả sân; người chơi đề xuất → admin chốt thỏa thuận/duyệt → thu phần còn lại → chủ sân ghi quyết toán → người tổ chức xác nhận.
 - Chỉ dịch thời gian của giải kiểm thử bằng SQL để kiểm tra mốc bắt đầu/kết thúc. Không đổi cờ nghiệm thu nhiều chủ sân; script dừng nếu cờ chưa bật. Dữ liệu thử được xóa trong `finally`; nếu tiến trình bị dừng cưỡng bức, dùng `cleanup.sql` trong thư mục kết quả để dọn đúng các UUID đã tạo.
 - Webhook đi vào localhost với ngân hàng/tài khoản giả. Ghi nhận thu, hoàn và quyết toán là mô phỏng, không chuyển tiền. Vẫn cần nghiệm thu QR với ngân hàng hợp lệ và giao dịch tiền thật trước khi coi thanh toán ngân hàng đã nghiệm thu.
+
+### Bố cục theo vai trò sau khi duyệt UI
+
+- Người chơi thấy form đăng ký hoặc trạng thái/cọc ngay dưới tên giải. Tiến trình ba bước phân biệt đã gửi, đã duyệt và đã đóng cọc; số tiền, hạn chuyển và tài khoản chủ sân nằm cùng một khung. Lịch, địa điểm và lệ phí ở cột bên cạnh trên desktop. Ghi chú, chính sách và thao tác hủy mở khi cần.
+- Người quản lý có ba mục: **Người tham gia**, **Thu & hoàn tiền**, **Thông tin giải**. Số việc cần xử lý hiện trên đầu trang và tab; danh sách lọc theo trạng thái, tìm tên/đội/điện thoại không cần gõ dấu. Duyệt là nút trực tiếp; từ chối có ô lý do riêng. Tab và bộ lọc giữ lựa chọn khi realtime cập nhật.
+- Trang tìm giải rút ngắn phần giới thiệu để danh sách xuất hiện sớm. Form tạo giải có điều hướng đến ba phần. Chủ sân tự tổ chức thấy tổng thu của giải, không bị yêu cầu quyết toán cho chính mình.
+- Đã chạy lại kịch bản E2E trên bản production local với bố cục mới, gồm tìm kiếm/bộ lọc người tham gia, tab thu–hoàn, thao tác hủy thu gọn và cọc ở đầu trang. Ảnh trước/sau nằm trong `../outputs/tournament-ux-review`. Luật nghiệp vụ, quyền và luồng tiền vẫn do các RPC hiện có xử lý.
