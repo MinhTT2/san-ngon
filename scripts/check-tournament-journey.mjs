@@ -141,7 +141,17 @@ const { POST } = load('app/api/tournaments/route.ts', {
 function request(body) { return new Request('http://localhost/api/tournaments', { method: 'POST', headers: { origin: 'http://localhost', 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
 const invalid = await POST(request({ action: 'submit', data: { ...input, deposit_amount: 200001 } }));
 assert.equal(invalid.status, 400);
-assert.match((await invalid.json()).error, /Cọc mỗi suất/);
+const invalidBody = await invalid.json();
+assert.match(invalidBody.error, /Cọc mỗi suất/);
+assert.match(invalidBody.fieldErrors.deposit_amount, /Cọc mỗi suất/);
+const invalidFields = await POST(request({ action: 'submit', data: { ...input, title: '   ab   ', description: '   short   ', capacity: 1 } }));
+const invalidFieldsBody = await invalidFields.json();
+assert.equal(invalidFields.status, 400);
+assert.match(invalidFieldsBody.fieldErrors.title, /ít nhất 3 ký tự/);
+assert.match(invalidFieldsBody.fieldErrors.description, /ít nhất 10 ký tự/);
+assert.match(invalidFieldsBody.fieldErrors.capacity, /từ 2/);
+assert.equal(tournaments.tournamentErrorFields.TOURNAMENT_REGISTRATION_PAST, 'registration_deadline');
+assert.match(tournaments.tournamentError('TOURNAMENT_REGISTRATION_PAST'), /đã qua/);
 assert.equal(calls.length, 0);
 const response = await POST(request({ action: 'register', id: tournament.id, data: participant }));
 assert.equal(response.status, 200);

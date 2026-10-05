@@ -180,3 +180,23 @@ thời với bài kiểm tra trình duyệt hoặc lệnh Supabase CLI khác.
 
 Nghiệm thu chuyển khoản ngân hàng thật, xác nhận webhook thật và quy trình hoàn
 thủ công vẫn là điều kiện riêng trước khi nhận tiền từ người dùng.
+
+## Xử lý lỗi công khai giải (05/10/2026)
+
+Form hiển thị danh sách mục cần sửa thay cho thông báo nhập liệu chung. Bấm
+lý do để tới đúng ô, sửa rồi gửi lại trên cùng form; lỗi đã sửa được bỏ khỏi
+danh sách. SQL dùng giờ server để phân biệt giờ bắt đầu đã qua, hạn đăng ký
+đã qua và thứ tự các mốc không hợp lệ. Tạo/công khai vẫn là một giao dịch:
+thất bại không để lại đề xuất chờ duyệt hoặc khóa sân.
+
+Kiểm tra bổ sung trong `check-tournament-e2e.mjs`: tên/thể lệ không đủ dài sau
+khi bỏ khoảng trắng, hạn đăng ký trong quá khứ, liên kết tới ô lỗi, giữ sân
+và lịch đã chọn, sửa rồi công khai; giải hiện ở danh sách công khai, Tôi tổ
+chức, chủ sân và admin. Kiểm tra SQL bao gồm năm lỗi thời gian và toàn bộ
+ràng buộc quyền/lịch/cọc cũ. API ghi mã lỗi RPC để đối chiếu lần lỗi tiếp
+theo, không ghi dữ liệu biểu mẫu hoặc nội dung giao dịch ngân hàng.
+
+Ba lần gửi bị từ chối trên production trước bản sửa không có nội dung lỗi
+trong log, nên chưa kết luận nguyên nhân riêng của các lần đó. Đã xác nhận
+luồng chủ sân công khai tại sân của mình chạy thành công trên production;
+không thêm bước admin duyệt hoặc bỏ các điều kiện công khai.

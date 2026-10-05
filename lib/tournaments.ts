@@ -27,6 +27,32 @@ export const participantSchema = z.object({
   full_name: z.string().trim().min(2).max(100), phone: z.string().trim().max(25).transform(normalizePhone).pipe(z.string().regex(/^0\d{9}$/, 'Số điện thoại gồm 10 chữ số, bắt đầu bằng 0 (hoặc +84).')),
   address: z.string().trim().min(2).max(300), team_name: z.string().trim().max(100), note: z.string().trim().max(1000),
 });
+const formLabels: Record<string, string> = {
+  title: 'Tên giải đấu', description: 'Thể lệ & thông tin liên hệ', sport: 'Môn thi đấu', court_id: 'Sân tổ chức',
+  address: 'Địa chỉ / khu vực', starts_at: 'Bắt đầu thi đấu', ends_at: 'Kết thúc thi đấu',
+  registration_deadline: 'Hạn nhận và duyệt đăng ký', payment_deadline: 'Hạn đóng cọc cuối cùng',
+  payment_hold_hours: 'Thời gian đóng cọc sau duyệt', capacity: 'Số người / đội tối đa',
+  entry_fee: 'Lệ phí mỗi suất', deposit_amount: 'Cọc mỗi suất', full_name: 'Họ tên', phone: 'Số điện thoại',
+};
+export function tournamentValidationErrors(issues: z.ZodIssue[]): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const issue of issues) {
+    const field = String(issue.path.at(-1) ?? '');
+    if (!formLabels[field] || errors[field]) continue;
+    const label = formLabels[field];
+    errors[field] = issue.code === 'custom' || field === 'phone' ? issue.message
+      : issue.code === 'too_small' ? `${label}: ${issue.type === 'string' ? `nhập ít nhất ${issue.minimum} ký tự sau khi bỏ khoảng trắng đầu/cuối` : `nhập số từ ${issue.minimum} trở lên`}.`
+      : issue.code === 'too_big' ? `${label}: ${issue.type === 'string' ? `tối đa ${issue.maximum} ký tự` : `không vượt quá ${issue.maximum}`}.`
+      : ['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline'].includes(field) ? `${label}: chọn đầy đủ ngày và giờ.`
+      : `${label}: kiểm tra lại giá trị đã nhập.`;
+  }
+  return errors;
+}
+export const tournamentErrorFields: Record<string, string> = {
+  TOURNAMENT_START_PAST: 'starts_at', TOURNAMENT_REGISTRATION_PAST: 'registration_deadline',
+  TOURNAMENT_END_INVALID: 'ends_at', TOURNAMENT_PAYMENT_INVALID: 'payment_deadline',
+  TOURNAMENT_REGISTRATION_INVALID: 'registration_deadline', COURT_REQUIRED: 'court_id', COURT_INVALID: 'court_id', SLOT_TAKEN: 'court_id',
+};
 export function tournamentError(code: string) {
   const errors: Record<string, string> = {
     TERMS_REQUIRED: 'Nhập tiền thuê sân, nội dung thỏa thuận và xác nhận hai bên đã đồng ý.',
@@ -40,6 +66,11 @@ export function tournamentError(code: string) {
     REFUND_CHANGED_OR_FORBIDDEN: 'Số tiền cần hoàn đã thay đổi hoặc bạn không có quyền. Tải lại trang và đối soát trước khi xác nhận.',
     FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.', AUTH_REQUIRED: 'Bạn cần đăng nhập.', ACCOUNT_BANNED: 'Tài khoản đang bị khóa.',
     TOURNAMENT_DATE_INVALID: 'Kiểm tra thời gian diễn ra, hạn đăng ký và trạng thái sân.', TOURNAMENT_NOT_PENDING: 'Giải này đã được xử lý.',
+    TOURNAMENT_START_PAST: 'Giờ bắt đầu thi đấu phải ở tương lai. Chọn lại ngày và giờ bắt đầu.',
+    TOURNAMENT_REGISTRATION_PAST: 'Hạn nhận và duyệt đăng ký đã qua. Chọn hạn mới ở tương lai để mở đăng ký.',
+    TOURNAMENT_END_INVALID: 'Giờ kết thúc phải sau giờ bắt đầu thi đấu.',
+    TOURNAMENT_PAYMENT_INVALID: 'Hạn đóng cọc không được sau giờ bắt đầu thi đấu.',
+    TOURNAMENT_REGISTRATION_INVALID: 'Hạn nhận và duyệt đăng ký không được sau hạn đóng cọc.',
     COURT_REQUIRED: 'Chủ sân cần chọn sân của mình để công khai giải.',
     COURT_INVALID: 'Chọn sân đang hoạt động và đúng môn thi đấu.', SLOT_TAKEN: 'Khung giờ này đã có đơn đặt sân hoặc đã bị khóa.',
     RECEIVER_NOT_READY: 'Chủ sân chưa sẵn sàng nhận cọc qua SePay. Kiểm tra kết nối, phí dịch vụ và điều kiện mở nhận đơn.',

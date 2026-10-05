@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requestOrigin } from '@/lib/request-origin';
-import { participantSchema, tournamentError, tournamentSchema } from '@/lib/tournaments';
+import { participantSchema, tournamentError, tournamentErrorFields, tournamentSchema, tournamentValidationErrors } from '@/lib/tournaments';
 
 const approve = z.union([z.boolean(), z.enum(['true', 'false']).transform(value => value === 'true')]);
 const id = z.string().uuid();
@@ -28,8 +28,8 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    const issue = parsed.error.issues.find(issue => issue.code === 'custom' || issue.path.at(-1) === 'phone');
-    return NextResponse.json({ error: issue?.message ?? 'Kiểm tra các trường thông tin, thời gian và mức cọc không vượt lệ phí.' }, { status: 400 });
+    const fieldErrors = tournamentValidationErrors(parsed.error.issues);
+    return NextResponse.json({ error: Object.values(fieldErrors)[0] ?? 'Kiểm tra các trường thông tin đã nhập.', fieldErrors }, { status: 400 });
   }
   const body = parsed.data;
   const result = body.action === 'submit' ? await db.rpc('submit_tournament', { p_data: body.data })
@@ -45,6 +45,11 @@ export async function POST(request: Request) {
     : body.action === 'cancel_registration' ? await db.rpc('cancel_tournament_registration', { p_id: body.id })
     : body.action === 'cancel' ? await db.rpc('cancel_tournament', { p_id: body.id })
     : await db.rpc('mark_tournament_refund', { p_transaction_key: body.transaction_key, p_expected_amount: body.expected_amount });
-  if (result.error) return NextResponse.json({ error: tournamentError(result.error.message) }, { status: 400 });
+  if (result.error) {
+    console.warn('Tournament action rejected', { action: body.action, code: result.error.code, reason: /^[A-Z_]+$/.test(result.error.message) ? result.error.message : 'DATABASE_ERROR' });
+    const error = tournamentError(result.error.message);
+    const field = tournamentErrorFields[result.error.message];
+    return NextResponse.json({ error, fieldErrors: field && ['submit', 'resubmit'].includes(body.action) ? { [field]: error } : {} }, { status: 400 });
+  }
   return NextResponse.json({ data: result.data });
 }

@@ -20,10 +20,10 @@ rmSync(join(output, 'result.json'), { force: true });
 const temp = mkdtempSync(join(tmpdir(), 'san-ngon-tournament-'));
 const cliPath = resolve('node_modules/supabase/dist/supabase.js');
 function cli(args) {
-  const raw = execFileSync(process.execPath, [cliPath, ...args], { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const raw = execFileSync(process.execPath, [cliPath, ...args, '-o', 'json'], { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   const result = JSON.parse(raw);
   if (result.error) throw new Error(result.error.message);
-  return result;
+  return Array.isArray(result) ? (args[0] === 'projects' ? { keys: result } : { rows: result }) : result;
 }
 function sql(query) {
   const file = join(temp, 'query.sql');
@@ -151,12 +151,47 @@ try {
     to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '9 days','YYYY-MM-DD"T"20:00') payment_deadline`)[0];
   const { owner, organizer, player, admin } = pages;
   await proposal(owner, { ...dates, title: '[KIỂM THỬ] Cầu lông cuối tuần Cầu Giấy' }, true);
+  // Reproduce a failed publication, correct the identified fields, and retry the same form.
+  await owner.locator('[name=title]').fill('   ab   ');
+  await owner.locator('textarea[name=description]').fill('   short   ');
+  async function rejectedPublication(field) {
+    const [response] = await Promise.all([
+      owner.waitForResponse(response => response.url() === `${origin}/api/tournaments` && response.request().method() === 'POST'),
+      owner.getByRole('button', { name: 'Công khai giải đấu', exact: true }).click(),
+    ]);
+    assert.equal(response.status(), 400);
+    const body = await response.json();
+    assert(body.fieldErrors[field]);
+    await owner.getByRole('list', { name: 'Thông tin cần sửa' }).waitFor();
+    await owner.locator(`[name=${field}][aria-invalid=true]`).waitFor();
+    assert.equal(owner.url(), `${origin}/giai-dau/tao`);
+    assert.equal(sql(`select count(*)::int n from tournaments where manager_id='${ids.owner}'`)[0].n, 0, 'failure must not leave a pending proposal');
+    return body;
+  }
+  const invalidFields = await rejectedPublication('title');
+  assert(invalidFields.fieldErrors.description);
+  await owner.getByRole('button', { name: invalidFields.fieldErrors.title, exact: true }).click();
+  assert.equal(await owner.evaluate(() => document.activeElement.name), 'title');
+  await owner.locator('[name=title]').fill('[KIỂM THỬ] Cầu lông cuối tuần Cầu Giấy');
+  await owner.locator('textarea[name=description]').fill('Một suất là một đội. Dữ liệu kiểm thử, không chuyển tiền thật.');
+  await owner.locator('[name=registration_deadline]').fill('2000-01-01T10:00');
+  const expiredDeadline = await rejectedPublication('registration_deadline');
+  assert.match(expiredDeadline.fieldErrors.registration_deadline, /đã qua/);
+  assert.equal(await owner.locator('[name=court_id]').inputValue(), ids.court, 'court selection survives a rejected publication');
+  assert.equal(await owner.locator('[name=starts_at]').inputValue(), dates.starts_at, 'schedule survives a rejected publication');
+  await owner.locator('[name=registration_deadline]').fill(dates.registration_deadline);
+  console.log('OK: failed publication identifies fields, preserves inputs and allows correction.');
   await shot(owner, '01-owner-create');
   const tid = await submit(owner, 'Công khai giải đấu');
   await owner.waitForURL(`${origin}/giai-dau/${tid}`);
   await owner.getByRole('navigation', { name: 'Quản lý giải đấu' }).waitFor();
   await shot(owner, '02-owner-published');
   assert.equal(sql(`select count(*)::int n from court_closures where tournament_id='${tid}'`)[0].n, 1);
+  for (const [actor, path] of [[owner, '/chu-san/giai-dau'], [owner, '/giai-dau?view=mine'], [admin, '/admin/giai-dau'], [player, '/giai-dau']]) {
+    await actor.goto(`${origin}${path}`);
+    await actor.getByRole('heading', { name: '[KIỂM THỬ] Cầu lông cuối tuần Cầu Giấy', exact: true }).waitFor();
+  }
+  console.log('OK: published owner tournament is visible to the owner, admin and public.');
   await player.goto(`${origin}/giai-dau`);
   await shot(player, '03-discover');
   await player.goto(`${origin}/giai-dau/${tid}`);

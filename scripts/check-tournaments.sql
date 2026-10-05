@@ -333,6 +333,16 @@ do $$ declare data jsonb; tid uuid; rid uuid; begin
  exception when raise_exception then if sqlerrm<>'COURT_REQUIRED' then raise; end if; end;
  begin perform submit_tournament(data||'{"sport":"pickleball"}'::jsonb); raise exception 'TEST: wrong sport accepted';
  exception when raise_exception then if sqlerrm<>'COURT_INVALID' then raise; end if; end;
+ begin perform submit_tournament(data||jsonb_build_object('starts_at',to_char((now() at time zone 'Asia/Ho_Chi_Minh')-interval '1 day','YYYY-MM-DD"T"HH24:MI'))); raise exception 'TEST: past start accepted';
+ exception when raise_exception then if sqlerrm<>'TOURNAMENT_START_PAST' then raise; end if; end;
+ begin perform submit_tournament(data||jsonb_build_object('registration_deadline',to_char((now() at time zone 'Asia/Ho_Chi_Minh')-interval '1 day','YYYY-MM-DD"T"HH24:MI'))); raise exception 'TEST: past registration deadline accepted';
+ exception when raise_exception then if sqlerrm<>'TOURNAMENT_REGISTRATION_PAST' then raise; end if; end;
+ begin perform submit_tournament(data||jsonb_build_object('ends_at',data->>'starts_at')); raise exception 'TEST: equal start and end accepted';
+ exception when raise_exception then if sqlerrm<>'TOURNAMENT_END_INVALID' then raise; end if; end;
+ begin perform submit_tournament(data||jsonb_build_object('payment_deadline',data->>'ends_at')); raise exception 'TEST: payment after start accepted';
+ exception when raise_exception then if sqlerrm<>'TOURNAMENT_PAYMENT_INVALID' then raise; end if; end;
+ begin perform submit_tournament(data||jsonb_build_object('payment_deadline',to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '18 days','YYYY-MM-DD"T"10:00'))); raise exception 'TEST: registration after payment accepted';
+ exception when raise_exception then if sqlerrm<>'TOURNAMENT_REGISTRATION_INVALID' then raise; end if; end;
  tid:=submit_tournament(data);
  perform set_config('test.owner_tournament',tid::text,true);
  assert (select status='published' and manager_id=auth.uid() and address='Địa chỉ kiểm tra' from tournaments where id=tid);
