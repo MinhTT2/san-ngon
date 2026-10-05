@@ -47,7 +47,7 @@ assert.equal(tournaments.registrationLabel({ status: 'approved', deposit_amount:
 const format = { vnd: value => `${value}đ`, dayLabel: () => '15/10/2030', hhmm: () => '10:00' };
 function ActionForm({ children, label }) { return React.createElement('form', null, children, React.createElement('button', null, label)); }
 const { TournamentRegistration } = load('components/tournament-registration.tsx', {
-  'next/image': { default: ({ src, alt, width, height, className }) => React.createElement('img', { src, alt, width, height, className }) }, '@/lib/tournaments': tournaments, '@/lib/format': format,
+  './tournament-payment-qr': { TournamentPaymentQr: ({ src, alt }) => React.createElement('img', { src, alt }) }, '@/lib/tournaments': tournaments, '@/lib/format': format,
   '@/lib/sepay': { vietQrUrl: () => 'https://test.invalid/qr.png' }, './action-form': { ActionForm },
   './copy-value': { CopyValue: ({ value }) => React.createElement('span', null, value) },
 });
@@ -78,11 +78,14 @@ assert(nodes(review()).some(node => node.props?.name === 'note' && node.props.re
 assert.equal(review().props.payload.terms_confirmed, false);
 
 state = [];
-const { TournamentParticipants } = load('components/tournament-participants.tsx', { react: hooks, '@/lib/tournament-status': status, '@/lib/format': format, './form-field': field, './action-form': { ActionForm } });
+const reviewRegistration = load('components/tournament-review-registration.tsx', { './form-field': field, './action-form': { ActionForm } });
+const { TournamentParticipants } = load('components/tournament-participants.tsx', { react: hooks, '@/lib/tournament-status': status, '@/lib/format': format, './form-field': field, './action-form': { ActionForm }, './tournament-review-registration': reviewRegistration });
 const registrations = [{ ...registration, id: 'pending', status: 'pending', full_name: 'Chờ duyệt' }, { ...registration, id: 'unpaid', team_name: 'Đội xanh' }, { ...registration, id: 'paid', paid_at: '2030-10-05T09:00:00Z' }];
 function participants(started = false) { cursor = 0; return TournamentParticipants({ registrations, closed: false, started, canCancel: true, userId: 'manager', admin: false }); }
 assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 3);
 nodes(participants()).find(node => node.type === 'select').props.onChange({ target: { value: 'unpaid' } });
+assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 1);
+nodes(participants()).find(node => node.props?.type === 'search').props.onChange({ target: { value: 'doi xanh' } });
 assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 1);
 nodes(participants()).find(node => node.props?.type === 'search').props.onChange({ target: { value: 'không khớp' } });
 assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 0);
@@ -94,6 +97,40 @@ assert.equal(selfCancellation.props.label, 'Hủy đăng ký của bạn');
 assert(!nodes(participants(true)).some(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'unpaid'));
 assert(nodes(participants(true)).some(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'paid'));
 console.log('OK: conditional review requirements and participant search/status filters.');
+
+state = [];
+const { TournamentPaymentQr } = load('components/tournament-payment-qr.tsx', { react: hooks,
+  'next/image': { default: () => null },
+});
+function qr() { cursor = 0; return TournamentPaymentQr({ src: 'https://test.invalid/qr.png', alt: 'QR cọc' }); }
+nodes(qr()).find(node => typeof node.props?.onError === 'function').props.onError();
+assert.match(renderToStaticMarkup(qr()), /Không tải được mã QR/);
+nodes(qr()).find(node => node.type === 'button').props.onClick();
+assert(!nodes(qr()).some(node => node.type === 'button'));
+assert(nodes(reviewRegistration.TournamentReviewRegistration({ id: registration.id })).some(node => node.props?.name === 'note' && !node.props.required));
+console.log('OK: QR fallback/retry and optional approval notes.');
+
+let settlement = { owner_id: 'owner', manager_id: 'manager', balance: 0, can_settle: true, pending_transfer: false,
+  venue_fee: 0, cancellation_venue_fee: 0, due_at: tournament.ends_at, terms_note: 'Thỏa thuận',
+  bank_received: 0, balance_received: 0, refund_due: 0, balance_refund_due: 0, uncollected_count: 0,
+};
+const { TournamentSettlementPanel } = load('components/tournament-settlement.tsx', {
+  '@/lib/supabase/server': { createClient: async () => ({
+    rpc: async () => ({ data: settlement, error: null }),
+    from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+  }) }, '@/lib/format': format, './form-field': field, './action-form': { ActionForm },
+});
+const settlementHtml = async () => renderToStaticMarkup(await TournamentSettlementPanel({ id: tournament.id, userId: 'owner', admin: false }));
+assert.match(await settlementHtml(), /Không còn khoản cần chuyển/);
+assert.doesNotMatch(await settlementHtml(), /<button/);
+settlement = { ...settlement, pending_transfer: true };
+assert.match(await settlementHtml(), /Chờ bên nhận kiểm tra/);
+settlement = { ...settlement, pending_transfer: false, balance: 100000 };
+assert.match(await settlementHtml(), /Đã chuyển 100000đ/);
+settlement = { ...settlement, balance: 0, manager_id: 'owner' };
+assert.match(await settlementHtml(), /không cần chuyển quyết toán cho bên khác/);
+assert.doesNotMatch(await settlementHtml(), /Còn phải chuyển quyết toán/);
+console.log('OK: settled, pending-transfer and self-organized settlement guidance.');
 
 const calls = [];
 const { POST } = load('app/api/tournaments/route.ts', {

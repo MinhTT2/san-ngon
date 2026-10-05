@@ -197,7 +197,8 @@ try {
   await manager.getByRole('button', { name: 'Tôi đã nhận tiền', exact: true }).click();
   await manager.getByText('Bên nhận đã xác nhận', { exact: false }).waitFor();
   await player.goto(`${proposal}?view=settlement`);
-  assert.equal(await player.getByRole('heading', { name: 'Thu phí & quyết toán', exact: true }).count(), 0);
+  assert.equal(await player.locator('#quyet-toan').count(), 0);
+  assert.equal(await player.getByRole('navigation', { name: 'Quản lý giải đấu' }).count(), 0);
   for (const page of [owner, manager, admin]) {
     for (const width of [390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 1000 });

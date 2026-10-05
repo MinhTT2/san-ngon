@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { Check, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { registrationLabel } from '@/lib/tournament-status';
 import type { Registration } from '@/lib/tournaments';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { ActionForm } from './action-form';
 import { Field, fieldClass } from './form-field';
+import { TournamentReviewRegistration } from './tournament-review-registration';
+
+const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLocaleLowerCase('vi');
 
 export function TournamentParticipants({ registrations, closed, started, canCancel, userId, admin }: {
   registrations: Registration[]; closed: boolean; started: boolean; canCancel: boolean; userId: string; admin: boolean;
@@ -14,7 +17,7 @@ export function TournamentParticipants({ registrations, closed, started, canCanc
   const [filter, setFilter] = useState('all');
   const matching = registrations.filter(registration => {
     const category = registration.status === 'approved' ? registration.paid_at || registration.deposit_amount === 0 ? 'confirmed' : 'unpaid' : registration.status;
-    return (filter === 'all' || category === filter) && `${registration.full_name} ${registration.team_name} ${registration.phone}`.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi'));
+    return (filter === 'all' || category === filter) && normalize(`${registration.full_name} ${registration.team_name ?? ''} ${registration.phone}`).includes(normalize(search.trim()));
   });
   return <section id="nguoi-tham-gia" className="scroll-mt-28 py-6">
     <h2 className="font-display text-2xl font-bold text-pitch">Người tham gia</h2>
@@ -38,15 +41,8 @@ export function TournamentParticipants({ registrations, closed, started, canCanc
           <p className="break-words text-sm"><a className="font-semibold text-pitch underline" href={`tel:${registration.phone}`}>{registration.phone}</a> · {registration.address}</p>
           {registration.note && <p className="whitespace-pre-wrap break-words text-sm text-ink-secondary">{registration.note}</p>}
           {registration.review_note && <p className="break-words text-sm text-ink-secondary">Ghi chú duyệt: {registration.review_note}</p>}
-          <p className="text-sm">{registration.paid_at ? `Đã nhận cọc ${vnd(registration.deposit_amount)}` : registration.deposit_amount === 0 ? 'Không yêu cầu cọc' : 'Chưa nhận đủ cọc'}{registration.status === 'approved' && !confirmed && registration.payment_expires_at && ` · Hạn: ${dayLabel(new Date(registration.payment_expires_at))} · ${hhmm(registration.payment_expires_at)}`}</p>
-          {registration.status === 'pending' && !closed && <div className="grid items-start gap-4 sm:grid-cols-2">
-            <ActionForm payload={{ action: 'review_registration', id: registration.id, approve: true, note: '' }} label="Duyệt tham gia" successMessage="Đã duyệt đăng ký." confirmMessage="Duyệt đăng ký và giữ một suất đến hạn cọc?">
-              <p className="flex items-center gap-2 text-xs text-ink-secondary"><Check size={16} aria-hidden="true" />{registration.deposit_amount > 0 ? `Cọc sau duyệt: ${vnd(registration.deposit_amount)}` : 'Xác nhận tham gia, không cần cọc'}</p>
-            </ActionForm>
-            <details><summary className="min-h-11 cursor-pointer text-sm font-semibold text-danger">Từ chối đăng ký</summary>
-              <ActionForm payload={{ action: 'review_registration', id: registration.id, approve: false }} label="Gửi lý do từ chối" variant="danger" successMessage="Đã từ chối đăng ký."><Field label="Lý do từ chối"><textarea className={fieldClass} name="note" required minLength={3} maxLength={1000} rows={2} /></Field></ActionForm>
-            </details>
-          </div>}
+          <p className="text-sm">{registration.paid_at ? `Đã nhận cọc ${vnd(registration.deposit_amount)}` : registration.deposit_amount === 0 ? 'Không yêu cầu cọc' : registration.status === 'pending' ? 'Chưa cần đóng cọc' : 'Chưa nhận đủ cọc'}{registration.status === 'approved' && !confirmed && registration.payment_expires_at && ` · Hạn: ${dayLabel(new Date(registration.payment_expires_at))} · ${hhmm(registration.payment_expires_at)}`}</p>
+          {registration.status === 'pending' && !closed && <TournamentReviewRegistration id={registration.id} />}
           {registration.status === 'approved' && canCancel && (!self || !started) && <ActionForm payload={{ action: 'cancel_registration', id: registration.id }} variant="danger" label={self ? 'Hủy đăng ký của bạn' : 'Hủy suất tham gia'} confirmMessage={self ? `Đây là đăng ký của bạn, áp dụng chính sách tự hủy. ${registration.refund_deadline ? `Chỉ hoàn cọc nếu hủy không muộn hơn ${dayLabel(new Date(registration.refund_deadline))} · ${hhmm(registration.refund_deadline)}.` : 'Xem chính sách hoàn cọc của giải.'}` : 'Hủy suất này? Các khoản đã nhận được ghi cần hoàn toàn bộ; chủ sân hoàn thủ công.'} />}
           {canHandleMoney && registration.status !== 'pending' && <div className="space-y-4 border-t border-hairline pt-4">
             <p className="text-sm text-ink-secondary">Phần lệ phí còn lại: {vnd(registration.entry_fee - registration.deposit_amount)} · {registration.balance_received_at ? 'Đã thu' : registration.balance_waived_at ? 'Đã miễn / vắng mặt' : 'Chưa thu'}</p>

@@ -86,3 +86,20 @@ Không dùng `app/(site)/loading.tsx` bọc toàn bộ website: Next.js 15 có l
 ### Kết quả kiểm tra bản cập nhật
 
 Đã chạy lint, typecheck, production build và hai kịch bản SQL rollback. Chromium headless với bốn phiên độc lập đã kiểm tra đề xuất/duyệt, hết hạn và đăng ký lại, SePay giả lập + retry + realtime, liên kết thông báo, quyền riêng tư liên hệ, thu phần còn lại và xác nhận quyết toán hai bên. Kiểm tra bố cục/bộ lọc/điều hướng tại 390, 768, 1024 và 1440 px. Hoàn cọc và quyết toán được kiểm tra bằng dữ liệu giả; vẫn cần nghiệm thu chuyển khoản ngân hàng thật.
+
+### Kiểm tra lại giải đấu ngày 03/10/2026
+
+- Chủ sân chọn sân thì form hiển thị địa chỉ đã lưu, không phải nhập lại địa điểm mà SQL sẽ thay thế. Đổi môn xóa sân đã chọn; môn chưa có sân có hướng dẫn rõ.
+- Trang chi tiết báo lỗi nếu chưa đọc được quyền/quy mô, không mặc định số suất bằng 0 khi RPC hỏng. Khi tới giờ bắt đầu, trang tự tải dữ liệu mới để hiện thao tác thu phần lệ phí còn lại và bỏ thao tác hủy cá nhân đã hết hạn.
+- Ảnh QR không tải được có hướng dẫn dùng thông tin chuyển khoản và nút thử lại. Không che số tài khoản, số tiền, mã chuyển khoản hay hạn cọc.
+- `scripts/check-tournament-e2e.mjs --live` chạy bản production local với Supabase thật, bốn phiên Chromium headless tách biệt. Cần CLI đăng nhập/link, `npm run build`, Playwright (hoặc `PLAYWRIGHT_MODULE`) và trình duyệt (hoặc `CHROMIUM_EXECUTABLE`). Ảnh và kết quả lưu ở `../outputs/tournament-review`, đổi bằng `UX_SCREENSHOT_DIR`.
+- Kịch bản tạo tài khoản/sân/kết nối **kiểm thử**, đi qua UI và API thật: chủ sân công khai → khóa sân → người chơi đăng ký → duyệt → webhook cọc giả lập/retry → realtime → hủy/ghi nhận hoàn → trả sân; người chơi đề xuất → admin chốt thỏa thuận/duyệt → thu phần còn lại → chủ sân ghi quyết toán → người tổ chức xác nhận.
+- Chỉ dịch thời gian của giải kiểm thử bằng SQL để kiểm tra mốc bắt đầu/kết thúc. Không đổi cờ nghiệm thu nhiều chủ sân; script dừng nếu cờ chưa bật. Dữ liệu thử được xóa trong `finally`; nếu tiến trình bị dừng cưỡng bức, dùng `cleanup.sql` trong thư mục kết quả để dọn đúng các UUID đã tạo.
+- Webhook đi vào localhost với ngân hàng/tài khoản giả. Ghi nhận thu, hoàn và quyết toán là mô phỏng, không chuyển tiền. Vẫn cần nghiệm thu QR với ngân hàng hợp lệ và giao dịch tiền thật trước khi coi thanh toán ngân hàng đã nghiệm thu.
+
+### Bố cục theo vai trò cập nhật ngày 05/10/2026
+
+- Người chơi thấy form đăng ký hoặc trạng thái/cọc ngay dưới tên giải. Tiến trình ba bước phân biệt đã gửi, đã duyệt và đã đóng cọc; số tiền, hạn chuyển và tài khoản chủ sân nằm cùng một khu vực. Lịch/địa điểm ở dưới và lệ phí ở cột bên cạnh trên desktop; có mốc hoàn và thao tác hủy đúng chính sách.
+- Người quản lý có bốn mục với URL riêng: **Tổng quan**, **Người tham gia**, **Giao dịch & hoàn tiền**, **Quyết toán**. Số việc cần xử lý hiện trên đầu trang; danh sách lọc theo trạng thái, tìm tên/đội/điện thoại không cần gõ dấu. Duyệt có lời nhắn tùy chọn; từ chối có ô lý do riêng. Vị trí quản lý giữ qua tải lại, tìm kiếm/bộ lọc giữ khi realtime cập nhật.
+- Trang tìm giải rút ngắn phần giới thiệu để danh sách xuất hiện sớm. Form tạo giải có điều hướng đến ba phần. Chủ sân tự tổ chức thấy tổng thu của giải, không bị yêu cầu quyết toán cho chính mình.
+- Kịch bản E2E kiểm tra tìm kiếm/bộ lọc người tham gia, QR lỗi, thu/hoàn và cọc ở đầu trang; kiểm tra bổ sung tại `scripts/check-tournament-browser.mjs` và `scripts/check-tournament-journey.mjs`. Xem [luồng và kết quả](tournament-journey.md). Luật nghiệp vụ, quyền và luồng tiền vẫn do các RPC xử lý.

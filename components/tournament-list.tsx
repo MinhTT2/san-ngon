@@ -33,7 +33,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
           <h2 className="mt-3 break-words font-display text-2xl font-bold leading-tight text-pitch">{t.title}</h2>
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-ink-secondary">{t.address}</p>
           <p className="mt-4 text-xs leading-6 text-ink-secondary">Tối đa {t.capacity} suất<br />Hạn đăng ký: {dayLabel(new Date(t.registration_deadline))} · {hhmm(t.registration_deadline)}</p>
-          <div className="mt-auto pt-5"><div className="flex items-end justify-between gap-3 border-t border-hairline pt-4"><div><p className="text-xs text-ink-secondary">Lệ phí / suất</p><p className="mt-1 font-display text-xl font-bold text-pitch">{t.entry_fee ? vnd(t.entry_fee) : 'Miễn phí'}</p><p className="mt-1 text-xs text-ink-secondary">{t.deposit_amount ? `Cọc ${vnd(t.deposit_amount)} sau duyệt` : 'Không yêu cầu cọc'}</p></div><span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full border border-strong text-pitch group-hover:bg-free-fill">↗</span></div></div>
+          <div className="mt-auto pt-5"><div className="flex items-end justify-between gap-3 border-t border-hairline pt-4"><div><p className="text-xs text-ink-secondary">Lệ phí / suất</p><p className="mt-1 font-display text-xl font-bold text-pitch">{t.entry_fee ? vnd(t.entry_fee) : 'Miễn phí'}</p><p className="mt-1 text-xs text-ink-secondary">{t.deposit_amount ? `Cọc ${vnd(t.deposit_amount)} sau duyệt` : 'Không yêu cầu cọc'}</p></div><span className="shrink-0 text-sm font-semibold text-pitch">{mode === 'public' ? 'Xem giải →' : 'Quản lý →'}</span></div></div>
         </div>
       </Link>;
     })}</div>

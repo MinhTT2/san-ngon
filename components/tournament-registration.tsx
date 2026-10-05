@@ -1,10 +1,10 @@
-import Image from 'next/image';
 import { Check, Circle, CreditCard } from 'lucide-react';
 import { registrationLabel, type Registration, type Tournament } from '@/lib/tournaments';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { vietQrUrl } from '@/lib/sepay';
 import { CopyValue } from './copy-value';
 import { ActionForm } from './action-form';
+import { TournamentPaymentQr } from './tournament-payment-qr';
 
 const dateTime = (value: string) => `${dayLabel(new Date(value))} · ${hhmm(value)}`;
 export function TournamentRegistration({ registration, tournament, canRegisterAgain, now, paymentHref = '#giao-dich' }: {
@@ -34,8 +34,8 @@ export function TournamentRegistration({ registration, tournament, canRegisterAg
     </li>)}</ol>}
     <p role="status" className="mt-4 text-sm leading-7">{message}</p>
     {registration.review_note && <p className="mt-3 whitespace-pre-wrap break-words border-l-2 border-strong pl-4 text-sm leading-7">Ghi chú ban tổ chức: {registration.review_note}</p>}
-    {awaitingPayment && registration.bank && registration.account_number && <div className="mt-5 grid gap-5 sm:grid-cols-[200px_minmax(0,1fr)]">
-      <Image unoptimized width={220} height={270} className="w-[200px] max-w-full rounded-control border border-hairline" src={vietQrUrl(registration.code, registration.deposit_amount, registration.bank, registration.account_number)} alt={`QR chuyển cọc ${vnd(registration.deposit_amount)}, nội dung ${registration.code}`} />
+    {awaitingPayment && registration.bank && registration.account_number && <div className="mt-5 grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)]">
+      <TournamentPaymentQr src={vietQrUrl(registration.code, registration.deposit_amount, registration.bank, registration.account_number)} alt={`QR chuyển cọc ${vnd(registration.deposit_amount)}, nội dung ${registration.code}`} />
       <div className="min-w-0 space-y-3 text-sm">
         <p className="flex items-center gap-2 font-semibold text-pitch"><CreditCard size={18} aria-hidden="true" />Đóng cọc {vnd(registration.deposit_amount)}</p>
         <p>Ngân hàng: <strong>{registration.bank}</strong></p>

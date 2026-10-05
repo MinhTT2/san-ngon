@@ -128,7 +128,9 @@ Bản này tập trung vào các điểm đó:
 - Tách bốn khu vực quản lý bằng điều hướng có URL; người chơi không thấy công cụ quản lý.
 - Đưa đăng ký và QR gần đầu trang, chỉ hiện QR khi còn được phép thanh toán.
 - Hiển thị bước tiếp theo, hạn cọc và mốc hoàn chính xác của đăng ký.
-- Có tìm kiếm/lọc trạng thái; công cụ thu/hoàn chỉ hiện cho người có trách nhiệm.
+- Có tìm tên không dấu và lọc trạng thái; duyệt có lời nhắn tùy chọn, từ chối cần lý do.
+- Công cụ thu/hoàn chỉ hiện cho người có trách nhiệm; chủ sân tự tổ chức không thấy chuyển quyết toán hai bên.
+- QR lỗi có thông tin chuyển khoản thay thế và nút tải lại; không cản việc kiểm tra người nhận và mã cọc.
 - Người quản lý hủy suất của chính mình vẫn theo chính sách tự hủy, không hứa hoàn như hủy suất người khác.
 - Chặn cọc vượt lệ phí và thứ tự thời gian sai ngay ở form, API trả lỗi cụ thể.
 - Từ chối đề xuất không bị các trường thuê sân cản trở; duyệt công khai có xác nhận.
@@ -170,6 +172,11 @@ Script kiểm tra công khai, đăng ký, duyệt, nhận cọc giả lập và 
 hoàn, từ chối và đăng ký lại, hết hạn, hủy giải, thỏa thuận admin, thu phần còn
 lại và xác nhận quyết toán hai bên. Bố cục được kiểm tra ở 390/768/1024/1440px.
 Ảnh kiểm tra nằm trong `output/tournament-journey`, không phải ảnh dữ liệu thật.
+
+`scripts/check-tournament-e2e.mjs --live` kiểm tra thêm đăng nhập thực tế cả bốn
+vai trò, QR lỗi và webhook giả lập qua app local. Script tự chạy app trên cổng
+3110, cần production build và hai biến Playwright như trên; không chạy đồng
+thời với bài kiểm tra trình duyệt hoặc lệnh Supabase CLI khác.
 
 Nghiệm thu chuyển khoản ngân hàng thật, xác nhận webhook thật và quy trình hoàn
 thủ công vẫn là điều kiện riêng trước khi nhận tiền từ người dùng.
