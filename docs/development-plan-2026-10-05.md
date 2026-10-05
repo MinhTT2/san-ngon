@@ -10,7 +10,7 @@ kiểm tra hay bàn giao.
 | Thứ tự | Mục | Căn cứ trong code | Điều kiện hoàn thành | Trạng thái |
 | --- | --- | --- | --- | --- |
 | 1 | Hộp thông báo dễ theo dõi | `/thong-bao` đọc toàn bộ dữ liệu, thiếu lọc; bỏ qua lỗi query; đánh dấu đã đọc quay về đầu danh sách | 20 thông báo/trang; lọc chưa đọc; giữ bộ lọc/trang khi đánh dấu; phân biệt lỗi với danh sách trống; mở đúng đơn/giải | Đã hoàn thành |
-| 2 | Phục hồi khi lỗi và đường dẫn sai | Chỉ chi tiết giải có `error.tsx`; chưa có trang 404 riêng | Thông báo tiếng Việt, thử lại, đường về tìm sân; không khuyến khích gửi lại tiền hoặc tạo lại đơn khi trạng thái chưa rõ | Chờ |
+| 2 | Phục hồi khi lỗi và đường dẫn sai | Chỉ chi tiết giải có `error.tsx`; chưa có trang 404 riêng | Thông báo tiếng Việt, thử lại, đường về tìm sân; không khuyến khích gửi lại tiền hoặc tạo lại đơn khi trạng thái chưa rõ | Đã hoàn thành |
 | 3 | Thông tin trang công khai khi chia sẻ/tìm kiếm | Chi tiết sân chưa có metadata riêng; chưa có sitemap/robots | Tiêu đề/mô tả đúng sân, chỉ đưa sân công khai vào sitemap; trang tài khoản/checkout không lập chỉ mục; không lộ thông tin cá nhân | Chờ |
 | 4 | Rà thao tác vận hành của chủ sân | Đã có đơn/lịch/giá/hoàn cọc nhưng chưa có biên bản quan sát người dùng | Quan sát 3–5 người làm tác vụ thật; ưu tiên điểm họ mắc; chỉ thêm lọc, tìm mã đơn hoặc xuất dữ liệu nếu thao tác hiện có chưa đáp ứng | Chờ dữ liệu sử dụng |
 
@@ -40,3 +40,7 @@ chưa phải hạng mục triển khai ngay.
 Bản đồ, đánh giá, chat/ghép đối, ví, hoàn tự động và app native tiếp tục nằm
 ngoài phạm vi hiện tại theo `AGENTS.md`. Không thêm thư viện, ORM hay chuyển
 nghiệp vụ giá/lịch/thanh toán từ SQL sang TypeScript.
+
+## Tiến độ mục 2
+
+Đã thêm trang lỗi chung và 404 bằng tiếng Việt: thử lại, về tìm sân và kiểm tra đơn trước khi chuyển thêm tiền. Ngày 05/10/2026, WSL hoạt động lại; lint, typecheck và production build đạt trên Node.js 24. Chromium headless với phiên riêng kiểm tra HTTP 404, nội dung, không tràn ngang và điều hướng về tìm sân ở 390/1440 px. Màn hình lỗi chung dùng cơ chế reset và refresh hiện có ở chi tiết giải; chưa giả lập lỗi server trong trình duyệt.
