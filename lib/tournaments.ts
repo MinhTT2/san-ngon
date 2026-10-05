@@ -1,11 +1,10 @@
 import { z } from 'zod';
 import type { Database } from './database.types';
+import { normalizePhone } from './profile';
 export type Tournament = Database['public']['Tables']['tournaments']['Row'];
 export type Registration = Database['public']['Tables']['tournament_registrations']['Row'];
 export type TournamentPayment = Omit<Database['public']['Tables']['tournament_payment_events']['Row'], 'raw'>;
-export const tournamentStatuses: Record<string, string> = { pending: 'Chờ admin duyệt', published: 'Đã công khai', rejected: 'Không được duyệt', cancelled: 'Đã hủy', completed: 'Đã kết thúc' };
-export const registrationStatuses: Record<string, string> = { pending: 'Chờ duyệt', approved: 'Được tham gia', rejected: 'Không được duyệt', cancelled: 'Đã hủy', expired: 'Hết hạn' };
-export const paymentOutcomes: Record<string, string> = { paid: 'Đã nhận đủ cọc', overpaid: 'Chuyển thừa', underpaid: 'Chuyển thiếu', duplicate_payment: 'Chuyển trùng', late_or_cancelled: 'Quá hạn / đăng ký đã hủy' };
+export { tournamentStatuses, registrationStatuses, paymentOutcomes, registrationLabel, tournamentLabel } from './tournament-status';
 export const sportSchema = z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball']);
 const localTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
 export const tournamentSchema = z.object({
@@ -14,9 +13,18 @@ export const tournamentSchema = z.object({
   starts_at: localTime, ends_at: localTime, registration_deadline: localTime, payment_deadline: localTime, payment_hold_hours: z.coerce.number().int().min(1).max(72),
   capacity: z.coerce.number().int().min(2).max(1000), entry_fee: z.coerce.number().int().min(0).max(100000000),
   deposit_amount: z.coerce.number().int().min(0).max(100000000),
-}).refine(d => d.deposit_amount <= d.entry_fee && d.ends_at > d.starts_at && d.registration_deadline <= d.payment_deadline && d.payment_deadline <= d.starts_at);
+}).superRefine((data, context) => {
+  for (const [invalid, field, message] of [
+    [data.deposit_amount > data.entry_fee, 'deposit_amount', 'Cọc mỗi suất không được vượt lệ phí.'],
+    [data.ends_at <= data.starts_at, 'ends_at', 'Giờ kết thúc phải sau giờ bắt đầu thi đấu.'],
+    [data.registration_deadline > data.payment_deadline, 'registration_deadline', 'Hạn nhận và duyệt đăng ký không được sau hạn đóng cọc.'],
+    [data.payment_deadline > data.starts_at, 'payment_deadline', 'Hạn đóng cọc không được sau giờ bắt đầu thi đấu.'],
+  ] as const) {
+    if (invalid) context.addIssue({ code: 'custom', path: [field], message });
+  }
+});
 export const participantSchema = z.object({
-  full_name: z.string().trim().min(2).max(100), phone: z.string().trim().min(10).max(25),
+  full_name: z.string().trim().min(2).max(100), phone: z.string().trim().max(25).transform(normalizePhone).pipe(z.string().regex(/^0\d{9}$/, 'Số điện thoại gồm 10 chữ số, bắt đầu bằng 0 (hoặc +84).')),
   address: z.string().trim().min(2).max(300), team_name: z.string().trim().max(100), note: z.string().trim().max(1000),
 });
 export function tournamentError(code: string) {

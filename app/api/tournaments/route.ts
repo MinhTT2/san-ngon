@@ -27,7 +27,10 @@ export async function POST(request: Request) {
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Kiểm tra các trường thông tin, thời gian và mức cọc không vượt lệ phí.' }, { status: 400 });
+  if (!parsed.success) {
+    const issue = parsed.error.issues.find(issue => issue.code === 'custom' || issue.path.at(-1) === 'phone');
+    return NextResponse.json({ error: issue?.message ?? 'Kiểm tra các trường thông tin, thời gian và mức cọc không vượt lệ phí.' }, { status: 400 });
+  }
   const body = parsed.data;
   const result = body.action === 'submit' ? await db.rpc('submit_tournament', { p_data: body.data })
     : body.action === 'review' ? await db.rpc('review_tournament', { p_id: body.id, p_approve: body.approve, p_court_id: body.court_id, p_note: body.note, p_venue_fee: body.venue_fee, p_cancellation_venue_fee: body.cancellation_venue_fee, p_terms_note: body.terms_note, p_terms_confirmed: body.terms_confirmed })

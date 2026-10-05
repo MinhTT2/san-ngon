@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { vnd, dayLabel, hhmm } from '@/lib/format';
-import { tournamentStatuses } from '@/lib/tournaments';
+import { tournamentLabel, tournamentStatuses } from '@/lib/tournaments';
 import { DiscoveryEmpty } from './discovery-empty';
 export async function TournamentList({ mode = 'public', sport = '', status = '', page = 1 }: { mode?: 'public' | 'mine' | 'admin' | 'owner'; sport?: string; status?: string; page?: number }) {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
-  let query = db.from('tournaments').select('*', { count: 'exact' }).order('created_at', { ascending: false });
-  if (mode === 'public') query = query.eq('status', status === 'completed' ? 'completed' : 'published');
+  const now = new Date().toISOString();
+  let query = db.from('tournaments').select('*', { count: 'exact' }).order(mode === 'public' ? 'starts_at' : 'created_at', { ascending: mode === 'public' && status !== 'completed' });
+  if (mode === 'public') query = status === 'completed' ? query.or(`status.eq.completed,and(status.eq.published,ends_at.lte.${now})`) : query.eq('status', 'published').gt('ends_at', now);
   else if (Object.hasOwn(tournamentStatuses, status)) query = query.eq('status', status as 'pending');
   if (mode === 'mine') query = query.eq('manager_id', user?.id ?? '00000000-0000-0000-0000-000000000000');
   if (mode === 'owner' && user) {
@@ -25,8 +26,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
   return <>
     <p className="mt-6 text-sm text-ink-secondary">{count ?? 0} giải đấu{sport && ` · ${SPORT_LABELS[sport]}`}</p>
     <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{data?.map(t => {
-      const closed = Date.parse(t.registration_deadline) <= Date.now();
-      const state = t.status === 'published' ? (closed ? 'Đã đóng đăng ký' : 'Đang nhận đăng ký') : tournamentStatuses[t.status];
+      const state = tournamentLabel(t);
       return <Link key={t.id} href={`/giai-dau/${t.id}`} className="group flex min-w-0 flex-col overflow-hidden rounded-card border border-hairline bg-card transition-colors hover:border-pitch">
         <div className="flex items-center justify-between gap-3 border-b border-hairline bg-free-fill/60 px-5 py-4"><span className="text-xs font-bold uppercase tracking-wide text-pitch">{SPORT_LABELS[t.sport]}</span><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${t.status === 'pending' ? 'bg-peak-fill text-peak-ink' : 'bg-card text-ink-secondary'}`}>{state}</span></div>
         <div className="flex flex-1 flex-col p-5"><p className="text-sm font-semibold text-pitch">{dayLabel(new Date(t.starts_at))} <span className="font-normal text-ink-secondary">· {hhmm(t.starts_at)}</span></p>

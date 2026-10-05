@@ -1,0 +1,112 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import vm from 'node:vm';
+import ts from 'typescript';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+const require = createRequire(import.meta.url);
+function load(path, imports = {}) {
+  const context = { exports: {}, Request, Response, require: name => imports[name] ?? require(name) };
+  const source = ts.transpileModule(readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText;
+  vm.runInNewContext(source, context);
+  return context.exports;
+}
+const profile = load('lib/profile.ts');
+const status = load('lib/tournament-status.ts');
+const tournaments = load('lib/tournaments.ts', { './profile': profile, './tournament-status': status });
+const input = {
+  title: 'Giải kiểm tra', description: 'Thể lệ kiểm tra đầy đủ', sport: 'badminton', court_id: '', address: 'Cầu Giấy, Hà Nội',
+  starts_at: '2030-10-15T10:00', ends_at: '2030-10-15T12:00', registration_deadline: '2030-10-14T10:00',
+  payment_deadline: '2030-10-15T09:00', payment_hold_hours: 24, capacity: 16, entry_fee: 200000, deposit_amount: 100000,
+};
+assert(tournaments.tournamentSchema.safeParse(input).success);
+for (const [change, field] of [
+  [{ deposit_amount: 200001 }, 'deposit_amount'], [{ ends_at: input.starts_at }, 'ends_at'],
+  [{ registration_deadline: '2030-10-15T09:01' }, 'registration_deadline'], [{ payment_deadline: '2030-10-15T10:01' }, 'payment_deadline'],
+]) {
+  const parsed = tournaments.tournamentSchema.safeParse({ ...input, ...change });
+  assert(!parsed.success);
+  assert(parsed.error.issues.some(issue => issue.path[0] === field && issue.code === 'custom'));
+}
+const participant = { full_name: 'Người tham gia', phone: '+84 900-000-004', address: 'Hà Nội', team_name: '', note: '' };
+assert.equal(tournaments.participantSchema.parse(participant).phone, '0900000004');
+assert(!tournaments.participantSchema.safeParse({ ...participant, phone: 'abcdefghij' }).success);
+const now = Date.parse('2030-10-05T10:00:00Z');
+const tournament = { ...input, id: 'e2900000-0000-4000-8000-000000000001', status: 'published', starts_at: '2030-10-15T03:00:00Z', ends_at: '2030-10-15T05:00:00Z', registration_deadline: '2030-10-14T03:00:00Z' };
+assert.equal(tournaments.tournamentLabel(tournament, now), 'Đang nhận đăng ký');
+assert.equal(tournaments.tournamentLabel({ ...tournament, starts_at: '2030-10-05T09:00:00Z', ends_at: '2030-10-05T11:00:00Z' }, now), 'Đang diễn ra');
+assert.equal(tournaments.tournamentLabel({ ...tournament, ends_at: '2030-10-05T09:00:00Z' }, now), 'Đã kết thúc');
+assert.equal(tournaments.tournamentLabel({ ...tournament, status: 'cancelled' }, now), 'Đã hủy');
+assert.equal(tournaments.registrationLabel({ status: 'approved', deposit_amount: 0, paid_at: null }), 'Đã xác nhận tham gia');
+assert.equal(tournaments.registrationLabel({ status: 'approved', deposit_amount: 100000, paid_at: null }), 'Chờ đóng cọc');
+
+const format = { vnd: value => `${value}đ`, dayLabel: () => '15/10/2030', hhmm: () => '10:00' };
+function ActionForm({ children, label }) { return React.createElement('form', null, children, React.createElement('button', null, label)); }
+const { TournamentRegistration } = load('components/tournament-registration.tsx', {
+  'next/image': { default: ({ src, alt, width, height, className }) => React.createElement('img', { src, alt, width, height, className }) }, '@/lib/tournaments': tournaments, '@/lib/format': format,
+  '@/lib/sepay': { vietQrUrl: () => 'https://test.invalid/qr.png' }, './action-form': { ActionForm },
+  './copy-value': { CopyValue: ({ value }) => React.createElement('span', null, value) },
+});
+const registration = { ...participant, id: 'registration', status: 'approved', paid_at: null, deposit_amount: 100000, entry_fee: 200000,
+  bank: 'MB', account_number: '0000000000', account_name: 'TEST', code: 'GIAIABCDEF123456', payment_expires_at: '2030-10-06T10:00:00Z', refund_deadline: '2030-10-14T03:00:00Z' };
+const renderRegistration = changes => renderToStaticMarkup(React.createElement(TournamentRegistration, { registration: { ...registration, ...changes }, tournament, now, canRegisterAgain: false }));
+assert.match(renderRegistration({}), /<img/);
+assert.doesNotMatch(renderRegistration({ paid_at: '2030-10-05T09:00:00Z' }), /<img/);
+assert.doesNotMatch(renderRegistration({ status: 'pending' }), /<img/);
+assert.doesNotMatch(renderRegistration({ status: 'expired' }), /<img/);
+assert.doesNotMatch(renderRegistration({ payment_expires_at: '2030-10-05T09:00:00Z' }), /<img/);
+assert.doesNotMatch(renderRegistration({ deposit_amount: 0 }), /<img/);
+const cancelled = renderToStaticMarkup(React.createElement(TournamentRegistration, { registration, tournament: { ...tournament, status: 'cancelled' }, now, canRegisterAgain: false }));
+assert.match(cancelled, /Giải đã hủy/);
+assert.doesNotMatch(cancelled, /<img|Hủy tham gia|Tiến trình đăng ký/);
+console.log('OK: input validation, phone normalization, display states, QR eligibility and cancellation.');
+
+let state = [], cursor = 0;
+const hooks = { ...React, useState(initial) { const position = cursor++; if (!(position in state)) state[position] = initial; return [state[position], value => { state[position] = value; }]; } };
+const field = load('components/form-field.tsx');
+const { TournamentReviewForm } = load('components/tournament-review-form.tsx', { react: hooks, './form-field': field, './action-form': { ActionForm } });
+function nodes(node) { return !node || typeof node !== 'object' ? [] : Array.isArray(node) ? node.flatMap(nodes) : [node, ...nodes(node.props?.children)]; }
+function review() { cursor = 0; return TournamentReviewForm({ id: tournament.id, courtId: null, courts: [] }); }
+assert(nodes(review()).some(node => node.props?.name === 'terms_confirmed' && node.props.required));
+nodes(review()).find(node => node.props?.name === 'approve').props.onChange({ target: { value: 'false' } });
+assert(!nodes(review()).some(node => node.props?.name === 'venue_fee' || node.props?.name === 'terms_confirmed'));
+assert(nodes(review()).some(node => node.props?.name === 'note' && node.props.required));
+assert.equal(review().props.payload.terms_confirmed, false);
+
+state = [];
+const { TournamentParticipants } = load('components/tournament-participants.tsx', { react: hooks, '@/lib/tournament-status': status, '@/lib/format': format, './form-field': field, './action-form': { ActionForm } });
+const registrations = [{ ...registration, id: 'pending', status: 'pending', full_name: 'Chờ duyệt' }, { ...registration, id: 'unpaid', team_name: 'Đội xanh' }, { ...registration, id: 'paid', paid_at: '2030-10-05T09:00:00Z' }];
+function participants(started = false) { cursor = 0; return TournamentParticipants({ registrations, closed: false, started, canCancel: true, userId: 'manager', admin: false }); }
+assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 3);
+nodes(participants()).find(node => node.type === 'select').props.onChange({ target: { value: 'unpaid' } });
+assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 1);
+nodes(participants()).find(node => node.props?.type === 'search').props.onChange({ target: { value: 'không khớp' } });
+assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 0);
+state = [];
+registrations[1] = { ...registrations[1], user_id: 'manager' };
+const selfCancellation = nodes(participants()).find(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'unpaid');
+assert.match(selfCancellation.props.confirmMessage, /áp dụng chính sách tự hủy/);
+assert.equal(selfCancellation.props.label, 'Hủy đăng ký của bạn');
+assert(!nodes(participants(true)).some(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'unpaid'));
+assert(nodes(participants(true)).some(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'paid'));
+console.log('OK: conditional review requirements and participant search/status filters.');
+
+const calls = [];
+const { POST } = load('app/api/tournaments/route.ts', {
+  'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
+  '@/lib/tournaments': tournaments, '@/lib/request-origin': { requestOrigin: () => 'http://localhost' },
+  '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: 'player' } } }) }, rpc: async (...args) => { calls.push(args); return { data: registration.id, error: null }; } }) },
+});
+function request(body) { return new Request('http://localhost/api/tournaments', { method: 'POST', headers: { origin: 'http://localhost', 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
+const invalid = await POST(request({ action: 'submit', data: { ...input, deposit_amount: 200001 } }));
+assert.equal(invalid.status, 400);
+assert.match((await invalid.json()).error, /Cọc mỗi suất/);
+assert.equal(calls.length, 0);
+const response = await POST(request({ action: 'register', id: tournament.id, data: participant }));
+assert.equal(response.status, 200);
+assert.equal(calls[0][1].p_data.phone, '0900000004');
+console.log('OK: API returns specific validation errors and forwards normalized data to SQL.');

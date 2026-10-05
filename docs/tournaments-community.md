@@ -4,6 +4,9 @@ Yêu cầu: [tài liệu ngày 29/09/2026](https://docs.google.com/document/d/10
 
 ## Giải đấu
 
+Xem [flow end-to-end, vai trò và đánh giá UI/UX](tournament-journey.md) cho toàn
+bộ hành trình từ tạo giải đến hoàn tiền/quyết toán và cách kiểm tra lặp lại.
+
 - `/giai-dau`: xem, lọc môn, phân trang, theo dõi các giải đã đề xuất và đăng ký.
 - `/giai-dau/tao`: chủ sân phải chọn sân của mình để công khai ngay, không cần admin duyệt; người chơi mô tả địa điểm mong muốn để admin bố trí và duyệt. Công khai và khóa lịch là một giao dịch SQL, vẫn kiểm tra đúng môn, lịch trống và điều kiện nhận cọc.
 - `/admin/giai-dau`: admin mở đề xuất, chọn sân đúng môn, duyệt hoặc từ chối kèm lý do. Duyệt khóa lịch sân bằng `court_closures`; không thể duyệt trùng đơn đặt hoặc khung đã khóa. Người đề xuất nhận quyền quản lý giải, không được đổi role tài khoản.

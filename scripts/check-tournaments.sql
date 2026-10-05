@@ -405,4 +405,27 @@ do $$ declare data jsonb:=current_setting('test.owner_data')::jsonb; tid uuid; b
  exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
 end $$;
 
+reset role;
+select set_config('request.jwt.claim.sub','e2900000-0000-4000-8000-000000000004',true);
+set local role authenticated;
+do $$ declare result jsonb; begin
+ assert exists(select 1 from tournaments where id=current_setting('test.tournament')::uuid and status='cancelled'),'participants can read cancelled tournaments to track refunds';
+ assert not manages_tournament(current_setting('test.tournament')::uuid),'reading refund history does not grant management';
+ assert not exists(select 1 from tournaments where id=current_setting('test.owner_tournament')::uuid),'unrelated cancelled tournament remains private';
+ assert not exists(select 1 from tournament_registrations where tournament_id=current_setting('test.tournament')::uuid and user_id<>auth.uid()),'participants cannot read others contact details';
+ assert exists(select 1 from tournament_payment_events where registration_id=current_setting('test.registration')::uuid and refund_status='needed'),'refund ledger stays readable after tournament cancellation';
+ result:=get_my_tournament_registrations();
+ assert exists(select 1 from jsonb_array_elements(result->'rows') row where row->>'tournament_id'=current_setting('test.tournament') and row->>'tournament_status'='cancelled' and row->>'starts_at' is not null and row->>'address' is not null),'my registrations includes dates, address and cancellation';
+ assert jsonb_array_length(get_my_tournament_registrations(10000)->'rows')=0,'pagination does not repeat records';
+ begin perform get_tournament_settlement(current_setting('test.tournament')::uuid); raise exception 'TEST: read access granted private settlement';
+ exception when raise_exception then if sqlerrm<>'FORBIDDEN' then raise; end if; end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$ begin
+ assert not exists(select 1 from tournaments where id=current_setting('test.tournament')::uuid),'cancelled tournament is not public';
+ perform count(*) from tournaments;
+end $$;
+reset role;
 rollback;

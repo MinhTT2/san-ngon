@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
-export function TournamentRefresh({ id, deadlines }: { id: string; deadlines: string[] }) {
+export function TournamentRefresh({ id, userId, deadlines }: { id?: string; userId?: string; deadlines: string[] }) {
   const router = useRouter();
   const deadlineKey = deadlines.join(',');
   useEffect(() => {
@@ -10,9 +10,10 @@ export function TournamentRefresh({ id, deadlines }: { id: string; deadlines: st
     let refreshTimer: ReturnType<typeof setTimeout> | undefined;
     const refresh = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => router.refresh(), 150); };
     const visible = () => { if (document.visibilityState === 'visible') refresh(); };
-    const channel = db.channel(`tournament:${id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournaments', filter: `id=eq.${id}` }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_registrations', filter: `tournament_id=eq.${id}` }, refresh)
+    const channel = db.channel(`tournament:${id ?? userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournaments', ...(id ? { filter: `id=eq.${id}` } : {}) }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_registrations', filter: id ? `tournament_id=eq.${id}` : `user_id=eq.${userId}` }, refresh);
+    if (id) channel
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_payment_events' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_settlements', filter: `tournament_id=eq.${id}` }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_transfers', filter: `tournament_id=eq.${id}` }, refresh);
@@ -26,6 +27,6 @@ export function TournamentRefresh({ id, deadlines }: { id: string; deadlines: st
     window.addEventListener('online', refresh); window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', visible);
     return () => { stop(); clearTimeout(refreshTimer); window.clearTimeout(timer); window.removeEventListener('online', refresh); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', visible); };
-  }, [id, deadlineKey, router]);
+  }, [id, userId, deadlineKey, router]);
   return null;
 }
