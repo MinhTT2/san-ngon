@@ -11,7 +11,7 @@ export default async function Page() {
 
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, code, starts_at, ends_at, status, total_amount, deposit_amount, expires_at, paid_at, refund_status, courts(name, sport, venues(name, district))')
+    .select('id, code, starts_at, ends_at, status, total_amount, deposit_amount, expires_at, paid_at, refund_status, courts(name, sport, venues(name, district, slug, status))')
     .eq('user_id', user.id)
     .order('starts_at', { ascending: false });
 

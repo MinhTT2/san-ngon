@@ -32,8 +32,8 @@ chỉ từ kiểm tra code.
 
 ## Mở rộng sau khi có nhu cầu
 
-Có thể xem xét sân yêu thích/đặt lại nhanh khi người chơi quay lại nhiều;
-xuất báo cáo khi chủ sân cần đối soát ngoài website; hỗ trợ lịch đặt định kỳ
+Sân yêu thích và mở lại sân từng đặt đã được triển khai trong đợt tiện ích
+ngày 05/10/2026. Có thể xem xét xuất báo cáo khi chủ sân cần đối soát ngoài website; hỗ trợ lịch đặt định kỳ
 khi có yêu cầu cụ thể và đã chốt cách cọc/hủy từng buổi. Đây là các ứng viên,
 chưa phải hạng mục triển khai ngay.
 
@@ -54,3 +54,10 @@ Lint, typecheck và production build đạt. Kiểm tra HTTP và Chromium headle
 ## Bước tiếp theo
 
 Mục 4 cần quan sát 3–5 người dùng thật: chủ sân tìm đơn theo mã, khóa/mở lịch, thay bảng giá và ghi nhận hoàn cọc; người chơi tìm sân, giữ chỗ và kiểm tra đơn. Ghi tác vụ, thời gian, điểm dừng/hỏi và khả năng hoàn thành; ưu tiên lỗi tái diễn trước khi thêm tính năng. Không dùng kết quả kiểm tra tự động để thay bằng chứng sử dụng thực tế. Nghiệm thu email/ngân hàng và chốt chính sách hoàn tiếp tục theo checklist vận hành phía trên.
+
+## Tiện ích bổ sung ngày 05/10/2026
+
+Đã triển khai góp ý/báo lỗi riêng tư và xử lý admin, sân yêu thích, chia sẻ sân,
+trung tâm trợ giúp có tìm kiếm, mở lại sân đã đặt và tải lịch buổi chơi đã xác nhận.
+Chi tiết hành vi, quyền, migration và kiểm tra tại [tiện ích người chơi](player-utilities.md).
+Các tiện ích này không thay đổi nghiệp vụ lịch/giá/cọc hoặc chính sách hoàn tiền.

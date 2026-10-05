@@ -16,6 +16,7 @@ export default function Page() {
       <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch lg:text-4xl">
         Liên hệ
       </h1>
+      <div className="mt-6 flex flex-wrap gap-3"><Link href="/gop-y" className="inline-flex min-h-11 items-center rounded-control bg-pitch px-5 py-3 text-sm font-semibold text-pitch-ink">Gửi góp ý / yêu cầu hỗ trợ</Link><Link href="/tro-giup" className="inline-flex min-h-11 items-center rounded-control border border-hairline px-5 py-3 text-sm font-semibold text-pitch">Câu hỏi thường gặp</Link></div>
 
       <div className="mt-9 flex flex-col gap-4">
         <Card title="Hỏi về đơn đã đặt">

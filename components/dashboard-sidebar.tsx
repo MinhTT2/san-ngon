@@ -10,6 +10,7 @@ import {
   Users,
   WalletCards,
   Trophy,
+  MessageSquare,
 } from 'lucide-react';
 
 type DashboardRole = 'owner' | 'admin';
@@ -31,6 +32,7 @@ const ADMIN_LINKS = [
   { href: '/admin/phi-dich-vu', label: 'Phí chủ sân', icon: WalletCards },
   { href: '/admin/giai-dau', label: 'Giải đấu', icon: Trophy },
   { href: '/admin/users', label: 'Người dùng', icon: Users },
+  { href: '/admin/gop-y', label: 'Góp ý người dùng', icon: MessageSquare },
 ] as const;
 
 export function DashboardSidebar({ role }: { role: DashboardRole }) {

@@ -12,7 +12,7 @@ import { CANCEL_WINDOW_HOURS, HOLD_MINUTES, SPORT_LABELS } from '@/lib/constants
 import type { Booking } from '@/lib/types';
 
 export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 'status' | 'total_amount' | 'deposit_amount' | 'expires_at' | 'paid_at' | 'refund_status'> & {
-  courts: { name: string; sport: string; venues: { name: string; district: string } | null } | null;
+  courts: { name: string; sport: string; venues: { name: string; district: string; slug: string; status: string } | null } | null;
 };
 
 type Filter = 'active' | 'pending' | 'confirmed' | 'history' | 'all';
@@ -170,6 +170,9 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
                     </td>
                     <td className="col-span-2 block lg:table-cell lg:px-4 lg:py-6">
                       <div className="flex flex-wrap items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
+                        {b.courts?.venues?.status === 'active' && <Link href={`/san/${b.courts.venues.slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Đặt lại sân này</Link>}
+                        {(b.status === 'confirmed' || b.status === 'completed') && <a href={`/api/bookings/${b.code}/calendar`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tải lịch buổi chơi</a>}
+                        <Link href={`/gop-y?trang=${encodeURIComponent(`/dat-san/${b.code}`)}`} className="inline-flex min-h-11 items-center text-xs text-ink-secondary underline">Cần hỗ trợ đơn này?</Link>
                         <Link href={`/dat-san/${b.code}`} className={`inline-flex min-h-11 items-center justify-center rounded-control px-3 text-center text-xs font-semibold ${b.pending ? 'bg-pitch text-pitch-ink hover:bg-pitch/90' : 'border border-hairline text-pitch hover:bg-sunk'}`}>{b.pending ? 'Tiếp tục thanh toán' : 'Xem chi tiết'}</Link>
                         {b.active && <CancelBookingButton code={b.code} pending={b.pending} refundable={b.status === 'confirmed' && Date.parse(b.starts_at) - now >= CANCEL_WINDOW_HOURS * 3600_000} className="min-h-11 lg:min-h-0" />}
                       </div>

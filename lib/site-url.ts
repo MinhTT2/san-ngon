@@ -8,4 +8,5 @@ export const PRIVATE_ROUTE_PREFIXES = [
   '/tai-khoan', '/thong-bao', '/dang-nhap', '/dang-ky', '/dang-ky-san',
   '/quen-mat-khau', '/dat-lai-mat-khau', '/giai-dau/tao', '/ket-noi/ho-so',
   '/api', '/auth',
+  '/gop-y', '/san-yeu-thich',
 ];

@@ -121,6 +121,63 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          category: string
+          created_at: string
+          handled_by: string | null
+          id: string
+          message: string
+          page_path: string | null
+          reply: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          handled_by?: string | null
+          id: string
+          message: string
+          page_path?: string | null
+          reply?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          message?: string
+          page_path?: string | null
+          reply?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sepay_transfer_claims: {
         Row: {
           transaction_key: string
@@ -1138,6 +1195,39 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_favorites: {
+        Row: {
+          created_at: string
+          user_id: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_favorites_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           address: string
@@ -1351,7 +1441,9 @@ export type Database = {
         }
         Returns: Json
       }
+      get_booking_calendar: { Args: { p_code: string }; Returns: Json }
       get_community_profile: { Args: { p_id: string }; Returns: Json }
+      get_my_favorites: { Args: never; Returns: Json }
       get_owner_period_stats: {
         Args: { p_days?: number; p_venue_id: string }
         Returns: Json
@@ -1365,6 +1457,15 @@ export type Database = {
       register_tournament: {
         Args: { p_data: Json; p_id: string }
         Returns: string
+      }
+      review_feedback: {
+        Args: {
+          p_id: string
+          p_reply: string
+          p_status: string
+          p_updated_at: string
+        }
+        Returns: undefined
       }
       review_tournament: {
         Args: {
@@ -1388,6 +1489,20 @@ export type Database = {
         Returns: Json
       }
       set_community_profile: { Args: { p_data: Json }; Returns: undefined }
+      set_venue_favorite: {
+        Args: { p_saved: boolean; p_venue_id: string }
+        Returns: boolean
+      }
+      submit_feedback: {
+        Args: {
+          p_category: string
+          p_id: string
+          p_message: string
+          p_page_path?: string
+          p_title: string
+        }
+        Returns: string
+      }
       submit_tournament: { Args: { p_data: Json }; Returns: string }
       get_admin_subscriptions: {
         Args: never

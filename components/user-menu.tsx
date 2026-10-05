@@ -50,6 +50,8 @@ export function UserMenu({ name, avatar = null, isOwner, isAdmin = false }: { na
           >
             <Item href="/tai-khoan" onNavigate={() => setOpen(false)}>Thông tin tài khoản</Item>
             <Item href="/don-cua-toi" onNavigate={() => setOpen(false)}>Đơn của tôi</Item>
+            <Item href="/san-yeu-thich" onNavigate={() => setOpen(false)}>Sân yêu thích</Item>
+            <Item href="/gop-y" onNavigate={() => setOpen(false)}>Góp ý & hỗ trợ</Item>
             {isOwner ? (
               <Item href="/chu-san" onNavigate={() => setOpen(false)}>Trang quản lý</Item>
             ) : isAdmin ? (
