@@ -1,16 +1,20 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import { CalendarDays, Check, MapPin, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { SPORT_LABELS } from '@/lib/constants';
 import { vnd } from '@/lib/format';
 import { Field, fieldClass } from './form-field';
+import { TournamentPhotoUpload } from './tournament-photo-upload';
+import { tournamentCoverSrc } from '@/lib/image-upload';
 
 const inputClass = `${fieldClass} min-h-12 bg-card px-4`;
 const sectionClass = 'min-w-0 scroll-mt-28 space-y-6 border-b border-hairline pb-8';
 function SectionHeading({ number, title, description }: { number: string; title: string; description: string }) {
   return <div className="flex items-start gap-4 border-b border-hairline pb-6"><span className="grid size-10 shrink-0 place-items-center rounded-control bg-free-fill font-display text-sm font-bold text-pitch">{number}</span><div><h2 className="font-display text-xl font-bold text-pitch sm:text-2xl">{title}</h2><p className="mt-2 text-sm leading-6 text-ink-secondary">{description}</p></div></div>;
 }
-export function TournamentFields({ courts, initial, owner = false }: { initial?: Record<string, string | number>; owner?: boolean; courts: { id: string; name: string; venue: string; address: string; sport: string }[] }) {
+export function TournamentFields({ userId, courts, initial, owner = false }: { userId: string; initial?: Record<string, string | number>; owner?: boolean; courts: { id: string; name: string; venue: string; address: string; sport: string }[] }) {
+  const [cover, setCover] = useState<string | null>(tournamentCoverSrc(String(initial?.cover_path ?? '')));
   const [values, setValues] = useState<Record<string, string | number>>({ sport: courts[0]?.sport ?? Object.keys(SPORT_LABELS)[0], entry_fee: 0, deposit_amount: 0, ...initial });
   const sport = String(values.sport);
   const court = courts.find(c => c.id === values.court_id && c.sport === sport);
@@ -26,6 +30,7 @@ export function TournamentFields({ courts, initial, owner = false }: { initial?:
       <section id="thong-tin-giai" className={sectionClass}>
         <SectionHeading number="01" title="Bắt đầu từ một ý tưởng" description="Một cái tên dễ nhớ, một môn chơi bạn yêu thích." />
         <Field label="Tên giải đấu"><input className={inputClass} name="title" defaultValue={initial?.title} placeholder="Ví dụ: Cầu lông cuối tuần Cầu Giấy" required minLength={3} maxLength={150} /></Field>
+        <TournamentPhotoUpload userId={userId} initialPath={String(initial?.cover_path ?? '')} onPreview={setCover} />
         <Field label="Môn thi đấu"><select className={inputClass} name="sport" value={sport} onChange={() => {}}>{Object.entries(SPORT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field>
         <Field label={owner ? 'Chọn sân của bạn' : 'Sân tổ chức'}><select className={inputClass} name="court_id" required={owner} value={court?.id ?? ''} onChange={() => {}}><option value="">{owner ? 'Chọn sân đang hoạt động' : 'Nhờ admin bố trí sân'}</option>{courts.filter(c => c.sport === sport).map(c => <option key={c.id} value={c.id}>{c.venue} · {c.name}</option>)}</select></Field>
         {owner ? <><Field label="Địa chỉ sân tổ chức"><input className={`${inputClass} bg-sunk`} name="address" value={court?.address ?? ''} readOnly placeholder="Chọn sân để xem địa chỉ" /></Field>{!courts.some(c => c.sport === sport) && <p role="status" className="text-sm leading-6 text-danger">Bạn chưa có sân đang hoạt động cho môn này. Chọn môn khác hoặc cập nhật sân trong mục quản lý.</p>}</> : <Field label="Địa chỉ / khu vực mong muốn"><input className={inputClass} name="address" defaultValue={initial?.address} placeholder="Ví dụ: Cầu Giấy, Hà Nội" required minLength={5} maxLength={300} /></Field>}
@@ -55,6 +60,7 @@ export function TournamentFields({ courts, initial, owner = false }: { initial?:
     </div>
     <aside aria-label="Xem trước giải đấu" className="min-w-0 space-y-5 lg:sticky lg:top-24">
       <div className="overflow-hidden rounded-card border border-strong bg-card">
+        {cover && <div className="relative aspect-video bg-sunk"><Image src={cover} alt="Ảnh bìa giải của bạn" fill unoptimized className="object-cover" /></div>}
         <div className="flex items-center justify-between border-b border-strong bg-free-fill px-5 py-4"><p className="text-xs font-bold uppercase tracking-[0.14em] text-pitch">Giải của bạn</p><Trophy size={19} className="text-pitch" aria-hidden="true" /></div>
         <div className="p-5"><span className="inline-flex rounded-pill border border-hairline px-3 py-1 text-xs font-semibold text-pitch">{SPORT_LABELS[sport]}</span><h2 className="mt-4 break-words font-display text-2xl font-bold leading-tight text-pitch">{values.title || 'Tên giải đấu của bạn'}</h2>
           <dl className="my-5 space-y-4 text-sm"><div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">Ngày thi đấu</dt><dd className="mt-1 font-medium">{start ? `${start.slice(8, 10)}/${start.slice(5, 7)}/${start.slice(0, 4)} · ${start.slice(11, 16)}` : 'Chưa chọn lịch'}</dd></div></div><div className="flex gap-3"><MapPin size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div className="min-w-0"><dt className="text-xs text-ink-secondary">Địa điểm</dt><dd className="mt-1 break-words font-medium">{court ? `${court.venue} · ${court.name}` : owner ? 'Chưa chọn sân' : values.address || 'Admin hỗ trợ bố trí sân'}</dd></div></div><div className="flex gap-3"><Users size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">Quy mô</dt><dd className="mt-1 font-medium">{values.capacity ? `${values.capacity} người / đội` : 'Chưa chọn số suất'}</dd></div></div></dl>

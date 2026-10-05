@@ -14,6 +14,7 @@ import { TournamentReviewForm } from '@/components/tournament-review-form';
 import { ActionForm } from '@/components/action-form';
 import { Field, fieldClass } from '@/components/form-field';
 import { TournamentRefresh } from '@/components/tournament-refresh';
+import { TournamentCover } from '@/components/tournament-cover';
 
 export const metadata = { title: 'Chi tiết giải đấu' };
 const dateTime = (value: string) => `${dayLabel(new Date(value))} · ${hhmm(value)}`;
@@ -80,6 +81,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <h1 className="mt-4 max-w-4xl break-words font-display text-3xl font-extrabold leading-tight text-pitch sm:text-4xl">{tournament.title}</h1>
       <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink-secondary"><p className="flex items-start gap-2"><CalendarDays size={17} aria-hidden="true" className="mt-0.5 shrink-0" />{dateTime(tournament.starts_at)}</p><p className="flex min-w-0 items-start gap-2"><MapPin size={17} aria-hidden="true" className="mt-0.5 shrink-0" /><span className="break-words">{tournament.address}</span></p></div>
     </header>
+    <TournamentCover path={tournament.cover_path} title={tournament.title} className="mb-6 aspect-video max-h-96 rounded-card border border-hairline" />
     {manager && <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-hairline py-4 text-sm"><p><strong>{pendingCount}</strong> chờ duyệt · <strong>{unpaidCount}</strong> chờ cọc · <strong>{refundCount}</strong> giao dịch cần hoàn</p><span className="text-xs text-ink-secondary">{tournament.manager_id === court?.venues.owner_id ? 'Chủ sân tự tổ chức' : 'Người tổ chức và chủ sân cùng quản lý'}</span></div>
       <nav aria-label="Quản lý giải đấu" className="mb-6 flex flex-wrap border-b border-hairline">{[['overview', 'Tổng quan'], ['participants', `Người tham gia (${registrations.length})`], ['payments', 'Giao dịch & hoàn tiền'], ['settlement', 'Quyết toán']].map(([key, label]) => <Link key={key} href={key === 'overview' ? `/giai-dau/${id}` : `/giai-dau/${id}?view=${key}`} aria-current={view === key ? 'page' : undefined} className={`inline-flex min-h-12 items-center border-b-2 px-3 text-sm ${view === key ? 'border-pitch font-semibold text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>{label}</Link>)}</nav>

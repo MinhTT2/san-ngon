@@ -9,6 +9,7 @@ bộ hành trình từ tạo giải đến hoàn tiền/quyết toán và cách 
 
 - `/giai-dau`: xem, lọc môn, phân trang, theo dõi các giải đã đề xuất và đăng ký.
 - `/giai-dau/tao`: chủ sân phải chọn sân của mình để công khai ngay, không cần admin duyệt; người chơi mô tả địa điểm mong muốn để admin bố trí và duyệt. Công khai và khóa lịch là một giao dịch SQL, vẫn kiểm tra đúng môn, lịch trống và điều kiện nhận cọc.
+- Tạo/sửa đề xuất có một ảnh bìa tùy chọn, xem trước và bỏ/đổi ảnh. JPG/PNG/WebP tối đa 5 MiB, bucket công khai riêng `tournament-photos`; SQL kiểm tra file của người tổ chức rồi lưu `tournaments.cover_path` cùng giao dịch gửi giải. Ảnh hiện ở danh sách và chi tiết. Không đổi ảnh của giải đã công khai. Storage không cho ghi đè hoặc xóa ảnh còn được giải sử dụng; ảnh cũ chỉ được dọn sau khi sửa giải thành công.
 - `/admin/giai-dau`: admin mở đề xuất, chọn sân đúng môn, duyệt hoặc từ chối kèm lý do. Duyệt khóa lịch sân bằng `court_closures`; không thể duyệt trùng đơn đặt hoặc khung đã khóa. Người đề xuất nhận quyền quản lý giải, không được đổi role tài khoản.
 - `/chu-san/giai-dau`: chủ sân thấy giải ở sân mình và giải mình đề xuất. Trang chi tiết dùng chung cho chủ sân, người tổ chức, admin và người tham gia; SQL quyết định quyền.
 - Mỗi tài khoản đăng ký một suất, có họ tên, điện thoại, địa chỉ, tên đội và ghi chú. Thể lệ ghi rõ suất là một người hay một đội. Duyệt đăng ký giữ suất đến hạn cọc riêng; hết hạn chưa trả tiền sẽ trả suất. Số suất còn hiệu lực không vượt quy mô.
@@ -31,6 +32,16 @@ Thông tin người đăng ký chỉ được đọc bởi chính họ, người
 
 `/ket-noi/ho-so` lưu thông tin công khai riêng với `profiles`. Mặc định ẩn; người dùng phải chọn đồng ý công khai. Bỏ chọn là ẩn ngay, tài khoản bị khóa cũng bị ẩn. Không có chat nội bộ, tự ghép đối hoặc bản đồ.
 
+Có thể tải/đổi/xóa ảnh đại diện ngay ở `/ket-noi/ho-so` và `/tai-khoan`.
+Ảnh được lưu ngay qua `set_profile_avatar`, dùng chung bucket `avatars` và
+hiển thị cùng một ảnh trên tài khoản và hồ sơ kết nối. Đổi ảnh không tự công khai hồ sơ.
+
+Kiểm tra tải ảnh thật với bản production local ở cổng 3101 bằng
+`RUN_IMAGE_UPLOAD_E2E=1 node scripts/check-image-uploads-browser.mjs`.
+Dùng `PLAYWRIGHT_MODULE`/`CHROMIUM_EXECUTABLE` nếu Playwright nằm ngoài repo.
+Script dùng Chromium headless và phiên riêng, tạo rồi dọn tài khoản thử,
+kiểm tra ảnh bìa/ảnh đại diện và bố cục desktop/mobile; ảnh chụp ở `output/image-uploads`.
+
 ## Đăng nhập, OTP và thống kê
 
 Đăng nhập/xác thực thành công tải lại trang đích để header đọc phiên mới. Người đã đăng nhập được chuyển khỏi `/dang-nhap` và `/dang-ky`. Form phục hồi sau lỗi mạng, trim email, chấp nhận mã 6–8 chữ số theo email; server vẫn kiểm tra mã.
@@ -47,6 +58,7 @@ npm run typecheck
 npm run build
 node scripts/check-doc-requirements.mjs
 npx supabase db query --linked --file scripts/check-tournaments.sql
+npx supabase db query --linked --file scripts/check-tournament-photos.sql
 npx supabase db query --linked --file scripts/check-community.sql
 node scripts/check-public-routes.mjs http://localhost:3100
 node scripts/check-sepay-webhook.mjs http://localhost:3100

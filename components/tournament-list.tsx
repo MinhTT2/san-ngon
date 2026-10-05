@@ -4,6 +4,7 @@ import { SPORT_LABELS } from '@/lib/constants';
 import { vnd, dayLabel, hhmm } from '@/lib/format';
 import { tournamentLabel, tournamentStatuses } from '@/lib/tournaments';
 import { DiscoveryEmpty } from './discovery-empty';
+import { TournamentCover } from './tournament-cover';
 export async function TournamentList({ mode = 'public', sport = '', status = '', page = 1 }: { mode?: 'public' | 'mine' | 'admin' | 'owner'; sport?: string; status?: string; page?: number }) {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
@@ -28,6 +29,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
     <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{data?.map(t => {
       const state = tournamentLabel(t);
       return <Link key={t.id} href={`/giai-dau/${t.id}`} className="group flex min-w-0 flex-col overflow-hidden rounded-card border border-hairline bg-card transition-colors hover:border-pitch">
+        <TournamentCover path={t.cover_path} title={t.title} className="aspect-video border-b border-hairline" />
         <div className="flex items-center justify-between gap-3 border-b border-hairline bg-free-fill/60 px-5 py-4"><span className="text-xs font-bold uppercase tracking-wide text-pitch">{SPORT_LABELS[t.sport]}</span><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${t.status === 'pending' ? 'bg-peak-fill text-peak-ink' : 'bg-card text-ink-secondary'}`}>{state}</span></div>
         <div className="flex flex-1 flex-col p-5"><p className="text-sm font-semibold text-pitch">{dayLabel(new Date(t.starts_at))} <span className="font-normal text-ink-secondary">· {hhmm(t.starts_at)}</span></p>
           <h2 className="mt-3 break-words font-display text-2xl font-bold leading-tight text-pitch">{t.title}</h2>

@@ -34,6 +34,11 @@ export function ActionForm({ children, payload = {}, nested = false, endpoint = 
   }
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+    if (event.currentTarget.querySelector('[data-image-uploading="true"]')) {
+      setFailed(true); setMessage('Ảnh đang được tải lên. Chờ tải xong rồi gửi giải đấu.');
+      return;
+    }
     if (confirmMessage && !window.confirm(confirmMessage)) return;
     const form = event.currentTarget;
     const fields: Record<string, unknown> = Object.fromEntries(new FormData(form));

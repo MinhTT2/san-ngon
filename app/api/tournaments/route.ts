@@ -33,6 +33,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: Object.values(fieldErrors)[0] ?? 'Kiểm tra các trường thông tin đã nhập.', fieldErrors }, { status: 400 });
   }
   const body = parsed.data;
+  const previousCover = body.action === 'resubmit'
+    ? (await db.from('tournaments').select('cover_path').eq('id', body.id).eq('manager_id', user.id).maybeSingle()).data?.cover_path
+    : null;
   const result = body.action === 'submit' ? await db.rpc('submit_tournament', { p_data: body.data })
     : body.action === 'review' ? await db.rpc('review_tournament', { p_id: body.id, p_approve: body.approve, p_court_id: body.court_id, p_note: body.note, p_venue_fee: body.venue_fee, p_cancellation_venue_fee: body.cancellation_venue_fee, p_terms_note: body.terms_note, p_terms_confirmed: body.terms_confirmed })
     : body.action === 'resubmit' ? await db.rpc('resubmit_tournament', { p_id: body.id, p_data: body.data })
@@ -51,6 +54,10 @@ export async function POST(request: Request) {
     const error = tournamentError(result.error.message);
     const field = tournamentErrorFields[result.error.message];
     return NextResponse.json({ error, fieldErrors: field && ['submit', 'resubmit'].includes(body.action) ? { [field]: error } : {} }, { status: 400 });
+  }
+  // Chỉ dọn ảnh cũ sau khi SQL lưu thành công; RLS giữ file nếu giải khác còn dùng.
+  if (body.action === 'resubmit' && previousCover && previousCover !== body.data.cover_path) {
+    await db.storage.from('tournament-photos').remove([previousCover]).catch(() => {});
   }
   return NextResponse.json({ data: result.data });
 }

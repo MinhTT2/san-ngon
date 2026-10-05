@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Camera, Check, CheckCheck, CircleUserRound, LoaderCircle, LockKeyhole, Mail, Phone, Save, Ticket, Trash2, UserRound } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { ArrowUpRight, Check, CheckCheck, CircleUserRound, LoaderCircle, LockKeyhole, Mail, Phone, Save, Ticket, UserRound } from 'lucide-react';
 import { normalizePhone } from '@/lib/profile';
-import { UserAvatar } from '@/components/user-avatar';
+import { AvatarUpload } from '@/components/avatar-upload';
 
 const INPUT = 'profile-input h-13 w-full rounded-control border border-hairline bg-page pl-11 pr-4 text-sm outline-none focus:border-pitch focus:bg-card';
 
@@ -14,56 +13,12 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
   userId: string; fullName: string; phone: string; email: string; avatar: string | null; role: string;
 }) {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-  const fileInput = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(fullName);
   const [number, setNumber] = useState(phone);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [photo, setPhoto] = useState(avatar);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const [photoMessage, setPhotoMessage] = useState<string | null>(null);
   const roleLabel = role === 'admin' ? 'Quản trị viên' : role === 'owner' ? 'Chủ sân' : 'Người chơi';
-
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
-
-  async function changePhoto(file: File | null) {
-    if (uploading) return;
-    setUploading(true); setPhotoError(null); setPhotoMessage(null);
-    let path: string | null = null;
-    try {
-      if (file) {
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 5 * 1024 * 1024) {
-          throw new Error('Chọn ảnh JPG, PNG hoặc WebP, tối đa 5 MB.');
-        }
-        try { const bitmap = await createImageBitmap(file); bitmap.close(); }
-        catch { throw new Error('Không đọc được ảnh này. Bạn thử chọn ảnh khác nhé.'); }
-        setPreview(URL.createObjectURL(file));
-        const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
-        path = `${userId}/${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage.from('avatars').upload(path, file, { contentType: file.type, upsert: false });
-        if (error) throw new Error('Chưa tải được ảnh. Kiểm tra mạng và thử lại.');
-      }
-      const { data, error } = await supabase.rpc('set_profile_avatar', { p_path: path });
-      if (error) throw new Error(error.message.includes('ACCOUNT_BANNED') ? 'Tài khoản đang bị khóa.' : 'Chưa lưu được ảnh. Hãy thử lại hoặc đăng nhập lại.');
-      setPhoto(data.avatar_url);
-      setPhotoMessage(file ? 'Ảnh mới đã sẵn sàng!' : 'Đã xóa ảnh đại diện.');
-      router.refresh();
-      // Chỉ xóa file đã bỏ liên kết. RLS giữ ảnh đang dùng nếu tab khác vừa chọn lại.
-      if (data.previous_avatar_url?.startsWith(`${userId}/`) && data.previous_avatar_url !== path) {
-        await supabase.storage.from('avatars').remove([data.previous_avatar_url]).catch(() => {});
-      }
-    } catch (error) {
-      if (path) await supabase.storage.from('avatars').remove([path]).catch(() => {});
-      setPhotoError(error instanceof Error ? error.message : 'Chưa tải được ảnh. Vui lòng thử lại.');
-    } finally {
-      setPreview(null); setUploading(false);
-      if (fileInput.current) fileInput.current.value = '';
-    }
-  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -93,26 +48,10 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
           <span className="absolute left-6 top-5 text-[10px] font-medium uppercase tracking-[0.24em] text-pitch-ink/70">Sân Ngon · Cùng ra sân</span>
         </div>
         <div className="relative px-6 pb-6">
-          <div className="-mt-12 flex items-end justify-between gap-3">
-            <div className="group relative rounded-full border-[6px] border-card bg-card">
-              <UserAvatar name={name} avatar={preview ?? photo} className={`size-24 text-4xl ${uploading ? 'opacity-60' : ''}`} />
-              <button type="button" aria-label="Chọn ảnh đại diện" title="Chọn ảnh đại diện" disabled={uploading} onClick={() => fileInput.current?.click()}
-                className="pf-action absolute -bottom-1 -right-1 grid size-9 place-items-center rounded-full border-[3px] border-card bg-pitch text-pitch-ink disabled:opacity-60">
-                {uploading ? <LoaderCircle aria-hidden="true" className="pf-spin size-4" /> : <Camera aria-hidden="true" className="size-4" />}
-              </button>
-            </div>
-            <span className="mb-2 rounded-pill border border-hairline px-3 py-1 text-[11px] font-medium text-ink-secondary">{roleLabel}</span>
-          </div>
+          <div className="relative -mt-10"><AvatarUpload userId={userId} name={name} avatar={avatar} /></div>
+          <span className="mt-4 inline-flex rounded-pill border border-hairline px-3 py-1 text-[11px] font-medium text-ink-secondary">{roleLabel}</span>
           <h2 className="mt-4 break-words font-display text-2xl font-bold tracking-tight text-pitch">{name.trim() || 'Chào bạn!'}</h2>
           <p className="mt-1 break-all text-xs leading-5 text-ink-secondary">{email}</p>
-          <div className="my-5 h-px bg-hairline" />
-          <input ref={fileInput} type="file" aria-label="Chọn ảnh đại diện" accept="image/jpeg,image/png,image/webp" hidden
-            onChange={(event) => { const file = event.target.files?.[0]; if (file) void changePhoto(file); }} />
-          <p className="text-center text-[11px] text-ink-secondary">JPG, PNG, WebP · Tối đa 5 MB</p>
-          {photo && <button type="button" disabled={uploading} onClick={() => void changePhoto(null)} className="pf-action mx-auto mt-3 flex items-center gap-1.5 rounded-control px-3 py-2 text-xs text-ink-secondary hover:text-danger disabled:opacity-50"><Trash2 aria-hidden="true" className="size-3.5" />Xóa ảnh đại diện</button>}
-          <p className="mt-3 text-center text-[11px] leading-5 text-ink-secondary">Ảnh được lưu ngay và hiển thị trên tài khoản.</p>
-          {photoError && <p role="alert" className="mt-3 text-sm leading-5 text-danger">{photoError}</p>}
-          {photoMessage && <p role="status" className="profile-feedback mt-3 flex items-center justify-center gap-2 text-xs text-pitch"><Check aria-hidden="true" className="size-4" />{photoMessage}</p>}
         </div>
       </section>
 

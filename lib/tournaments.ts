@@ -10,6 +10,7 @@ const calendarDate = z.string().date();
 const localTime = z.string().regex(/^(?!0000)\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/)
   .refine(value => calendarDate.safeParse(value.slice(0, 10)).success, 'Ngày đã chọn không tồn tại. Chọn lại ngày trong lịch.');
 export const tournamentSchema = z.object({
+  cover_path: z.union([z.string().regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/), z.literal('')]).default(''),
   title: z.string().trim().min(3).max(150), description: z.string().trim().min(10).max(5000),
   sport: sportSchema, court_id: z.union([z.string().uuid(), z.literal('')]), address: z.string().trim().min(5).max(300),
   starts_at: localTime, ends_at: localTime, registration_deadline: localTime, payment_deadline: localTime, payment_hold_hours: z.coerce.number().int().min(1).max(72),
@@ -30,6 +31,7 @@ export const participantSchema = z.object({
   address: z.string().trim().min(2).max(300), team_name: z.string().trim().max(100), note: z.string().trim().max(1000),
 });
 const formLabels: Record<string, string> = {
+  cover_path: 'Ảnh bìa giải đấu',
   title: 'Tên giải đấu', description: 'Thể lệ & thông tin liên hệ', sport: 'Môn thi đấu', court_id: 'Sân tổ chức',
   address: 'Địa chỉ / khu vực', starts_at: 'Bắt đầu thi đấu', ends_at: 'Kết thúc thi đấu',
   registration_deadline: 'Hạn nhận và duyệt đăng ký', payment_deadline: 'Hạn đóng cọc cuối cùng',
@@ -51,12 +53,14 @@ export function tournamentValidationErrors(issues: z.ZodIssue[]): Record<string,
   return errors;
 }
 export const tournamentErrorFields: Record<string, string> = {
+  TOURNAMENT_IMAGE_INVALID: 'cover_path',
   TOURNAMENT_START_PAST: 'starts_at', TOURNAMENT_REGISTRATION_PAST: 'registration_deadline',
   TOURNAMENT_END_INVALID: 'ends_at', TOURNAMENT_PAYMENT_INVALID: 'payment_deadline',
   TOURNAMENT_REGISTRATION_INVALID: 'registration_deadline', COURT_REQUIRED: 'court_id', COURT_INVALID: 'court_id', SLOT_TAKEN: 'court_id',
 };
 export function tournamentError(code: string) {
   const errors: Record<string, string> = {
+    TOURNAMENT_IMAGE_INVALID: 'Ảnh bìa chưa hợp lệ. Chọn lại ảnh JPG, PNG hoặc WebP tối đa 5 MB của bạn.',
     TERMS_REQUIRED: 'Nhập tiền thuê sân, nội dung thỏa thuận và xác nhận hai bên đã đồng ý.',
     TERMS_ALREADY_FIXED: 'Thỏa thuận đã được chốt, không thể ghi đè.',
     TOURNAMENT_NOT_EDITABLE: 'Chỉ sửa đề xuất đang chờ hoặc bị từ chối.',

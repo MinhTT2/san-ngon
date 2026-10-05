@@ -391,6 +391,7 @@ export type Database = {
           cancel_window_hours: number
           cancelled_by: string | null
           capacity: number
+          cover_path: string | null
           court_id: string | null
           created_at: string
           deposit_amount: number
@@ -414,6 +415,7 @@ export type Database = {
           cancel_window_hours?: number
           cancelled_by?: string | null
           capacity: number
+          cover_path?: string | null
           court_id?: string | null
           created_at?: string
           deposit_amount: number
@@ -437,6 +439,7 @@ export type Database = {
           cancel_window_hours?: number
           cancelled_by?: string | null
           capacity?: number
+          cover_path?: string | null
           court_id?: string | null
           created_at?: string
           deposit_amount?: number
