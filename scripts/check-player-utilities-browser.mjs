@@ -125,6 +125,13 @@ try {
   await player.goto(origin + '/don-cua-toi');
   await player.getByRole('button', { name: /Lịch sử/ }).first().click();
   const bookingRow = player.locator('tr').filter({ has: player.getByRole('link', { name: code, exact: true }) });
+  await player.getByLabel('Tìm đơn theo mã hoặc tên sân').fill(code);
+  await player.reload();
+  assert.equal(await player.getByLabel('Tìm đơn theo mã hoặc tên sân').inputValue(), code);
+  assert.equal(new URL(player.url()).searchParams.get('filter'), 'history');
+  await bookingRow.getByRole('button', { name: 'Sao chép mã ' + code }).click();
+  assert.equal(await player.evaluate(() => navigator.clipboard.readText()), code);
+  await bookingRow.locator('summary').click();
   await bookingRow.getByRole('link', { name: 'Đặt lại sân này' }).click();
   await player.waitForURL(origin + '/san/' + venue.slug);
   const calendar = await player.request.get(origin + '/api/bookings/' + code + '/calendar');

@@ -3,6 +3,11 @@ import { safeNext } from './safe-next';
 
 export const FEEDBACK_CATEGORIES = { bug: 'Báo lỗi', idea: 'Đề xuất cải thiện', support: 'Cần hỗ trợ' } as const;
 export const FEEDBACK_STATUSES = { new: 'Đã tiếp nhận', reviewing: 'Đang xử lý', resolved: 'Đã giải quyết', closed: 'Đã đóng' } as const;
+export const feedbackSearchParams = z.object({
+  page: z.coerce.number().int().min(1).max(100000).catch(1),
+  status: z.enum(['all','open','done']).catch('all'),
+  trang: z.string().max(300).optional().catch(undefined),
+});
 export const feedbackSchema = z.object({
   id: z.string().uuid(), category: z.enum(['bug', 'idea', 'support']),
   title: z.string().trim().min(5).max(120), message: z.string().trim().min(20).max(3000),

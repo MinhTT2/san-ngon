@@ -14,7 +14,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       <SiteHeader variant="dashboard" />
       <div className="flex flex-grow flex-col lg:flex-row">
         <DashboardSidebar role="owner" />
-        <div className="min-w-0 flex-grow"><SubscriptionBanner />{children}</div>
+        <div id="noi-dung" tabIndex={-1} className="min-w-0 flex-grow"><SubscriptionBanner />{children}</div>
       </div>
     </div>
   );

@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, CalendarDays, Clock3, History, Plus } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, History, Plus, Search } from 'lucide-react';
 import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { StatusBadge } from '@/components/status-badge';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import { CANCEL_WINDOW_HOURS, HOLD_MINUTES, SPORT_LABELS } from '@/lib/constants';
 import type { Booking } from '@/lib/types';
+import { useQueryControls } from '@/lib/use-query-controls';
+import { matchesSearch } from '@/lib/text-search';
+import { CopyButton } from '@/components/copy-button';
 
 export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 'status' | 'total_amount' | 'deposit_amount' | 'expires_at' | 'paid_at' | 'refund_status'> & {
   courts: { name: string; sport: string; venues: { name: string; district: string; slug: string; status: string } | null } | null;
@@ -24,7 +27,11 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
   failed?: boolean;
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<Filter>('active');
+  const { params, update } = useQueryControls();
+  const requestedFilter = params.get('filter') ?? '';
+  const filter: Filter = ['active', 'pending', 'confirmed', 'history', 'all'].includes(requestedFilter) ? requestedFilter as Filter : 'active';
+  const query = (params.get('q') ?? '').slice(0, 100);
+  const setFilter = (value: Filter) => update({ filter: value === 'active' ? null : value }, true);
   const [clock, setClock] = useState(initialNow);
   const now = Math.max(clock, initialNow);
 
@@ -65,8 +72,8 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
   const pendingCount = rows.filter((b) => b.pending).length;
   const confirmedCount = rows.filter((b) => b.confirmed).length;
   const historyCount = rows.filter((b) => !b.active).length;
-  const visible = rows.filter((b) => filter === 'all' || (filter === 'active' ? b.active
-    : filter === 'history' ? !b.active : b[filter])).sort((a, b) => {
+  const visible = rows.filter((b) => (filter === 'all' || (filter === 'active' ? b.active
+    : filter === 'history' ? !b.active : b[filter])) && matchesSearch(`${b.code} ${b.courts?.name ?? ''} ${b.courts?.venues?.name ?? ''} ${b.courts?.venues?.district ?? ''} ${SPORT_LABELS[b.courts?.sport ?? ''] ?? ''}`, query)).sort((a, b) => {
     if (a.active !== b.active) return a.active ? -1 : 1;
     if (a.pending !== b.pending) return a.pending ? -1 : 1;
     return a.active ? Date.parse(a.starts_at) - Date.parse(b.starts_at) : Date.parse(b.starts_at) - Date.parse(a.starts_at);
@@ -110,7 +117,12 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
           ))}
         </div>
 
-        <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-b border-hairline">
+        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-card border border-hairline bg-card p-4">
+          <label htmlFor="booking-search" className="relative min-w-0 flex-1"><span className="sr-only">Tìm đơn theo mã hoặc tên sân</span><Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input id="booking-search" type="search" value={query} maxLength={100} onChange={event => update({ q: event.target.value })} placeholder="Tìm mã đơn, tên sân, khu vực…" className="min-h-11 w-full rounded-control border border-hairline bg-page pl-10 pr-3 text-sm" /></label>
+          {query && <button type="button" onClick={() => update({ q: null })} className="min-h-11 px-2 text-sm font-semibold text-pitch underline">Xóa tìm kiếm</button>}
+          <p role="status" className="w-full text-xs text-ink-secondary sm:w-auto">{visible.length} đơn trong mục đang xem</p>
+        </div>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-hairline">
           <div role="group" aria-label="Lọc đơn đặt sân" className="flex gap-1">
             {([
               ['active', 'Đang đặt', pendingCount + confirmedCount],
@@ -129,9 +141,9 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
         {visible.length === 0 ? (
           <div className="mt-5 rounded-card border border-hairline bg-card px-5 py-14 text-center">
             <CalendarDays className="mx-auto text-pitch" size={32} strokeWidth={1.5} aria-hidden="true" />
-            <h2 className="mt-4 font-display text-2xl font-bold text-pitch">{rows.length === 0 ? 'Chưa có buổi chơi nào' : filter === 'pending' ? 'Không có đơn chờ cọc' : filter === 'history' ? 'Chưa có lịch sử đặt sân' : 'Bạn chưa có lịch chơi sắp tới'}</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">{rows.length && filter !== 'history' ? 'Đơn đã kết thúc, hủy hoặc hết hạn nằm trong Lịch sử.' : 'Chọn sân và khung giờ phù hợp. Các đơn của bạn sẽ xuất hiện tại đây.'}</p>
-            <Link href="/tim-san" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-pitch underline underline-offset-4">Tìm sân để chơi <ArrowRight size={16} aria-hidden="true" /></Link>
+            <h2 className="mt-4 font-display text-2xl font-bold text-pitch">{query.trim() ? 'Không có đơn khớp trong mục này' : rows.length === 0 ? 'Chưa có buổi chơi nào' : filter === 'pending' ? 'Không có đơn chờ cọc' : filter === 'history' ? 'Chưa có lịch sử đặt sân' : 'Bạn chưa có lịch chơi sắp tới'}</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">{query.trim() ? 'Thử tên sân hoặc mã đơn ngắn hơn, hoặc tìm trong tất cả đơn của bạn.' : rows.length && filter !== 'history' ? 'Đơn đã kết thúc, hủy hoặc hết hạn nằm trong Lịch sử.' : 'Chọn sân và khung giờ phù hợp. Các đơn của bạn sẽ xuất hiện tại đây.'}</p>
+            {query.trim() && filter !== 'all' ? <button type="button" onClick={() => setFilter('all')} className="mt-5 min-h-11 rounded-control border border-hairline px-5 text-sm font-semibold text-pitch">Tìm trong tất cả đơn</button> : <Link href="/tim-san" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-pitch underline underline-offset-4">Tìm sân để chơi <ArrowRight size={16} aria-hidden="true" /></Link>}
           </div>
         ) : (
           <div className="mt-5 lg:overflow-hidden lg:rounded-card lg:border lg:border-hairline lg:bg-card">
@@ -147,7 +159,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
                       <p className="font-display text-lg font-bold leading-snug text-pitch">{b.courts?.venues?.name ?? 'Thông tin sân đang cập nhật'}</p>
                       <p className="mt-1.5 font-medium">{b.courts?.name ?? 'Sân đã đặt'}{b.courts?.sport && <span className="font-normal text-ink-secondary"> · {SPORT_LABELS[b.courts.sport]}</span>}</p>
                       <p className="mt-1 text-xs text-ink-secondary">{b.courts?.venues?.district}</p>
-                      <Link href={`/dat-san/${b.code}`} className="mt-3 inline-block text-xs font-semibold tracking-wide text-ink-secondary underline decoration-hairline underline-offset-4">{b.code}</Link>
+                      <div className="mt-3 flex flex-wrap items-center gap-2"><Link href={`/dat-san/${b.code}`} className="inline-flex min-h-11 items-center text-xs font-semibold tracking-wide text-ink-secondary underline decoration-hairline underline-offset-4">{b.code}</Link><CopyButton value={b.code} /></div>
                     </td>
                     <td className="block min-w-0 lg:table-cell lg:px-4 lg:py-6">
                       <p className="mb-2 text-xs text-ink-secondary lg:hidden">Lịch chơi</p>
@@ -170,11 +182,13 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
                     </td>
                     <td className="col-span-2 block lg:table-cell lg:px-4 lg:py-6">
                       <div className="flex flex-wrap items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
-                        {b.courts?.venues?.status === 'active' && <Link href={`/san/${b.courts.venues.slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Đặt lại sân này</Link>}
-                        {(b.status === 'confirmed' || b.status === 'completed') && <a href={`/api/bookings/${b.code}/calendar`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tải lịch buổi chơi</a>}
-                        <Link href={`/gop-y?trang=${encodeURIComponent(`/dat-san/${b.code}`)}`} className="inline-flex min-h-11 items-center text-xs text-ink-secondary underline">Cần hỗ trợ đơn này?</Link>
                         <Link href={`/dat-san/${b.code}`} className={`inline-flex min-h-11 items-center justify-center rounded-control px-3 text-center text-xs font-semibold ${b.pending ? 'bg-pitch text-pitch-ink hover:bg-pitch/90' : 'border border-hairline text-pitch hover:bg-sunk'}`}>{b.pending ? 'Tiếp tục thanh toán' : 'Xem chi tiết'}</Link>
                         {b.active && <CancelBookingButton code={b.code} pending={b.pending} refundable={b.status === 'confirmed' && Date.parse(b.starts_at) - now >= CANCEL_WINDOW_HOURS * 3600_000} className="min-h-11 lg:min-h-0" />}
+                        <details className="w-full text-xs"><summary className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Các thao tác khác</summary><div className="flex flex-col items-start gap-1">
+                          {b.courts?.venues?.status === 'active' && <Link href={`/san/${b.courts.venues.slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Đặt lại sân này</Link>}
+                          {(b.status === 'confirmed' || b.status === 'completed') && <><a href={`/api/bookings/${b.code}/calendar`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tải lịch buổi chơi</a><p className="text-xs leading-5 text-ink-secondary">Lịch đã tải không tự cập nhật khi hủy đơn.</p></>}
+                          <Link href={`/gop-y?trang=${encodeURIComponent(`/dat-san/${b.code}`)}`} className="inline-flex min-h-11 items-center text-sm text-ink-secondary underline">Cần hỗ trợ đơn này?</Link>
+                        </div></details>
                       </div>
                     </td>
                   </tr>

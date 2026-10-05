@@ -46,3 +46,12 @@ SQL tạo dữ liệu tạm trong transaction rồi rollback: quyền đọc/ghi
 Script browser tạo 3 tài khoản thử, một sân con không hoạt động ở sân đang nhận đơn và một đơn đã hoàn tất trong quá khứ. Không giữ lịch trống, gửi thư, chuyển tiền hoặc sửa cờ nghiệm thu. Chỉ thử phản hồi có UUID do script tạo. Dữ liệu được dọn trong `finally`; nếu bị dừng cưỡng bức, dùng `cleanup.sql` trong thư mục kết quả để xóa đúng UUID đã tạo. File kết quả không chứa mật khẩu/token.
 
 Đã đạt lint, typecheck, production build; SQL rollback; luồng thật UI/API/RPC cho cả sáu nhóm tiện ích, quyền riêng tư và retry; bố cục 390/1440 px; clipboard thực và tìm trợ giúp không dấu/bàn phím. Đã xem ảnh trang góp ý điện thoại, trợ giúp desktop và giao diện xử lý admin. API cũng đã kiểm tra người chưa đăng nhập, origin khác và header không lập chỉ mục. Tệp `.ics` được kiểm tra nội dung/định dạng/quyền tải, chưa nghiệm thu nhập tệp trên mọi ứng dụng lịch.
+
+## Cải thiện UI/UX ngày 05/10/2026
+
+- Tìm sân: bộ lọc chính gọn hơn, điều kiện nâng cao thu gọn trên điện thoại; từng điều kiện có nút bỏ riêng; lưu sân ngay trên thẻ.
+- Đơn của tôi: tìm không dấu theo mã/tên sân/khu vực, giữ tìm kiếm và tab trong URL, sao chép mã, đưa thanh toán/chi tiết lên trước các tiện ích phụ.
+- Góp ý: lịch sử và form chia hai cột trên desktop; người đã gửi thấy lịch sử trước trên điện thoại; lọc theo tiến độ, đếm ký tự, đưa focus tới lỗi.
+- Trợ giúp: giữ từ khóa/chủ đề khi tải lại và quay lại, xóa tìm kiếm đưa focus về ô nhập. Có liên kết bỏ qua điều hướng và viền focus bàn phím.
+
+Kiểm tra: lint, typecheck, production build đạt; Chromium headless với context cô lập chạy các luồng tài khoản thật tạm thời (góp ý/phản hồi/quyền riêng tư, lưu sân, chia sẻ, sao chép mã, tìm đơn sau reload, đặt lại và tải lịch). Dữ liệu kiểm thử đã dọn. Trang tìm sân không tràn ngang ở 320/390/768/1024/1440 px; FAQ giữ trạng thái qua reload/back; bộ lọc nâng cao vẫn dùng được khi tắt JavaScript. Ở viewport 390 px, thẻ sân đầu tiên từ y=1108 xuống y=808; desktop 1440 px giữ gần tương đương (572 → 574). Đây là đo bố cục, chưa phải thử nghiệm với người dùng.

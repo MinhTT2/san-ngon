@@ -50,6 +50,11 @@
 
 :root { color-scheme: light; }
 
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-pitch);
+  outline-offset: 3px;
+}
+
 body {
   background: var(--color-page);
   color: var(--color-ink);

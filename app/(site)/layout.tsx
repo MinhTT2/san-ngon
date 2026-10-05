@@ -9,7 +9,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <div className="flex-grow">{children}</div>
+      <div id="noi-dung" tabIndex={-1} className="flex-grow">{children}</div>
       <SiteFooter />
     </div>
   );

@@ -7,7 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <SiteHeader variant="admin" />
       <div className="flex flex-grow flex-col lg:flex-row">
         <DashboardSidebar role="admin" />
-        <div className="min-w-0 flex-grow">{children}</div>
+        <div id="noi-dung" tabIndex={-1} className="min-w-0 flex-grow">{children}</div>
       </div>
     </div>
   );
