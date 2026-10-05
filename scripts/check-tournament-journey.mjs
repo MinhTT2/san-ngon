@@ -24,6 +24,14 @@ const input = {
   payment_deadline: '2030-10-15T09:00', payment_hold_hours: 24, capacity: 16, entry_fee: 200000, deposit_amount: 100000,
 };
 assert(tournaments.tournamentSchema.safeParse(input).success);
+for (const field of ['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline']) {
+  for (const value of ['2030-02-30T10:00', '2030-02-29T10:00', '2030-13-01T10:00', '2030-10-15T24:00', '2030-10-15T10:60', '0000-10-15T10:00']) {
+    const invalid = tournaments.tournamentSchema.safeParse({ ...input, [field]: value });
+    assert(!invalid.success, `${field}: ${value}`);
+    assert(tournaments.tournamentValidationErrors(invalid.error.issues)[field]);
+  }
+}
+assert(tournaments.tournamentSchema.safeParse({ ...input, starts_at: '2032-02-29T10:00', ends_at: '2032-02-29T12:00', registration_deadline: '2032-02-28T10:00', payment_deadline: '2032-02-29T09:00' }).success, 'leap day is a valid local calendar date');
 for (const [change, field] of [
   [{ deposit_amount: 200001 }, 'deposit_amount'], [{ ends_at: input.starts_at }, 'ends_at'],
   [{ registration_deadline: '2030-10-15T09:01' }, 'registration_deadline'], [{ payment_deadline: '2030-10-15T10:01' }, 'payment_deadline'],
@@ -35,6 +43,11 @@ for (const [change, field] of [
 const participant = { full_name: 'Người tham gia', phone: '+84 900-000-004', address: 'Hà Nội', team_name: '', note: '' };
 assert.equal(tournaments.participantSchema.parse(participant).phone, '0900000004');
 assert(!tournaments.participantSchema.safeParse({ ...participant, phone: 'abcdefghij' }).success);
+for (const phone of [undefined, '0'.repeat(26)]) {
+  const invalid = tournaments.participantSchema.safeParse({ ...participant, phone });
+  assert(!invalid.success);
+  assert.match(tournaments.tournamentValidationErrors(invalid.error.issues).phone, /Số điện thoại/);
+}
 const now = Date.parse('2030-10-05T10:00:00Z');
 const tournament = { ...input, id: 'e2900000-0000-4000-8000-000000000001', status: 'published', starts_at: '2030-10-15T03:00:00Z', ends_at: '2030-10-15T05:00:00Z', registration_deadline: '2030-10-14T03:00:00Z' };
 assert.equal(tournaments.tournamentLabel(tournament, now), 'Đang nhận đăng ký');

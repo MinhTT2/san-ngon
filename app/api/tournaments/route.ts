@@ -28,6 +28,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
+    console.warn('Tournament input rejected', { issues: parsed.error.issues.map(issue => ({ field: issue.path.join('.'), code: issue.code })) });
     const fieldErrors = tournamentValidationErrors(parsed.error.issues);
     return NextResponse.json({ error: Object.values(fieldErrors)[0] ?? 'Kiểm tra các trường thông tin đã nhập.', fieldErrors }, { status: 400 });
   }

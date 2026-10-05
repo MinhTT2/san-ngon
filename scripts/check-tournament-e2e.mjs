@@ -151,6 +151,24 @@ try {
     to_char((now() at time zone 'Asia/Ho_Chi_Minh')+interval '9 days','YYYY-MM-DD"T"20:00') payment_deadline`)[0];
   const { owner, organizer, player, admin } = pages;
   await proposal(owner, { ...dates, title: '[KIỂM THỬ] Cầu lông cuối tuần Cầu Giấy' }, true);
+  // Simulate transport failures without forwarding a create request to the database.
+  for (const failure of ['offline', 'html', 'missing-id']) {
+    const handler = route => failure === 'offline' ? route.abort('internetdisconnected')
+      : route.fulfill({ status: failure === 'html' ? 502 : 200, contentType: failure === 'html' ? 'text/html' : 'application/json', body: failure === 'html' ? '<html>Bad Gateway</html>' : '{}' });
+    await owner.route('**/api/tournaments', handler);
+    try {
+      await owner.getByRole('button', { name: 'Công khai giải đấu', exact: true }).click();
+      const feedback = owner.getByRole('alert').filter({ hasText: /chưa xác nhận được|Chưa xác nhận được/ });
+      await feedback.waitFor();
+      assert.match(await feedback.innerText(), /Kiểm tra danh sách|Kiểm tra mạng và danh sách/);
+      assert.equal(await owner.getByRole('button', { name: 'Công khai giải đấu', exact: true }).isEnabled(), true);
+      assert.equal(await owner.locator('[name=court_id]').inputValue(), ids.court);
+      assert.equal(await owner.locator('[name=starts_at]').inputValue(), dates.starts_at);
+      assert.equal(owner.url(), `${origin}/giai-dau/tao`);
+    } finally { await owner.unroute('**/api/tournaments', handler); }
+  }
+  assert.equal(sql(`select count(*)::int n from tournaments where manager_id='${ids.owner}'`)[0].n, 0, 'transport simulations do not write a proposal');
+  console.log('OK: network, invalid JSON and missing-ID errors preserve the form and explain uncertainty.');
   // Reproduce a failed publication, correct the identified fields, and retry the same form.
   await owner.locator('[name=title]').fill('   ab   ');
   await owner.locator('textarea[name=description]').fill('   short   ');

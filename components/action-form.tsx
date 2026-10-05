@@ -37,20 +37,26 @@ export function ActionForm({ children, payload = {}, nested = false, endpoint = 
     if (confirmMessage && !window.confirm(confirmMessage)) return;
     const form = event.currentTarget;
     const fields: Record<string, unknown> = Object.fromEntries(new FormData(form));
+    const unconfirmed = 'Chưa xác nhận được kết quả lưu từ máy chủ. Kiểm tra danh sách trước khi gửi lại; thông tin vẫn được giữ trên form.';
     form.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input => { fields[input.name] = input.checked; });
     setBusy(true); setMessage(''); setFailed(false); setFieldErrors({});
     try {
       const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...(nested ? { data: fields } : fields) }) });
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
+      if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error(unconfirmed);
       if (!response.ok) {
         const errors: Record<string, string> = Object.fromEntries(Object.entries(result.fieldErrors ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
         setFieldErrors(errors);
         throw new Error(Object.keys(errors).length ? 'Chưa lưu được. Sửa các mục dưới đây rồi gửi lại; thông tin đã nhập vẫn được giữ trên form.' : result.error || 'Chưa lưu được.');
       }
+      if (successHref === 'tournament' && (typeof result.data !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(result.data))) throw new Error(unconfirmed);
       setMessage(successMessage);
       if (successHref) window.location.assign(successHref === 'tournament' ? `/giai-dau/${result.data}` : successHref);
       else router.refresh();
-    } catch (error) { setFailed(true); setMessage(error instanceof Error ? error.message : 'Không kết nối được. Thử lại nhé.'); }
+    } catch (error) {
+      setFailed(true);
+      setMessage(error instanceof TypeError ? 'Kết nối bị gián đoạn, chưa xác nhận được kết quả lưu. Kiểm tra mạng và danh sách trước khi gửi lại; thông tin vẫn được giữ trên form.' : error instanceof Error ? error.message : 'Chưa xác nhận được kết quả lưu. Kiểm tra danh sách trước khi gửi lại.');
+    }
     finally { setBusy(false); }
   }
   return <form ref={formRef} onSubmit={submit} onChange={event => {

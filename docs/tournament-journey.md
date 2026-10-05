@@ -200,3 +200,11 @@ Ba lần gửi bị từ chối trên production trước bản sửa không có
 trong log, nên chưa kết luận nguyên nhân riêng của các lần đó. Đã xác nhận
 luồng chủ sân công khai tại sân của mình chạy thành công trên production;
 không thêm bước admin duyệt hoặc bỏ các điều kiện công khai.
+
+Rà tiếp: API chặn ngày không tồn tại, năm 0000 và giờ ngoài phạm vi trước
+khi gọi SQL; đây là kiểm tra định dạng, không quy đổi múi giờ ở JavaScript.
+Form xử lý mất mạng, phản hồi không phải JSON và kết quả thiếu mã giải bằng
+thông báo tiếng Việt. Khi chưa biết yêu cầu đã lưu hay chưa, hướng dẫn kiểm
+tra danh sách trước khi gửi lại; không tự gửi lại hoặc điều hướng tới mã rỗng.
+Kiểm tra mô phỏng các lỗi phản hồi không gửi yêu cầu tạo giải tới database.
+API ghi cả tên trường/mã lỗi nhập liệu, không ghi giá trị người dùng nhập.

@@ -6,7 +6,9 @@ export type Registration = Database['public']['Tables']['tournament_registration
 export type TournamentPayment = Omit<Database['public']['Tables']['tournament_payment_events']['Row'], 'raw'>;
 export { tournamentStatuses, registrationStatuses, paymentOutcomes, registrationLabel, tournamentLabel } from './tournament-status';
 export const sportSchema = z.enum(['football5', 'football7', 'football11', 'badminton', 'pickleball']);
-const localTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+const calendarDate = z.string().date();
+const localTime = z.string().regex(/^(?!0000)\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/)
+  .refine(value => calendarDate.safeParse(value.slice(0, 10)).success, 'Ngày đã chọn không tồn tại. Chọn lại ngày trong lịch.');
 export const tournamentSchema = z.object({
   title: z.string().trim().min(3).max(150), description: z.string().trim().min(10).max(5000),
   sport: sportSchema, court_id: z.union([z.string().uuid(), z.literal('')]), address: z.string().trim().min(5).max(300),
@@ -40,7 +42,7 @@ export function tournamentValidationErrors(issues: z.ZodIssue[]): Record<string,
     const field = String(issue.path.at(-1) ?? '');
     if (!formLabels[field] || errors[field]) continue;
     const label = formLabels[field];
-    errors[field] = issue.code === 'custom' || field === 'phone' ? issue.message
+    errors[field] = issue.code === 'custom' || (field === 'phone' && issue.code === 'invalid_string') ? `${['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline'].includes(field) ? `${label}: ` : ''}${issue.message}`
       : issue.code === 'too_small' ? `${label}: ${issue.type === 'string' ? `nhập ít nhất ${issue.minimum} ký tự sau khi bỏ khoảng trắng đầu/cuối` : `nhập số từ ${issue.minimum} trở lên`}.`
       : issue.code === 'too_big' ? `${label}: ${issue.type === 'string' ? `tối đa ${issue.maximum} ký tự` : `không vượt quá ${issue.maximum}`}.`
       : ['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline'].includes(field) ? `${label}: chọn đầy đủ ngày và giờ.`
