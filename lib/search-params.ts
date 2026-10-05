@@ -10,3 +10,8 @@ export const VenueSearchParams = z.object({
   sort: z.enum(['name', 'price', 'availability']).catch('name'),
   page: z.coerce.number().int().min(1).max(2147483647).catch(1),
 });
+
+export const NotificationSearchParams = z.object({
+  status: z.enum(['all', 'unread']).catch('all'),
+  page: VenueSearchParams.shape.page,
+});
