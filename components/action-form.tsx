@@ -10,12 +10,20 @@ export function ActionForm({ children, payload = {}, nested = false, endpoint = 
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [imageWorking, setImageWorking] = useState(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const errorId = useId();
   const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const form = formRef.current;
+    const sync = () => setImageWorking(!!form?.querySelector('[data-image-uploading="true"]'));
+    sync();
+    form?.addEventListener('image-upload-state', sync);
+    return () => form?.removeEventListener('image-upload-state', sync);
+  }, []);
   useEffect(() => {
     formRef.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input[name],select[name],textarea[name]').forEach(input => {
       if (fieldErrors[input.name]) {
@@ -75,7 +83,8 @@ export function ActionForm({ children, payload = {}, nested = false, endpoint = 
     {message && <p ref={feedback} tabIndex={-1} role={failed ? 'alert' : 'status'} className={`rounded-control border p-4 text-sm leading-6 ${failed ? 'border-danger/30 bg-danger/5 text-danger' : 'border-strong bg-free-fill text-pitch'}`}>{message}</p>}
     {!!Object.keys(fieldErrors).length && <ul aria-label="Thông tin cần sửa" className="space-y-2 rounded-control border border-danger/30 bg-danger/5 p-4 text-sm text-danger">{Object.entries(fieldErrors).map(([name, error]) => <li key={name} id={`${errorId}-${name}`}><button type="button" onClick={() => focusField(name)} className="min-h-11 text-left leading-6 underline underline-offset-4">{error}</button></li>)}</ul>}
     <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">{children}
-      <button className={`min-h-11 rounded-control border px-5 py-2.5 text-sm font-semibold transition-colors ${variant === 'danger' ? 'border-danger/30 text-danger hover:bg-danger/5' : 'border-pitch bg-pitch text-pitch-ink hover:bg-pitch/90'}`} type="submit">{busy ? 'Đang xử lý…' : label}</button>
+      {imageWorking && <p role="status" className="text-xs leading-6 text-ink-secondary">Hoàn tất chỉnh và tải ảnh trước khi gửi giải đấu.</p>}
+      <button disabled={busy || imageWorking} className={`min-h-11 rounded-control border px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${variant === 'danger' ? 'border-danger/30 text-danger hover:bg-danger/5' : 'border-pitch bg-pitch text-pitch-ink hover:bg-pitch/90'}`} type="submit">{busy ? 'Đang xử lý…' : imageWorking ? 'Đang chuẩn bị ảnh…' : label}</button>
     </fieldset>
   </form>;
 }

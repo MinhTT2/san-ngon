@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-import { CalendarDays, Check, MapPin, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, MapPin, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { SPORT_LABELS } from '@/lib/constants';
 import { vnd } from '@/lib/format';
 import { Field, fieldClass } from './form-field';
@@ -9,9 +9,9 @@ import { TournamentPhotoUpload } from './tournament-photo-upload';
 import { tournamentCoverSrc } from '@/lib/image-upload';
 
 const inputClass = `${fieldClass} min-h-12 bg-card px-4`;
-const sectionClass = 'min-w-0 scroll-mt-28 space-y-6 border-b border-hairline pb-8';
+const sectionClass = 'min-w-0 scroll-mt-28 space-y-6 rounded-card border border-hairline bg-card p-5 sm:p-7';
 function SectionHeading({ number, title, description }: { number: string; title: string; description: string }) {
-  return <div className="flex items-start gap-4 border-b border-hairline pb-6"><span className="grid size-10 shrink-0 place-items-center rounded-control bg-free-fill font-display text-sm font-bold text-pitch">{number}</span><div><h2 className="font-display text-xl font-bold text-pitch sm:text-2xl">{title}</h2><p className="mt-2 text-sm leading-6 text-ink-secondary">{description}</p></div></div>;
+  return <div className="flex items-start gap-4 border-b border-hairline pb-6"><span className="grid size-10 shrink-0 place-items-center rounded-full border border-strong bg-free-fill font-display text-sm font-bold text-pitch">{number}</span><div><h2 className="font-display text-xl font-bold text-pitch sm:text-2xl">{title}</h2><p className="mt-2 text-sm leading-6 text-ink-secondary">{description}</p></div></div>;
 }
 export function TournamentFields({ userId, courts, initial, owner = false }: { userId: string; initial?: Record<string, string | number>; owner?: boolean; courts: { id: string; name: string; venue: string; address: string; sport: string }[] }) {
   const [cover, setCover] = useState<string | null>(tournamentCoverSrc(String(initial?.cover_path ?? '')));
@@ -20,6 +20,14 @@ export function TournamentFields({ userId, courts, initial, owner = false }: { u
   const court = courts.find(c => c.id === values.court_id && c.sport === sport);
   const start = String(values.starts_at ?? '');
   const paymentDeadline = String(values.payment_deadline ?? '');
+  const previewCard = <div className="overflow-hidden rounded-card border border-strong bg-card">
+        {cover ? <div className="relative aspect-video bg-sunk"><Image src={cover} alt="Ảnh bìa giải của bạn" fill unoptimized className="object-cover" /></div> : <div aria-hidden="true" className="relative grid aspect-video place-items-center overflow-hidden bg-pitch"><svg viewBox="0 0 320 180" fill="none" className="absolute inset-0 size-full text-free-line/25"><path d="M24 20H296V160H24ZM160 20V160" stroke="currentColor" /><circle cx="160" cy="90" r="38" stroke="currentColor" /></svg><Trophy className="relative size-8 text-pitch-ink" strokeWidth={1.5} /></div>}
+        <div className="flex items-center justify-between border-b border-strong bg-free-fill px-5 py-4"><p className="text-xs font-bold uppercase tracking-[0.14em] text-pitch">Người chơi sẽ thấy</p><Trophy size={19} className="text-pitch" aria-hidden="true" /></div>
+        <div className="p-5"><span className="inline-flex rounded-pill border border-hairline px-3 py-1 text-xs font-semibold text-pitch">{SPORT_LABELS[sport]}</span><h2 className="mt-4 break-words font-display text-2xl font-bold leading-tight text-pitch">{values.title || 'Tên giải đấu của bạn'}</h2>
+          <dl className="my-5 space-y-4 text-sm"><div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">Ngày thi đấu</dt><dd className="mt-1 font-medium">{start ? `${start.slice(8, 10)}/${start.slice(5, 7)}/${start.slice(0, 4)} · ${start.slice(11, 16)}` : 'Chưa chọn lịch'}</dd></div></div><div className="flex gap-3"><MapPin size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div className="min-w-0"><dt className="text-xs text-ink-secondary">Địa điểm</dt><dd className="mt-1 break-words font-medium">{court ? `${court.venue} · ${court.name}` : owner ? 'Chưa chọn sân' : values.address || 'Admin hỗ trợ bố trí sân'}</dd></div></div><div className="flex gap-3"><Users size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">Quy mô</dt><dd className="mt-1 font-medium">{values.capacity ? `${values.capacity} người / đội` : 'Chưa chọn số suất'}</dd></div></div></dl>
+          <div className="border-t border-hairline pt-5"><p className="text-xs text-ink-secondary">Lệ phí mỗi suất</p><p className="mt-2 font-display text-3xl font-bold text-pitch">{Number(values.entry_fee) > 0 ? vnd(Number(values.entry_fee)) : 'Miễn phí'}</p><p className="mt-2 text-xs leading-6 text-ink-secondary">{Number(values.deposit_amount) > 0 ? `Cọc ${vnd(Number(values.deposit_amount))} sau khi được duyệt` : 'Không yêu cầu cọc'}</p></div>
+        </div>
+      </div>;
   return <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]" onChange={event => {
     const input = event.target;
     if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement) {
@@ -58,15 +66,9 @@ export function TournamentFields({ userId, courts, initial, owner = false }: { u
       </section>
       <div className="flex items-start gap-3 px-1 py-2"><ShieldCheck size={20} className="mt-0.5 shrink-0 text-pitch" aria-hidden="true" /><p className="text-xs leading-6 text-ink-secondary">{owner ? 'Kiểm tra kỹ lịch và thể lệ trước khi công khai. Giải sẽ mở đăng ký ngay và khóa lịch sân; lịch, giá và chính sách không thể sửa sau khi công khai.' : 'Đề xuất sẽ được admin kiểm tra và bố trí sân trước khi công khai. Bạn có thể chỉnh sửa khi đang chờ duyệt hoặc cần bổ sung.'}</p></div>
     </div>
-    <aside aria-label="Xem trước giải đấu" className="min-w-0 space-y-5 lg:sticky lg:top-24">
-      <div className="overflow-hidden rounded-card border border-strong bg-card">
-        {cover && <div className="relative aspect-video bg-sunk"><Image src={cover} alt="Ảnh bìa giải của bạn" fill unoptimized className="object-cover" /></div>}
-        <div className="flex items-center justify-between border-b border-strong bg-free-fill px-5 py-4"><p className="text-xs font-bold uppercase tracking-[0.14em] text-pitch">Giải của bạn</p><Trophy size={19} className="text-pitch" aria-hidden="true" /></div>
-        <div className="p-5"><span className="inline-flex rounded-pill border border-hairline px-3 py-1 text-xs font-semibold text-pitch">{SPORT_LABELS[sport]}</span><h2 className="mt-4 break-words font-display text-2xl font-bold leading-tight text-pitch">{values.title || 'Tên giải đấu của bạn'}</h2>
-          <dl className="my-5 space-y-4 text-sm"><div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">Ngày thi đấu</dt><dd className="mt-1 font-medium">{start ? `${start.slice(8, 10)}/${start.slice(5, 7)}/${start.slice(0, 4)} · ${start.slice(11, 16)}` : 'Chưa chọn lịch'}</dd></div></div><div className="flex gap-3"><MapPin size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div className="min-w-0"><dt className="text-xs text-ink-secondary">Địa điểm</dt><dd className="mt-1 break-words font-medium">{court ? `${court.venue} · ${court.name}` : owner ? 'Chưa chọn sân' : values.address || 'Admin hỗ trợ bố trí sân'}</dd></div></div><div className="flex gap-3"><Users size={17} className="mt-0.5 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">Quy mô</dt><dd className="mt-1 font-medium">{values.capacity ? `${values.capacity} người / đội` : 'Chưa chọn số suất'}</dd></div></div></dl>
-          <div className="border-t border-hairline pt-5"><p className="text-xs text-ink-secondary">Lệ phí mỗi suất</p><p className="mt-2 font-display text-3xl font-bold text-pitch">{Number(values.entry_fee) > 0 ? vnd(Number(values.entry_fee)) : 'Miễn phí'}</p><p className="mt-2 text-xs leading-6 text-ink-secondary">{Number(values.deposit_amount) > 0 ? `Cọc ${vnd(Number(values.deposit_amount))} sau khi được duyệt` : 'Không yêu cầu cọc'}</p></div>
-        </div>
-      </div>
+    <details className="group overflow-hidden rounded-card border border-hairline bg-card lg:hidden"><summary className="flex min-h-14 list-none items-center justify-between gap-3 px-5 py-3 text-sm font-semibold text-pitch"><span className="flex items-center gap-2"><Trophy size={18} aria-hidden="true" />Xem trước thẻ giải đấu</span><ChevronDown size={18} aria-hidden="true" className="transition-transform group-open:rotate-180" /></summary><div className="border-t border-hairline p-4">{previewCard}</div></details>
+    <aside aria-label="Xem trước giải đấu" className="hidden min-w-0 space-y-5 lg:sticky lg:top-24 lg:block">
+      {previewCard}
       <nav aria-label="Các phần tạo giải" className="hidden border-t border-hairline pt-5 lg:block"><p className="mb-3 text-xs font-semibold text-ink-secondary">HOÀN THIỆN GIẢI ĐẤU</p>{[['thong-tin-giai', 'Thông tin & địa điểm'], ['lich-thi-dau', 'Lịch & quy mô'], ['le-phi', 'Lệ phí & thể lệ']].map(([id, label], index) => <a key={id} href={`#${id}`} className="flex min-h-11 items-center gap-3 text-sm text-pitch hover:underline"><span className="text-xs text-ink-secondary">0{index + 1}</span>{label}</a>)}</nav>
       <p className="flex items-start gap-2 px-1 text-xs leading-6 text-ink-secondary"><Check size={16} className="mt-1 shrink-0 text-pitch" aria-hidden="true" />{owner ? 'Tự công khai tại sân của bạn. Không cần admin duyệt.' : 'Admin duyệt đề xuất và hỗ trợ bố trí địa điểm.'}</p>
     </aside>

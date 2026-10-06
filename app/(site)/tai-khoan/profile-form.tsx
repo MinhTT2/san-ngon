@@ -40,7 +40,7 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8">
       <section aria-label="Ảnh đại diện" className="profile-enter profile-delay-1 overflow-hidden rounded-card border border-hairline bg-card">
-        <div className="relative h-36 overflow-hidden bg-pitch" aria-hidden="true">
+        <div className="relative h-28 overflow-hidden bg-pitch" aria-hidden="true">
           <svg viewBox="0 0 320 144" fill="none" className="profile-court absolute inset-0 size-full text-free-line/25">
             <path d="M30 20H290V124H30ZM160 20V124M30 49H67V95H30M290 49H253V95H290" stroke="currentColor" />
             <circle cx="160" cy="72" r="29" stroke="currentColor" /><circle cx="160" cy="72" r="3" fill="currentColor" />
@@ -48,10 +48,10 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
           <span className="absolute left-6 top-5 text-[10px] font-medium uppercase tracking-[0.24em] text-pitch-ink/70">Sân Ngon · Cùng ra sân</span>
         </div>
         <div className="relative px-6 pb-6">
-          <div className="relative -mt-10"><AvatarUpload userId={userId} name={name} avatar={avatar} /></div>
-          <span className="mt-4 inline-flex rounded-pill border border-hairline px-3 py-1 text-[11px] font-medium text-ink-secondary">{roleLabel}</span>
-          <h2 className="mt-4 break-words font-display text-2xl font-bold tracking-tight text-pitch">{name.trim() || 'Chào bạn!'}</h2>
-          <p className="mt-1 break-all text-xs leading-5 text-ink-secondary">{email}</p>
+          <div className="relative -mt-12"><AvatarUpload userId={userId} name={name} avatar={avatar} layout="portrait" /></div>
+          <div className="mt-5 border-t border-hairline pt-5 text-center"><span className="inline-flex rounded-pill border border-strong bg-free-fill px-3 py-1 text-[11px] font-medium text-pitch">{roleLabel}</span>
+          <h2 className="mt-3 break-words font-display text-2xl font-bold tracking-tight text-pitch">{name.trim() || 'Chào bạn!'}</h2>
+          <p className="mt-2 break-all text-xs leading-5 text-ink-secondary">{email}</p></div>
         </div>
       </section>
 

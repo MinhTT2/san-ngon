@@ -33,6 +33,10 @@ Thông tin người đăng ký chỉ được đọc bởi chính họ, người
 `/ket-noi/ho-so` lưu thông tin công khai riêng với `profiles`. Mặc định ẩn; người dùng phải chọn đồng ý công khai. Bỏ chọn là ẩn ngay, tài khoản bị khóa cũng bị ẩn. Không có chat nội bộ, tự ghép đối hoặc bản đồ.
 
 Có thể tải/đổi/xóa ảnh đại diện ngay ở `/ket-noi/ho-so` và `/tai-khoan`.
+Chọn ảnh → chỉnh khung tròn → dùng ảnh → lưu ngay. Ảnh bìa giải có khung
+16:9 và tùy chọn giữ toàn bộ poster; ảnh chỉ tải sau khi đồng ý dùng. Có
+kéo-thả, trạng thái chờ, thử lại sau lỗi mạng và bản xem trước gọn trên mobile.
+Xem [phân tích UI/UX và tài liệu tham khảo](image-upload-ux.md).
 Ảnh được lưu ngay qua `set_profile_avatar`, dùng chung bucket `avatars` và
 hiển thị cùng một ảnh trên tài khoản và hồ sơ kết nối. Đổi ảnh không tự công khai hồ sơ.
 
