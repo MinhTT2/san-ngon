@@ -1,3 +1,4 @@
+import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { VenueManagement } from './venue-management';
@@ -19,5 +20,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     .order('created_at')
     .order('id');
   if (error) throw new Error('Không tải được dữ liệu quản lý sân. Vui lòng thử lại.');
-  return <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16"><header className="max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Quản lý vận hành</p><h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight text-pitch">Cụm sân và sân con.</h1><p className="mt-4 text-[15px] leading-7 text-ink-secondary">Sửa thông tin, tắt sân tạm thời hoặc thêm sân mới. Đơn đã phát sinh sẽ không bị xóa nhầm.</p></header><div className="mt-8"><VenueManagement initialVenues={(data ?? []) as unknown as Parameters<typeof VenueManagement>[0]['initialVenues']} selectedVenueId={selectedVenueId} defaultPhone={profile.phone} /></div></main>;
+  return <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8"><DashboardPageHeader eyebrow="Chủ sân / Quản lý" title="Cụm sân và sân con" description="Cập nhật thông tin, ảnh và bảng giá. Đơn đã phát sinh được giữ lại khi tắt sân." /><div className="mt-5"><VenueManagement initialVenues={(data ?? []) as unknown as Parameters<typeof VenueManagement>[0]['initialVenues']} selectedVenueId={selectedVenueId} defaultPhone={profile.phone} /></div></main>;
 }

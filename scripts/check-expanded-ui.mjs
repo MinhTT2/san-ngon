@@ -16,7 +16,8 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(origin);
     const hero = page.getByRole('region', { name: 'Tìm cảm hứng ra sân' });
-    await hero.getByRole('button', { name: 'Xem Bóng đá', exact: true }).click();
+    await hero.getByRole('button', { name: 'Ảnh tiếp theo', exact: true }).click();
+    await hero.getByRole('button', { name: 'Ảnh trước', exact: true }).click();
     const frame = await hero.boundingBox();
     const copy = await hero.locator('[aria-hidden="false"] h2').boundingBox();
     for (const name of ['Ảnh trước', 'Ảnh tiếp theo']) {

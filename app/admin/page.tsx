@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { ArrowUpRight, Building2, ShieldCheck, Users } from 'lucide-react';
+import { DashboardPageHeader, DashboardLink } from '@/components/dashboard-page-header';
+import { DashboardRecords } from '@/components/dashboard-records';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
@@ -53,26 +56,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     : [];
 
   return (
-    <main className="mx-auto max-w-[1400px] px-5 py-8 lg:px-10 lg:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-ink-secondary">Thứ hai, {dayLabel(new Date())}</p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-pitch">Tổng quan vận hành</h1>
+    <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <DashboardPageHeader eyebrow="Quản trị / Vận hành" title={{ overview: 'Tổng quan vận hành', owners: 'Hồ sơ chủ sân', venues: 'Hồ sơ cụm sân', bookings: 'Đơn đặt sân', users: 'Tài khoản gần đây' }[view]}
+        description={{ overview: 'Theo dõi giao dịch và xử lý các hồ sơ đang chờ.', owners: 'Kiểm tra thông tin đại diện và giấy tờ trước khi duyệt tài khoản chủ sân.', venues: 'Theo dõi trạng thái các cụm sân. Hồ sơ chờ từ luồng cũ được duyệt tại đây.', bookings: 'Xem 30 đơn gần nhất, thông tin khách và trạng thái thanh toán.', users: 'Xem tài khoản mới hoặc mở quản lý người dùng để chỉnh quyền truy cập.' }[view]}
+        actions={view === 'overview' ? <DashboardLink href="/admin?view=owners">Duyệt hồ sơ chủ sân</DashboardLink> : view === 'users' ? <DashboardLink href="/admin/users">Quản lý người dùng</DashboardLink> : undefined} />
+      {view === 'overview' && <>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {[{ href: '/admin?view=owners', label: 'Chủ sân chờ duyệt', value: pendingOwners.length, icon: ShieldCheck }, { href: '/admin?view=venues', label: 'Cụm sân hoạt động', value: activeVenues.length, icon: Building2 }, { href: '/admin/users', label: 'Tài khoản trên hệ thống', value: ownerProfiles?.length ?? 0, icon: Users }].map(({ href, label, value, icon: Icon }) => <Link key={href} href={href} className="pf-card flex items-center gap-3 rounded-card border border-hairline bg-card p-4 hover:border-strong"><span className="grid size-10 shrink-0 place-items-center rounded-control bg-free-fill text-pitch"><Icon size={19} aria-hidden="true" /></span><div className="min-w-0 flex-1"><strong className="block font-display text-2xl font-bold tabular-nums text-pitch">{value}</strong><span className="text-xs text-ink-secondary">{label}</span></div><ArrowUpRight size={15} className="shrink-0 text-ink-secondary" aria-hidden="true" /></Link>)}
         </div>
-        <Link href="/" className="rounded-control border border-hairline bg-card px-4 py-2.5 text-sm font-medium text-ink-secondary hover:border-strong">
-          Xem trang đặt sân ↗
-        </Link>
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-ink-secondary">Một góc nhìn cho quyết định duyệt hồ sơ, hỗ trợ chủ sân và tăng giao dịch.</p>
-        <PeriodLinks path="/admin" period={period} />
-      </div>
-      {view === 'overview' && <AdminStatsPanel stats={stats} />}
-
-      {view === 'overview' && (
         <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
-      )}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-pitch">Thống kê giao dịch</p><PeriodLinks path="/admin" period={period} /></div>
+        <AdminStatsPanel stats={stats} />
+      </>}
       {view === 'owners' && <OwnerTable owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
       {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
       {view === 'bookings' && <BookingTable bookings={bookings} />}
@@ -83,14 +78,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
 function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById }: { pendingOwners: OwnerProfile[]; pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile> }) {
   return (
-    <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
       <section className="rounded-card border border-hairline bg-card">
         <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
           <div>
             <h2 className="font-semibold">Hồ sơ cần xử lý</h2>
-            <p className="mt-1 text-xs text-ink-secondary">Duyệt xong, sân sẽ xuất hiện trên trang tìm sân.</p>
+            <p className="mt-1 text-xs text-ink-secondary">Duyệt tài khoản trước; chủ sân thêm cụm sân và ảnh để công khai.</p>
           </div>
-          <Link href="/admin?view=venues" className="text-sm font-semibold text-pitch">Xem tất cả</Link>
+          <Link href="/admin?view=owners" className="pf-action inline-flex min-h-11 shrink-0 items-center text-xs font-semibold text-pitch">Xem chủ sân</Link>
         </div>
         {pendingOwners.length === 0 && pendingVenues.length === 0 ? (
           <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ nào đang chờ duyệt.</p>
@@ -108,7 +103,7 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById 
           <ProgressRow label="Cụm sân đang hoạt động" value={activeVenueCount} total={activeVenueCount + pendingVenues.length} />
           <div className="border-t border-hairline pt-4">
             <p className="text-sm font-medium">Việc cần làm tiếp theo</p>
-            <p className="mt-1 text-sm leading-6 text-ink-secondary">Kiểm tra thông tin liên hệ và bảng giá trước khi duyệt hồ sơ.</p>
+            <p className="mt-1 text-sm leading-6 text-ink-secondary">Kiểm tra giấy tờ và thông tin đại diện. Cụm sân mới tự công khai khi chủ sân đã duyệt lưu đủ ảnh.</p>
           </div>
         </div>
       </section>
@@ -140,38 +135,17 @@ function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
     if (a.owner_application_status !== 'pending' && b.owner_application_status === 'pending') return 1;
     return (b.created_at ?? '').localeCompare(a.created_at ?? '');
   });
-  return (
-    <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-hairline px-5 py-4">
-        <div>
-          <h2 className="font-semibold">Hồ sơ chủ sân</h2>
-          <p className="mt-1 text-xs text-ink-secondary">Xem hồ sơ đang chờ, đã duyệt và bị từ chối.</p>
-        </div>
-        <span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-semibold text-ink-secondary">{owners.length} hồ sơ</span>
-      </div>
-      {owners.length === 0 ? (
-        <p className="p-10 text-center text-sm text-ink-secondary">Chưa có hồ sơ chủ sân nào.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Tài khoản nhận cọc</th><th className="px-5 py-3 font-medium">Giấy tờ</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
-            <tbody>
-              {sortedOwners.map((owner) => (
-                <tr key={owner.id} className="border-b border-hairline last:border-0 align-top">
-                  <td className="px-5 py-4"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></td>
-                  <td className="px-5 py-4"><p>{owner.payout_bank ?? 'Chưa có ngân hàng'}</p><p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></td>
-                  <td className="px-5 py-4">{owner.business_license_path ? <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="font-semibold text-pitch underline underline-offset-4">{owner.business_license_name ?? 'Mở giấy tờ'} ↗</a> : <span className="text-ink-secondary">Chưa có</span>}</td>
-                  <td className="px-5 py-4 text-ink-secondary">{owner.created_at ? dayLabel(new Date(owner.created_at)) : '—'}</td>
-                  <td className="px-5 py-4"><OwnerApplicationStatus status={owner.owner_application_status} /></td>
-                  <td className="px-5 py-4 text-right">{owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
+  return <DashboardRecords title="Danh sách hồ sơ chủ sân" description="Hồ sơ chờ duyệt được xếp trước. Tìm theo tên hoặc số điện thoại."
+    mobilePrimary={[4, 5]} columns={['Người đại diện', 'Tài khoản nhận cọc', 'Giấy tờ', 'Ngày gửi', 'Trạng thái', 'Thao tác']}
+    statuses={[{ value: 'pending', label: 'Chờ duyệt' }, { value: 'active', label: 'Đã duyệt' }, { value: 'rejected', label: 'Bị từ chối' }]}
+    records={sortedOwners.map(owner => ({ id: owner.id, search: `${owner.full_name ?? ''} ${owner.phone ?? ''}`, status: owner.owner_application_status ?? '', cells: [
+      <div key="name"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></div>,
+      <div key="bank">{owner.payout_bank ?? 'Chưa có ngân hàng'}<p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></div>,
+      owner.business_license_path ? <a key="license" href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Mở giấy tờ ↗</a> : 'Chưa có',
+      owner.created_at ? dayLabel(new Date(owner.created_at)) : '—',
+      <OwnerApplicationStatus key="status" status={owner.owner_application_status} />,
+      owner.owner_application_status === 'pending' ? <AdminOwnerAction key="action" ownerId={owner.id} /> : <Link key="detail" href={`/admin/owners/${owner.id}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch">Xem hồ sơ ↗</Link>,
+    ] }))} />;
 }
 
 function OwnerApplicationStatus({ status }: { status?: string | null }) {
@@ -197,25 +171,28 @@ function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProf
 }
 
 function VenueTable({ venues, profileById }: { venues: VenueRow[]; profileById: Map<string, OwnerProfile> }) {
-  return (
-    <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card">
-      <div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tất cả hồ sơ sân</h2></div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px] text-sm">
-          <thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Cụm sân</th><th className="px-5 py-3 font-medium">Người đại diện</th><th className="px-5 py-3 font-medium">Khu vực</th><th className="px-5 py-3 font-medium">Ngày gửi</th><th className="px-5 py-3 font-medium">Trạng thái</th><th className="px-5 py-3" /></tr></thead>
-          <tbody>{venues.map((venue) => <tr key={venue.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{venue.name}<span className="mt-1 block text-xs font-normal text-ink-secondary">{venue.slug}</span></td><td className="px-5 py-4">{profileById.get(venue.owner_id)?.full_name ?? 'Chưa có tên'}<span className="mt-1 block text-xs font-normal text-ink-secondary">{profileById.get(venue.owner_id)?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}</span></td><td className="px-5 py-4">{venue.district}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(venue.created_at))}</td><td className="px-5 py-4"><span className="rounded-pill bg-sunk px-2.5 py-1 text-xs font-medium">{VENUE_STATUS_LABELS[venue.status]}</span></td><td className="px-5 py-4 text-right"><span className="inline-flex items-center gap-3">{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}{venue.status === 'pending' && <AdminVenueAction venueId={venue.id} />}</span></td></tr>)}</tbody>
-        </table>
-      </div>
-    </section>
-  );
+  return <DashboardRecords title="Danh sách cụm sân" description="Tìm theo tên sân, khu vực hoặc người đại diện."
+    mobilePrimary={[2, 4, 5]} columns={['Cụm sân', 'Người đại diện', 'Khu vực', 'Ngày tạo', 'Trạng thái', 'Thao tác']}
+    statuses={Object.entries(VENUE_STATUS_LABELS).map(([value, label]) => ({ value, label }))}
+    records={venues.map(venue => ({ id: venue.id, search: `${venue.name} ${venue.district} ${profileById.get(venue.owner_id)?.full_name ?? ''} ${venue.phone ?? ''}`, status: venue.status, cells: [
+      <div key="venue" className="font-semibold text-pitch">{venue.name}<p className="mt-1 text-xs font-normal text-ink-secondary">{venue.slug}</p></div>,
+      <div key="owner">{profileById.get(venue.owner_id)?.full_name ?? 'Chưa có tên'}<p className="mt-1 text-xs text-ink-secondary">{profileById.get(venue.owner_id)?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}</p></div>,
+      venue.district, dayLabel(new Date(venue.created_at)),
+      <span key="status" className={`inline-flex rounded-pill px-2.5 py-1.5 text-xs font-semibold ${venue.status === 'active' ? 'bg-free-fill text-pitch' : venue.status === 'pending' ? 'bg-peak-fill text-peak-ink' : 'bg-sunk text-ink-secondary'}`}>{VENUE_STATUS_LABELS[venue.status]}</span>,
+      <div key="action" className="flex flex-wrap gap-2">{venue.status === 'pending' ? <AdminVenueAction venueId={venue.id} /> : venue.status === 'active' ? <Link href={`/san/${venue.slug}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch">Xem sân ↗</Link> : '—'}{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}</div>,
+    ] }))} />;
 }
 
 function BookingTable({ bookings }: { bookings: Array<{ id: string; code: string; starts_at: string; status: BookingStatus; total_amount: number; customer_name: string | null; courts: unknown }> }) {
-  return <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card"><div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Đơn đặt sân gần đây</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Mã đơn</th><th className="px-5 py-3 font-medium">Khách</th><th className="px-5 py-3 font-medium">Thời gian</th><th className="px-5 py-3 text-right font-medium">Giá trị</th><th className="px-5 py-3 font-medium">Trạng thái</th></tr></thead><tbody>{bookings.map((booking) => <tr key={booking.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{booking.code}</td><td className="px-5 py-4">{booking.customer_name ?? 'Khách đặt sân'}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(booking.starts_at))} · {hhmm(booking.starts_at)}</td><td className="px-5 py-4 text-right tabular-nums">{vnd(booking.total_amount)}</td><td className="px-5 py-4"><StatusBadge status={booking.status} /></td></tr>)}</tbody></table></div>{bookings.length === 0 && <p className="p-10 text-center text-sm text-ink-secondary">Chưa có đơn đặt sân.</p>}</section>;
+  return <DashboardRecords title="Đơn đặt sân gần đây" description="30 đơn gần nhất theo thời gian chơi."
+    mobilePrimary={[1, 4]} columns={['Mã đơn', 'Khách', 'Thời gian', 'Giá trị', 'Trạng thái']}
+    records={bookings.map(b => ({ id: b.id, search: `${b.code} ${b.customer_name ?? ''}`, status: b.status, cells: [<strong key="code" className="font-mono text-pitch">{b.code}</strong>, b.customer_name ?? 'Khách đặt sân', `${dayLabel(new Date(b.starts_at))} · ${hhmm(b.starts_at)}`, <span key="amount" className="font-semibold tabular-nums text-pitch">{vnd(b.total_amount)}</span>, <StatusBadge key="status" status={b.status} />] }))} />;
 }
 
 function UserTable({ users }: { users: Array<{ id: string; full_name: string | null; phone: string | null; role: string; created_at: string }> }) {
-  return <section className="mt-8 overflow-hidden rounded-card border border-hairline bg-card"><div className="border-b border-hairline px-5 py-4"><h2 className="font-semibold">Tài khoản gần đây</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[680px] text-sm"><thead><tr className="border-b border-hairline text-left text-xs text-ink-secondary"><th className="px-5 py-3 font-medium">Tên</th><th className="px-5 py-3 font-medium">Liên hệ</th><th className="px-5 py-3 font-medium">Vai trò</th><th className="px-5 py-3 font-medium">Ngày tạo</th></tr></thead><tbody>{users.map((item) => <tr key={item.id} className="border-b border-hairline last:border-0"><td className="px-5 py-4 font-semibold">{item.full_name ?? 'Chưa cập nhật'}</td><td className="px-5 py-4 text-ink-secondary">{item.phone ?? '—'}</td><td className="px-5 py-4 capitalize">{item.role}</td><td className="px-5 py-4 text-ink-secondary">{dayLabel(new Date(item.created_at))}</td></tr>)}</tbody></table></div></section>;
+  return <DashboardRecords title="Tài khoản gần đây" description="Mở mục Người dùng để chỉnh vai trò và quyền truy cập."
+    mobilePrimary={[1, 2]} columns={['Tên', 'Liên hệ', 'Vai trò', 'Ngày tạo']}
+    records={users.map(u => ({ id: u.id, search: `${u.full_name ?? ''} ${u.phone ?? ''}`, status: u.role, cells: [u.full_name ?? 'Chưa cập nhật', u.phone ?? '—', u.role === 'admin' ? 'Quản trị viên' : u.role === 'owner' ? 'Chủ sân' : 'Người chơi', dayLabel(new Date(u.created_at))] }))} />;
 }
 
 function ProgressRow({ label, value, total }: { label: string; value: number; total: number }) {

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { FeedbackList } from '@/components/feedback-list';
@@ -27,14 +28,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   if (error) throw new Error('Chưa tải được danh sách góp ý.');
   const pages = Math.max(1, Math.ceil((count ?? 0) / 20));
   if (page > pages) redirect(href(pages));
-  return <main className="mx-auto w-full max-w-5xl px-5 py-10 lg:px-10">
+  return <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
     <RefreshOnReturn />
-    <h1 className="font-display text-3xl font-extrabold text-pitch">Góp ý từ người dùng</h1>
-    <p className="mt-3 text-sm leading-6 text-ink-secondary">Tiếp nhận báo lỗi và đề xuất. Phản hồi hiển thị riêng cho người gửi.</p>
+    <DashboardPageHeader eyebrow="Quản trị / Hỗ trợ" title="Góp ý từ người dùng" description="Tiếp nhận báo lỗi và đề xuất. Phản hồi hiển thị riêng cho người gửi." />
     <form className="my-6 flex flex-wrap items-end gap-3 rounded-card border border-hairline bg-card p-5">
       <label className="min-w-40 flex-1 text-sm font-semibold">Trạng thái<select name="status" defaultValue={status} className="mt-2 min-h-11 w-full rounded-control border border-hairline bg-page px-3 font-normal"><option value="">Tất cả trạng thái</option>{Object.entries(FEEDBACK_STATUSES).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></label>
       <label className="min-w-40 flex-1 text-sm font-semibold">Loại<select name="category" defaultValue={category} className="mt-2 min-h-11 w-full rounded-control border border-hairline bg-page px-3 font-normal"><option value="">Tất cả loại</option>{Object.entries(FEEDBACK_CATEGORIES).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-      <button className="min-h-11 rounded-control bg-pitch px-6 py-3 text-sm font-semibold text-pitch-ink">Lọc góp ý</button>
+      {(status || category) && <Link href="/admin/gop-y" className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-pitch underline underline-offset-4">Xóa bộ lọc</Link>}
+      <button className="pf-action min-h-11 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink">Lọc góp ý</button>
     </form>
     <p className="mb-4 text-sm text-ink-secondary">{count ?? 0} yêu cầu</p>
     <FeedbackList admin rows={(data ?? []) as unknown as (Feedback & { sender: { full_name: string | null } | null })[]} />

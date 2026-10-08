@@ -27,5 +27,5 @@ export function AdminVenueAction({ venueId }: { venueId: string }) {
     }
   }
 
-  return <span className="inline-flex flex-col items-end gap-2"><span className="flex gap-2"><button type="button" onClick={() => review('active')} disabled={busy} className="rounded-control bg-pitch px-3 py-2 text-xs font-semibold text-pitch-ink disabled:opacity-60">{busy ? 'Đang lưu…' : 'Duyệt hồ sơ'}</button><button type="button" onClick={() => review('rejected')} disabled={busy} className="rounded-control border border-hairline px-3 py-2 text-xs font-semibold text-danger disabled:opacity-60">Từ chối</button></span>{error && <span role="alert" className="max-w-xs text-xs text-danger">{error}</span>}</span>;
+  return <span className="inline-flex flex-col items-end gap-2"><span className="flex flex-wrap gap-2"><button type="button" onClick={() => review('active')} disabled={busy} className="pf-action min-h-11 rounded-control bg-pitch px-3 text-xs font-semibold text-pitch-ink disabled:opacity-60">{busy ? 'Đang lưu…' : 'Duyệt hồ sơ'}</button><button type="button" onClick={() => review('rejected')} disabled={busy} className="pf-action min-h-11 rounded-control border border-hairline px-3 text-xs font-semibold text-danger disabled:opacity-60">Từ chối</button></span>{error && <span role="alert" className="max-w-xs text-xs text-danger">{error}</span>}</span>;
 }

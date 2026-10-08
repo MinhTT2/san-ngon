@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DashboardPageHeader, DashboardLink } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/status-badge';
@@ -79,18 +80,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
 
   const today = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(new Date()));
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch">{venue.name}</h1>
-        <span className="text-sm text-ink-secondary">{dayLabel(new Date())}</span>
-      </div>
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <DashboardPageHeader eyebrow="Chủ sân / Tổng quan" title={venue.name} description={`${dayLabel(new Date())} · Theo dõi lịch chơi và các việc cần xử lý tại cụm sân.`}
+        actions={<><DashboardLink href={`/chu-san/don?venue=${venue.id}`}>Xem đơn</DashboardLink><DashboardLink href="/chu-san/lich">Lịch sân</DashboardLink></>} />
 
       <OwnerVenuePicker venues={venues} selectedId={venue.id} pathname="/chu-san" query={{ period: String(period) }} />
 
       {venue.status !== 'active' && (
         <p className="mt-5 rounded-card border border-peak-line bg-peak-fill p-4 text-sm leading-relaxed text-peak-ink">
-          Hồ sơ đang chờ duyệt nên sân chưa hiện ở trang tìm sân và chưa nhận được đơn nào.{' '}
-          <Link href="/dang-ky-san" className="font-semibold underline underline-offset-2">Xem tiến độ</Link>
+          {venue.status === 'draft' ? 'Cụm sân đang là bản nháp. Lưu đủ ảnh sân để công khai và nhận đặt.' : venue.status === 'pending' ? 'Hồ sơ cụm sân đang chờ duyệt theo luồng cũ.' : 'Cụm sân chưa được công khai. Kiểm tra thông tin trong phần quản lý.'}{' '}
+          <Link href="/chu-san/quan-ly" className="font-semibold underline underline-offset-2">Quản lý sân</Link>
         </p>
       )}
 
@@ -207,7 +206,7 @@ function NoVenue() {
       </p>
       <Link
         href="/chu-san/quan-ly"
-        className="mt-7 flex h-13 w-fit items-center rounded-control bg-pitch px-7 font-semibold text-pitch-ink"
+        className="mt-7 pf-action flex min-h-11 w-fit items-center rounded-control bg-pitch px-4 font-semibold text-pitch-ink"
       >
         Tạo cụm sân
       </Link>

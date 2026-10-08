@@ -1,3 +1,4 @@
+import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
@@ -20,8 +21,8 @@ export default async function Page() {
   const s = data as OwnerSubscription;
   const invoices = history.data as SubscriptionInvoice[];
   const pending = invoices.find(i => i.status === 'pending') ?? null;
-  return <main className="mx-auto max-w-4xl px-5 py-8 lg:px-10 lg:py-10">
-    <h1 className="font-display text-4xl font-extrabold tracking-tight text-pitch">Phí sử dụng website</h1>
+  return <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <DashboardPageHeader eyebrow="Chủ sân / Phí dịch vụ" title="Phí sử dụng website" description="Kiểm tra hạn sử dụng, thanh toán kỳ mới và xem lịch sử gia hạn." />
     <div className="mt-6 rounded-card border border-hairline bg-card p-5 sm:p-8">
       <p className="font-semibold text-pitch">{!s.fee_required ? 'Tài khoản đang được miễn phí' : s.active ? 'Đã thanh toán phí sử dụng' : 'Cần thanh toán để đăng sân và nhận đơn mới'}</p>
       <p className="mt-3 text-sm leading-7 text-ink-secondary">{s.fee_required ? 'Phí 299.000đ/tháng. Khi hết hạn, hệ thống tạm dừng đăng sân và nhận đơn mới; bạn vẫn xem và xử lý các đơn đã có.' : 'Quản trị viên chưa bật thu phí cho tài khoản này. Bạn không cần chuyển tiền.'}</p>

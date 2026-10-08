@@ -1,3 +1,4 @@
+import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ConnectionPanel, type ConnectionSummary } from '@/components/sepay-connection-panel';
@@ -14,10 +15,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   const { data, error } = await db.rpc('get_my_sepay_connection');
   if (error) throw new Error('Chưa tải được tài khoản nhận cọc.');
   const params = await searchParams;
-  return <main className="mx-auto max-w-4xl px-5 py-8 lg:px-10 lg:py-10">
-    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Thanh toán</p>
-    <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-pitch">Tài khoản nhận cọc</h1>
-    <p className="mt-3 max-w-2xl text-sm leading-7 text-ink-secondary">Kết nối SePay để tiền cọc về tài khoản của bạn và đơn đặt sân tự được xác nhận. Một tài khoản nhận cọc cho tất cả cụm sân.</p>
+  return <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <DashboardPageHeader eyebrow="Chủ sân / Thanh toán" title="Tài khoản nhận cọc" description="Kết nối SePay để nhận cọc và tự xác nhận đơn. Một tài khoản nhận tiền cho tất cả cụm sân." />
     <ConnectionPanel connection={data as ConnectionSummary | null} callbackError={params.error} justConnected={params.connected === '1'} />
   </main>;
 }

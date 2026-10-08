@@ -39,7 +39,8 @@ try {
   }
   console.log('OK: landing and search at 320/390/768/1024/1440px; CTA 44px, no overflow.');
   await page.goto(origin);
-  await hero.getByRole('button', { name: 'Xem Cầu lông', exact: true }).click();
+  assert.equal(await hero.getByRole('button', { name: /^Xem (Bóng đá|Cầu lông|Pickleball)$/ }).count(), 0);
+  await hero.getByRole('button', { name: 'Ảnh tiếp theo', exact: true }).click();
   assert.equal(await hero.locator('[aria-roledescription="slide"][aria-hidden="false"]').getAttribute('aria-label'), '2 / 3 · Cầu lông');
   await hero.getByRole('button', { name: 'Ảnh tiếp theo', exact: true }).click();
   assert.equal(await hero.locator('[aria-roledescription="slide"][aria-hidden="false"]').getAttribute('aria-label'), '3 / 3 · Pickleball');
@@ -52,7 +53,7 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-hero-carousel]').dataset.playing === 'true');
   await hero.getByRole('button', { name: 'Dừng tự chuyển ảnh', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[data-hero-carousel]').dataset.playing === 'false');
-  console.log('OK: slide tabs, wrapping, keyboard, pause/resume.');
+  console.log('OK: arrows, wrapping, keyboard, pause/resume.');
   const videoButton = page.getByRole('button', { name: 'Dừng video nền', exact: true });
   await ownerHeading.scrollIntoViewIfNeeded(); await videoButton.waitFor();
   assert(await page.locator('video').evaluate(video => !video.paused), 'Video should play in view');

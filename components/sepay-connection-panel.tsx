@@ -11,7 +11,7 @@ export type ConnectionSummary = {
 };
 type Account = { id: string; account_number: string; account_holder_name: string; bank: { short_name: string } };
 const STATUS = { setup: 'Chưa hoàn tất', ready: 'Đã kết nối', reconnect: 'Cần kết nối lại', disconnected: 'Đã ngắt kết nối' };
-const BUTTON = 'inline-flex min-h-12 items-center justify-center rounded-control border border-hairline px-5 text-sm font-semibold text-pitch disabled:opacity-50';
+const BUTTON = 'pf-action inline-flex min-h-11 items-center justify-center rounded-control border border-hairline px-4 text-sm font-semibold text-pitch disabled:opacity-50';
 
 export function ConnectionPanel({ connection: c, callbackError, justConnected, returnTo = '/chu-san/thanh-toan', awaitingApproval = false }: {
   connection: ConnectionSummary | null; callbackError?: string; justConnected: boolean; returnTo?: '/dang-ky-san' | '/chu-san/thanh-toan'; awaitingApproval?: boolean;

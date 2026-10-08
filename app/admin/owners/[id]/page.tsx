@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, Building2, CalendarCheck, CircleCheck, FileText, Phone, ShieldCheck, WalletCards } from 'lucide-react';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
@@ -52,27 +53,18 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
   const activeVenues = (venues ?? []).filter((venue) => venue.status === 'active').length;
 
   return (
-    <main className="mx-auto max-w-[1100px] px-5 py-8 lg:px-10 lg:py-10">
-      <Link href="/admin?view=owners" className="inline-flex items-center gap-2 text-sm font-semibold text-ink-secondary hover:text-pitch"><ArrowLeft className="size-4" aria-hidden="true" /> Quay lại danh sách hồ sơ</Link>
-      <header className="mt-7 flex flex-wrap items-start justify-between gap-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Hồ sơ chủ sân</p>
-          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-pitch">{owner.full_name ?? 'Chưa có tên'}</h1>
-          <p className="mt-2 text-sm text-ink-secondary">Gửi hồ sơ ngày {dayLabel(new Date(owner.created_at))}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <OwnerStatus status={owner.owner_application_status} />
-          {owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}
-        </div>
-      </header>
+    <main className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <Link href="/admin?view=owners" className="pf-action mb-4 inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-ink-secondary hover:text-pitch"><ArrowLeft className="size-4" aria-hidden="true" /> Quay lại danh sách hồ sơ</Link>
+      <DashboardPageHeader eyebrow="Quản trị / Hồ sơ chủ sân" title={owner.full_name ?? 'Chưa có tên'} description={`Gửi hồ sơ ngày ${dayLabel(new Date(owner.created_at))}. Kiểm tra thông tin và giấy tờ trước khi duyệt.`}
+        actions={<><OwnerStatus status={owner.owner_application_status} />{owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}</>} />
 
       <section className="mt-8 grid gap-3 sm:grid-cols-3">
         <EvidenceCard icon={Building2} value={`${activeVenues}/${(venues ?? []).length}`} label="Cụm sân đang hoạt động" />
         <EvidenceCard icon={CalendarCheck} value={String(completedBookings)} label="Đơn đã hoàn tất" />
-        <EvidenceCard icon={CircleCheck} value={String(confirmedBookings)} label="Đơn đang xác nhận" />
+        <EvidenceCard icon={CircleCheck} value={String(confirmedBookings)} label="Đơn đã xác nhận" />
       </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-6">
           <section className="rounded-card border border-hairline bg-card p-5 sm:p-7">
             <h2 className="font-display text-xl font-bold text-pitch">Thông tin đăng ký</h2>
@@ -116,7 +108,7 @@ function EvidenceCard({ icon: Icon, value, label }: { icon: typeof Building2; va
 }
 
 function Info({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: React.ReactNode }) {
-  return <div className="flex gap-3"><Icon className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden="true" /><div><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-1 text-sm font-medium">{value}</dd></div></div>;
+  return <div className="min-w-0 flex gap-3"><Icon className="mt-0.5 size-4 shrink-0 text-ink-secondary" aria-hidden="true" /><div className="min-w-0"><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-1 break-words text-sm font-medium">{value}</dd></div></div>;
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
