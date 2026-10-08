@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { vnd, dayLabel, hhmm } from '@/lib/format';
-import { tournamentLabel, tournamentStatuses } from '@/lib/tournaments';
+import { tournamentLabel, tournamentStatuses, type Tournament } from '@/lib/tournaments';
 import { tournamentSearchPattern } from '@/lib/tournament-discovery';
 import { DiscoveryEmpty } from './discovery-empty';
 import { TournamentCover } from './tournament-cover';
@@ -15,7 +15,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   const now = new Date().toISOString();
-  let query = db.from('tournaments').select('*', { count: 'exact' });
+  let query = db.from('tournaments').select('*,courts(venues(name,images))', { count: 'exact' });
   if (mode === 'public') {
     if (status === 'completed') query = query.or(`status.eq.completed,and(status.eq.published,ends_at.lte.${now})`);
     else {
@@ -38,7 +38,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
   query = sort === 'fee' ? query.order('entry_fee').order('starts_at')
     : sort === 'newest' || (mode !== 'public' && mode !== 'mine') ? query.order('created_at', { ascending: false })
     : query.order('starts_at', { ascending: status !== 'completed' });
-  const { data, count, error } = await query.order('id').range((page - 1) * 12, page * 12 - 1);
+  const { data, count, error } = await query.order('id').range((page - 1) * 12, page * 12 - 1).returns<(Tournament & { courts: { venues: { name: string; images: string[] } | null } | null })[]>();
   if (error) throw new Error('Chưa tải được giải đấu. Vui lòng thử lại.');
   const href = (patch: Record<string, string>) => `?${new URLSearchParams({ view: mode === 'mine' ? 'mine' : 'all', sport, status, q, location, sort, layout, page: String(page), ...patch })}`;
   const filtered = !!sport || !!status || !!q || !!location || page > 1;
@@ -53,7 +53,7 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
       const awaiting = t.status === 'pending';
       const live = state === 'Đang diễn ra';
       return <li key={t.id} className="pf-card group min-w-0 overflow-hidden rounded-card border border-hairline bg-card"><Link href={`/giai-dau/${t.id}`} className={`flex h-full min-w-0 ${layout === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}>
-        <div className={`relative shrink-0 ${layout === 'list' ? 'sm:w-48' : ''}`}><TournamentCover path={t.cover_path} title={t.title} fallback className={`aspect-video ${layout === 'list' ? 'sm:aspect-auto sm:h-full sm:min-h-48' : ''}`} /><span className={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1.5 text-[11px] font-semibold ${awaiting ? 'border-peak-line bg-peak-fill text-peak-ink' : live ? 'border-free-line bg-free-fill text-free-ink' : 'border-hairline bg-card text-pitch'}`}>{live && <span className="size-1.5 rounded-full bg-success" />}{state}</span><span className="absolute bottom-3 left-3 rounded-control bg-pitch px-2.5 py-1.5 text-[11px] font-semibold text-pitch-ink">{SPORT_LABELS[t.sport]}</span></div>
+        <div className={`relative shrink-0 ${layout === 'list' ? 'sm:w-48' : ''}`}><TournamentCover path={t.cover_path} title={t.title} venueImages={t.courts?.venues?.images ?? []} venueName={t.courts?.venues?.name ?? ''} fallback className={`aspect-video ${layout === 'list' ? 'sm:aspect-auto sm:h-full sm:min-h-48' : ''}`} /><span className={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1.5 text-[11px] font-semibold ${awaiting ? 'border-peak-line bg-peak-fill text-peak-ink' : live ? 'border-free-line bg-free-fill text-free-ink' : 'border-hairline bg-card text-pitch'}`}>{live && <span className="size-1.5 rounded-full bg-success" />}{state}</span><span className="absolute bottom-3 left-3 rounded-control bg-pitch px-2.5 py-1.5 text-[11px] font-semibold text-pitch-ink">{SPORT_LABELS[t.sport]}</span></div>
         <div className="flex min-w-0 flex-1 flex-col p-5">
           <h3 className="break-words font-display text-xl font-bold leading-snug tracking-tight text-pitch">{t.title}</h3>
           <p className="mt-4 flex items-start gap-2 text-xs font-semibold leading-6 text-pitch"><CalendarDays size={15} className="mt-1 shrink-0" aria-hidden="true" /><span>{dayLabel(new Date(t.starts_at))} · {hhmm(t.starts_at)}</span></p>

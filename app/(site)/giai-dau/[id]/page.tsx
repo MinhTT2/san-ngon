@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
-import { tournamentLabel, paymentOutcomes, type Registration } from '@/lib/tournaments';
+import { tournamentLabel, paymentOutcomes, type Registration, type Tournament } from '@/lib/tournaments';
 import { TournamentSettlementPanel } from '@/components/tournament-settlement';
 import { TournamentRegistration } from '@/components/tournament-registration';
 import { TournamentParticipants } from '@/components/tournament-participants';
@@ -17,18 +17,19 @@ import { Field, fieldClass } from '@/components/form-field';
 import { TournamentRefresh } from '@/components/tournament-refresh';
 import { TournamentCover } from '@/components/tournament-cover';
 import { TournamentShare } from '@/components/tournament-share';
-import { tournamentCoverSrc } from '@/lib/image-upload';
+import { VenueGallery } from '@/components/venue-gallery';
+import { tournamentCoverSrc, venuePhotoSrc } from '@/lib/image-upload';
 import { siteUrl } from '@/lib/site-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   if (!z.string().uuid().safeParse(id).success) return { title: 'Chi tiết giải đấu' };
   const db = await createClient();
-  const { data } = await db.from('tournaments').select('title,sport,status,cover_path,starts_at').eq('id', id).maybeSingle();
+  const { data } = await db.from('tournaments').select('title,sport,status,cover_path,starts_at,courts(venues(images))').eq('id', id).returns<(Pick<Tournament, 'title' | 'sport' | 'status' | 'cover_path' | 'starts_at'> & { courts: { venues: { images: string[] } | null } | null })[]>().maybeSingle();
   if (!data || !['published', 'completed'].includes(data.status)) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
   const title = `${data.title} — Sân Ngon`;
   const description = `${SPORT_LABELS[data.sport]} · ${dayLabel(new Date(data.starts_at))}. Xem lịch, thể lệ, lệ phí và đăng ký tham gia.`;
-  const image = tournamentCoverSrc(data.cover_path);
+  const image = tournamentCoverSrc(data.cover_path) ?? venuePhotoSrc(data.courts?.venues?.images[0]);
   const url = siteUrl(`/giai-dau/${id}`).href;
   return { title, description, alternates: { canonical: url }, openGraph: { title, description, url, type: 'website', ...(image ? { images: [{ url: image, alt: data.title }] } : {}) } };
 }
@@ -56,7 +57,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (registrationError) throw new Error('Chưa tải được danh sách tham gia.');
   const registrations = (registrationData ?? []) as Registration[];
   const own = registrations.find(registration => registration.user_id === user?.id);
-  const { data: court, error: courtError } = tournament.court_id ? await db.from('courts').select('name,venues(name,slug,owner_id)').eq('id', tournament.court_id).returns<{ name: string; venues: { name: string; slug: string; owner_id: string } }[]>().maybeSingle() : { data: null, error: null };
+  const { data: court, error: courtError } = tournament.court_id ? await db.from('courts').select('name,venues(name,slug,owner_id,images)').eq('id', tournament.court_id).returns<{ name: string; venues: { name: string; slug: string; owner_id: string; images: string[] } }[]>().maybeSingle() : { data: null, error: null };
   if (courtError) throw new Error('Chưa tải được địa điểm giải.');
   const { data: courts, error: courtsError } = admin && tournament.status === 'pending' ? await db.from('courts').select('id,name,venues!inner(name,status)').eq('sport', tournament.sport).eq('is_active', true).eq('venues.status', 'active').returns<{ id: string; name: string; venues: { name: string; status: string } }[]>() : { data: [], error: null };
   if (courtsError) throw new Error('Chưa tải được sân để duyệt.');
@@ -99,7 +100,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <p className="mt-4 flex min-w-0 items-start gap-2 text-sm leading-7 text-ink-secondary"><MapPin size={17} aria-hidden="true" className="mt-1 shrink-0" /><span className="break-words">{tournament.address}</span></p>
           {['published', 'completed'].includes(tournament.status) && <div className="mt-5"><TournamentShare id={id} title={tournament.title} /></div>}
         </div>
-        <TournamentCover path={tournament.cover_path} title={tournament.title} fallback className="aspect-video w-full rounded-card border border-strong" />
+        <TournamentCover path={tournament.cover_path} title={tournament.title} venueImages={court?.venues.images ?? []} venueName={court?.venues.name ?? ''} fallback className="aspect-video w-full rounded-card border border-strong" />
       </div>
       <dl className="grid border-t border-strong bg-card sm:grid-cols-3">
         {[[CalendarDays, 'Ngày thi đấu', dateTime(tournament.starts_at)], [Users, 'Suất đã được duyệt', `${approvedCount} / ${tournament.capacity}`], [ArrowUpRight, 'Lệ phí mỗi suất', tournament.entry_fee ? vnd(tournament.entry_fee) : 'Miễn phí']].map(([Icon, label, value]) => {
@@ -108,7 +109,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         })}
       </dl>
     </header>
-    {!manager && <nav aria-label="Các mục trong trang giải" className="mb-6 flex gap-1 overflow-x-auto border-b border-hairline">{[['#dang-ky', own ? 'Đăng ký của bạn' : 'Tham gia'], ['#lich-thi-dau', 'Lịch & địa điểm'], ['#the-le', 'Thể lệ'], ['#chinh-sach', 'Cọc & hủy']].map(([href, label]) => <a key={href} href={href} className="inline-flex min-h-12 shrink-0 items-center px-4 text-sm font-semibold text-pitch hover:bg-free-fill">{label}</a>)}</nav>}
+    {!manager && <nav aria-label="Các mục trong trang giải" className="mb-6 flex gap-1 overflow-x-auto border-b border-hairline">{[['#dang-ky', own ? 'Đăng ký của bạn' : 'Tham gia'], ['#lich-thi-dau', 'Lịch & địa điểm'], ['#the-le', 'Thể lệ'], ...(court?.venues.images.length ? [['#anh-san', 'Ảnh sân']] : []), ['#chinh-sach', 'Cọc & hủy']].map(([href, label]) => <a key={href} href={href} className="inline-flex min-h-12 shrink-0 items-center px-4 text-sm font-semibold text-pitch hover:bg-free-fill">{label}</a>)}</nav>}
     {manager && <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-hairline py-4 text-sm"><p><strong>{pendingCount}</strong> chờ duyệt · <strong>{unpaidCount}</strong> chờ cọc · <strong>{refundCount}</strong> giao dịch cần hoàn</p><span className="text-xs text-ink-secondary">{tournament.manager_id === court?.venues.owner_id ? 'Chủ sân tự tổ chức' : 'Người tổ chức và chủ sân cùng quản lý'}</span></div>
       <nav aria-label="Quản lý giải đấu" className="mb-6 flex flex-wrap border-b border-hairline">{[['overview', 'Tổng quan'], ['participants', `Người tham gia (${registrations.length})`], ['payments', 'Giao dịch & hoàn tiền'], ['settlement', 'Quyết toán']].map(([key, label]) => <Link key={key} href={key === 'overview' ? `/giai-dau/${id}` : `/giai-dau/${id}?view=${key}`} aria-current={view === key ? 'page' : undefined} className={`inline-flex min-h-12 items-center border-b-2 px-3 text-sm ${view === key ? 'border-pitch font-semibold text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>{label}</Link>)}</nav>
@@ -125,6 +126,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             ['Hạn nhận / duyệt đăng ký', dateTime(tournament.registration_deadline)], ['Hạn đóng cọc cuối cùng', dateTime(tournament.payment_deadline)],
             ['Thời gian cọc sau duyệt', `${tournament.payment_hold_hours} giờ, không vượt hạn cuối`], ['Quy mô', `${tournament.capacity} suất · ${approvedCount} đã được duyệt`],
           ].map(([label, value]) => <div key={label} className="border-b border-hairline pb-4"><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-2 break-words font-semibold leading-6">{value}</dd></div>)}</dl>{court && <Link href={`/san/${court.venues.slug}`} className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-pitch underline">Xem sân tổ chức<ArrowUpRight size={16} aria-hidden="true" /></Link>}</section>
+          {!!court?.venues.images.length && <section id="anh-san" className="mt-6 scroll-mt-28"><h2 className="mb-4 font-display text-2xl font-bold text-pitch">Ảnh sân tổ chức</h2><VenueGallery images={court.venues.images} name={court.venues.name} compact /></section>}
           <section id="the-le" className="mt-6 scroll-mt-28"><h2 className="font-display text-2xl font-bold text-pitch">Thông tin & thể lệ</h2><p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7">{tournament.description}</p>{tournament.review_note && <p className="mt-5 border-l-2 border-strong pl-4 text-sm leading-7">Ghi chú admin: {tournament.review_note}</p>}</section>
           <section id="chinh-sach" className="mt-6 scroll-mt-28 border-t border-hairline pt-6"><h2 className="font-display text-xl font-bold text-pitch">Cọc & chính sách hủy</h2><ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-ink-secondary"><li>Cọc sau khi được duyệt; SePay xác nhận tự động, tiền về chủ sân.</li><li>{tournament.cancel_window_hours === 24 ? 'Tự hủy trước giờ thi đấu ít nhất 24 giờ: hoàn 100% cọc. Muộn hơn không hoàn.' : 'Giải cũ: tự hủy trước giờ bắt đầu được hoàn 100% cọc.'}</li><li>Ban tổ chức hủy suất hoặc giải: hoàn toàn bộ tiền đã nhận. Chủ sân chuyển tiền hoàn thủ công.</li><li>Phần còn lại nộp tại giải bằng tiền mặt hoặc nội dung chuyển khoản riêng, không dùng lại mã cọc GIAI.</li></ul></section>
         </div>
