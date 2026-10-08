@@ -94,7 +94,7 @@ export function VenueTimePicker({
         </div>
         {a.selectionLost && <p role="status" className="mb-3 text-sm text-ink-secondary">Sân vừa chọn không còn trống đủ thời gian. Bạn chọn lại một giờ còn sân nhé.</p>}
         {!availableTimes && <p role="status" className="mb-4 rounded-control bg-sunk p-3 text-sm leading-6 text-ink-secondary">Không còn sân trống đủ {duration} phút cho môn này. Bạn thử thời lượng ngắn hơn hoặc ngày khác nhé.</p>}
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
           {times.map(({ startsAt, choices }) => {
             const best = choices[0];
             const selected = selection?.startsAt === startsAt;
@@ -107,11 +107,11 @@ export function VenueTimePicker({
               <button key={startsAt} type="button" disabled={!best} aria-pressed={selected}
                 aria-label={`${hhmm(startsAt)}, ${best ? `còn sân, từ ${vnd(best.total)} cho ${duration} phút` : `không còn sân cho ${duration} phút`}`}
                 onClick={() => a.choose(best)}
-                className={`pf-slot relative flex min-h-24 flex-col items-start justify-center gap-1 rounded-control border px-2 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch sm:px-3 ${tone}`}>
-                <span className="text-base font-semibold tabular-nums">{hhmm(startsAt)}</span>
+                className={`pf-slot relative flex min-h-19 flex-col items-start justify-center gap-0.5 rounded-control border px-2 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch ${tone}`}>
+                <span className="text-sm font-semibold tabular-nums">{hhmm(startsAt)}</span>
                 <span className="text-xs">{best ? 'Còn sân' : 'Không còn sân'}</span>
                 {best && <span className="text-[11px] font-semibold sm:text-xs">Từ {vnd(best.total)}</span>}
-                {selected && <span aria-hidden="true" className="absolute right-3 top-3">✓</span>}
+                {selected && <span aria-hidden="true" className="absolute right-2 top-2">✓</span>}
               </button>
             );
           })}
