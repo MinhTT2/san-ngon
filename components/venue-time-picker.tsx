@@ -119,7 +119,7 @@ export function VenueTimePicker({
         <p className="mt-4 text-xs leading-5 text-ink-secondary">Giá cho toàn bộ {duration} phút. Chỉ gợi ý sân trống liền mạch suốt thời gian chơi.</p>
       </section>
 
-      <aside ref={summaryRef} aria-label="Tóm tắt đặt sân" className="min-w-0 rounded-card border border-pitch bg-pitch p-5 text-pitch-ink lg:sticky lg:top-5">
+      <aside ref={summaryRef} aria-label="Tóm tắt đặt sân" className="min-w-0 rounded-card border border-pitch bg-pitch p-5 text-pitch-ink lg:sticky lg:top-24">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch-ink/65">Buổi chơi của bạn</p>
         <h2 className="mt-2 font-display text-xl font-bold">{selection ? `${hhmm(selection.startsAt)} – ${hhmm(selection.endsAt)}` : 'Chỉ cần chọn giờ phù hợp'}</h2>
         {!selection ? (

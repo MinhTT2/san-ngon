@@ -119,7 +119,6 @@ function Hero({ grid }: { grid: React.ReactNode }) {
   return (
     <section>
       <HeroCarousel />
-      <p className="border-b border-hairline bg-card px-5 py-2 text-center text-[11px] text-ink-secondary">Ảnh giới thiệu: <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Unsplash</a> · Pickleball: <a href="https://commons.wikimedia.org/w/index.php?curid=107275576" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Picklerpeej</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">CC BY-SA 4.0</a> (đã cắt khung hình) · Video: <a href="https://mixkit.co/free-stock-video/one-on-one-in-a-soccer-game-43483/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Mixkit</a></p>
       <div className="border-b border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-9">
           <div className="flex min-w-0 flex-col gap-4">

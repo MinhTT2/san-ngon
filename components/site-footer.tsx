@@ -22,15 +22,15 @@ export function SiteFooter() {
             <h2 className="mt-7 max-w-xl font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">Tối nay có kèo.<br /><span className="text-free-line">Chốt sân thôi.</span></h2>
             <p className="mt-5 max-w-md text-[15px] leading-7 text-free-line">Lịch trống thật của các sân thể thao ở Hà Nội. Chọn giờ, đặt cọc và hẹn nhau ra sân.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/tim-san" className="inline-flex min-h-12 items-center gap-4 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Tìm sân ngay <span aria-hidden="true">↗</span></Link>
-              <Link href="/dang-ky-san" className="inline-flex min-h-12 items-center gap-4 rounded-control border border-white/25 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">Bạn có sân? <span aria-hidden="true">↗</span></Link>
+              <Link href="/tim-san" className="pf-action inline-flex min-h-11 items-center gap-3 rounded-control bg-free-fill px-4 py-2 text-sm font-semibold text-pitch transition-colors hover:bg-white">Tìm sân ngay <span aria-hidden="true">↗</span></Link>
+              <Link href="/dang-ky-san" className="pf-action inline-flex min-h-11 items-center gap-3 rounded-control border border-white/25 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10">Bạn có sân? <span aria-hidden="true">↗</span></Link>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-9 text-sm sm:grid-cols-3">
             <FooterGroup title="Người chơi" links={[["Tìm sân", '/tim-san'], ['Giải đấu', '/giai-dau'], ['Kết nối', '/ket-noi'], ['Đơn của tôi', '/don-cua-toi'], ['Sân yêu thích', '/san-yeu-thich']]} />
             <FooterGroup title="Chủ sân" links={[["Đăng ký chủ sân", '/dang-ky-san'], ['Trang quản lý', '/chu-san'], ['Tài khoản', '/tai-khoan']]} />
-            <FooterGroup title="Hỗ trợ" links={[["Cách hoạt động", '/#cach-hoat-dong'], ['Trung tâm trợ giúp', '/tro-giup'], ['Góp ý / báo lỗi', '/gop-y'], ['Chính sách hủy', '/chinh-sach-huy'], ['Liên hệ', '/lien-he']]} />
+            <FooterGroup title="Hỗ trợ" links={[["Cách hoạt động", '/#cach-hoat-dong'], ['Trung tâm trợ giúp', '/tro-giup'], ['Góp ý / báo lỗi', '/gop-y'], ['Chính sách hủy', '/chinh-sach-huy'], ['Liên hệ', '/lien-he'], ['Nguồn hình ảnh', '/nguon-hinh-anh']]} />
           </div>
         </div>
 

@@ -84,12 +84,12 @@ export function HeroCarousel() {
               <div className="absolute inset-0 bg-gradient-to-r from-pitch/95 via-pitch/75 to-pitch/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-pitch/65 via-transparent to-transparent" />
             </div>
-            <div className="mx-auto flex min-h-[430px] w-full max-w-7xl items-center px-5 pb-28 pt-10 sm:min-h-[440px] lg:px-16">
+            <div className="mx-auto flex min-h-[430px] w-full max-w-7xl items-center px-14 pb-24 pt-10 sm:min-h-[440px] sm:px-16 lg:px-20">
               <div className="w-full max-w-lg text-white">
                 <p className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-free-fill">
                   <span className="h-px w-6 bg-free-line" aria-hidden="true" />{label} · {eyebrow}
                 </p>
-                <h2 className="pf-hero-copy font-display text-[40px] font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-[60px]">
+                <h2 className="pf-hero-copy font-display text-[36px] font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-[60px]">
                   {title}<br /><span className="text-free-line">{accent}</span>
                 </h2>
                 <p className="pf-hero-copy pf-hero-description mt-4 max-w-sm text-sm leading-6 text-free-fill sm:text-[15px] sm:leading-7">{description}</p>
@@ -105,23 +105,29 @@ export function HeroCarousel() {
         ))}
       </div>
       <div className="absolute right-5 top-3 z-20 rounded-pill bg-pitch/70 px-2.5 py-1 text-[10px] text-free-fill">Ảnh minh họa</div>
+      <button type="button" onClick={() => select(index - 1)} aria-label="Ảnh trước"
+        className="pf-action absolute left-1.5 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch focus-visible:outline-free-line sm:left-3 lg:left-6">
+        <ArrowLeft size={19} aria-hidden="true" />
+      </button>
+      <button type="button" onClick={() => select(index + 1)} aria-label="Ảnh tiếp theo"
+        className="pf-action absolute right-1.5 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch focus-visible:outline-free-line sm:right-3 lg:right-6">
+        <ArrowRight size={19} aria-hidden="true" />
+      </button>
       <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/15 bg-pitch/45">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 px-5 py-2.5 lg:px-16">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 lg:px-16">
           <div className="flex items-center gap-1" aria-label="Chọn môn giới thiệu">
             {SLIDES.map((slide, i) => <button key={slide.key} type="button" aria-label={`Xem ${slide.label}`}
               aria-pressed={index === i} onClick={() => select(i)}
-              className={`pf-action relative min-h-11 rounded-control px-3 text-xs font-semibold sm:px-4 sm:text-sm ${index === i ? 'bg-white/15 text-white' : 'text-free-line hover:bg-white/10 hover:text-white'}`}>
+              className={`pf-action relative min-h-11 rounded-control px-2 text-xs font-semibold sm:px-4 sm:text-sm ${index === i ? 'bg-white/15 text-white' : 'text-free-line hover:bg-white/10 hover:text-white'}`}>
               {slide.label}<span aria-hidden="true" className={`absolute bottom-1 left-3 right-3 h-0.5 rounded-full ${index === i ? 'bg-free-line' : 'bg-transparent'}`} />
             </button>)}
           </div>
           <div className="flex items-center gap-1 text-white">
-            <button type="button" onClick={() => select(index - 1)} aria-label="Ảnh trước" className="pf-action grid size-11 place-items-center rounded-control hover:bg-white/15"><ArrowLeft size={17} aria-hidden="true" /></button>
             <button type="button" onClick={() => setPaused((value) => !value)} disabled={!motion}
               aria-label={paused || !motion ? 'Tự chuyển ảnh' : 'Dừng tự chuyển ảnh'} aria-pressed={!paused && motion}
               className="pf-action grid size-11 place-items-center rounded-control hover:bg-white/15 disabled:opacity-45">
               {paused || !motion ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => select(index + 1)} aria-label="Ảnh tiếp theo" className="pf-action grid size-11 place-items-center rounded-control hover:bg-white/15"><ArrowRight size={17} aria-hidden="true" /></button>
           </div>
         </div>
       </div>

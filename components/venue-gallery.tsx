@@ -8,12 +8,12 @@ const photoUrl = (path: string) => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/stor
 const initialView = { scale: 1, x: 0, y: 0 };
 const viewerButton = 'grid size-11 shrink-0 place-items-center rounded-full border border-white/20 bg-ink text-white hover:bg-white/15 aria-disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
 
-export function VenueGallery({ images, name }: { images: string[]; name: string }) {
+export function VenueGallery({ images, name, compact = false }: { images: string[]; name: string; compact?: boolean }) {
   const [selected, setSelected] = useState<number | null>(null);
   if (!images.length) return null;
 
   return <section aria-label={`Ảnh ${name}`} className="mb-6">
-    <div className={`grid h-72 grid-rows-2 gap-2 overflow-hidden rounded-card sm:h-[460px] ${images.length >= 5 ? 'grid-cols-[2fr_1fr] lg:grid-cols-[2fr_1fr_1fr]' : images.length > 1 ? 'grid-cols-[2fr_1fr]' : 'grid-cols-1'}`}>
+    <div className={`grid grid-rows-2 gap-2 overflow-hidden rounded-[20px] ${compact ? 'h-64 sm:h-[360px]' : 'h-72 sm:h-[460px]'} ${images.length >= 5 ? 'grid-cols-[2fr_1fr] lg:grid-cols-[2fr_1fr_1fr]' : images.length > 1 ? 'grid-cols-[2fr_1fr]' : 'grid-cols-1'}`}>
       {images.slice(0, images.length >= 5 ? 5 : 3).map((path, index) => (
         <button key={`${path}-${index}`} type="button" onClick={() => setSelected(index)}
           aria-label={`Mở ảnh ${index + 1} của ${name}`}
