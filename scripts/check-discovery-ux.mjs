@@ -22,6 +22,7 @@ try {
       await page.evaluate(() => document.fonts.ready);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${route}: overflow at ${width}px`);
       if (route !== 'tim-san') {
+        if (route === 'giai-dau' && width < 1024) await page.getByRole('button', { name: 'Bộ lọc', exact: true }).click();
         const select = await page.locator('main select').first().boundingBox();
         assert(select.height >= 44 && select.width >= 120, `${route}: filter must remain usable`);
         if (width === 390) {
