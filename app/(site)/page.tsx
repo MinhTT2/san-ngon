@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { HeroCarousel } from '@/components/hero-carousel';
+import { AmbientVideo } from '@/components/ambient-video';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
 import { Reveal } from '@/components/reveal';
 import { CountUp } from '@/components/count-up';
@@ -118,8 +119,9 @@ function Hero({ grid }: { grid: React.ReactNode }) {
   return (
     <section>
       <HeroCarousel />
+      <p className="border-b border-hairline bg-card px-5 py-2 text-center text-[11px] text-ink-secondary">Ảnh giới thiệu: <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Unsplash</a> · Pickleball: <a href="https://commons.wikimedia.org/w/index.php?curid=107275576" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Picklerpeej</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">CC BY-SA 4.0</a> (đã cắt khung hình) · Video: <a href="https://mixkit.co/free-stock-video/one-on-one-in-a-soccer-game-43483/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Mixkit</a></p>
       <div className="border-b border-hairline bg-free-fill">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-12">
+        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-9">
           <div className="flex min-w-0 flex-col gap-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">Đặt sân thể thao ở Hà Nội</p>
             <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-pitch sm:text-5xl">Tìm sân trống.<br />Chọn giờ, ra sân.</h1>
@@ -145,7 +147,7 @@ function SearchBar() {
 
   // Hai cột trên desktop, một cột trên điện thoại để các ô nhập đủ rộng.
   return (
-    <form action="/tim-san" className="grid grid-cols-1 gap-2.5 rounded-card bg-card p-4 sm:grid-cols-2">
+    <form action="/tim-san" className="grid grid-cols-1 gap-2.5 rounded-card border border-strong bg-card p-4 sm:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-1.5">
         <label htmlFor="sport" className="text-xs font-semibold text-ink-secondary">Môn thể thao</label>
         <select id="sport" name="sport" defaultValue="" className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]">
@@ -165,7 +167,7 @@ function SearchBar() {
         <input id="ngay" name="ngay" type="date" min={today} defaultValue={today}
           className="h-12 rounded-[9px] border border-hairline bg-page px-2.5 text-[15px]" />
       </div>
-      <button type="submit" className="pf-action mt-1 h-12 self-end rounded-[9px] bg-pitch px-6 text-[15px] font-semibold text-pitch-ink hover:bg-ink">
+      <button type="submit" className="pf-action mt-1 h-11 self-end rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink hover:bg-ink">
         Xem sân trống <span className="pf-arrow ml-2" aria-hidden="true">→</span>
       </button>
     </form>
@@ -215,7 +217,7 @@ function HowItWorks() {
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
         {steps.map(({ title, body, color, label }, i) => (
           <Reveal key={title} delay={i * 90} className="pf-story-step flex">
-            <article className={`flex w-full flex-col overflow-hidden rounded-[24px] border border-ink/10 ${color}`}>
+            <article className={`pf-card flex w-full flex-col overflow-hidden rounded-[24px] border border-ink/10 ${color}`}>
               <div className="px-7 pt-7">
                 <p className="text-xs font-semibold uppercase tracking-widest text-pitch">{label}</p>
                 <h3 className="mt-4 font-display text-2xl font-bold tracking-tight">{title}</h3>
@@ -306,22 +308,19 @@ function Line({ label, value }: { label: string; value: string }) {
 function ForOwners() {
   return (
     <section className="mx-auto max-w-7xl px-5 pt-16 lg:px-16 lg:pt-24">
-      <div className="relative grid min-h-[620px] overflow-hidden rounded-[28px] bg-pitch lg:min-h-[560px] lg:grid-cols-2">
-        {/* Nguồn: Mixkit, clip miễn phí "One on one in a soccer game". */}
-        <video className="pf-ambient-video absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" poster="/videos/soccer-poster.svg" aria-hidden="true">
-          <source src="/videos/soccer-one-on-one.mp4" type="video/mp4" />
-        </video>
+      <div className="relative grid min-h-[620px] pb-16 lg:pb-0 overflow-hidden rounded-[28px] bg-pitch lg:min-h-[560px] lg:grid-cols-2">
+        <AmbientVideo />
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-pitch via-pitch/80 to-pitch/30" />
         <div className="relative z-10 flex flex-col justify-center p-7 text-white sm:p-10 lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Dành cho chủ sân</p>
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Bạn chăm sân.<br />Khách tự chốt kèo.</h2>
           <p className="mt-5 max-w-md text-[15px] leading-7 text-free-fill">Đang ngoài sân, tay bận, trời ồn? Để khách tự xem lịch và đặt chỗ. Bạn biết ngay khi có khách, nắm lịch và khoản cần thu thật gọn.</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link href="/dang-ky-san" className="pf-action inline-flex min-h-12 items-center gap-5 rounded-control bg-free-fill px-6 py-3 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng ký làm chủ sân <span aria-hidden="true" className="pf-arrow">↗</span></Link>
+            <Link href="/dang-ky-san" className="pf-action inline-flex min-h-11 items-center gap-3 rounded-control bg-free-fill px-4 py-2 text-sm font-semibold text-pitch transition-colors hover:bg-white">Đăng ký làm chủ sân <span aria-hidden="true" className="pf-arrow">↗</span></Link>
             <Link href="/chu-san" className="pf-action inline-flex min-h-11 items-center border-b border-white/40 text-sm font-semibold text-white">Mở trang dành cho chủ sân</Link>
           </div>
         </div>
-        <div className="relative z-10 flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-12">
+        <div className="relative z-10 flex flex-col justify-center gap-4 p-5 sm:p-10 lg:pl-0 lg:pr-12 lg:py-9">
           <div className="rounded-[20px] border border-white bg-card p-6 sm:p-8">
             <div className="flex items-center justify-between gap-3 border-b border-hairline pb-5"><span className="font-display text-xl font-bold">Lịch sân trong ngày</span><span className="rounded-pill bg-sunk px-3 py-1 text-xs text-ink-secondary">Ví dụ</span></div>
             <div className="divide-y divide-hairline">
@@ -372,7 +371,7 @@ function Faq() {
               <span className="flex-1">{q}</span>
               <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-strong text-pitch transition-transform group-open:rotate-45 motion-reduce:transition-none">+</span>
             </summary>
-            <p className="pb-6 pl-8 pr-8 text-sm leading-7 text-ink-secondary">{a}</p>
+            <p className="pf-details-content pb-6 pl-8 pr-8 text-sm leading-7 text-ink-secondary">{a}</p>
           </details>
         ))}
       </div>

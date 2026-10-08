@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { VenueTimePicker } from '@/components/venue-time-picker';
@@ -27,6 +27,18 @@ export function VenueSchedule({
   const pathname = usePathname();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const previousConfirming = useRef(false);
+
+  useEffect(() => {
+    if (confirming) {
+      stageRef.current?.focus({ preventScroll: true });
+      stageRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    } else if (previousConfirming.current) {
+      stageRef.current?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')?.focus({ preventScroll: true });
+    }
+    previousConfirming.current = confirming;
+  }, [confirming]);
   const availability = useAvailability(venueId, date, !confirming);
   const confirm = () => {
     setSelection(availability.selection);
@@ -54,7 +66,7 @@ export function VenueSchedule({
 
   if (confirming && selection) {
     return (
-      <div className="mx-auto max-w-md">
+      <div ref={stageRef} tabIndex={-1} role="region" aria-label="Thông tin đặt sân" className="mx-auto max-w-md scroll-mt-5 focus:outline-none">
         <BookingForm
           selection={selection}
           depositPct={depositPct}
@@ -69,7 +81,7 @@ export function VenueSchedule({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={stageRef} className="flex flex-col gap-4">
       <div className="rounded-card border border-hairline bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Bước 1 · Chọn ngày</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Bạn muốn chơi ngày nào?</h2></div><p className="text-xs text-ink-secondary">Giữ chỗ 15 phút để chuyển cọc</p></div>
         <form className="mt-4 flex flex-wrap items-end gap-3">

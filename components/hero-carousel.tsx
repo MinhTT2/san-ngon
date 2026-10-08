@@ -1,58 +1,53 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { SceneFootball, SceneBadminton, ScenePickleball } from './pitch-scenes';
+import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
 
 const SLIDES = [
   {
-    key: 'football', label: 'Bóng đá', Scene: SceneFootball,
-    eyebrow: 'Kèo tối nay',
-    title: 'Đủ đội rồi.', accent: 'Ra sân thôi.',
-    description: 'Tìm sân bóng còn chỗ, xem giá rõ ràng và giữ ngay khung giờ cả đội cùng rảnh.',
+    key: 'football', label: 'Bóng đá', image: '/media/football-editorial.webp',
+    eyebrow: 'Kèo tối nay', title: 'Đủ đội rồi.', accent: 'Ra sân thôi.',
+    description: 'Tìm sân bóng còn chỗ, xem giá rõ ràng và giữ khung giờ cả đội cùng rảnh.',
     href: '/tim-san?sport=football5', cta: 'Tìm sân bóng',
-    layout: 'mr-auto max-w-2xl text-white',
-    heading: 'text-[44px] sm:text-[60px] lg:text-[76px]',
-    overlay: 'bg-gradient-to-r from-pitch/95 via-pitch/65 to-pitch/10',
   },
   {
-    key: 'badminton', label: 'Cầu lông', Scene: SceneBadminton,
-    eyebrow: 'Một giờ cho mình',
-    title: 'Gác việc lại.', accent: 'Cầm vợt lên.',
+    key: 'badminton', label: 'Cầu lông', image: '/media/badminton-editorial.webp',
+    eyebrow: 'Một giờ cho mình', title: 'Gác việc lại.', accent: 'Cầm vợt lên.',
     description: 'Sân gần nhà, giờ đẹp, giá rõ ràng. Chọn một khung giờ và hẹn nhau ở sân.',
     href: '/tim-san?sport=badminton', cta: 'Chọn sân cầu lông',
-    layout: 'ml-auto max-w-lg rounded-card border border-strong bg-free-fill p-6 text-pitch sm:p-9',
-    heading: 'text-[36px] sm:text-[44px] lg:text-[52px]',
-    overlay: 'bg-gradient-to-l from-pitch/65 via-pitch/20 to-transparent',
   },
   {
-    key: 'pickleball', label: 'Pickleball', Scene: ScenePickleball,
-    eyebrow: 'Hẹn nhau cuối tuần',
-    title: 'Rủ hội bạn.', accent: 'Ra sân vui hơn.',
+    key: 'pickleball', label: 'Pickleball', image: '/media/pickleball-editorial.webp',
+    eyebrow: 'Hẹn nhau cuối tuần', title: 'Rủ hội bạn.', accent: 'Ra sân vui hơn.',
     description: 'Thử một môn mới, chọn sân còn chỗ và chốt lịch thật nhanh.',
     href: '/tim-san?sport=pickleball', cta: 'Tìm sân pickleball',
-    layout: 'mx-auto max-w-3xl text-center text-white',
-    heading: 'text-[40px] sm:text-[56px] lg:text-[68px]',
-    overlay: 'bg-pitch/45',
   },
 ] as const;
+const INTERVAL = 6500;
 
-const INTERVAL = 5000;
-
-/** Ảnh và nội dung đổi cùng nhau; form tìm sân nằm ngoài để giữ nguyên dữ liệu đang nhập. */
+/** Ảnh minh họa giới thiệu môn; ảnh địa điểm thật vẫn do chủ sân cung cấp. */
 export function HeroCarousel() {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [autoplay, setAutoplay] = useState(false);
-  const playing = autoplay && !hovered && !focused;
+  const [paused, setPaused] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [motion, setMotion] = useState(false);
+  const playing = motion && !paused && !hovered && !focused && visible;
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setAutoplay(!media.matches);
-    sync();
-    media.addEventListener('change', sync);
-    return () => media.removeEventListener('change', sync);
+    const syncMotion = () => setMotion(!media.matches);
+    const syncVisibility = () => setVisible(!document.hidden);
+    syncMotion(); syncVisibility();
+    media.addEventListener('change', syncMotion);
+    document.addEventListener('visibilitychange', syncVisibility);
+    return () => {
+      media.removeEventListener('change', syncMotion);
+      document.removeEventListener('visibilitychange', syncVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -61,99 +56,75 @@ export function HeroCarousel() {
     return () => clearTimeout(timer);
   }, [playing, index]);
 
-  function move(direction: number) {
-    setIndex((i) => (i + direction + SLIDES.length) % SLIDES.length);
+  function select(next: number) {
+    setIndex((next + SLIDES.length) % SLIDES.length);
+    setPaused(true);
   }
 
   return (
-    <div
-      data-hero-carousel=""
-      data-motion={autoplay}
-      role="region"
-      aria-roledescription="carousel"
-      aria-label="Tìm cảm hứng ra sân"
-      className="relative isolate overflow-hidden"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <div data-hero-carousel="" data-motion={motion && !paused} data-playing={playing} role="region"
+      aria-roledescription="carousel" aria-label="Tìm cảm hứng ra sân"
+      className="relative isolate overflow-hidden bg-pitch"
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
-      }}
+      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
       onKeyDown={(event) => {
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-          event.preventDefault();
-          move(event.key === 'ArrowLeft' ? -1 : 1);
+          event.preventDefault(); select(index + (event.key === 'ArrowLeft' ? -1 : 1));
         }
-      }}
-    >
+      }}>
       <div className="grid" aria-live={playing ? 'off' : 'polite'}>
-        {SLIDES.map(({ key, label, Scene, eyebrow, title, accent, description, href, cta, layout, heading, overlay }, i) => (
-          <div
-            key={key}
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} / ${SLIDES.length} · ${label}`}
-            aria-hidden={i !== index}
-            inert={i !== index}
-            className={`relative col-start-1 row-start-1 flex transition-opacity duration-700 motion-reduce:transition-none ${i === index ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'}`}
-          >
-            <div aria-hidden="true" className="absolute inset-0 -z-10">
-              <Scene className="absolute inset-0 h-full w-full" />
-              <div className={`absolute inset-0 ${overlay}`} />
+        {SLIDES.map(({ key, label, image, eyebrow, title, accent, description, href, cta }, i) => (
+          <div key={key} role="group" aria-roledescription="slide" aria-label={`${i + 1} / ${SLIDES.length} · ${label}`}
+            aria-hidden={i !== index} inert={i !== index}
+            className={`relative col-start-1 row-start-1 flex transition-opacity duration-700 motion-reduce:transition-none ${i === index ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'}`}>
+            <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
+              <Image src={image} alt="" fill priority={i === 0} sizes="100vw"
+                className="pf-hero-image object-cover object-[65%_center]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-pitch/95 via-pitch/75 to-pitch/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-pitch/65 via-transparent to-transparent" />
             </div>
-            <div className="mx-auto flex min-h-[480px] w-full max-w-7xl items-center px-5 pb-24 pt-10 sm:min-h-[500px] lg:min-h-[540px] lg:px-16 lg:py-12">
-              <div className={`w-full ${layout}`}>
-                <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] sm:text-sm">
-                  {label} <span aria-hidden="true" className="mx-2 opacity-50">/</span> {eyebrow}
+            <div className="mx-auto flex min-h-[430px] w-full max-w-7xl items-center px-5 pb-28 pt-10 sm:min-h-[440px] lg:px-16">
+              <div className="w-full max-w-lg text-white">
+                <p className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-free-fill">
+                  <span className="h-px w-6 bg-free-line" aria-hidden="true" />{label} · {eyebrow}
                 </p>
-                <h2 className={`pf-hero-copy font-display font-extrabold leading-[1.06] tracking-[-0.035em] ${heading}`}>
-                  {title}<br />
-                  <span className={key === 'badminton' ? 'text-ink-secondary' : 'text-free-line'}>{accent}</span>
+                <h2 className="pf-hero-copy font-display text-[40px] font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-[60px]">
+                  {title}<br /><span className="text-free-line">{accent}</span>
                 </h2>
-                <p className={`pf-hero-copy pf-hero-description mt-5 max-w-lg text-[15px] leading-7 sm:text-base ${key === 'pickleball' ? 'mx-auto' : ''}`}>
-                  {description}
-                </p>
+                <p className="pf-hero-copy pf-hero-description mt-4 max-w-sm text-sm leading-6 text-free-fill sm:text-[15px] sm:leading-7">{description}</p>
                 <div className="pf-hero-copy pf-hero-cta">
-                  <Link
-                    href={href}
-                    className={`pf-action mt-7 inline-flex min-h-12 items-center justify-center gap-4 rounded-control border px-5 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 ${
-                      key === 'badminton'
-                        ? 'border-pitch bg-pitch text-white hover:bg-ink'
-                        : key === 'pickleball'
-                          ? 'border-free-line text-white hover:bg-pitch'
-                          : 'border-card bg-card text-pitch hover:bg-free-fill'
-                    }`}
-                  >
-                    {cta}<span className="pf-arrow" aria-hidden="true">↗</span>
+                  <Link href={href} className="pf-action mt-6 inline-flex min-h-11 items-center justify-center gap-3 rounded-control border border-card bg-card px-4 text-sm font-semibold text-pitch hover:bg-free-fill">
+                    {cta}<ArrowRight size={16} className="pf-arrow" aria-hidden="true" />
                   </Link>
+                  <p className="mt-3 text-[11px] text-free-fill/80">Xem lịch miễn phí · Đăng nhập khi đặt</p>
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-
-      <button
-        type="button"
-        onClick={() => move(-1)}
-        aria-label="Ảnh trước"
-        className="absolute bottom-4 left-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:bottom-auto lg:left-6 lg:top-1/2 lg:-translate-y-1/2"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="rotate-180">
-          <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => move(1)}
-        aria-label="Ảnh tiếp theo"
-        className="absolute bottom-4 right-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-free-line/40 bg-pitch/45 text-white backdrop-blur-sm hover:bg-pitch/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-free-line lg:bottom-auto lg:right-6 lg:top-1/2 lg:-translate-y-1/2"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-          <path d="M4 10h12m-5-5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
+      <div className="absolute right-5 top-3 z-20 rounded-pill bg-pitch/70 px-2.5 py-1 text-[10px] text-free-fill">Ảnh minh họa</div>
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/15 bg-pitch/45">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 px-5 py-2.5 lg:px-16">
+          <div className="flex items-center gap-1" aria-label="Chọn môn giới thiệu">
+            {SLIDES.map((slide, i) => <button key={slide.key} type="button" aria-label={`Xem ${slide.label}`}
+              aria-pressed={index === i} onClick={() => select(i)}
+              className={`pf-action relative min-h-11 rounded-control px-3 text-xs font-semibold sm:px-4 sm:text-sm ${index === i ? 'bg-white/15 text-white' : 'text-free-line hover:bg-white/10 hover:text-white'}`}>
+              {slide.label}<span aria-hidden="true" className={`absolute bottom-1 left-3 right-3 h-0.5 rounded-full ${index === i ? 'bg-free-line' : 'bg-transparent'}`} />
+            </button>)}
+          </div>
+          <div className="flex items-center gap-1 text-white">
+            <button type="button" onClick={() => select(index - 1)} aria-label="Ảnh trước" className="pf-action grid size-11 place-items-center rounded-control hover:bg-white/15"><ArrowLeft size={17} aria-hidden="true" /></button>
+            <button type="button" onClick={() => setPaused((value) => !value)} disabled={!motion}
+              aria-label={paused || !motion ? 'Tự chuyển ảnh' : 'Dừng tự chuyển ảnh'} aria-pressed={!paused && motion}
+              className="pf-action grid size-11 place-items-center rounded-control hover:bg-white/15 disabled:opacity-45">
+              {paused || !motion ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
+            </button>
+            <button type="button" onClick={() => select(index + 1)} aria-label="Ảnh tiếp theo" className="pf-action grid size-11 place-items-center rounded-control hover:bg-white/15"><ArrowRight size={17} aria-hidden="true" /></button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

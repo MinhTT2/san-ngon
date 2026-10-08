@@ -107,7 +107,7 @@ export function VenueTimePicker({
               <button key={startsAt} type="button" disabled={!best} aria-pressed={selected}
                 aria-label={`${hhmm(startsAt)}, ${best ? `còn sân, từ ${vnd(best.total)} cho ${duration} phút` : `không còn sân cho ${duration} phút`}`}
                 onClick={() => a.choose(best)}
-                className={`relative flex min-h-24 flex-col items-start justify-center gap-1 rounded-control border px-2 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch sm:px-3 ${tone}`}>
+                className={`pf-slot relative flex min-h-24 flex-col items-start justify-center gap-1 rounded-control border px-2 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch sm:px-3 ${tone}`}>
                 <span className="text-base font-semibold tabular-nums">{hhmm(startsAt)}</span>
                 <span className="text-xs">{best ? 'Còn sân' : 'Không còn sân'}</span>
                 {best && <span className="text-[11px] font-semibold sm:text-xs">Từ {vnd(best.total)}</span>}
@@ -125,7 +125,7 @@ export function VenueTimePicker({
         {!selection ? (
           <p className="mt-4 text-sm leading-6 text-pitch-ink/75">Mỗi giờ hiển thị tình trạng của cả cụm. Chọn một giờ còn sân để xem sân được gợi ý và tổng tiền.</p>
         ) : (
-          <div className="mt-3 flex flex-col gap-4">
+          <div className="pf-settle mt-3 flex flex-col gap-4">
             <p className="text-sm text-pitch-ink/75">{dayLabel(new Date(selection.startsAt))} · {SPORT_LABELS[sport] ?? sport}</p>
             <div className="flex min-w-0 flex-col gap-2 text-sm font-semibold">
               <label htmlFor="booking-court">Sân của bạn</label>
@@ -141,10 +141,10 @@ export function VenueTimePicker({
             <p className="-mt-2 text-xs leading-5 text-pitch-ink/75">Gợi ý theo giá thấp nhất. Bạn có thể đổi sang sân khác còn trống.</p>
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-y border-white/20 py-4">
               <span className="text-sm text-pitch-ink/75">Tổng {duration} phút</span>
-              <span className="font-display text-2xl font-bold">{vnd(selection.total)}</span>
+              <span key={`${selection.courtId}-${selection.startsAt}`} className="pf-settle font-display text-2xl font-bold">{vnd(selection.total)}</span>
             </div>
             <div className="flex justify-between gap-2 text-sm"><span className="text-pitch-ink/75">Cọc trước {depositPct}%</span><span className="font-semibold">{vnd(deposit)}</span></div>
-            <button onClick={onConfirm} className="pf-action min-h-12 rounded-control bg-white px-3 text-sm font-semibold text-pitch hover:bg-free-fill">
+            <button onClick={onConfirm} className="pf-action inline-flex min-h-11 items-center justify-center self-start rounded-control bg-white px-4 text-sm font-semibold text-pitch hover:bg-free-fill">
               Tiếp tục đặt sân <span aria-hidden="true" className="pf-arrow ml-2">→</span>
             </button>
             <p className="text-xs leading-5 text-pitch-ink/65">Chưa giữ chỗ ở bước này. Bạn sẽ kiểm tra thông tin trước khi đặt cọc.</p>

@@ -81,7 +81,7 @@ export function BookingForm({
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4 rounded-card border border-strong bg-card p-5">
+    <form onSubmit={submit} aria-busy={busy} className="pf-settle flex flex-col gap-4 rounded-card border border-strong bg-card p-5">
       <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Bước 2 · Thông tin đặt sân</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Kiểm tra trước khi giữ chỗ</h2></div>
       <div className="flex flex-col gap-3 border-b border-hairline pb-4">
         <div className="flex items-start justify-between gap-3">
@@ -104,14 +104,14 @@ export function BookingForm({
       <div className="flex flex-col gap-1.5">
         <label htmlFor="ten" className="text-sm font-semibold">Tên người đặt</label>
         <input id="ten" value={name} onChange={(e) => setName(e.target.value)}
-          required autoComplete="name" placeholder="Nguyễn Văn A"
+          required maxLength={100} autoComplete="name" placeholder="Nguyễn Văn A"
           className="h-12 rounded-control border border-hairline px-3.5 focus:border-pitch focus:outline-none" />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="sdt" className="text-sm font-semibold">Số điện thoại</label>
         <input id="sdt" type="tel" required inputMode="numeric" pattern="0\d{9}"
-          autoComplete="tel" placeholder="0912345678"
+          maxLength={10} title="Nhập 10 chữ số, bắt đầu bằng 0 (ví dụ 0912345678)" autoComplete="tel" placeholder="0912345678"
           value={phone} onChange={(e) => setPhone(e.target.value)}
           className="h-12 rounded-control border border-hairline px-3.5 focus:border-pitch focus:outline-none" />
         <span className="text-xs text-ink-secondary">Chủ sân gọi số này nếu có thay đổi.</span>
@@ -121,7 +121,7 @@ export function BookingForm({
         <label htmlFor="ghichu" className="text-sm font-semibold">
           Ghi chú <span className="font-normal text-ink-secondary">(không bắt buộc)</span>
         </label>
-        <textarea id="ghichu" rows={2} value={note} onChange={(e) => setNote(e.target.value)}
+        <textarea id="ghichu" maxLength={500} rows={2} value={note} onChange={(e) => setNote(e.target.value)}
           placeholder="Cần thuê thêm bóng, áo bib…"
           className="resize-none rounded-control border border-hairline p-3" />
       </div>
@@ -146,17 +146,17 @@ export function BookingForm({
 
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
-      <div className="flex gap-3">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button type="button" disabled={busy} onClick={() => {
           sessionStorage.removeItem('san-ngon:booking-draft');
           onCancel();
         }}
-          className="h-13 flex-grow rounded-control border border-hairline font-semibold">
+          className="pf-action inline-flex min-h-11 items-center justify-center rounded-control border border-hairline px-4 text-sm font-semibold hover:bg-sunk disabled:opacity-60">
           Chọn lại
         </button>
         <button type="submit" disabled={busy}
-          className="h-13 flex-[2] rounded-control bg-pitch font-semibold text-pitch-ink disabled:opacity-60">
-          {busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? `Giữ chỗ · Cọc ${vnd(deposit)}` : 'Đăng nhập để tiếp tục'}
+          className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-2 text-sm font-semibold text-pitch-ink hover:bg-ink disabled:opacity-60">
+          {busy && <span aria-hidden="true" className="pf-spin size-3.5 rounded-full border-2 border-white/40 border-t-white" />}{busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? 'Giữ chỗ 15 phút' : 'Đăng nhập để tiếp tục'}
         </button>
       </div>
 

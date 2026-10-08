@@ -54,7 +54,7 @@ export default async function Page({
         <span>{venue.address} · {venue.district}</span>
         <span>· {sports.join(', ')}</span>
         <span>· Mở {venue.open_time.slice(0, 5)}–{venue.close_time.slice(0, 5)}</span>
-      </p></div>{acceptsBookings && <a href="#lich-san" className="inline-flex min-h-12 items-center justify-center rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">Chọn giờ đặt sân ↓</a>}</div>
+      </p></div>{acceptsBookings && <a href="#lich-san" className="pf-action inline-flex min-h-11 items-center justify-center rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink">Chọn giờ đặt sân ↓</a>}</div>
 
       <div className="mt-5"><VenueGallery images={venue.images ?? []} name={venue.name} /></div>
 
