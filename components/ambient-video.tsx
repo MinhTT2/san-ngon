@@ -2,16 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Pause, Play } from 'lucide-react';
 
 /** Chỉ tải/chạy video khi vào màn hình, không chạy khi giảm chuyển động/tiết kiệm dữ liệu. */
-export function AmbientVideo({ scene = 'soccer', label = 'video nền' }: { scene?: 'soccer' | 'court'; label?: string }) {
+export function AmbientVideo({ scene = 'soccer' }: { scene?: 'soccer' | 'court' }) {
   const poster = scene === 'court' ? '/media/court-flow.webp' : '/media/soccer-poster.webp';
   const source = scene === 'court' ? '/videos/court-flow.webm' : '/videos/soccer-one-on-one.mp4';
   const host = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
-  const [paused, setPaused] = useState(false);
   const [allowed, setAllowed] = useState(false);
   const [inView, setInView] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -36,7 +34,7 @@ export function AmbientVideo({ scene = 'soccer', label = 'video nền' }: { scen
     };
   }, []);
 
-  const shouldPlay = allowed && inView && visible && !paused && !failed;
+  const shouldPlay = allowed && inView && visible && !failed;
   useEffect(() => {
     if (shouldPlay) setLoaded(true);
     const element = video.current;
@@ -57,14 +55,5 @@ export function AmbientVideo({ scene = 'soccer', label = 'video nền' }: { scen
       muted loop playsInline preload="none" poster={poster} aria-hidden="true" onError={() => { setFailed(true); setPlaying(false); }}>
       <source src={source} type={scene === 'court' ? 'video/webm' : 'video/mp4'} onError={() => { setFailed(true); setPlaying(false); }} />
     </video>}
-    {allowed && !failed && <button type="button" onClick={() => {
-      if (playing) { setPaused(true); return; }
-      setPaused(false);
-      void video.current?.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-    }}
-      aria-label={`${playing ? 'Dừng' : 'Phát'} ${label}`}
-      className="pf-action absolute bottom-4 right-4 z-20 flex min-h-11 items-center gap-2 rounded-control border border-white/30 bg-pitch/90 px-3 text-xs font-semibold text-white hover:bg-pitch">
-      {playing ? <Pause size={15} aria-hidden="true" /> : <Play size={15} aria-hidden="true" />}{playing ? 'Dừng video' : 'Phát video'}
-    </button>}
   </div>;
 }

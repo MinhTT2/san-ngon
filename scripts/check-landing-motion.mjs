@@ -60,15 +60,16 @@ try {
   await page.locator('#q').focus(); await page.mouse.move(0, 0);
   await page.waitForFunction(() => document.querySelector('[data-hero-carousel]').dataset.playing === 'false');
   console.log('OK: overlay removed; arrows, wrapping, keyboard, hover/focus pause, manual selection stops autoplay.');
-  const videoButton = page.getByRole('button', { name: 'Dừng video nền', exact: true });
-  await ownerHeading.scrollIntoViewIfNeeded(); await videoButton.waitFor();
+  await ownerHeading.scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => {
+    const video = document.querySelector('[data-ambient-scene="soccer"] video');
+    return video && !video.paused && video.readyState >= 2;
+  });
+  assert.equal(await page.locator('[data-ambient-scene="soccer"]').getByRole('button').count(), 0, 'Ambient video has no playback button');
   assert(await page.locator('video').evaluate(video => !video.paused), 'Video should play in view');
-  await videoButton.click();
-  assert(await page.locator('video').evaluate(video => video.paused));
-  await page.getByRole('button', { name: 'Phát video nền', exact: true }).click(); await videoButton.waitFor();
   await page.evaluate(() => scrollTo(0, 0));
   await page.waitForFunction(() => document.querySelector('video')?.paused);
-  console.log('OK: video plays in view, user pause/resume, stops offscreen.');
+  console.log('OK: video plays in view without controls, stops offscreen.');
   const reduced = await browser.newContext({ reducedMotion: 'reduce' });
   const quiet = await reduced.newPage();
   await quiet.goto(origin); await quiet.locator('h1').waitFor();

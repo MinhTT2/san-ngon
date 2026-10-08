@@ -26,16 +26,16 @@ try {
   console.log('OK: public discovery, auth and support pages enter cleanly at mobile/desktop widths.');
   await page.goto(`${origin}/tim-san`);
   const scene = page.locator('[data-ambient-scene="court"]');
-  await scene.getByRole('button', { name: 'Dừng video sân chuyển động' }).waitFor();
+  await page.waitForFunction(() => {
+    const video = document.querySelector('[data-ambient-scene="court"] video');
+    return video && !video.paused && video.readyState >= 2;
+  });
+  assert.equal(await scene.getByRole('button').count(), 0, 'Ambient video has no playback button');
   const video = scene.locator('video');
   assert(await video.evaluate(element => !element.paused && element.videoWidth === 960 && element.muted));
   const time = await video.evaluate(element => element.currentTime);
   await page.waitForTimeout(300);
   assert(await video.evaluate((element, time) => element.currentTime > time, time), 'The new film advances');
-  await scene.getByRole('button', { name: 'Dừng video sân chuyển động' }).click();
-  assert(await video.evaluate(element => element.paused));
-  await scene.getByRole('button', { name: 'Phát video sân chuyển động' }).click();
-  await page.waitForFunction(() => !document.querySelector('[data-ambient-scene="court"] video')?.paused);
   // Browser back and hydration must not replace a form while the user is typing.
   const input = page.getByRole('searchbox').first();
   await input.fill('Cầu Giấy');
@@ -49,7 +49,7 @@ try {
   assert(await page.locator('[data-motion-seen]').count() > 0, 'Filter navigation still receives motion');
   await page.goBack(); await page.waitForTimeout(650);
   assert(await page.locator('h1').isVisible());
-  console.log('OK: new film plays/pauses; typing retains value/focus; filter and back navigation settle.');
+  console.log('OK: new film plays without controls; typing retains value/focus; filter and back navigation settle.');
 
   for (const mode of ['reduced', 'save-data', 'no-js', 'failed-video']) {
     const quiet = await browser.newContext(mode === 'reduced' ? { reducedMotion: 'reduce' } : mode === 'no-js' ? { javaScriptEnabled: false } : {});

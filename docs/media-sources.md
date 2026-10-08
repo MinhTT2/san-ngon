@@ -16,7 +16,8 @@ media tích hợp hoặc API key).
 
 Ảnh đã đổi sang WebP và giới hạn chiều rộng để tải nhanh. Video lưu tại dự án,
 chỉ tải khi khối giới thiệu vào màn hình, dừng khi đổi tab/rời khung nhìn, và
-không tự chạy khi giảm chuyển động hoặc tiết kiệm dữ liệu. Có nút dừng/phát.
+không tự chạy khi giảm chuyển động hoặc tiết kiệm dữ liệu. Video nền không có
+nút dừng/phát, tự điều khiển theo khung nhìn và trạng thái tab.
 Carousel có mũi tên chuyển thủ công; tự chuyển dừng khi rê chuột, focus hoặc
 chọn ảnh bằng tay.
 
@@ -35,5 +36,5 @@ sân và quỹ đạo bóng dùng màu trong design system. Tạo lại bằng
 
 Dùng tại phần mở đầu tìm sân và kết nối trên desktop. Video chỉ tải khi vào
 khung nhìn, dừng khi ra ngoài màn hình hoặc đổi tab; chế độ giảm chuyển động,
-tiết kiệm dữ liệu và không có JavaScript dùng poster. Có nút dừng/phát; tải
-lỗi vẫn giữ poster. Không cần API hoặc thêm thư viện animation.
+tiết kiệm dữ liệu và không có JavaScript dùng poster. Video nền không có nút
+dừng/phát; tải lỗi vẫn giữ poster. Không cần API hoặc thêm thư viện animation.
