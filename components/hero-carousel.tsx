@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 const SLIDES = [
   {
@@ -103,14 +103,6 @@ export function HeroCarousel() {
             </div>
           </div>
         ))}
-      </div>
-      <div className="absolute right-3 top-3 z-20 flex items-center gap-2 sm:right-5">
-        <span className="rounded-pill bg-pitch/70 px-2.5 py-1 text-[10px] text-free-fill">Ảnh minh họa</span>
-        <button type="button" onClick={() => setPaused(value => !value)} disabled={!motion}
-          aria-label={paused || !motion ? 'Tự chuyển ảnh' : 'Dừng tự chuyển ảnh'} aria-pressed={!paused && motion}
-          className="pf-action grid size-11 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch disabled:opacity-45">
-          {paused || !motion ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
-        </button>
       </div>
       <button type="button" onClick={() => select(index - 1)} aria-label="Ảnh trước"
         className="pf-action absolute left-1.5 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch focus-visible:outline-free-line sm:left-3 lg:left-6">
