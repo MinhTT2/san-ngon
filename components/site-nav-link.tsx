@@ -16,7 +16,7 @@ export function NavLink({ href, label, compact = false }: { href: string; label:
     <Link
       href={href}
       aria-current={on ? 'page' : undefined}
-      className={`flex flex-none items-center border-b-2 px-2 text-sm ${compact ? 'h-12' : 'h-19 text-[15px]'} ${
+      className={`pf-nav-link flex flex-none items-center border-b-2 px-2 text-sm ${compact ? 'h-12' : 'h-19 text-[15px]'} ${
         on ? 'border-pitch font-semibold text-ink' : 'border-transparent font-medium text-ink-secondary'
       }`}
     >

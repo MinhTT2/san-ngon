@@ -17,5 +17,9 @@ export default function Page() {
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"><a href={source.href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 font-semibold text-pitch underline underline-offset-4">{source.creator}<ExternalLink size={14} aria-hidden="true" /></a><a href={source.licenseHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-ink-secondary underline underline-offset-4">{source.license}</a></div>
       <p className="mt-2 text-sm leading-7 text-ink-secondary">{source.description}</p>
     </article>)}</div>
+    <article className="mt-4 rounded-card border border-hairline bg-card p-5 sm:p-7">
+      <h2 className="font-display text-xl font-bold text-pitch">Sân chuyển động</h2>
+      <p className="mt-3 text-sm leading-7 text-ink-secondary">Video đồ họa gốc của Sân Ngon, dùng ở phần khám phá sân và kết nối. Đường sân và quỹ đạo bóng được vẽ riêng, không đại diện cho một địa điểm đang nhận đặt. Video dài 12 giây, không có âm thanh.</p>
+    </article>
   </main>;
 }

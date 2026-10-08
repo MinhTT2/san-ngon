@@ -27,31 +27,35 @@ export function CountUp({
     const el = ref.current;
     if (!el) return;
 
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || typeof IntersectionObserver === 'undefined') return;
-
-    setValue(0);
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (typeof IntersectionObserver === 'undefined') return;
+    let frame = 0;
+    let finished = false;
+    const quiet = () => {
+      if (!media.matches) return;
+      cancelAnimationFrame(frame); finished = true; setValue(to); io.disconnect();
+    };
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
+        if (!entry.isIntersecting || finished || media.matches) return;
         io.disconnect();
 
         const start = performance.now();
-        let frame = 0;
         const tick = (now: number) => {
           const t = Math.min(1, (now - start) / duration);
           // easeOutCubic: chạy nhanh lúc đầu rồi dừng êm, không giật ở cuối.
           setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
           if (t < 1) frame = requestAnimationFrame(tick);
+          else finished = true;
         };
         frame = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(frame);
       },
       { threshold: 0.4 }
     );
-    io.observe(el);
-    return () => io.disconnect();
+    if (!media.matches) io.observe(el);
+    media.addEventListener('change', quiet);
+    return () => { io.disconnect(); cancelAnimationFrame(frame); media.removeEventListener('change', quiet); };
   }, [to, duration]);
 
   return (

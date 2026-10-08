@@ -66,6 +66,18 @@ try {
     [`/admin/owners/${ids.owner}`, 'Nguyễn Minh', 'Hồ sơ chủ sân'],
   ]);
   const page = admin.page;
+  await page.setViewportSize({ width: 1440, height: 700 });
+  await page.goto(`${origin}/admin`);
+  await page.locator('h1').waitFor(); await page.waitForTimeout(650);
+  const chart = page.locator('.pf-chart-bar').first();
+  assert.equal(await chart.evaluate(element => element.closest('section').hasAttribute('data-motion-seen')), false, 'Offscreen charts wait for the scroll');
+  await page.getByRole('heading', { name: 'Doanh thu theo ngày' }).scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('.pf-chart-bar')?.getAnimations().some(animation => animation.playState === 'running'));
+  const nav = page.getByRole('navigation', { name: 'Điều hướng admin' });
+  const selected = await nav.locator('[aria-current=page]').boundingBox();
+  const marker = await nav.locator('.pf-nav-marker').boundingBox();
+  assert(Math.abs(selected.x - marker.x) < 2 && Math.abs(selected.y - marker.y) < 2 && Math.abs(selected.width - marker.width) < 2, 'Navigation surface follows the selected item');
+  console.log('OK: charts animate when scrolled into view; navigation marker aligns with selection.');
   await page.setViewportSize({ width: 390, height: 1000 });
   await page.goto(`${origin}/admin?view=owners`);
   const list = page.getByRole('region', { name: 'Danh sách hồ sơ chủ sân' });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { NavigationMarker } from './navigation-marker';
 import {
   Building2,
   CalendarDays,
@@ -62,7 +63,8 @@ export function DashboardSidebar({ role }: { role: DashboardRole }) {
             {role === 'admin' ? 'Khu vực quản trị' : 'Khu vực chủ sân'}
           </span>
         </div>
-        <nav ref={navRef} aria-label={role === 'admin' ? 'Điều hướng admin' : 'Điều hướng chủ sân'} className="flex gap-1 overflow-x-auto p-3 lg:mt-4 lg:flex-col lg:p-0">
+        <nav ref={navRef} aria-label={role === 'admin' ? 'Điều hướng admin' : 'Điều hướng chủ sân'} className="pf-dashboard-nav relative isolate flex gap-1 overflow-x-auto p-3 lg:mt-4 lg:flex-col lg:p-0">
+          <NavigationMarker activeKey={`${pathname}?${searchParams.toString()}`} />
           {links.map(({ href, label, icon: Icon }) => {
             const query = href.includes('?') ? new URLSearchParams(href.split('?')[1]).get('view') : null;
             const path = href.split('?')[0];
@@ -76,7 +78,7 @@ export function DashboardSidebar({ role }: { role: DashboardRole }) {
                 key={href}
                 href={href}
                 aria-current={selected ? 'page' : undefined}
-                className={`pf-action flex min-h-11 shrink-0 items-center gap-3 rounded-control px-3 text-sm font-medium transition-colors ${selected ? 'bg-pitch text-pitch-ink' : 'text-ink-secondary hover:bg-sunk hover:text-ink'}`}
+                className={`pf-dashboard-link pf-action flex min-h-11 shrink-0 items-center gap-3 rounded-control px-3 text-sm font-medium transition-colors ${selected ? 'bg-pitch text-pitch-ink' : 'text-ink-secondary hover:bg-sunk hover:text-ink'}`}
               >
                 <Icon className="size-[17px]" strokeWidth={selected ? 2.2 : 1.8} aria-hidden="true" />
                 {label}

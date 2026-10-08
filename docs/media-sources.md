@@ -17,9 +17,23 @@ media tích hợp hoặc API key).
 Ảnh đã đổi sang WebP và giới hạn chiều rộng để tải nhanh. Video lưu tại dự án,
 chỉ tải khi khối giới thiệu vào màn hình, dừng khi đổi tab/rời khung nhìn, và
 không tự chạy khi giảm chuyển động hoặc tiết kiệm dữ liệu. Có nút dừng/phát.
-Carousel có chọn môn, chuyển thủ công và nút bật/tắt tự chuyển.
+Carousel có mũi tên chuyển thủ công; tự chuyển dừng khi rê chuột, focus hoặc
+chọn ảnh bằng tay.
 
 Cả ba môn dùng ảnh minh họa. Chỉ ảnh Wikimedia có giấy phép thương mại đã
 xác minh qua Openverse được đưa vào sản phẩm.
 Khi có bộ ảnh sân thật được chủ sân cho phép dùng ở trang chủ, có thể thay các
 ảnh minh họa; không đổi ảnh xác thực của địa điểm bằng ảnh stock.
+
+## Video đồ họa sân chuyển động
+
+`public/videos/court-flow.webm` và poster `public/media/court-flow.webp` là
+đồ họa gốc được vẽ cho Sân Ngon bằng canvas, không phải cảnh quay một cụm sân.
+Video dài 12 giây, 960 × 540, 24 fps, không âm thanh và lặp liên tục. Đường
+sân và quỹ đạo bóng dùng màu trong design system. Tạo lại bằng
+`scripts/generate-court-film.mjs` trong Chromium headless riêng.
+
+Dùng tại phần mở đầu tìm sân và kết nối trên desktop. Video chỉ tải khi vào
+khung nhìn, dừng khi ra ngoài màn hình hoặc đổi tab; chế độ giảm chuyển động,
+tiết kiệm dữ liệu và không có JavaScript dùng poster. Có nút dừng/phát; tải
+lỗi vẫn giữ poster. Không cần API hoặc thêm thư viện animation.

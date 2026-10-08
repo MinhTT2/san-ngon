@@ -7,6 +7,7 @@ import { ResponsiveDisclosure } from '@/components/responsive-disclosure';
 import { VenueCard, type VenueCardData } from '@/components/venue-card';
 import { SportShortcuts } from '@/components/sport-shortcuts';
 import { DiscoveryEmpty } from '@/components/discovery-empty';
+import { CourtFilm } from '@/components/court-film';
 import { CalendarDays, MapPin, Search, X } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -55,14 +56,17 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-12 pt-6 lg:px-16 lg:pt-8">
-      <header className="grid gap-5 rounded-[24px] border border-strong bg-free-fill p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center">
+      <header className="grid gap-5 rounded-[24px] border border-strong bg-free-fill p-5 sm:p-7 lg:grid-cols-[1fr_280px] lg:items-center">
         <div><p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-pitch"><MapPin size={14} aria-hidden="true" />Hà Nội · Lịch trống theo ngày</p>
           <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight tracking-tight text-pitch sm:text-4xl">Tìm sân, chọn giờ chơi.</h1>
           <p className="mt-3 max-w-lg text-sm leading-6 text-ink-secondary">Chọn môn và khu vực thuận tiện. Xem ảnh sân, giá và giờ trống trước khi đặt.</p>
         </div>
-        <div className="flex items-center gap-5 border-t border-strong pt-4 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+        <div className="flex flex-col gap-4">
+          <CourtFilm className="hidden lg:block" />
+        <div className="flex items-center gap-5 border-t border-strong pt-4">
           <div><p className="font-display text-3xl font-bold tabular-nums text-pitch">{discovery.total}</p><p className="mt-1 text-xs text-ink-secondary">cụm sân phù hợp</p></div>
           <div className="border-l border-strong pl-5"><CalendarDays size={19} className="text-pitch" aria-hidden="true" /><p className="mt-2 text-sm font-semibold text-pitch">{dateLabel}</p><p className="mt-1 text-xs text-ink-secondary">ngày bạn chơi</p></div>
+        </div>
         </div>
       </header>
       <div className="mt-5"><SportShortcuts pathname="/tim-san" sport={sport} params={applied} /></div>
