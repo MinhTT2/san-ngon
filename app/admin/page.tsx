@@ -64,9 +64,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {[{ href: '/admin?view=owners', label: 'Chủ sân chờ duyệt', value: pendingOwners.length, icon: ShieldCheck }, { href: '/admin?view=venues', label: 'Cụm sân hoạt động', value: activeVenues.length, icon: Building2 }, { href: '/admin/users', label: 'Tài khoản trên hệ thống', value: ownerProfiles?.length ?? 0, icon: Users }].map(({ href, label, value, icon: Icon }) => <Link key={href} href={href} className="pf-card flex items-center gap-3 rounded-card border border-hairline bg-card p-4 hover:border-strong"><span className="grid size-10 shrink-0 place-items-center rounded-control bg-free-fill text-pitch"><Icon size={19} aria-hidden="true" /></span><div className="min-w-0 flex-1"><strong className="block font-display text-2xl font-bold tabular-nums text-pitch">{value}</strong><span className="text-xs text-ink-secondary">{label}</span></div><ArrowUpRight size={15} className="shrink-0 text-ink-secondary" aria-hidden="true" /></Link>)}
         </div>
-        <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-pitch">Thống kê giao dịch</p><PeriodLinks path="/admin" period={period} /></div>
-        <AdminStatsPanel stats={stats} />
+        <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-pitch">Thống kê giao dịch</p><PeriodLinks path="/admin" period={period} /></div>
+            <AdminStatsPanel stats={stats} />
+          </div>
+          <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
+        </div>
       </>}
       {view === 'owners' && <OwnerTable owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
       {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
@@ -78,9 +82,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
 function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById }: { pendingOwners: OwnerProfile[]; pendingVenues: VenueRow[]; activeVenueCount: number; profileById: Map<string, OwnerProfile> }) {
   return (
-    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <aside className="min-w-0 space-y-4 xl:sticky xl:top-6">
       <section className="rounded-card border border-hairline bg-card">
-        <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-5 py-4">
           <div>
             <h2 className="font-semibold">Hồ sơ cần xử lý</h2>
             <p className="mt-1 text-xs text-ink-secondary">Duyệt tài khoản trước; chủ sân thêm cụm sân và ảnh để công khai.</p>
@@ -91,10 +95,14 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById 
           <p className="p-10 text-center text-sm text-ink-secondary">Không có hồ sơ nào đang chờ duyệt.</p>
         ) : (
           <ul className="divide-y divide-hairline">
-            {pendingOwners.slice(0, 6).map((owner) => <OwnerRowItem key={owner.id} owner={owner} />)}
-            {pendingVenues.slice(0, 6).map((venue) => <VenueRowItem key={venue.id} venue={venue} profile={profileById.get(venue.owner_id)} />)}
+            {pendingOwners.slice(0, 3).map((owner) => <OwnerRowItem key={owner.id} owner={owner} />)}
+            {pendingVenues.slice(0, 3).map((venue) => <VenueRowItem key={venue.id} venue={venue} profile={profileById.get(venue.owner_id)} />)}
           </ul>
         )}
+        {(pendingOwners.length > 3 || pendingVenues.length > 3) && <div className="border-t border-hairline px-5 py-3 text-xs leading-6 text-ink-secondary">
+          {pendingOwners.length > 3 && <Link href="/admin?view=owners" className="pf-action block min-h-11 py-2 font-semibold text-pitch underline underline-offset-4">Xem đủ {pendingOwners.length} hồ sơ chủ sân →</Link>}
+          {pendingVenues.length > 3 && <Link href="/admin?view=venues" className="pf-action block min-h-11 py-2 font-semibold text-pitch underline underline-offset-4">Xem đủ {pendingVenues.length} hồ sơ sân →</Link>}
+        </div>}
       </section>
 
       <section className="rounded-card border border-hairline bg-card p-5">
@@ -107,7 +115,7 @@ function Overview({ pendingOwners, pendingVenues, activeVenueCount, profileById 
           </div>
         </div>
       </section>
-    </div>
+    </aside>
   );
 }
 
@@ -161,9 +169,9 @@ function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProf
         <p className="truncate font-semibold">{venue.name}</p>
         <p className="mt-1 text-xs text-ink-secondary">{profile?.full_name ?? 'Chưa có tên'} · {profile?.phone ?? venue.phone ?? 'Chưa có số điện thoại'} · {venue.district}</p>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-medium text-peak-ink">{VENUE_STATUS_LABELS[venue.status]}</span>
-        {venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="whitespace-nowrap rounded-pill bg-peak-fill px-2.5 py-1 text-xs font-medium text-peak-ink">{VENUE_STATUS_LABELS[venue.status]}</span>
+        {venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}
         <AdminVenueAction venueId={venue.id} />
       </div>
     </li>

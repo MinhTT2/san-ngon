@@ -12,7 +12,7 @@ export function PeriodLinks({ path, period }: { path: string; period: number }) 
 
 export function OwnerStatsPanel({ stats }: { stats: OwnerStats }) {
   const s = stats.summary;
-  return <section className="mt-5" aria-labelledby="stats-heading">
+  return <section className="pf-stats-container mt-5" aria-labelledby="stats-heading">
     <StatsHeader eyebrow="Hiệu quả kinh doanh" from={stats.from} to={stats.to} />
     <div data-motion-item className="mt-4 overflow-hidden rounded-card border border-pitch bg-pitch text-pitch-ink">
       <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_190px] lg:p-6">
@@ -22,20 +22,20 @@ export function OwnerStatsPanel({ stats }: { stats: OwnerStats }) {
       <div className="grid border-t border-white/15 sm:grid-cols-3"><HeroMetric label="Tỷ lệ lấp đầy" value={`${s.occupancy_pct}%`} icon={Target} /><HeroMetric label="Tỷ lệ hủy / không đến" value={`${s.cancellation_pct}%`} icon={TrendingUp} danger={s.cancellation_pct > 10} /><HeroMetric label="Số đơn phát sinh" value={s.bookings} icon={CalendarCheck} /></div>
     </div>
     <div className="mt-4"><OwnerActions pending={s.pending} cancelled={s.cancelled} /></div>
-    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"><RevenueChart points={stats.daily} /><CourtRanking courts={stats.courts} /></div>
+    <div className="pf-stats-grid mt-4"><RevenueChart points={stats.daily} /><CourtRanking courts={stats.courts} /></div>
   </section>;
 }
 
 export function AdminStatsPanel({ stats }: { stats: AdminStats }) {
   const s = stats.summary;
-  return <section className="mt-5" aria-labelledby="stats-heading">
+  return <section className="pf-stats-container mt-5" aria-labelledby="stats-heading">
     <StatsHeader eyebrow="Sức khỏe nền tảng" from={stats.from} to={stats.to} suffix="Chỉ tính cụm sân đang hoạt động" />
     <div data-motion-item className="mt-4 overflow-hidden rounded-card border border-pitch bg-pitch text-pitch-ink">
       <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_190px] lg:p-6"><div className="flex min-w-0 flex-col justify-between gap-5"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-strong"><Activity className="size-4" aria-hidden="true" /> Đang hoạt động</div><p className="mt-3 text-xs text-strong">Giá trị giao dịch đã chốt</p><p className="mt-1 font-display break-words text-[clamp(1.8rem,4vw,2.6rem)] font-extrabold tracking-tight">{vnd(s.revenue)}</p><p className="mt-3 max-w-md text-sm leading-6 text-strong">Tiền cọc qua hệ thống <strong className="text-pitch-ink">{vnd(s.deposit)}</strong> từ {s.paid_bookings} đơn đã thanh toán.</p></div><div className="flex flex-wrap gap-2 text-xs"><DarkPill label="Người chơi mới" value={`+${s.new_players}`} /><DarkPill label="Cụm sân" value={s.active_venues} /><DarkPill label="Sân hoạt động" value={s.active_courts} /></div></div><OccupancyRing value={s.occupancy_pct} booked={s.booked_hours} capacity={s.capacity_hours} /></div>
       <div className="grid border-t border-white/15 sm:grid-cols-3"><HeroMetric label="Tỷ lệ lấp đầy" value={`${s.occupancy_pct}%`} icon={Target} /><HeroMetric label="Đơn đã chốt" value={`${s.paid_bookings}/${s.bookings}`} icon={CalendarCheck} /><HeroMetric label="Đang hoạt động" value={`${s.active_venues} cụm`} icon={TrendingUp} /></div>
     </div>
     {(s.pending_owners + s.pending_venues + s.pending_bookings) > 0 && <div className="mt-4 rounded-card border border-peak-line bg-peak-fill p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-peak-ink">Cần xử lý</p><p className="mt-1 font-semibold text-peak-ink">Có việc đang chờ trên hệ thống</p><p className="mt-1 text-sm text-peak-ink">{s.pending_owners} hồ sơ chủ sân · {s.pending_venues} hồ sơ cụm sân · {s.pending_bookings} đơn chờ cọc</p></div><ArrowUpRight className="size-5 text-peak-ink" aria-hidden="true" /></div></div>}
-    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"><RevenueChart points={stats.daily} /><VenueRanking venues={stats.venues} /></div>
+    <div className="pf-stats-grid mt-4"><RevenueChart points={stats.daily} /><VenueRanking venues={stats.venues} /></div>
   </section>;
 }
 

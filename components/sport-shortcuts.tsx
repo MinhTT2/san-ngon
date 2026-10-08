@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SPORT_LABELS } from '@/lib/constants';
+import { SportGlyph } from './sport-glyph';
 
 /** Các lối tắt lọc bằng URL: giữ ngày/khu vực, quay lại trang kết quả đầu tiên. */
 export function SportShortcuts({ pathname, sport, params = {} }: {
@@ -12,8 +13,8 @@ export function SportShortcuts({ pathname, sport, params = {} }: {
   };
   return <nav aria-label="Chọn nhanh môn chơi" className="flex min-w-0 gap-2 overflow-x-auto py-1">
     {[['', 'Tất cả môn'], ...Object.entries(SPORT_LABELS)].map(([key, label]) => <Link key={key} href={href(key)} scroll={false} aria-current={(sport || '') === key ? 'true' : undefined}
-      className={`pf-action inline-flex min-h-11 shrink-0 items-center rounded-pill border px-3.5 text-xs font-semibold sm:text-sm ${(sport || '') === key ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-ink-secondary hover:border-strong hover:text-pitch'}`}>
-      {label.replace(' người', '')}
+      className={`pf-action inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill border px-3.5 text-xs font-semibold sm:text-sm ${(sport || '') === key ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-ink-secondary hover:border-strong hover:text-pitch'}`}>
+      <SportGlyph sport={key} className="size-[18px] shrink-0" />{label.replace(' người', '')}
     </Link>)}
   </nav>;
 }

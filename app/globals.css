@@ -297,6 +297,11 @@ button:disabled,
 .pf-dashboard-link { position: relative; z-index: 1; }
 .pf-nav-marker { visibility: hidden; }
 .pf-dashboard-nav[data-marker-ready='true'] .pf-nav-marker { visibility: visible; }
+.pf-stats-container { container-type: inline-size; }
+.pf-stats-grid { display: grid; gap: 1rem; }
+@container (min-width: 860px) {
+  .pf-stats-grid { grid-template-columns: minmax(0, 1fr) 300px; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   [data-motion-seen='true'] {
@@ -334,6 +339,8 @@ button:disabled,
   .pf-nav-link:hover::after { scale: 1 1; }
   .pf-dashboard-link:hover > svg { translate: 2px 0; rotate: -5deg; }
   .pf-card:hover .pf-film-poster { scale: 1.035; }
+  .pf-player-glyph { transition: rotate 300ms ease, scale 300ms ease; }
+  .pf-card:hover .pf-player-glyph { rotate: -8deg; scale: 1.08; }
 }
 @media (prefers-reduced-motion: no-preference) {
   @supports (interpolate-size: allow-keywords) and selector(details::details-content) {
