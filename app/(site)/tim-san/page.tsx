@@ -8,6 +8,7 @@ import { VenueCard, type VenueCardData } from '@/components/venue-card';
 import { SportShortcuts } from '@/components/sport-shortcuts';
 import { DiscoveryEmpty } from '@/components/discovery-empty';
 import { CourtFilm } from '@/components/court-film';
+import { LivePageRefresh } from '@/components/live-page-refresh';
 import { CalendarDays, MapPin, Search, SlidersHorizontal, X } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -56,11 +57,12 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-[1400px] px-5 pb-12 pt-6 lg:px-12 lg:pt-8">
+      <LivePageRefresh scope="discovery" />
       <header className="grid items-center gap-6 border-b border-hairline pb-6 lg:grid-cols-[1fr_280px]">
         <div>
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-secondary"><MapPin size={14} aria-hidden="true" />Hà Nội / Khám phá sân</p>
-          <h1 className="mt-3 font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-pitch sm:text-5xl">Tìm sân, chọn giờ chơi.</h1>
-          <p className="mt-3 max-w-lg text-sm leading-6 text-ink-secondary">Một buổi chơi vừa ý bắt đầu từ đúng sân. Chọn môn, khu vực và giờ thuận tiện cho cả đội.</p>
+          <h1 className="mt-3 font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-pitch sm:text-5xl">Tìm sân ở Hà Nội</h1>
+          <p className="mt-3 max-w-lg text-sm leading-6 text-ink-secondary">Chọn môn, khu vực và ngày chơi để xem sân còn giờ trống.</p>
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-secondary">
             <span><strong className="font-display text-xl text-pitch">{discovery.total}</strong> cụm sân phù hợp</span>
             <span className="flex items-center gap-2"><CalendarDays size={15} aria-hidden="true" />Lịch ngày <strong className="font-semibold text-pitch">{dateLabel}</strong></span>
@@ -71,7 +73,7 @@ export default async function Page({
       <div data-discovery-layout className="mt-6 grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
       <aside className="min-w-0 lg:sticky lg:top-6">
       <form key={JSON.stringify(applied)} action="/tim-san" aria-label="Tìm và lọc sân" className="relative grid grid-cols-2 gap-3 rounded-[20px] border border-hairline bg-card p-4 sm:p-5 lg:grid-cols-1 lg:gap-4">
-        <h2 className="col-span-2 flex items-center gap-2 border-b border-hairline pb-3 font-display text-lg font-bold text-pitch lg:col-span-1"><SlidersHorizontal size={17} aria-hidden="true" />Buổi chơi của bạn</h2>
+        <h2 className="col-span-2 flex items-center gap-2 border-b border-hairline pb-3 font-display text-lg font-bold text-pitch lg:col-span-1"><SlidersHorizontal size={17} aria-hidden="true" />Lọc sân</h2>
         <div className="col-span-2 flex min-w-0 flex-col gap-1.5 lg:col-span-1"><label htmlFor="q" className="text-xs font-semibold text-ink-secondary">Bạn muốn chơi ở đâu?</label><div className="relative"><Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input id="q" name="q" type="search" defaultValue={q} maxLength={100} placeholder="Tên sân, đường hoặc quận" className="h-11 w-full min-w-0 rounded-control border border-hairline bg-page pl-10 pr-3 text-sm" /></div></div>
         <div className="flex min-w-0 flex-col gap-1.5 lg:col-span-1"><label htmlFor="sport" className="text-xs font-semibold text-ink-secondary">Môn thể thao</label><select id="sport" name="sport" defaultValue={sport ?? ''} className="h-11 min-w-0 rounded-control border border-hairline bg-page px-2 text-sm"><option value="">Tất cả môn</option>{Object.entries(SPORT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
         <div className="flex min-w-0 flex-col gap-1.5 lg:col-span-1"><label htmlFor="ngay" className="text-xs font-semibold text-ink-secondary">Ngày chơi</label><input id="ngay" name="ngay" type="date" min={discovery.today} max={discovery.last_date} defaultValue={discovery.date} className="h-11 w-full min-w-0 rounded-control border border-hairline bg-page px-2 text-sm" /></div>
@@ -92,7 +94,7 @@ export default async function Page({
         <Link href={resetHref} className="inline-flex min-h-11 items-center px-2 font-semibold text-pitch underline underline-offset-4">Xóa bộ lọc</Link>
       </div>}
       <div id="ket-qua" className="mt-5 flex flex-wrap items-end justify-between gap-3 border-b border-hairline pb-4">
-        <div><h2 className="font-display text-xl font-bold text-pitch">Sân phù hợp với buổi chơi</h2><p className="mt-2 text-xs leading-6 text-ink-secondary">{discovery.total ? `Hiển thị ${venues.length} trong ${discovery.total} cụm sân · Lịch ngày ${dateLabel}` : `Không có kết quả phù hợp ngày ${dateLabel}`}</p></div>
+        <div><h2 className="font-display text-xl font-bold text-pitch">Danh sách sân</h2><p className="mt-2 text-xs leading-6 text-ink-secondary">{discovery.total ? `Hiển thị ${venues.length} trong ${discovery.total} cụm sân · Lịch ngày ${dateLabel}` : `Không có kết quả phù hợp ngày ${dateLabel}`}</p></div>
         <p className="flex items-center gap-1.5 text-xs text-ink-secondary"><span className="size-1.5 rounded-full bg-pitch" aria-hidden="true" />Khung trống tính trên từng sân con</p>
       </div>
       <ul className="mt-5 grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">

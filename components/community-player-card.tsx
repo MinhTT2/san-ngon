@@ -9,9 +9,9 @@ export function CommunityPlayerCard({ profile: p }: { profile: CommunityProfile 
   const tint = p.sport === 'badminton' ? 'bg-story-lilac' : p.sport === 'pickleball' ? 'bg-story-teal' : 'bg-free-fill';
   return <li className="pf-card group min-w-0 overflow-hidden rounded-[20px] border border-hairline bg-card">
     <Link href={`/ket-noi/${p.user_id}`} className="flex h-full flex-col">
-      <div className={`relative flex min-h-20 items-center justify-between gap-3 overflow-hidden border-b border-hairline px-5 py-4 ${tint}`}>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-pitch">{SPORT_LABELS[p.sport] ?? p.sport}</span>
-        <SportGlyph sport={p.sport} className="pf-player-glyph size-12 shrink-0 text-pitch/65" />
+      <div className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-3">
+        <span className="text-xs font-medium text-ink-secondary">{SPORT_LABELS[p.sport] ?? p.sport}</span>
+        <span className={`grid size-9 shrink-0 place-items-center rounded-control ${tint}`}><SportGlyph sport={p.sport} className="pf-player-glyph size-6 text-pitch" /></span>
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center gap-3.5"><UserAvatar name={p.display_name} avatar={p.avatar_url} className="size-14 shrink-0 text-xl" /><div className="min-w-0"><h3 className="break-words font-display text-xl font-bold leading-snug tracking-tight text-pitch">{p.display_name}</h3><p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-ink-secondary"><MapPin size={13} className="mt-0.5 shrink-0" aria-hidden="true" /><span className="line-clamp-2">{p.location}</span></p></div></div>

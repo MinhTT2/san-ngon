@@ -3,7 +3,6 @@ import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { FeedbackList } from '@/components/feedback-list';
-import { RefreshOnReturn } from '@/components/refresh-on-return';
 import { FEEDBACK_CATEGORIES, FEEDBACK_STATUSES, type Feedback } from '@/lib/feedback';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +28,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const pages = Math.max(1, Math.ceil((count ?? 0) / 20));
   if (page > pages) redirect(href(pages));
   return <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-    <RefreshOnReturn />
     <DashboardPageHeader eyebrow="Quản trị / Hỗ trợ" title="Góp ý từ người dùng" description="Tiếp nhận báo lỗi và đề xuất. Phản hồi hiển thị riêng cho người gửi." />
     <form className="my-6 flex flex-wrap items-end gap-3 rounded-card border border-hairline bg-card p-5">
       <label className="min-w-40 flex-1 text-sm font-semibold">Trạng thái<select name="status" defaultValue={status} className="mt-2 min-h-11 w-full rounded-control border border-hairline bg-page px-3 font-normal"><option value="">Tất cả trạng thái</option>{Object.entries(FEEDBACK_STATUSES).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></label>

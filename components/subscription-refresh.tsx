@@ -1,13 +1,12 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 
 export function SubscriptionRefresh({ ownerId, paidUntil }: { ownerId: string; paidUntil: string | null }) {
-  const router = useRouter();
   useEffect(() => {
     const db = createClient();
-    const refresh = () => router.refresh();
+    // The owner layout coalesces updates and protects forms with unsaved changes.
+    const refresh = () => window.dispatchEvent(new Event('san-ngon:page-refresh'));
     const visible = () => { if (document.visibilityState === 'visible') refresh(); };
     const channel = db.channel(`subscription:${ownerId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'owner_subscriptions', filter: `owner_id=eq.${ownerId}` }, refresh)
@@ -19,6 +18,6 @@ export function SubscriptionRefresh({ ownerId, paidUntil }: { ownerId: string; p
     window.addEventListener('online', refresh);
     document.addEventListener('visibilitychange', visible);
     return () => { stop(); window.clearTimeout(timer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', visible); };
-  }, [ownerId, paidUntil, router]);
+  }, [ownerId, paidUntil]);
   return null;
 }

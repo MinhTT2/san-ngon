@@ -8,20 +8,20 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 const SLIDES = [
   {
     key: 'football', label: 'Bóng đá', image: '/media/football-editorial.webp',
-    eyebrow: 'Kèo tối nay', title: 'Đủ đội rồi.', accent: 'Ra sân thôi.',
+    eyebrow: 'Hà Nội', title: 'Sân bóng cho cả đội',
     description: 'Tìm sân bóng còn chỗ, xem giá rõ ràng và giữ khung giờ cả đội cùng rảnh.',
     href: '/tim-san?sport=football5', cta: 'Tìm sân bóng',
   },
   {
     key: 'badminton', label: 'Cầu lông', image: '/media/badminton-editorial.webp',
-    eyebrow: 'Một giờ cho mình', title: 'Gác việc lại.', accent: 'Cầm vợt lên.',
-    description: 'Sân gần nhà, giờ đẹp, giá rõ ràng. Chọn một khung giờ và hẹn nhau ở sân.',
+    eyebrow: 'Hà Nội', title: 'Đặt sân cầu lông',
+    description: 'Tìm sân trong nhà hoặc ngoài trời. Chọn ngày để xem lịch trống và giá theo giờ.',
     href: '/tim-san?sport=badminton', cta: 'Chọn sân cầu lông',
   },
   {
     key: 'pickleball', label: 'Pickleball', image: '/media/pickleball-editorial.webp',
-    eyebrow: 'Hẹn nhau cuối tuần', title: 'Rủ hội bạn.', accent: 'Ra sân vui hơn.',
-    description: 'Thử một môn mới, chọn sân còn chỗ và chốt lịch thật nhanh.',
+    eyebrow: 'Hà Nội', title: 'Tìm sân pickleball',
+    description: 'Xem vị trí, ảnh sân và giờ còn trống. Chọn thời lượng phù hợp với buổi chơi của bạn.',
     href: '/tim-san?sport=pickleball', cta: 'Tìm sân pickleball',
   },
 ] as const;
@@ -74,7 +74,7 @@ export function HeroCarousel() {
         }
       }}>
       <div className="grid" aria-live={playing ? 'off' : 'polite'}>
-        {SLIDES.map(({ key, label, image, eyebrow, title, accent, description, href, cta }, i) => (
+        {SLIDES.map(({ key, label, image, eyebrow, title, description, href, cta }, i) => (
           <div key={key} role="group" aria-roledescription="slide" aria-label={`${i + 1} / ${SLIDES.length} · ${label}`}
             aria-hidden={i !== index} inert={i !== index}
             className={`relative col-start-1 row-start-1 flex transition-opacity duration-700 motion-reduce:transition-none ${i === index ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'}`}>
@@ -89,8 +89,8 @@ export function HeroCarousel() {
                 <p className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-free-fill">
                   <span className="h-px w-6 bg-free-line" aria-hidden="true" />{label} · {eyebrow}
                 </p>
-                <h2 className="pf-hero-copy font-display text-[36px] font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-[60px]">
-                  {title}<br /><span className="text-free-line">{accent}</span>
+                <h2 className="pf-hero-copy font-display text-[36px] font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[56px]">
+                  {title}
                 </h2>
                 <p className="pf-hero-copy pf-hero-description mt-4 max-w-sm text-sm leading-6 text-free-fill sm:text-[15px] sm:leading-7">{description}</p>
                 <div className="pf-hero-copy pf-hero-cta">

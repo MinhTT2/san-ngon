@@ -2,52 +2,24 @@ import Link from 'next/link';
 import { BrandMark } from './brand-mark';
 
 export function SiteFooter() {
-  return (
-    <footer className="relative mt-24 overflow-hidden bg-pitch text-white">
-      <div aria-hidden="true" className="pointer-events-none absolute right-0 top-0 h-full w-full opacity-20 lg:w-1/2">
-        <svg viewBox="0 0 700 620" className="h-full w-full" preserveAspectRatio="none" fill="none">
-          <path d="M700 60 520 560H40M700 170 580 500H180M700 280 640 450H330" stroke="#9FC6B2" strokeWidth="2" />
-          <path d="M430 0 700 0v620H190" stroke="#F9DED6" strokeWidth="2" />
-          <ellipse cx="510" cy="340" rx="72" ry="40" stroke="#E8E1F5" strokeWidth="2" />
-        </svg>
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-16">
-        <div className="grid gap-10 border-b border-white/15 py-14 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:gap-20 lg:py-20">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-[14px] bg-free-fill p-2"><BrandMark size={32} /></span>
-              <span className="font-display text-2xl font-extrabold tracking-tight">Sân Ngon</span>
-            </div>
-            <h2 className="mt-7 max-w-xl font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">Tối nay có kèo.<br /><span className="text-free-line">Chốt sân thôi.</span></h2>
-            <p className="mt-5 max-w-md text-[15px] leading-7 text-free-line">Lịch trống thật của các sân thể thao ở Hà Nội. Chọn giờ, đặt cọc và hẹn nhau ra sân.</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/tim-san" className="pf-action inline-flex min-h-11 items-center gap-3 rounded-control bg-free-fill px-4 py-2 text-sm font-semibold text-pitch transition-colors hover:bg-white">Tìm sân ngay <span aria-hidden="true">↗</span></Link>
-              <Link href="/dang-ky-san" className="pf-action inline-flex min-h-11 items-center gap-3 rounded-control border border-white/25 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10">Bạn có sân? <span aria-hidden="true">↗</span></Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-9 text-sm sm:grid-cols-3">
-            <FooterGroup title="Người chơi" links={[["Tìm sân", '/tim-san'], ['Giải đấu', '/giai-dau'], ['Kết nối', '/ket-noi'], ['Đơn của tôi', '/don-cua-toi'], ['Sân yêu thích', '/san-yeu-thich']]} />
-            <FooterGroup title="Chủ sân" links={[["Đăng ký chủ sân", '/dang-ky-san'], ['Trang quản lý', '/chu-san'], ['Tài khoản', '/tai-khoan']]} />
-            <FooterGroup title="Hỗ trợ" links={[["Cách hoạt động", '/#cach-hoat-dong'], ['Trung tâm trợ giúp', '/tro-giup'], ['Góp ý / báo lỗi', '/gop-y'], ['Chính sách hủy', '/chinh-sach-huy'], ['Liên hệ', '/lien-he'], ['Nguồn hình ảnh', '/nguon-hinh-anh']]} />
-          </div>
+  return <footer className="mt-14 border-t border-hairline bg-card">
+    <div className="mx-auto max-w-7xl px-5 lg:px-16">
+      <div className="grid gap-8 py-9 md:grid-cols-[1fr_2fr] lg:gap-16">
+        <div>
+          <Link href="/" className="inline-flex min-h-11 items-center gap-2.5 text-pitch"><BrandMark size={30} /><span className="font-display text-xl font-bold">Sân Ngon</span></Link>
+          <p className="mt-3 max-w-xs text-xs leading-6 text-ink-secondary">Đặt sân bóng đá, cầu lông và pickleball ở Hà Nội. Xem lịch trống và giá trước khi đặt.</p>
         </div>
-
-        <div className="flex flex-col gap-4 py-6 text-xs text-free-line sm:flex-row sm:items-center sm:justify-between">
-          <span>© 2026 Sân Ngon · Hà Nội</span>
-          <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-story-coral" /> Chọn giờ hợp ý · Hẹn nhau ra sân</span>
-        </div>
+        <nav aria-label="Liên kết cuối trang" className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3">
+          <FooterGroup title="Người chơi" links={[["Tìm sân", '/tim-san'], ['Giải đấu', '/giai-dau'], ['Kết nối', '/ket-noi'], ['Đơn của tôi', '/don-cua-toi'], ['Sân yêu thích', '/san-yeu-thich']]} />
+          <FooterGroup title="Chủ sân" links={[["Đăng ký chủ sân", '/dang-ky-san'], ['Trang quản lý', '/chu-san'], ['Tài khoản', '/tai-khoan']]} />
+          <FooterGroup title="Hỗ trợ" links={[["Cách đặt sân", '/#cach-hoat-dong'], ['Trung tâm trợ giúp', '/tro-giup'], ['Góp ý / báo lỗi', '/gop-y'], ['Chính sách hủy', '/chinh-sach-huy'], ['Liên hệ', '/lien-he'], ['Nguồn hình ảnh', '/nguon-hinh-anh']]} />
+        </nav>
       </div>
-    </footer>
-  );
+      <p className="border-t border-hairline py-5 text-[11px] text-ink-secondary">© 2026 Sân Ngon · Hà Nội</p>
+    </div>
+  </footer>;
 }
 
 function FooterGroup({ title, links }: { title: string; links: [string, string][] }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/50">{title}</p>
-      {links.map(([label, href]) => <Link key={label} href={href} className="w-fit text-free-line transition-colors hover:text-white">{label}</Link>)}
-    </div>
-  );
+  return <div><p className="mb-2 text-xs font-semibold text-ink">{title}</p>{links.map(([label, href]) => <Link key={label} href={href} className="flex min-h-9 w-fit items-center py-1 text-xs leading-5 text-ink-secondary hover:text-pitch hover:underline">{label}</Link>)}</div>;
 }

@@ -14,7 +14,7 @@ const page = await context.newPage();
 page.on('pageerror', error => errors.push(error.message));
 const overflow = async () => assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Overflow at ${page.viewportSize().width}px`);
 const hero = page.getByRole('region', { name: 'Tìm cảm hứng ra sân' });
-const ownerHeading = page.getByRole('heading', { name: /Bạn chăm sân/ });
+const ownerHeading = page.getByRole('heading', { name: 'Quản lý lịch và đơn đặt sân', exact: true });
 try {
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -73,7 +73,7 @@ try {
   const reduced = await browser.newContext({ reducedMotion: 'reduce' });
   const quiet = await reduced.newPage();
   await quiet.goto(origin); await quiet.locator('h1').waitFor();
-  await quiet.getByRole('heading', { name: /Bạn chăm sân/ }).scrollIntoViewIfNeeded();
+  await quiet.getByRole('heading', { name: 'Quản lý lịch và đơn đặt sân', exact: true }).scrollIntoViewIfNeeded();
   assert.equal(await quiet.locator('video').count(), 0);
   assert.equal(await quiet.locator('[data-hero-carousel]').getAttribute('data-playing'), 'false');
   await quiet.getByRole('button', { name: 'Ảnh tiếp theo', exact: true }).click();
@@ -84,7 +84,7 @@ try {
   await saving.addInitScript(() => Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData: true } }));
   const saver = await saving.newPage();
   await saver.goto(origin); await saver.locator('h1').waitFor();
-  await saver.getByRole('heading', { name: /Bạn chăm sân/ }).scrollIntoViewIfNeeded();
+  await saver.getByRole('heading', { name: 'Quản lý lịch và đơn đặt sân', exact: true }).scrollIntoViewIfNeeded();
   assert.equal(await saver.locator('video').count(), 0); await saving.close();
   const nojs = await browser.newContext({ javaScriptEnabled: false });
   const fallback = await nojs.newPage(); await fallback.goto(origin);
