@@ -98,13 +98,8 @@ button:disabled,
   to   { opacity: 1; }
 }
 
-/* Khối chờ hiện ra khi cuộn tới. Không có JS thì .pf-reveal không bao giờ
-   nhận .is-in, nên mặc định phải là ĐÃ HIỆN — thà không có hiệu ứng còn hơn
-   nội dung tàng hình. JS gắn .pf-armed rồi mới giấu đi. */
-.pf-reveal.pf-armed { opacity: 0; }
-.pf-reveal.pf-armed.is-in {
-  animation: pf-rise 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-}
+/* Reveal and page entrances use Motion Mini after hydration.
+   Their default CSS remains visible, including without JavaScript. */
 
 /* Khối vào trang: chỉ dịch vị trí, nội dung luôn hiện khi JS chưa chạy. */
 .pf-in { animation: pf-arrive 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
@@ -142,11 +137,6 @@ button:disabled,
 .pf-arrow { display: inline-block; }
 
 @media (prefers-reduced-motion: no-preference) {
-  [data-hero-carousel][data-motion='true'] [aria-hidden='false'] .pf-hero-copy {
-    animation: pf-rise 450ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  }
-  [data-hero-carousel][data-motion='true'] [aria-hidden='false'] .pf-hero-description { animation-delay: 70ms; }
-  [data-hero-carousel][data-motion='true'] [aria-hidden='false'] .pf-hero-cta { animation-delay: 140ms; }
 
   .pf-story-step.pf-armed.is-in .pf-story-selected { animation: pf-slot-confirm 350ms 250ms both; }
   .pf-story-step.pf-armed.is-in .pf-story-hold { animation: pf-settle 400ms 450ms both; }
@@ -297,16 +287,45 @@ button:disabled,
 .pf-dashboard-link { position: relative; z-index: 1; }
 .pf-nav-marker { visibility: hidden; }
 .pf-dashboard-nav[data-marker-ready='true'] .pf-nav-marker { visibility: visible; }
+.pf-selection-rail[data-marker-ready='true'] .pf-nav-marker { visibility: visible; }
+.pf-selection-rail[data-marker-ready='true'] .pf-selection-link[aria-current] { background-color: transparent; }
+.pf-selection-rail:has(.rounded-pill) .pf-nav-marker { border-radius: var(--radius-pill); }
 .pf-stats-container { container-type: inline-size; }
 .pf-stats-grid { display: grid; gap: 1rem; }
 @container (min-width: 860px) {
   .pf-stats-grid { grid-template-columns: minmax(0, 1fr) 300px; }
 }
 
+/* Field-inspired framing with flat surfaces and clear information hierarchy. */
+.pf-chart-plot {
+  background-image: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), var(--color-hairline) calc(25% - 1px), var(--color-hairline) 25%);
+}
+.pf-records thead th { letter-spacing: .05em; text-transform: uppercase; }
+.pf-records tbody tr:nth-child(even) { background-color: var(--color-page); }
+.pf-records tbody tr:hover, .pf-records tbody tr:focus-within { background-color: var(--color-free-fill); }
+.pf-dashboard-header h1 { text-wrap: balance; }
+.pf-metric-panel { position: relative; isolation: isolate; }
+.pf-metric-panel::before {
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  width: 250px; height: 250px; right: -65px; top: -70px;
+  border: 1px solid rgb(255 255 255 / .1); border-radius: 50%;
+}
+.pf-metric-panel::after {
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  inset: 16px; border: 1px solid rgb(255 255 255 / .06); border-radius: 8px;
+}
+.pf-player-card { border-top: 3px solid var(--color-pitch); }
+.pf-venue-card h2 a { text-underline-offset: 5px; text-decoration-thickness: 1px; }
+@media (min-width: 768px) {
+  .pf-venue-results[data-sparse='true'] { grid-template-columns: minmax(0, 1fr); }
+  .pf-venue-results[data-sparse='true'] .pf-venue-card { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); }
+  .pf-venue-results[data-sparse='true'] .pf-venue-photo { height: 100%; min-height: 320px; aspect-ratio: auto; }
+  .pf-venue-results[data-sparse='true'] .pf-venue-body { padding: 24px; }
+  .pf-venue-results[data-sparse='true'] .pf-venue-body h2 { font-size: 26px; }
+  .pf-venue-results[data-sparse='true'] .pf-venue-favorite { right: calc(52.5% + 12px); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  [data-motion-seen='true'] {
-    animation: pf-page-enter 520ms cubic-bezier(0.16, 1, 0.3, 1) var(--pf-enter-delay, 0ms);
-  }
   .pf-route-progress > span { animation: pf-progress 8s cubic-bezier(0.1, 0.7, 0.1, 1) both; }
   :where(button, a, summary, input, select, textarea):not(.pf-action):not(.pf-slot) {
     transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, outline-offset 180ms ease;
@@ -316,7 +335,6 @@ button:disabled,
   .pf-card:focus-within { border-color: var(--color-free-line); }
   .pf-nav-link::after { transition: scale 220ms cubic-bezier(0.16, 1, 0.3, 1); }
   .pf-dashboard-link > svg { transition: translate 200ms ease, rotate 200ms ease; }
-  .pf-nav-marker { transition: translate 280ms cubic-bezier(0.16, 1, 0.3, 1), width 280ms ease, height 280ms ease; }
   .pf-dashboard-link[aria-current='page'] > svg { animation: pf-check-pop 220ms ease; }
   tbody tr { transition: background-color 180ms ease; }
   tbody tr:focus-within { background-color: var(--color-free-fill); }

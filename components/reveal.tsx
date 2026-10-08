@@ -1,15 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { enterMotion } from '@/lib/motion';
 
 /**
- * Hiện dần khi cuộn tới. Dùng IntersectionObserver của trình duyệt, không
- * thêm thư viện animation nào — hiệu ứng chỉ có bấy nhiêu mà framer-motion
- * nặng gần 50kb, đắt cho một trang landing.
- *
- * Quan trọng: CSS để mặc định là ĐÃ HIỆN. Chỉ khi component này chạy được
- * mới gắn .pf-armed để giấu đi rồi mới cho hiện. JS hỏng hay bot đọc trang
- * thì nội dung vẫn còn nguyên, không tàng hình.
+ * Scroll entrance through Motion Mini. Server HTML stays visible; an effect
+ * starts only when a block enters the viewport and cleans up its inline styles.
  */
 export function Reveal({
   children,
@@ -22,7 +18,6 @@ export function Reveal({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [armed, setArmed] = useState(false);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -31,26 +26,26 @@ export function Reveal({
 
     // Trình duyệt quá cũ không có IntersectionObserver: để nguyên, khỏi giấu.
     if (typeof IntersectionObserver === 'undefined') return;
-    setArmed(true);
+    let dispose = () => {};
 
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
         setShown(true);
+        dispose = enterMotion(el, delay / 1000, 20);
         io.disconnect();
       },
       // Kích hoạt sớm một chút để khối đã hiện xong trước khi vào hẳn khung nhìn.
       { rootMargin: '0px 0px -12% 0px', threshold: 0.1 }
     );
     io.observe(el);
-    return () => io.disconnect();
-  }, []);
+    return () => { io.disconnect(); dispose(); };
+  }, [delay]);
 
   return (
     <div
       ref={ref}
-      style={shown && delay ? { animationDelay: `${delay}ms` } : undefined}
-      className={`pf-reveal ${armed ? 'pf-armed' : ''} ${shown ? 'is-in' : ''} ${className}`}
+      className={`pf-reveal ${shown ? 'pf-armed is-in' : ''} ${className}`}
     >
       {children}
     </div>

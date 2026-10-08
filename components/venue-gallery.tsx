@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Expand, Images, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { playMotion } from '@/lib/motion';
 
 const photoUrl = (path: string) => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${path}`;
 const initialView = { scale: 1, x: 0, y: 0 };
@@ -113,6 +114,10 @@ function PhotoViewer({ images, name, start, onClose }: { images: string[]; name:
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
   }, [ready, zoom]);
+
+  useEffect(() => {
+    if (ready && photo.current) return playMotion(photo.current, { opacity: [0, 1] }, { duration: 0.3 });
+  }, [source, ready]);
 
   useEffect(() => {
     dialog.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });

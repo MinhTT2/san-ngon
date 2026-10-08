@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { enterMotion } from '@/lib/motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -29,6 +30,7 @@ const INTERVAL = 6500;
 
 /** Ảnh minh họa giới thiệu môn; ảnh địa điểm thật vẫn do chủ sân cung cấp. */
 export function HeroCarousel() {
+  const ref = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -36,6 +38,12 @@ export function HeroCarousel() {
   const [visible, setVisible] = useState(true);
   const [motion, setMotion] = useState(false);
   const playing = motion && !paused && !hovered && !focused && visible;
+
+  useEffect(() => {
+    if (!motion) return;
+    const effects = Array.from(ref.current?.querySelectorAll<HTMLElement>('[aria-hidden="false"] .pf-hero-copy') ?? []).map((element, i) => enterMotion(element, i * 0.065, 18));
+    return () => effects.forEach(dispose => dispose());
+  }, [index, motion]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -62,7 +70,7 @@ export function HeroCarousel() {
   }
 
   return (
-    <div data-hero-carousel="" data-motion={motion && !paused} data-playing={playing} role="region"
+    <div ref={ref} data-hero-carousel="" data-motion={motion && !paused} data-playing={playing} role="region"
       aria-roledescription="carousel" aria-label="Tìm cảm hứng ra sân"
       className="relative isolate overflow-hidden bg-pitch"
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}

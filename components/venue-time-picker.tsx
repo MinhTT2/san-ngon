@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { enterMotion } from '@/lib/motion';
 import { MAX_SLOTS, PEAK_FROM_HOUR, PEAK_TO_HOUR, SPORT_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, hourOf, vnd } from '@/lib/format';
 import type { useAvailability } from '@/lib/use-availability';
@@ -38,6 +39,10 @@ export function VenueTimePicker({
   const choices = times.find((time) => time.startsAt === selection?.startsAt)?.choices ?? [];
   const deposit = selection ? Math.min(selection.total, Math.ceil(selection.total * depositPct / 100 / 1000) * 1000) : 0;
   const summaryRef = useRef<HTMLElement>(null);
+  const summaryContentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (summaryContentRef.current) return enterMotion(summaryContentRef.current, 0, 8);
+  }, [selection?.startsAt, selection?.courtId]);
 
   useEffect(() => {
     if (selection?.startsAt && window.matchMedia('(max-width: 1023px)').matches) {
@@ -125,7 +130,7 @@ export function VenueTimePicker({
         {!selection ? (
           <p className="mt-4 text-sm leading-6 text-pitch-ink/75">Mỗi giờ hiển thị tình trạng của cả cụm. Chọn một giờ còn sân để xem sân được gợi ý và tổng tiền.</p>
         ) : (
-          <div className="pf-settle mt-3 flex flex-col gap-4">
+          <div ref={summaryContentRef} className="mt-3 flex flex-col gap-4">
             <p className="text-sm text-pitch-ink/75">{dayLabel(new Date(selection.startsAt))} · {SPORT_LABELS[sport] ?? sport}</p>
             <div className="flex min-w-0 flex-col gap-2 text-sm font-semibold">
               <label htmlFor="booking-court">Sân của bạn</label>

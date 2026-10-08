@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { enterMotion } from '@/lib/motion';
 
 const ITEMS = 'main > header, main h1, main > form, main > section > h2, [data-motion-item], .pf-card';
 const SKIP = '.pf-reveal, .pf-in, .profile-enter, .checkout, dialog, [role="dialog"], [data-motion-skip]';
@@ -22,10 +23,13 @@ export function SiteMotion() {
     let frame = 0;
     const items = new Set<HTMLElement>();
     const seen = new WeakSet<HTMLElement>();
+    const effects = new Set<() => void>();
     const show = (element: HTMLElement) => {
       if (seen.has(element)) return;
       seen.add(element);
       element.dataset.motionSeen = 'true';
+      const siblings = Array.from(element.parentElement?.children ?? []).filter(sibling => sibling.matches(ITEMS));
+      effects.add(enterMotion(element, Math.max(0, siblings.indexOf(element)) * 0.045));
       observer?.unobserve(element);
     };
     const scan = () => {
@@ -35,14 +39,13 @@ export function SiteMotion() {
         if (items.has(element) || element.closest(SKIP) || element.parentElement?.closest(ITEMS)) return;
         if (!element.getClientRects().length) return;
         items.add(element);
-        const siblings = Array.from(element.parentElement?.children ?? []).filter(sibling => sibling.matches(ITEMS));
-        element.style.setProperty('--pf-enter-delay', `${Math.min(Math.max(0, siblings.indexOf(element)), 4) * 55}ms`);
         observer?.observe(element);
       });
     };
     const sync = () => {
       observer?.disconnect();
       if (media.matches || typeof IntersectionObserver === 'undefined') {
+        effects.forEach(dispose => dispose()); effects.clear();
         items.forEach(element => { delete element.dataset.motionSeen; });
         return;
       }
@@ -62,7 +65,8 @@ export function SiteMotion() {
     return () => {
       observer?.disconnect(); mutations.disconnect(); cancelAnimationFrame(frame);
       media.removeEventListener('change', sync);
-      items.forEach(element => { delete element.dataset.motionSeen; element.style.removeProperty('--pf-enter-delay'); });
+      effects.forEach(dispose => dispose());
+      items.forEach(element => { delete element.dataset.motionSeen; });
     };
   }, [route]);
 

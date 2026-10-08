@@ -20,6 +20,13 @@ admin/chủ sân ở nhiều cỡ màn hình. Ảnh lưu ở `output/automated-u
 thư mục tạm và server kiểm thử được dọn khi chạy xong. Có thể đặt
 `CHROMIUM_EXECUTABLE` nếu máy đã có Chromium riêng.
 
+Animation dùng `motion/mini` (Motion), kết hợp observer cho nội dung khi cuộn
+và CSS cho trạng thái hover/lịch. Nội dung HTML luôn đọc được trước khi JS
+chạy; hiệu ứng trả lại style ban đầu khi xong, khi đóng component và khi
+người dùng bật giảm chuyển động. Không dùng animation để thay/remount form.
+Bài kiểm tra tương tác kiểm tra vùng chọn, bố cục thẻ sân ít kết quả,
+phóng to ảnh, focus hộp thoại và đổi tùy chọn giảm chuyển động ngay lúc mở.
+
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.
 Ảnh desktop/mobile được lưu trong artifact `ui-desktop-mobile` 14 ngày,

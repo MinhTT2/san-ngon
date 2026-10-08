@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { vnd } from '@/lib/format';
 
 /**
  * Số đếm tăng dần khi cuộn tới. Không thêm thư viện — requestAnimationFrame
@@ -12,11 +13,13 @@ import { useEffect, useRef, useState } from 'react';
 export function CountUp({
   to,
   suffix = '',
+  format,
   duration = 900,
   className = '',
 }: {
   to: number;
   suffix?: string;
+  format?: 'money';
   duration?: number;
   className?: string;
 }) {
@@ -60,7 +63,7 @@ export function CountUp({
 
   return (
     <span ref={ref} className={`tabular-nums ${className}`}>
-      {value}
+      {format === 'money' ? vnd(value) : value}
       {suffix}
     </span>
   );

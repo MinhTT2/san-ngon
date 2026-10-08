@@ -57,7 +57,14 @@ const server = createServer(async (req, res) => {
       const rows = publicPlayers.filter(p => (!args.p_sport || p.sport === args.p_sport) && (!args.p_location || p.location.toLowerCase().includes(args.p_location.toLowerCase())));
       send({ total: rows.length, rows }); return;
     }
-    if (name === 'get_venue_availability') { send([]); return; }
+    if (name === 'get_venue_calendar') {
+      send({ today: '2026-10-08', date: args.p_date || '2026-10-08', last_date: '2026-11-07', days: [{ date: '2026-10-08', weekday: 4 }, { date: '2026-10-09', weekday: 5 }] }); return;
+    }
+    if (name === 'venue_accepts_bookings') { send(true); return; }
+    if (name === 'get_venue_availability') {
+      const date = args.p_date || '2026-10-08';
+      send([10, 11, 12, 13, 14, 15, 16, 17].map(hour => ({ court_id: courtId, court_name: court.name, sport: court.sport, slot_minutes: 60, starts_at: `${date}T${hour}:00:00+07:00`, ends_at: `${date}T${hour + 1}:00:00+07:00`, price: 100000, is_available: true }))); return;
+    }
     const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     send(rpc[name]); return;
