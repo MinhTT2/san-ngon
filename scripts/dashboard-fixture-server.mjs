@@ -35,6 +35,15 @@ const stats = { from: '2026-09-09', to: '2026-10-08', summary, daily: Array.from
 const feedback = [{ id: 'feedback-1', category: 'bug', title: 'Cần hỗ trợ chọn lịch', message: 'Tôi muốn xem lịch ở một ngày khác.', page_path: '/tim-san', status: 'new', reply: null, created_at: created, updated_at: created, sender: { full_name: 'Lê Hải' } }];
 const users = people.slice(0, 5).map((p, i) => ({ ...p, email: `test${i}@example.invalid`, is_banned: i === 3, banned_until: i === 3 ? 'infinity' : null, ban_reason: i === 3 ? 'Tài khoản kiểm tra' : null }));
 const publicVenues = [{ ...venues[0], court_count: 3, sports: ['badminton'], available_slots: 18, min_price: 100000, next_slot: future }];
+const additionalVenues = Array.from({ length: 20 }, (_, i) => ({
+  ...venues[0], id: `cccccccc-cccc-4ccc-8ccc-${String(i + 2).padStart(12, '0')}`,
+  name: `Sân kiểm thử ${String(i + 1).padStart(2, '0')}`, slug: `san-kiem-thu-${i + 1}`,
+  district: i % 2 ? 'Ba Đình' : 'Cầu Giấy', address: `Địa chỉ kiểm thử ${i + 1}, Hà Nội`,
+  court_count: 2, sports: ['badminton', 'pickleball'], available_slots: i % 4 ? 12 : 0,
+  min_price: 110000 + i * 1000, next_slot: i % 4 ? future : null, indoor: i % 2 === 0,
+}));
+const favoriteRows = [{ id: venueId, name: venues[0].name, slug: venues[0].slug, address: venues[0].address, district: venues[0].district, image: 'fixture1.webp' },
+  { id: 'cccccccc-cccc-4ccc-8ccc-000000000999', name: 'Sân kiểm thử tạm ngưng', slug: null, address: null, district: null, image: null }];
 const publicPlayers = [
   { user_id: ownerId, display_name: 'Minh', location: 'Cầu Giấy, Hà Nội', sport: 'badminton', skill_level: 'intermediate', usual_play_times: 'Tối thứ ba và thứ năm', bio: 'Chơi đôi, thường đặt sân trong nhà.', avatar_url: null },
   { user_id: adminId, display_name: 'Hà', location: 'Ba Đình, Hà Nội', sport: 'pickleball', skill_level: 'beginner', usual_play_times: 'Sáng cuối tuần', bio: 'Mới chơi, muốn tập đều cuối tuần.', avatar_url: null },
@@ -54,9 +63,11 @@ const server = createServer(async (req, res) => {
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
   let connectionState = 'ready';
+  let catalog = 'default', favoriteState = 'default', mixedSports = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
+    catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports;
   } catch { /* Anonymous requests use only public fixture data. */ }
   const me = role === 'owner' ? people[1] : people[0];
   const send = (data, code = 200) => { res.statusCode = code; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
@@ -72,9 +83,16 @@ const server = createServer(async (req, res) => {
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const name = url.pathname.split('/').at(-1);
     if (name === 'search_venues') {
-      const rows = publicVenues.filter(v => (!args.p_sport || v.sports.includes(args.p_sport)) && (!args.p_district || v.district === args.p_district) && (!args.p_query || `${v.name} ${v.address}`.toLowerCase().includes(args.p_query.toLowerCase())));
-      send({ today: '2026-10-08', date: args.p_date || '2026-10-08', last_date: '2026-11-07', total: rows.length, page: 1, pages: 1, venues: rows }); return;
+      const candidates = catalog === 'many' ? [...publicVenues.map(v => ({ ...v, indoor: true })), ...additionalVenues] : publicVenues.map(v => ({ ...v, indoor: true }));
+      const matching = candidates.filter(v => (!args.p_sport || v.sports.includes(args.p_sport)) && (!args.p_district || v.district === args.p_district)
+        && (args.p_indoor == null || v.indoor === args.p_indoor) && (!args.p_available || v.available_slots > 0)
+        && (!args.p_query || `${v.name} ${v.address}`.toLowerCase().includes(args.p_query.toLowerCase())));
+      matching.sort((a, b) => args.p_sort === 'price' ? (a.min_price ?? Infinity) - (b.min_price ?? Infinity) : args.p_sort === 'availability' ? b.available_slots - a.available_slots : a.name.localeCompare(b.name, 'vi'));
+      const pages = Math.max(1, Math.ceil(matching.length / 9));
+      const page = Math.max(1, Math.min(args.p_page || 1, pages));
+      send({ today: '2026-10-08', date: args.p_date || '2026-10-08', last_date: '2026-11-07', total: matching.length, page, pages, page_size: 9, venues: matching.slice((page - 1) * 9, page * 9) }); return;
     }
+    if (name === 'get_my_favorites') { send(favoriteState === 'empty' ? [] : favoriteState === 'active-only' ? favoriteRows.slice(0, 1) : favoriteRows); return; }
     if (name === 'search_community') {
       const rows = publicPlayers.filter(p => (!args.p_sport || p.sport === args.p_sport) && (!args.p_location || p.location.toLowerCase().includes(args.p_location.toLowerCase())));
       send({ total: rows.length, rows }); return;
@@ -85,7 +103,8 @@ const server = createServer(async (req, res) => {
     if (name === 'venue_accepts_bookings') { send(true); return; }
     if (name === 'get_venue_availability') {
       const date = args.p_date || '2026-10-08';
-      send([10, 11, 12, 13, 14, 15, 16, 17].map(hour => ({ court_id: courtId, court_name: court.name, sport: court.sport, slot_minutes: 60, starts_at: `${date}T${hour}:00:00+07:00`, ends_at: `${date}T${hour + 1}:00:00+07:00`, price: 100000, is_available: true }))); return;
+      const slots = [10, 11, 12, 13, 14, 15, 16, 17].map(hour => ({ court_id: courtId, court_name: court.name, sport: court.sport, slot_minutes: 60, starts_at: `${date}T${hour}:00:00+07:00`, ends_at: `${date}T${hour + 1}:00:00+07:00`, price: 100000, is_available: true }));
+      send(mixedSports ? [...slots, ...slots.map(slot => ({ ...slot, court_id: 'dddddddd-dddd-4ddd-8ddd-ddddddddddde', court_name: 'Pickleball 01', sport: 'pickleball', price: 120000 }))] : slots); return;
     }
     if (name === 'get_my_sepay_connection' && connectionState !== 'ready') {
       send({ status: connectionState === 'authorized' ? 'setup' : connectionState, bank: null, account_number: null, account_name: null, bank_account_id: null, has_authorization: connectionState === 'authorized', rollout_enabled: false, checked_at: null, last_webhook_at: null }); return;
@@ -98,7 +117,9 @@ const server = createServer(async (req, res) => {
   const table = url.pathname.split('/').at(-1);
   if (table === 'bookings' && url.searchParams.has('code')) { send(checkoutBookings[url.searchParams.get('code').replace(/^eq\./, '')] ?? null); return; }
   if (!(table in tables)) { send({ message: `Unknown fixture table ${table}` }, 404); return; }
-  let rows = [...tables[table]];
+  if (table === 'venue_favorites' && favoriteState === 'error') { send({ message: 'Favorite read interrupted' }, 503); return; }
+  let rows = table === 'venues' && catalog === 'many' ? [...venues, ...additionalVenues]
+    : table === 'venue_favorites' && favoriteState === 'saved' ? [{ user_id: me.id, venue_id: venueId }] : [...tables[table]];
   if (table === 'notifications') {
     rows = rows.filter(row => row.user_id === me.id);
     if (url.searchParams.get('read_at') === 'is.null') rows = rows.filter(row => row.read_at === null);

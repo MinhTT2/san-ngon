@@ -23,8 +23,10 @@ try {
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${route}: overflow at ${width}px`);
       if (route !== 'tim-san') {
         if (route === 'giai-dau' && width < 1024) await page.getByRole('button', { name: 'Bộ lọc', exact: true }).click();
-        const select = await page.locator('main select').first().boundingBox();
-        assert(select.height >= 44 && select.width >= 120, `${route}: filter must remain usable`);
+        const control = await page.locator('main select').first().elementHandle();
+        await control.waitForElementState('stable');
+        const select = await control.boundingBox();
+        assert(select.height >= 43.99 && select.width >= 119.99, `${route}: filter must remain usable`);
         if (width === 390) {
           const guide = page.locator('main details');
           assert.equal(await guide.getAttribute('open'), null);

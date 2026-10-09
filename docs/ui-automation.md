@@ -71,6 +71,17 @@ Cảnh báo rời trang dùng `beforeunload`; liên kết trong website và các
 chặn được Back/Forward trong cùng tài liệu. Không tự lưu dữ liệu ngân hàng
 hay form vào bộ nhớ trình duyệt.
 
+Tìm sân và lưu sân có nhóm `--only=check-player-discovery`: tìm kiếm đang
+tải, ngăn gửi lặp, đưa focus về kết quả, giữ bộ lọc/phân trang/môn chơi
+khi mở sân và đổi ngày, nới từng bộ lọc khi không có kết quả. Form tìm sân
+vẫn gửi GET khi tắt JavaScript. Nút lưu sân dùng trạng thái đã xác nhận từ
+API; lỗi/trạng thái chưa đọc nằm dưới nội dung thẻ, có thử lại và đăng nhập
+về đúng trang khi phiên hết hạn. Sân yêu thích có dữ liệu thiếu ảnh và sân
+chưa công khai; bỏ lưu trả focus về tiêu đề danh sách. Đổi giờ ở bước thông
+tin giữ tên, điện thoại và ghi chú trong bộ nhớ của lần mở trang hiện tại.
+Dữ liệu gồm một danh mục giả có nhiều trang và sân nhiều môn; mọi request
+lưu sân/tạo đơn được chặn và trả dữ liệu giả, không dùng database thật.
+
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.
 Ảnh desktop/mobile được lưu trong artifact `ui-desktop-mobile` 14 ngày,

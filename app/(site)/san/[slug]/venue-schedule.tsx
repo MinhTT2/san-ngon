@@ -11,6 +11,8 @@ import type { Selection, VenueCalendar } from '@/lib/types';
 
 export function VenueSchedule({
   venueId,
+  initialSport,
+  returnPath,
   depositPct,
   calendar,
   defaultName,
@@ -18,6 +20,8 @@ export function VenueSchedule({
   isAuthenticated,
 }: {
   venueId: string;
+  initialSport?: import('@/lib/types').Sport;
+  returnPath?: string;
   depositPct: number;
   calendar: VenueCalendar;
   defaultName?: string | null;
@@ -75,7 +79,7 @@ export function VenueSchedule({
           defaultPhone={draftContact?.phone ?? defaultPhone}
           defaultNote={draftContact?.note}
           isAuthenticated={isAuthenticated}
-          onCancel={() => setConfirming(false)}
+          onCancel={(contact) => { setDraftContact(contact); setConfirming(false); }}
         />
       </div>
     );
@@ -86,6 +90,8 @@ export function VenueSchedule({
       <div className="rounded-card border border-hairline bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-secondary"><CalendarDays size={14} aria-hidden="true" />Bước 1 · Chọn ngày</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Bạn muốn chơi ngày nào?</h2></div><p className="flex items-center gap-1.5 text-xs text-ink-secondary"><Clock3 size={14} aria-hidden="true" />Giữ chỗ 15 phút khi tạo đơn</p></div>
         <form className="mt-4 flex flex-wrap items-end gap-3">
+          {initialSport && <input type="hidden" name="sport" value={initialSport} />}
+          {returnPath && <input type="hidden" name="from" value={returnPath} />}
           <label className="flex flex-col gap-1.5 text-sm font-semibold">Ngày chơi
             <input key={date} name="ngay" type="date" required min={calendar.today} max={calendar.last_date} defaultValue={date}
               className="h-11 rounded-control border border-hairline bg-page px-3 text-sm" />
@@ -95,7 +101,7 @@ export function VenueSchedule({
         </form>
         <div aria-label="Chọn nhanh ngày chơi" className="mt-4 flex gap-2 overflow-x-auto py-1">
           {calendar.days.map((day) => (
-            <Link key={day.date} href={`?ngay=${day.date}`} scroll={false} aria-current={day.date === date ? 'date' : undefined}
+            <Link key={day.date} href={`?${new URLSearchParams({ ngay: day.date, ...(initialSport ? { sport: initialSport } : {}), ...(returnPath ? { from: returnPath } : {}) })}`} scroll={false} aria-current={day.date === date ? 'date' : undefined}
               className={`pf-action flex h-16 w-16 flex-none flex-col items-center justify-center gap-0.5 rounded-control border ${day.date === date ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-page hover:border-pitch'}`}>
               <span className="text-[11px] font-semibold uppercase opacity-75">{day.date === calendar.today ? 'Hôm nay' : ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][day.weekday - 1]}</span>
               <span className="text-lg font-semibold tabular-nums">{day.date.slice(8, 10)}</span>
@@ -105,7 +111,7 @@ export function VenueSchedule({
         </div>
       </div>
 
-      <VenueTimePicker availability={availability} depositPct={depositPct} onConfirm={confirm} />
+      <VenueTimePicker availability={availability} depositPct={depositPct} initialSport={initialSport} onConfirm={confirm} />
     </div>
   );
 }

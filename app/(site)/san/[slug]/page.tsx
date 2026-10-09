@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { VenueSchedule } from './venue-schedule';
+import { venueDiscoveryReturn } from '@/lib/venue-discovery-links';
+import { VenueSearchParams } from '@/lib/search-params';
 import { CANCEL_WINDOW_HOURS, SPORT_LABELS } from '@/lib/constants';
 import { ArrowDown, ArrowLeft, Check, Clock3, Layers3, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { VenueGallery } from '@/components/venue-gallery';
@@ -13,9 +15,9 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ngay?: string }>;
+  searchParams: Promise<{ ngay?: string; sport?: string; from?: string }>;
 }) {
-  const [{ slug }, { ngay }] = await Promise.all([params, searchParams]);
+  const [{ slug }, { ngay, sport, from }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
 
   const { data: venue } = await supabase
@@ -33,6 +35,8 @@ export default async function Page({
   });
   if (calendarError || !calendarData) throw new Error('Không tải được ngày đặt sân. Vui lòng thử lại.');
   const calendar = calendarData as unknown as VenueCalendar;
+  const initialSport = VenueSearchParams.shape.sport.parse(sport);
+  const returnPath = venueDiscoveryReturn(from, calendar.date) ?? `/tim-san?ngay=${calendar.date}#ket-qua`;
 
   const { data: acceptsBookings, error: bookingAvailabilityError } = await supabase.rpc('venue_accepts_bookings', { p_venue_id: venue.id });
   if (bookingAvailabilityError) throw new Error('Không kiểm tra được trạng thái nhận đặt sân.');
@@ -49,7 +53,7 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-12 pt-6 lg:px-16 lg:pt-8">
-      <nav aria-label="Điều hướng trang sân" className="mb-4 flex flex-wrap items-center gap-2 text-xs text-ink-secondary"><Link href={ngay ? `/tim-san?ngay=${encodeURIComponent(ngay)}` : '/tim-san'} className="pf-action inline-flex min-h-11 items-center gap-2 font-semibold text-pitch"><ArrowLeft size={14} aria-hidden="true" />Tìm sân</Link><span aria-hidden="true">/</span><span>{venue.district}</span></nav>
+      <nav aria-label="Điều hướng trang sân" className="mb-4 flex flex-wrap items-center gap-2 text-xs text-ink-secondary"><Link href={returnPath} className="pf-action inline-flex min-h-11 items-center gap-2 font-semibold text-pitch"><ArrowLeft size={14} aria-hidden="true" />{returnPath.startsWith('/san-yeu-thich') ? 'Sân yêu thích' : 'Kết quả tìm sân'}</Link><span aria-hidden="true">/</span><span>{venue.district}</span></nav>
       <header className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:flex-wrap">
         <div className="min-w-0 w-full sm:w-auto sm:flex-1"><div className="mb-3 flex flex-wrap gap-2">{sports.map(sport => <span key={sport} className="rounded-pill border border-strong bg-free-fill px-3 py-1 text-xs font-semibold text-pitch">{sport}</span>)}</div>
           <h1 className="break-words font-display text-3xl font-extrabold leading-tight tracking-tight text-pitch sm:text-4xl">{venue.name}</h1>
@@ -82,6 +86,8 @@ export default async function Page({
         {acceptsBookings ? <VenueSchedule
           key={calendar.date}
           calendar={calendar}
+          initialSport={initialSport}
+          returnPath={returnPath}
           venueId={venue.id}
           depositPct={venue.deposit_pct}
           defaultName={profile?.full_name}

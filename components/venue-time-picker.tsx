@@ -11,16 +11,18 @@ import type { Court, Sport } from '@/lib/types';
 
 export function VenueTimePicker({
   availability: a,
+  initialSport,
   courts = [],
   depositPct,
   onConfirm,
 }: {
   availability: ReturnType<typeof useAvailability>;
+  initialSport?: Sport;
   courts?: Pick<Court, 'id' | 'surface' | 'is_indoor'>[];
   depositPct: number;
   onConfirm: () => void;
 }) {
-  const [chosenSport, setChosenSport] = useState<Sport | null>(a.selection?.slots[0].sport ?? null);
+  const [chosenSport, setChosenSport] = useState<Sport | null>(a.selection?.slots[0].sport ?? initialSport ?? null);
   const [chosenDuration, setChosenDuration] = useState<number | null>(a.selection?.slots.reduce((sum, slot) => sum + slot.slot_minutes, 0) ?? null);
   const sports = [...new Set(a.slots.map((slot) => slot.sport))];
   const sport = chosenSport && sports.includes(chosenSport) ? chosenSport : sports[0];

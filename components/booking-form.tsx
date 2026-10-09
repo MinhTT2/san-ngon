@@ -28,7 +28,7 @@ export function BookingForm({
   defaultPhone?: string | null;
   defaultNote?: string;
   isAuthenticated: boolean;
-  onCancel: () => void;
+  onCancel: (contact: { name: string; phone: string; note: string }) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -77,7 +77,7 @@ export function BookingForm({
       const json = await res.json();
 
       if (!res.ok) { setError(json.error ?? 'Không đặt được sân.'); return; }
-      sessionStorage.removeItem('san-ngon:booking-draft');
+      try { sessionStorage.removeItem('san-ngon:booking-draft'); } catch { /* Storage can be blocked; the server-created order still opens. */ }
       router.push(`/dat-san/${json.booking.code}`);
     } catch {
       setError('Không kết nối được. Kiểm tra mạng và thử lại.');
@@ -157,8 +157,8 @@ export function BookingForm({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button type="button" disabled={busy} onClick={() => {
-          sessionStorage.removeItem('san-ngon:booking-draft');
-          onCancel();
+          try { sessionStorage.removeItem('san-ngon:booking-draft'); } catch { /* Keep choosing hours available when storage is blocked. */ }
+          onCancel({ name, phone, note });
         }}
           className="pf-action inline-flex min-h-11 items-center justify-center rounded-control border border-hairline px-4 text-sm font-semibold hover:bg-sunk disabled:opacity-60">
           Chọn lại
