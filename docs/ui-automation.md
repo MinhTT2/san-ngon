@@ -51,6 +51,14 @@ thử lại khóa/mở lịch. Request thay đổi lịch đều bị chặn, kh
 Menu tài khoản được kiểm tra mũi tên, Home/End, Escape và Tab. Các liên kết
 admin “Cần xử lý” được kiểm tra bộ lọc hồ sơ và đơn chờ cọc.
 
+Checkout có nhóm `--only=check-checkout-ux`: tóm tắt sân/giờ trên mobile,
+tải lại QR lỗi và giữ đúng người nhận/số tiền/mã đơn, mất mạng và nối lại,
+lỗi đọc trạng thái, cập nhật realtime đến trước phản hồi đọc cũ, cùng các
+trạng thái đã xác nhận/đã chơi/hủy/hết hạn/chưa có tài khoản nhận cọc.
+WebSocket, QR và dữ liệu đơn đều được giả lập trên trình duyệt cô lập;
+không tải QR thật, gửi tiền hoặc ghi database. Bài kiểm tra chờ qua 15 giây
+để xác nhận checkout không polling trạng thái thanh toán.
+
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.
 Ảnh desktop/mobile được lưu trong artifact `ui-desktop-mobile` 14 ngày,

@@ -16,6 +16,16 @@ const court = { id: courtId, venue_id: venueId, name: 'Cầu lông 01', sport: '
 const venues = [{ id: venueId, name: 'Sân Cầu Giấy', slug: 'san-cau-giay', address: '123 Cầu Giấy, Hà Nội', district: 'Cầu Giấy', status: 'active', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: null, images: ['fixture1.webp', 'fixture2.webp', 'fixture3.webp'], open_time: '06:00:00', close_time: '23:00:00', deposit_pct: 100, booking_horizon_days: 30, description: 'Sân trong nhà, đủ ánh sáng và có chỗ để xe.', amenities: ['Chỗ để xe'], courts: [court] }, { id: 'venue-pending', name: 'Sân chờ duyệt', slug: 'san-cho-duyet', district: 'Ba Đình', status: 'pending', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: 'fixture.pdf', courts: [] }];
 const bookings = [{ id: 'booking-1', code: 'SANABC234', court_id: courtId, starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 3600000).toISOString(), status: 'confirmed', total_amount: 100000, deposit_amount: 100000, refund_status: null, customer_name: 'Lê Hải', customer_phone: base.phone, courts: { name: court.name, venue_id: venueId, venues: { name: venues[0].name, slug: venues[0].slug, district: venues[0].district, status: 'active' }, sport: 'badminton' } }, { id: 'booking-2', code: 'SANDEF567', court_id: courtId, starts_at: future, ends_at: '2026-12-01T04:00:00Z', status: 'pending', total_amount: 120000, deposit_amount: 120000, refund_status: null, customer_name: 'Mai Anh', customer_phone: base.phone, courts: { name: court.name, venue_id: venueId, venues: { name: venues[0].name, slug: venues[0].slug, district: venues[0].district, status: 'active' }, sport: 'badminton' } }];
 bookings.forEach((booking, i) => { booking.expires_at = new Date(Date.now() + 15 * 60000).toISOString(); booking.paid_at = i === 0 ? created : null; });
+const checkoutBase = { ...bookings[1], id: 'checkout-pending', payment_bank: 'MB', payment_account: '0123456789', payment_account_name: 'SAN NGON KIEM THU', courts: { ...bookings[1].courts, venues: { ...bookings[1].courts.venues, address: venues[0].address } } };
+const checkoutBookings = {
+  SANDEF567: checkoutBase,
+  SANABC234: { ...checkoutBase, id: 'checkout-confirmed', code: 'SANABC234', status: 'confirmed' },
+  SANHJK234: { ...checkoutBase, id: 'checkout-completed', code: 'SANHJK234', status: 'completed', starts_at: created, ends_at: '2026-10-01T04:00:00Z' },
+  SANCAN234: { ...checkoutBase, id: 'checkout-cancelled', code: 'SANCAN234', status: 'cancelled' },
+  SANEXP234: { ...checkoutBase, id: 'checkout-expired', code: 'SANEXP234', expires_at: created },
+  SANBAD234: { ...checkoutBase, id: 'checkout-unconfigured', code: 'SANBAD234', payment_account: '' },
+  SANLNG234: { ...checkoutBase, id: 'checkout-long', code: 'SANLNG234', total_amount: 1500000, deposit_amount: 1500000, courts: { ...checkoutBase.courts, venues: { ...checkoutBase.courts.venues, name: 'Cụm sân thể thao Cầu Giấy — Nhà thi đấu phía Tây' } } },
+};
 const subscription = { owner_id: ownerId, full_name: 'Nguyễn Minh', phone: base.phone, fee_required: false, paid_until: future, active: true, amount: 299000 };
 const invoice = { id: 'invoice-1', owner_id: ownerId, code: 'PHI1234ABCD', amount: 299000, status: 'paid', created_at: created, paid_at: created, period_end: future };
 const pendingTournament = { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'Giải cầu lông mùa thu', sport: 'badminton', starts_at: future, ends_at: '2026-12-01T08:00:00Z', registration_deadline: '2026-11-25T03:00:00Z', capacity: 16, entry_fee: 200000, deposit_amount: 100000, address: venues[0].address, status: 'pending', cover_path: null };
@@ -78,6 +88,7 @@ const server = createServer(async (req, res) => {
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture is read-only.' }, 403); return; }
   const table = url.pathname.split('/').at(-1);
+  if (table === 'bookings' && url.searchParams.has('code')) { send(checkoutBookings[url.searchParams.get('code').replace(/^eq\./, '')] ?? null); return; }
   if (!(table in tables)) { send({ message: `Unknown fixture table ${table}` }, 404); return; }
   let rows = [...tables[table]];
   if (table === 'notifications') {
