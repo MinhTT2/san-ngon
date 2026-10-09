@@ -1214,15 +1214,63 @@ export type Database = {
           },
         ]
       }
+      owner_application_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          reason: string | null
+          reviewer_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          reason?: string | null
+          reviewer_id?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          reason?: string | null
+          reviewer_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_application_reviews_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_application_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          ban_reason: string | null
+          banned_at: string | null
+          banned_until: string | null
           business_license_name: string | null
           business_license_path: string | null
           created_at: string
           full_name: string | null
           id: string
           owner_application_status: string | null
+          owner_rejection_reason: string | null
+          owner_reviewed_at: string | null
+          owner_reviewed_by: string | null
           payout_account: string | null
           payout_bank: string | null
           phone: string | null
@@ -1233,12 +1281,18 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_until?: string | null
           business_license_name?: string | null
           business_license_path?: string | null
           created_at?: string
           full_name?: string | null
           id: string
           owner_application_status?: string | null
+          owner_rejection_reason?: string | null
+          owner_reviewed_at?: string | null
+          owner_reviewed_by?: string | null
           payout_account?: string | null
           payout_bank?: string | null
           phone?: string | null
@@ -1249,12 +1303,18 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_until?: string | null
           business_license_name?: string | null
           business_license_path?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
           owner_application_status?: string | null
+          owner_rejection_reason?: string | null
+          owner_reviewed_at?: string | null
+          owner_reviewed_by?: string | null
           payout_account?: string | null
           payout_bank?: string | null
           phone?: string | null
@@ -1263,7 +1323,15 @@ export type Database = {
           telegram_link_expires_at?: string | null
           telegram_link_token_hash?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_owner_reviewed_by_fkey"
+            columns: ["owner_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       venue_favorites: {
         Row: {
@@ -2005,12 +2073,18 @@ export type Database = {
         }
         Returns: {
           avatar_url: string | null
+          ban_reason: string | null
+          banned_at: string | null
+          banned_until: string | null
           business_license_name: string | null
           business_license_path: string | null
           created_at: string
           full_name: string | null
           id: string
           owner_application_status: string | null
+          owner_rejection_reason: string | null
+          owner_reviewed_at: string | null
+          owner_reviewed_by: string | null
           payout_account: string | null
           payout_bank: string | null
           phone: string | null
@@ -2027,7 +2101,7 @@ export type Database = {
         }
       }
       review_owner: {
-        Args: { p_owner_id: string; p_status: string }
+        Args: { p_owner_id: string; p_reason?: string; p_status: string }
         Returns: undefined
       }
       review_venue: {

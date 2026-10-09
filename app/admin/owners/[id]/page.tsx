@@ -14,6 +14,8 @@ type Owner = {
   phone: string | null;
   role: string;
   owner_application_status: 'pending' | 'active' | 'rejected' | null;
+  owner_rejection_reason: string | null;
+  owner_reviewed_at: string | null;
   business_license_path: string | null;
   business_license_name: string | null;
   payout_bank: string | null;
@@ -30,7 +32,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
 
   const { id } = await params;
   const { data: owner } = await supabase.from('profiles')
-    .select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at')
+    .select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, created_at')
     .eq('id', id).maybeSingle() as { data: Owner | null };
   if (!owner?.owner_application_status) notFound();
 
@@ -58,6 +60,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
       <DashboardPageHeader eyebrow="Quản trị / Hồ sơ chủ sân" title={owner.full_name ?? 'Chưa có tên'} description={`Gửi hồ sơ ngày ${dayLabel(new Date(owner.created_at))}. Kiểm tra thông tin và giấy tờ trước khi duyệt.`}
         actions={<><OwnerStatus status={owner.owner_application_status} />{owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}</>} />
 
+      {owner.owner_application_status === 'rejected' && <section className="mt-6 rounded-card border border-hairline bg-card p-5"><h2 className="font-display text-xl font-bold text-pitch">Lý do cần bổ sung</h2><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7">{owner.owner_rejection_reason || 'Hồ sơ được xử lý trước khi có lý do chi tiết.'}</p>{owner.owner_reviewed_at && <p className="mt-3 text-xs text-ink-secondary">Xử lý ngày {dayLabel(new Date(owner.owner_reviewed_at))}</p>}</section>}
       <section className="mt-8 grid gap-3 sm:grid-cols-3">
         <EvidenceCard icon={Building2} value={`${activeVenues}/${(venues ?? []).length}`} label="Cụm sân đang hoạt động" />
         <EvidenceCard icon={CalendarCheck} value={String(completedBookings)} label="Đơn đã hoàn tất" />

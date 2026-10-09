@@ -10,7 +10,7 @@ const courtId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const created = '2026-10-01T03:00:00Z';
 const fixturePort = Number(process.env.DASHBOARD_FIXTURE_PORT || 3210);
 const future = '2026-12-01T03:00:00Z';
-const base = { phone: '0901234567', created_at: created, avatar_url: null, banned_until: null, telegram_chat_id: 'fixture', owner_application_status: 'active', business_license_path: 'fixture/license.pdf', business_license_name: 'Giấy đăng ký', payout_bank: 'MB', payout_account: '0123456789' };
+const base = { owner_rejection_reason: null, owner_reviewed_at: null, owner_reviewed_by: null, phone: '0901234567', created_at: created, avatar_url: null, banned_until: null, telegram_chat_id: 'fixture', owner_application_status: 'active', business_license_path: 'fixture/license.pdf', business_license_name: 'Giấy đăng ký', payout_bank: 'MB', payout_account: '0123456789' };
 const people = [{ ...base, id: adminId, full_name: 'Quản trị viên kiểm tra', role: 'admin' }, { ...base, id: ownerId, full_name: 'Nguyễn Minh', role: 'owner' }, ...Array.from({ length: 23 }, (_, i) => ({ ...base, id: `owner-${i}`, full_name: `Chủ sân ${i + 1}`, role: 'player', owner_application_status: i === 22 ? 'rejected' : 'pending' }))];
 const court = { id: courtId, venue_id: venueId, name: 'Cầu lông 01', sport: 'badminton', slot_minutes: 60, surface: 'tham', is_indoor: true, open_time: null, close_time: null, is_active: true, sort_order: 1, price_rules: [{ id: 'price-base', days: [1, 2, 3, 4, 5, 6, 0], priority: 0, price_per_hour: 100000, start_time: '06:00:00', end_time: '23:00:00', label: 'Giá chung' }], venues: { id: venueId, name: 'Sân Cầu Giấy', owner_id: ownerId } };
 const venues = [{ id: venueId, name: 'Sân Cầu Giấy', slug: 'san-cau-giay', address: '123 Cầu Giấy, Hà Nội', district: 'Cầu Giấy', status: 'active', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: null, images: ['fixture1.webp', 'fixture2.webp', 'fixture3.webp'], open_time: '06:00:00', close_time: '23:00:00', deposit_pct: 100, booking_horizon_days: 30, description: 'Sân trong nhà, đủ ánh sáng và có chỗ để xe.', amenities: ['Chỗ để xe'], courts: [court] }, { id: 'venue-pending', name: 'Sân chờ duyệt', slug: 'san-cho-duyet', district: 'Ba Đình', status: 'pending', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: 'fixture.pdf', courts: [] }];
@@ -66,6 +66,7 @@ const server = createServer(async (req, res) => {
   let readFailure = '';
   let ownerHistory = false, playerHistory = false, bookingSnapshot = false;
   let manyCourts=false,pendingInvoice=false;
+  let applicationState = '';
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
@@ -75,6 +76,7 @@ const server = createServer(async (req, res) => {
     playerHistory = !!claims.fixture_player_history;
     manyCourts=!!claims.fixture_many_courts; pendingInvoice=!!claims.fixture_pending_invoice;
     bookingSnapshot = !!claims.fixture_booking_snapshot;
+    applicationState = claims.fixture_application || '';
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
     catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
   } catch { /* Anonymous requests use only public fixture data. */ }
@@ -197,6 +199,7 @@ const server = createServer(async (req, res) => {
   if (table === 'venue_favorites' && favoriteState === 'error') { send({ message: 'Favorite read interrupted' }, 503); return; }
   let rows = table === 'venues' && catalog === 'many' ? [...venues, ...additionalVenues]
     : table === 'venue_favorites' && favoriteState === 'saved' ? [{ user_id: me.id, venue_id: venueId }] : [...tables[table]];
+  if(table==='profiles' && applicationState) rows=rows.map(row => row.id===me.id ? {...row,owner_application_status:applicationState,owner_rejection_reason:applicationState==='rejected' ? 'Bổ sung giấy tờ rõ nét, thể hiện tên người đại diện.' : null,role:'player'} : row);
   if(table==='courts' && manyCourts) rows=[court,...Array.from({length:14},(_,i)=>({...court,id:'dddddddd-dddd-4ddd-8ddd-'+String(i+1).padStart(12,'0'),name:'Sân kiểm thử '+String(i+1).padStart(2,'0'),sport:i%2?'badminton':'pickleball'}))];
   if(table==='subscription_invoices' && pendingInvoice) rows=[{...invoice,status:'pending',bank:'MB',account_number:'0987654321',account_name:'SAN NGON'}];
   if (table === 'bookings' && includeRefund) rows = rows.map(row => row.id === 'booking-1' ? { ...row, status: 'cancelled', refund_status: 'needed' } : row);

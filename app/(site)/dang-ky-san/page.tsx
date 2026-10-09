@@ -9,7 +9,7 @@ import type { OwnerVenue } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Đăng ký chủ sân · Sân Ngon' };
 
-type OwnerProfile = { full_name: string | null; phone: string | null; role: string; owner_application_status: string | null };
+type OwnerProfile = { full_name: string | null; phone: string | null; role: string; owner_application_status: string | null; owner_rejection_reason: string | null; business_license_name: string | null; business_license_path: string | null };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ resubmit?: string; error?: string; connected?: string }> }) {
   const { resubmit, error: callbackError, connected } = await searchParams;
@@ -20,7 +20,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ r
   let loadFailed = false;
   if (user) {
     const [{ data, error: profileError }, { data: venueRows, error: venueError }] = await Promise.all([
-      supabase.from('profiles').select('full_name, phone, role, owner_application_status').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('full_name, phone, role, owner_application_status, owner_rejection_reason, business_license_name, business_license_path').eq('id', user.id).maybeSingle(),
       supabase.from('venues').select('id, slug, name, address, district, phone, status').eq('owner_id', user.id).order('created_at').order('id'),
     ]);
     profile = data as OwnerProfile | null;
@@ -39,8 +39,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ r
 }
 
 function OwnerStatusOrForm({ profile, resubmit }: { profile: OwnerProfile | null; resubmit: boolean }) {
-  if (profile?.owner_application_status === 'rejected' && !resubmit) return <OwnerStatusSteps status="rejected" />;
-  return <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10"><div><header className="mb-10 max-w-2xl"><p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Đồng hành cùng Sân Ngon</p><h1 className="font-display text-4xl font-extrabold leading-[1.12] tracking-tight text-pitch sm:text-5xl">Trở thành chủ sân.</h1><p className="mt-5 max-w-xl text-[15px] leading-7 text-ink-secondary">Hoàn tất thông tin đại diện, giấy tờ và tài khoản nhận cọc ngay tại đây. Khi được duyệt, bạn bắt đầu tạo cụm sân.</p></header><RegisterForm defaultName={profile?.full_name} defaultPhone={profile?.phone} /></div><aside className="rounded-card bg-pitch p-7 text-pitch-ink"><span className="text-xs font-medium uppercase tracking-[0.16em] text-free-line">Quy trình đơn giản</span><h2 className="mt-4 font-display text-2xl font-bold">Duyệt tài khoản trước, đăng sân sau.</h2><p className="mt-3 text-sm leading-6 text-pitch-ink/75">Bạn kết nối SePay ở bước cuối để chọn tài khoản nhận cọc. Sân Ngon xét duyệt hồ sơ trước khi bạn tạo cụm sân và nhận đơn.</p></aside></div>;
+  if (profile?.owner_application_status === 'rejected' && !resubmit) return <OwnerStatusSteps status="rejected" reason={profile.owner_rejection_reason} />;
+  return <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10"><div><header className="mb-10 max-w-2xl"><p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-pitch">Đồng hành cùng Sân Ngon</p><h1 className="font-display text-4xl font-extrabold leading-[1.12] tracking-tight text-pitch sm:text-5xl">Trở thành chủ sân.</h1><p className="mt-5 max-w-xl text-[15px] leading-7 text-ink-secondary">Hoàn tất thông tin đại diện, giấy tờ và tài khoản nhận cọc ngay tại đây. Khi được duyệt, bạn bắt đầu tạo cụm sân.</p></header>{profile?.owner_rejection_reason && <div className="mb-5 rounded-control border border-hairline bg-card p-4"><p className="font-semibold text-pitch">Thông tin cần bổ sung</p><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{profile.owner_rejection_reason}</p></div>}<RegisterForm defaultName={profile?.full_name} defaultPhone={profile?.phone} existingLicenseName={profile?.owner_application_status === 'rejected' && profile.business_license_path ? profile.business_license_name : null} /></div><aside className="rounded-card bg-pitch p-7 text-pitch-ink"><span className="text-xs font-medium uppercase tracking-[0.16em] text-free-line">Quy trình đơn giản</span><h2 className="mt-4 font-display text-2xl font-bold">Duyệt tài khoản trước, đăng sân sau.</h2><p className="mt-3 text-sm leading-6 text-pitch-ink/75">Bạn kết nối SePay ở bước cuối để chọn tài khoản nhận cọc. Sân Ngon xét duyệt hồ sơ trước khi bạn tạo cụm sân và nhận đơn.</p></aside></div>;
 }
 
 function RegistrationPayment({ connection, approved, callbackError, justConnected }: {

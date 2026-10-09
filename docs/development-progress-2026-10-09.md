@@ -184,3 +184,22 @@ npm run check:ui -- --only=check-request-origin-browser,check-auth-ux,check-book
 ```
 
 Trạng thái: **hoàn thành ngày 09/10/2026**. Đã sửa lỗi D3-F01; không diễn giải bài HTTP gắn cookie thành bằng chứng khai thác CSRF qua trình duyệt. Các phần nghiệm thu thật khác trong D3 vẫn mở.
+
+
+## Đợt 9 — A16: lý do bổ sung hồ sơ chủ sân
+
+- Từ chối cần lý do tiếng Việt 10–1.000 ký tự, kiểm tra ở SQL và API; admin không thể gọi RPC hai tham số để bỏ qua. Duyệt vẫn kiểm người đại diện, giấy tờ và tài khoản nhận tiền.
+- Hồ sơ lưu lý do/người/thời điểm xử lý. Bảng lịch sử riêng chỉ cho chủ hồ sơ và admin đang hoạt động đọc; trình duyệt không được ghi/sửa/xóa lịch sử.
+- Inbox SQL và email dùng cùng lý do đã trim, email escape HTML; admin và chủ sân xem được lý do trên trang hồ sơ. Hồ sơ cũ không có lý do được ghi rõ, không dựng lại nội dung chưa từng lưu.
+- Gửi lại giữ tên/điện thoại và cho dùng lại giấy tờ hiện tại của chính hồ sơ bị từ chối, hoặc chọn tệp thay thế. API lấy đường dẫn từ hồ sơ phía server, bỏ qua đường dẫn client; gửi lại lỗi không xóa giấy tờ cũ.
+- Gửi lại xóa kết quả hiện tại nhưng giữ lịch sử; không tự cấp role hoặc duyệt. Nút gửi chống bấm lặp, lỗi giữ nội dung.
+
+Kiểm tra đạt: SQL ứng viên trong transaction rollback, SQL sau triển khai, quyền anon/người khác/chủ hồ sơ/admin bị khóa, lý do thiếu/ngắn/dài, inbox, gửi lại và duyệt; API mocks kiểm lý do/email escape/tái dùng tệp; giao diện 390/1440, lỗi giữ nội dung, form quản lý và lỗi đọc dashboard. Lint/typecheck và production build đạt. Chỉ dùng fixture, không gửi email thật.
+
+Migration `20261009000300_owner_review_reasons.sql` đã áp dụng trên Supabase liên kết; types phần thay đổi lấy từ schema triển khai. A16 **hoàn thành về code**, việc nhận email thật vẫn thuộc A01; thông báo ngoài hệ thống có retry bền vững vẫn thuộc A11.
+
+```sh
+node scripts/check-owner-review-reasons.mjs
+npx supabase db query --linked --file scripts/check-owner-review-reasons.sql
+npm run check:ui -- --only=check-owner-review-reasons-browser,check-owner-forms,check-query-errors
+```

@@ -57,13 +57,13 @@ export async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-export function ownerApplicationEmail(status: 'active' | 'rejected') {
+export function ownerApplicationEmail(status: 'active' | 'rejected', reason?: string | null) {
   const approved = status === 'active';
   return {
     subject: approved ? 'Hồ sơ chủ sân đã được duyệt · Sân Ngon' : 'Cập nhật hồ sơ chủ sân · Sân Ngon',
     html: approved
       ? '<h2>Hồ sơ chủ sân đã được duyệt</h2><p>Bạn có thể đăng nhập Sân Ngon để tạo cụm sân và thêm các sân con.</p><p>Hẹn gặp bạn trên Sân Ngon.</p>'
-      : '<h2>Hồ sơ chủ sân cần bổ sung</h2><p>Hồ sơ của bạn chưa được duyệt lần này. Vui lòng liên hệ Sân Ngon để biết thông tin cần cập nhật.</p>',
+      : `<h2>Hồ sơ chủ sân cần bổ sung</h2><p>Thông tin cần bổ sung:</p><p>${escapeHtml(reason?.trim() || 'Liên hệ Sân Ngon để kiểm tra hồ sơ.').replace(/\n/g, '<br>')}</p><p>Mở Đăng ký chủ sân trên Sân Ngon để cập nhật và gửi lại hồ sơ.</p>`,
   };
 }
 

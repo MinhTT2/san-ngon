@@ -6,7 +6,7 @@ import { Check, FileText, UploadCloud, X } from 'lucide-react';
 
 const STEPS = ['Người đại diện', 'Giấy tờ kinh doanh', 'Tài khoản nhận cọc'];
 
-export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: string | null; defaultPhone?: string | null }) {
+export function RegisterForm({ defaultName, defaultPhone, existingLicenseName }: { defaultName?: string | null; defaultPhone?: string | null; existingLicenseName?: string | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,15 +38,16 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
     setBusy(true); setError(null);
     const form = new FormData(event.currentTarget);
     const license = form.get('business_license');
-    if (!(license instanceof File) || license.size === 0) {
+    if ((!(license instanceof File) || license.size === 0) && !existingLicenseName) {
       setError('Bạn cần tải lên giấy tờ kinh doanh.'); setBusy(false); return;
     }
     const payload = new FormData();
     payload.set('data', JSON.stringify({
       full_name: String(form.get('full_name') ?? ''),
       phone: String(form.get('phone') ?? ''),
+      reuse_document: Boolean(existingLicenseName && (!(license instanceof File) || license.size === 0)),
     }));
-    payload.set('business_license', license);
+    if (license instanceof File && license.size > 0) payload.set('business_license', license);
     try {
       const response = await fetch('/api/owner-registration', { method: 'POST', body: payload });
       if (response.status === 401) { router.push('/dang-nhap?next=/dang-ky-san'); return; }
@@ -82,12 +83,13 @@ export function RegisterForm({ defaultName, defaultPhone }: { defaultName?: stri
         <Fieldset innerRef={(node) => { stepRefs.current[1] = node; }} hidden={step !== 1} number="02" legend="Giấy tờ kinh doanh">
           <p className="-mt-1 text-sm leading-6 text-ink-secondary">Tải lên giấy đăng ký hộ kinh doanh/doanh nghiệp hoặc giấy tờ chứng minh quyền khai thác sân.</p>
           <Field label="Giấy tờ" htmlFor="business_license" required hint="PDF, JPG hoặc PNG · tối đa 10MB.">
+            {existingLicenseName && !licenseFile && <p className="rounded-control border border-hairline bg-page p-3 text-sm">Sẽ dùng lại giấy tờ đã gửi: <strong className="break-words">{existingLicenseName}</strong>. Chọn tệp bên dưới nếu cần thay.</p>}
             <div onDragOver={(event) => { event.preventDefault(); setLicenseDragging(true); }} onDragLeave={() => setLicenseDragging(false)} onDrop={(event) => { event.preventDefault(); setLicenseDragging(false); chooseLicense(event.dataTransfer.files[0]); }} className={`rounded-control border-2 border-dashed p-3 ${licenseDragging ? 'border-pitch bg-free-fill' : 'border-strong bg-sunk'}`}>
               <label htmlFor="business_license" className="flex cursor-pointer flex-col items-center justify-center rounded-[calc(var(--radius-control)-4px)] border border-transparent px-4 py-7 text-center hover:border-strong hover:bg-card">
                 <span className={`flex size-12 items-center justify-center rounded-full ${licenseFile ? 'bg-free-fill text-free-ink' : 'bg-card text-pitch'}`}>{licenseFile ? <Check className="size-6" aria-hidden="true" /> : <UploadCloud className="size-6" aria-hidden="true" />}</span>
                 <span className="mt-3 text-sm font-semibold text-pitch">{licenseFile ? 'Đổi giấy tờ khác' : 'Kéo thả giấy tờ vào đây'}</span>
                 <span className="mt-1 text-xs text-ink-secondary">hoặc bấm để chọn từ thiết bị</span>
-                <input ref={licenseInputRef} id="business_license" name="business_license" type="file" required accept="application/pdf,image/jpeg,image/png" onChange={(event) => chooseLicense(event.target.files?.[0])} className="sr-only" />
+                <input ref={licenseInputRef} id="business_license" name="business_license" type="file" required={!existingLicenseName} accept="application/pdf,image/jpeg,image/png" onChange={(event) => chooseLicense(event.target.files?.[0])} className="sr-only" />
               </label>
             </div>
             {licenseFile && <div className="mt-3 flex items-center gap-3 rounded-control border border-free-line bg-free-fill px-3.5 py-3"><FileText className="size-5 shrink-0 text-free-ink" aria-hidden="true" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-free-ink">{licenseFile.name}</p><p className="mt-0.5 text-xs text-free-ink/80">{formatFileSize(licenseFile.size)} · Sẵn sàng gửi</p></div><button type="button" onClick={() => { if (licenseInputRef.current) licenseInputRef.current.value = ''; setLicenseFile(null); }} aria-label="Xóa giấy tờ đã chọn" className="pf-action flex size-11 shrink-0 items-center justify-center rounded-full text-free-ink hover:bg-card"><X className="size-4" /></button></div>}

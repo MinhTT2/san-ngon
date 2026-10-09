@@ -23,6 +23,7 @@ jobs:
       - run: npm run check:refresh
       - run: node scripts/check-booking-inputs.mjs
       - run: node scripts/check-request-origin.mjs
+      - run: node scripts/check-owner-review-reasons.mjs
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15

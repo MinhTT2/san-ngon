@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { ownerApplicationEmail, sendEmail } from '@/lib/notify';
 
-const Body = z.object({ status: z.enum(['active', 'rejected']) });
+const Body = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('active') }),
+  z.object({ status: z.literal('rejected'), reason: z.string().trim().min(10).max(1000) }),
+]);
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -14,9 +17,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin duyệt hồ sơ không hợp lệ.' }, { status: 400 });
-  const { error } = await supabase.rpc('review_owner', { p_owner_id: id, p_status: parsed.data.status });
+  const { error } = await supabase.rpc('review_owner', { p_owner_id: id, p_status: parsed.data.status, p_reason: parsed.data.status === 'rejected' ? parsed.data.reason : undefined });
   if (error) {
-    const messages: Record<string, string> = { OWNER_NOT_FOUND: 'Không tìm thấy hồ sơ chủ sân.', OWNER_ALREADY_REVIEWED: 'Hồ sơ đã được xử lý. Hãy tải lại trang.', REPRESENTATIVE_REQUIRED: 'Hồ sơ thiếu họ tên hoặc số điện thoại.', BUSINESS_LICENSE_MISSING: 'Hồ sơ thiếu giấy tờ kinh doanh.', PAYOUT_REQUIRED: 'Chủ sân chưa bổ sung tài khoản nhận tiền.' };
+    const messages: Record<string, string> = { REJECTION_REASON_REQUIRED: 'Ghi rõ lý do cần bổ sung (10–1.000 ký tự).', OWNER_NOT_FOUND: 'Không tìm thấy hồ sơ chủ sân.', OWNER_ALREADY_REVIEWED: 'Hồ sơ đã được xử lý. Hãy tải lại trang.', REPRESENTATIVE_REQUIRED: 'Hồ sơ thiếu họ tên hoặc số điện thoại.', BUSINESS_LICENSE_MISSING: 'Hồ sơ thiếu giấy tờ kinh doanh.', PAYOUT_REQUIRED: 'Chủ sân chưa bổ sung tài khoản nhận tiền.' };
     const key = Object.keys(messages).find((item) => error.message.includes(item));
     return NextResponse.json({ error: key ? messages[key] : 'Không lưu được kết quả duyệt. Hãy thử lại.' }, { status: key ? 409 : 500 });
   }
@@ -24,7 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (emailLookupError) console.error('[owner-review] không lấy được email chủ sân', emailLookupError.message);
   let emailSent = false;
   if (ownerEmail) {
-    const message = ownerApplicationEmail(parsed.data.status);
+    const message = ownerApplicationEmail(parsed.data.status, parsed.data.status === 'rejected' ? parsed.data.reason : null);
     const email = await sendEmail(ownerEmail, message.subject, message.html);
     emailSent = email.ok;
     if (!email.ok && email.reason !== 'NOT_CONFIGURED') console.error('[owner-review] không gửi được email', email.reason);
