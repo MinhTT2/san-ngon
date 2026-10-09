@@ -23,7 +23,7 @@ try{
   try{
    await page.goto(origin+'/');await page.getByRole('heading',{level:1}).waitFor();
    const search=await page.locator('main form').first().boundingBox(),carousel=await page.getByRole('button',{name:'Dừng chuyển ảnh'}).boundingBox();
-   assert(search.y<carousel.y,'Homepage search precedes carousel');
+   assert(search.y>carousel.y,'Homepage search follows carousel');
    await page.getByRole('button',{name:'Dừng chuyển ảnh'}).click();assert.equal(await page.getByRole('button',{name:'Tiếp tục chuyển ảnh'}).getAttribute('aria-pressed'),'true');await fit(page,'Home');
    await shot(page,'home',width);
    await page.goto(origin+'/tim-san?ngay=2026-10-09&gio=10%3A00&phut=120');

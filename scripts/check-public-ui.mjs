@@ -23,6 +23,9 @@ try {
     const footer = page.locator('footer');
     assert((await footer.boundingBox()).height < (width < 768 ? 740 : 440), 'Footer must remain compact');
     const hero = page.locator('[data-hero-carousel]');
+    const search = await page.locator('main form').first().boundingBox();
+    const carousel = await hero.boundingBox();
+    assert(search.y >= carousel.y + carousel.height, 'Homepage search follows carousel');
     await hero.getByRole('button', { name: 'Ảnh tiếp theo', exact: true }).click();
     assert.equal(await hero.locator('[aria-roledescription="slide"][aria-hidden="false"]').getAttribute('aria-label'), '2 / 3 · Cầu lông');
     if (output && [390, 1440].includes(width)) {

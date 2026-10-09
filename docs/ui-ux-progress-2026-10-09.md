@@ -14,7 +14,7 @@ Danh sách gốc có 29 mục: 7 P1, 19 P2, 3 P3 có điều kiện. Người d�
 | 6 | Giữ đường quay lại khi đăng ký / khôi phục tài khoản | Đã sửa. Commit d321539. |
 | 7 | Chốt trách nhiệm và hạn hoàn cọc | Giữ mốc 2 giờ; chủ sân hoàn thủ công trong 3 ngày làm việc sau khi đủ thông tin đối soát. Chính sách hiển thị công khai; không đổi SQL hoặc áp ngược đơn cũ. |
 | 8 | Cọc 100% đã đủ tiền sân | Đã làm rõ checkout, form và đơn của tôi; giữ số dư đơn cũ. Commit aef6567. |
-| 9 | Tìm sân trước carousel | Form tìm sân đứng trước carousel, có main landmark. |
+| 9 | Tìm sân sau carousel | Theo lựa chọn của người dùng, carousel đứng trước phần tìm sân trên desktop và điện thoại; giữ main landmark. |
 | 10 | Lưu/chia sẻ/báo lỗi gần tên sân; Xem lịch dẫn đúng chỗ | Thanh thao tác gần tên; ảnh và nút Xem lịch mở #lich-san. |
 | 11 | Tìm theo giờ và thời lượng | RPC SQL kiểm tra đúng giờ, cùng sân trống liên tục, tối đa 3 khung; mang lựa chọn sang trang sân. |
 | 12 | Tóm tắt đặt sân gọn trên điện thoại | Thanh dưới hiển thị giờ, thời lượng, tiền và nút tiếp tục; giữ phần đổi sân đầy đủ. |

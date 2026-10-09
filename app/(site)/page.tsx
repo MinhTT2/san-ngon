@@ -126,6 +126,7 @@ async function loadHeroSlots(
 function Hero({ grid }: { grid: React.ReactNode }) {
   return (
     <section>
+      <HeroCarousel />
       <div className="border-b border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-9">
           <div className="flex min-w-0 flex-col gap-4">
@@ -142,7 +143,6 @@ function Hero({ grid }: { grid: React.ReactNode }) {
           </div>
         </div>
       </div>
-      <HeroCarousel />
     </section>
   );
 }
