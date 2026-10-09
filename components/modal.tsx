@@ -40,9 +40,8 @@ export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }
     return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = previousOverflow; if (previousFocus?.isConnected) previousFocus.focus(); };
   }, []);
 
-  return <div className="fixed inset-0 z-50 isolate flex items-center justify-center p-3 sm:p-6" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-    <div ref={backdropRef} aria-hidden="true" className="fixed inset-0 bg-pitch/35" />
-    <button type="button" tabIndex={-1} aria-label="Đóng cửa sổ" onClick={close} className="absolute inset-0 z-0 h-full w-full cursor-default" />
+  return <div className="fixed inset-0 z-50 isolate flex items-center justify-center p-3 sm:p-6" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
+    <div ref={backdropRef} aria-hidden="true" className="pointer-events-none fixed inset-0 bg-pitch/35" />
     <section ref={panelRef} data-modal-panel className={`relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full ${size} flex-col overflow-hidden rounded-[24px] border border-hairline bg-card sm:max-h-[calc(100dvh-3rem)]`}>
       <header className="flex shrink-0 items-start justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-7">
         <div><h2 id={titleId} className="font-display text-2xl font-bold text-pitch">{title}</h2>{subtitle && <p className="mt-1 text-sm text-ink-secondary">{subtitle}</p>}</div>

@@ -111,7 +111,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
                   <p className="text-sm font-semibold">{b.code} · {b.customer_name ?? 'Khách'} · {b.courtName}</p>
                   <p className="mt-0.5 text-xs text-peak-ink">{b.customer_phone} · hoàn {vnd(b.deposit_amount)}</p>
                 </div>
-                <RefundDoneButton code={b.code} />
+                <RefundDoneButton code={b.code} customerName={b.customer_name} customerPhone={b.customer_phone} courtName={b.courtName} depositAmount={b.deposit_amount} />
               </li>
             ))}
           </ul>
@@ -129,7 +129,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
                   <p className="text-sm font-semibold">{b.code} · {b.customer_name ?? 'Khách'} · {b.courtName}</p>
                   <p className="mt-0.5 text-xs text-ink-secondary">{b.customer_phone} · cọc {vnd(b.deposit_amount)}</p>
                 </div>
-                <ConfirmPaymentButton code={b.code} />
+                <ConfirmPaymentButton code={b.code} customerName={b.customer_name} customerPhone={b.customer_phone} courtName={b.courtName} depositAmount={b.deposit_amount} />
               </li>
             ))}
           </ul>

@@ -12,23 +12,25 @@ const page = await context.newPage();
 const errors = [];
 const writes = [];
 let responseMode = 'error';
+let releaseWrite;
 page.on('pageerror', error => errors.push(error.message));
-await page.route('**/api/bookings/**', route => {
+await page.route('**/api/bookings/**', async route => {
   assert.equal(route.request().method(), 'POST');
   writes.push({ url: route.request().url(), body: route.request().postDataJSON() });
   if (responseMode === 'offline') return route.abort('failed');
-  return route.fulfill({ status: responseMode === 'success' ? 200 : 400, contentType: 'application/json', body: JSON.stringify(responseMode === 'success' ? { ok: true } : { error: 'Lỗi kiểm thử: chưa cập nhật đơn.' }) });
+  if (responseMode === 'delayed') await new Promise(resolve => { releaseWrite = resolve; });
+  return route.fulfill({ status: ['success', 'delayed'].includes(responseMode) ? 200 : 400, contentType: 'application/json', body: JSON.stringify(['success', 'delayed'].includes(responseMode) ? { ok: true } : { error: 'Lỗi kiểm thử: chưa cập nhật đơn.' }) });
 });
 async function screenshot(name) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(650);
   if (output) await page.screenshot({ path: `${output}/${name}.png`, fullPage: true });
 }
-async function signIn(role) {
+async function signIn(role, refunds = false) {
   const id = role === 'owner' ? 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' : 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   const exp = Math.floor(Date.now() / 1000) + 3600;
   const b64 = value => Buffer.from(JSON.stringify(value)).toString('base64url');
-  const token = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: id, exp, aud: 'authenticated', role: 'authenticated', fixture_role: role })}.fixture`;
+  const token = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: id, exp, aud: 'authenticated', role: 'authenticated', fixture_role: role, fixture_refunds: refunds })}.fixture`;
   await context.addCookies([{ name: 'sb-127-auth-token', url: origin, sameSite: 'Lax', value: `base64-${b64({ access_token: token, refresh_token: 'fixture-only', expires_at: exp, expires_in: 3600, token_type: 'bearer', user: { id, email: 'fixture@example.invalid' } })}` }]);
 }
 try {
@@ -104,16 +106,79 @@ try {
     assert.equal(await page.locator('.pf-booking-record time').count(), 2);
     if ([390, 1440].includes(width)) await screenshot(`review-owner-orders-${width}`);
   }
-  const confirm = page.getByRole('button', { name: 'Đã nhận cọc — xác nhận tay', exact: true });
-  responseMode = 'offline';
-  await confirm.click();
-  await page.getByRole('alert').filter({ hasText: 'Mất kết nối' }).waitFor();
-  assert(await confirm.isEnabled(), 'Failed network request makes the action retryable');
-  responseMode = 'error';
-  await confirm.click();
-  await page.getByRole('alert').filter({ hasText: 'Lỗi kiểm thử' }).waitFor();
-  assert(await confirm.isEnabled());
-  assert.equal(writes.length, 4, 'Only explicitly clicked actions send requests');
+  await signIn('owner', true);
+  const actions = [
+    { opener: 'Đã nhận cọc — xác nhận tay', title: 'Xác nhận đã nhận cọc?', submit: 'Xác nhận đã nhận đủ cọc', busy: 'Đang xác nhận…', done: 'Đã xác nhận nhận cọc', endpoint: 'confirm', code: 'SANDEF567', customer: 'Mai Anh', amount: '120.000' },
+    { opener: 'Đã hoàn — đánh dấu xong', title: 'Đánh dấu đã hoàn cọc?', submit: 'Xác nhận đã hoàn đủ cọc', busy: 'Đang cập nhật…', done: 'Đã đánh dấu hoàn cọc', endpoint: 'refund', code: 'SANABC234', customer: 'Lê Hải', amount: '100.000' },
+  ];
+  for (const path of ['/chu-san', '/chu-san/don']) {
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto(`${origin}${path}`);
+      for (const action of actions) {
+        const opener = page.getByRole('button', { name: action.opener, exact: true });
+        const before = writes.length;
+        await opener.click();
+        const modal = page.getByRole('dialog', { name: action.title, exact: true });
+        await modal.waitFor();
+        assert.equal(writes.length, before, 'Opening owner confirmation never sends a mutation');
+        const copy = await modal.innerText();
+        assert(copy.includes(action.code) && copy.includes(action.customer) && copy.includes(action.amount) && copy.includes('Cầu lông 01'), 'Confirmation identifies the exact booking, person, court and amount');
+        assert(await modal.evaluate(element => element.scrollWidth <= element.clientWidth), 'Confirmation fits the viewport');
+        await modal.getByRole('button', { name: 'Quay lại', exact: true }).focus();
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Tab');
+        assert(await modal.evaluate(element => element.contains(document.activeElement)), 'Keyboard focus stays inside confirmation');
+        if ([390, 1440].includes(width)) await screenshot(`review-owner-${action.endpoint}-${path === '/chu-san' ? 'overview' : 'orders'}-${width}`);
+        await page.keyboard.press('Escape');
+        await modal.waitFor({ state: 'detached' });
+        assert(await opener.evaluate(element => element === document.activeElement), 'Closing returns focus to the matching action');
+        await opener.click();
+        await modal.click({ position: { x: 2, y: 2 } });
+        await modal.waitFor({ state: 'detached' });
+        assert.equal(writes.length, before, 'Escaping or cancelling never changes money status');
+      }
+    }
+  }
+  for (const action of actions) {
+    const opener = page.getByRole('button', { name: action.opener, exact: true });
+    await opener.click();
+    const modal = page.getByRole('dialog', { name: action.title, exact: true });
+    const submit = modal.getByRole('button', { name: action.submit, exact: true });
+    const before = writes.length;
+    responseMode = 'error';
+    await submit.click();
+    const feedback = modal.getByRole('alert');
+    await feedback.filter({ hasText: 'Lỗi kiểm thử' }).waitFor();
+    assert.equal(writes.length, before + 1);
+    assert(writes.at(-1).url.endsWith(`/${action.code}/${action.endpoint}`));
+    assert(await submit.isEnabled(), 'A known server rejection permits retry');
+    assert(await feedback.evaluate(element => element === document.activeElement), 'Failure receives focus inside the modal');
+    if (action.endpoint === 'confirm') {
+      responseMode = 'offline';
+      await submit.click();
+      await feedback.filter({ hasText: 'Mất kết nối' }).waitFor();
+      assert.equal(await submit.count(), 0, 'An unknown network result requires reviewing current status before another mutation');
+      await modal.getByRole('button', { name: 'Đóng và kiểm tra lại', exact: true }).click();
+      await modal.waitFor({ state: 'detached' });
+      await opener.click();
+    }
+    const beforeSuccess = writes.length;
+    responseMode = 'delayed';
+    releaseWrite = null;
+    await submit.evaluate(element => { element.click(); element.click(); });
+    await modal.getByRole('button', { name: action.busy, exact: true }).waitFor();
+    assert.equal(writes.length, beforeSuccess + 1, 'Double clicking sends only one financial mutation');
+    assert(await modal.getByRole('button', { name: 'Quay lại', exact: true }).isDisabled());
+    await page.keyboard.press('Escape');
+    await modal.getByRole('button', { name: 'Đóng', exact: true }).click();
+    assert(await modal.isVisible(), 'Pending mutation keeps the confirmation open');
+    releaseWrite();
+    await modal.waitFor({ state: 'detached' });
+    assert.equal(writes.length, beforeSuccess + 1);
+    assert(await page.getByRole('button', { name: action.done, exact: true }).isDisabled(), 'Successful mutation cannot be submitted again while refreshed state is loading');
+  }
+  const ownerWrites = writes.length;
 
   await page.goto(`${origin}/san/san-cau-giay`);
   await page.getByRole('button', { name: 'Chọn giờ sớm nhất · 10:00', exact: true }).click();
@@ -127,7 +192,7 @@ try {
   await screenshot('review-booking-form-1440');
   await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
   assert.equal(await page.getByRole('button', { name: /^10:00, còn sân/ }).getAttribute('aria-pressed'), 'true');
-  assert.equal(writes.length, 4, 'Reviewing contact information does not create a booking');
+  assert.equal(writes.length, ownerWrites, 'Reviewing contact information does not create a booking');
   assert.deepEqual(errors, []);
-  console.log('OK: populated tournaments, adaptive orders, cancellation safety/focus, recoverable owner actions and booking review.');
+  console.log('OK: populated tournaments, adaptive orders, cancellation safety/focus, owner confirmation context/cancellation/focus/duplicate-submit/recovery and booking review.');
 } finally { await context.close(); await browser.close(); }

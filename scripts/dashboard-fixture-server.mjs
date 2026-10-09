@@ -63,11 +63,11 @@ const server = createServer(async (req, res) => {
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
   let connectionState = 'ready';
-  let catalog = 'default', favoriteState = 'default', mixedSports = false;
+  let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
-    catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports;
+    catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
   } catch { /* Anonymous requests use only public fixture data. */ }
   const me = role === 'owner' ? people[1] : people[0];
   const send = (data, code = 200) => { res.statusCode = code; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
@@ -120,6 +120,7 @@ const server = createServer(async (req, res) => {
   if (table === 'venue_favorites' && favoriteState === 'error') { send({ message: 'Favorite read interrupted' }, 503); return; }
   let rows = table === 'venues' && catalog === 'many' ? [...venues, ...additionalVenues]
     : table === 'venue_favorites' && favoriteState === 'saved' ? [{ user_id: me.id, venue_id: venueId }] : [...tables[table]];
+  if (table === 'bookings' && includeRefund) rows = rows.map(row => row.id === 'booking-1' ? { ...row, status: 'cancelled', refund_status: 'needed' } : row);
   if (table === 'notifications') {
     rows = rows.filter(row => row.user_id === me.id);
     if (url.searchParams.get('read_at') === 'is.null') rows = rows.filter(row => row.read_at === null);
