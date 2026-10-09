@@ -63,3 +63,16 @@ npm run check:ui -- --only=check-query-errors,check-dashboard-ui,check-public-ui
 ```
 
 Trạng thái: **hoàn thành ngày 09/10/2026**.
+
+## Đợt 3 — A07: vá thư viện chạy website
+
+- Next.js 15.5.25 → 15.5.27, eslint-config-next đồng bộ 15.5.27; sharp 0.35.4 → 0.35.5 và source-map-js 1.2.1 → 1.2.2.
+- Lockfile và overrides giữ bản đã vá; không đổi nhánh major Next, danh sách host ảnh hay quyền tối ưu SVG.
+- `npm audit --omit=dev` không còn cảnh báo. Audit gồm công cụ phát triển còn 37 cảnh báo; A07 vẫn mở phần CLI/lint. Chi tiết advisory, đường sử dụng và ngoại lệ trong [biên bản thư viện](dependency-security-2026-10-09.md).
+- Bài kiểm tra ảnh qua endpoint Next được đưa vào CI giao diện; dùng ảnh sẵn có, kiểm xử lý ảnh/giải mã, chặn host ngoài danh sách và SVG.
+
+Kiểm tra: lint, typecheck, production build, hợp đồng API đặt sân và queue realtime đạt; bộ giao diện trang chủ/tìm sân/đặt sân/checkout/báo lỗi và bài xử lý ảnh đều đạt trên fixture riêng. Không tạo đơn hoặc chuyển tiền thật.
+
+Trạng thái: **hoàn thành phần runtime ngày 09/10/2026**; A07 còn ngoại lệ công cụ phát triển. Biên bản đã ghi rõ 37 cảnh báo còn lại, gồm critical trong tar của cây Vercel CLI.
+
+Bổ sung guard cho runner để từ chối sớm khi danh sách kiểm tra nhắc tới script chưa được Git theo dõi. Tham chiếu tạm tới bài auth trong đợt trước đã có file tương ứng được bàn giao ở commit kế tiếp; danh sách kiểm tra của bản push hiện tại đầy đủ.

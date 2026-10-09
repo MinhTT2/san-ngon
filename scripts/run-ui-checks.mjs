@@ -11,7 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const staged = process.argv.includes('--staged');
 const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
 const selectedChecks = only?.split(',');
-const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-player-discovery', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-checkout-ux', 'check-personal-ui', 'check-auth-ux', 'check-calendar-ux', 'check-owner-forms', 'check-dashboard-ui', 'check-query-errors', 'capture-ui-review'];
+const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-player-discovery', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-checkout-ux', 'check-personal-ui', 'check-auth-ux', 'check-calendar-ux', 'check-owner-forms', 'check-dashboard-ui', 'check-query-errors', 'check-image-optimizer', 'capture-ui-review'];
 if (selectedChecks?.some(check => !checks.includes(check))) throw new Error(`Unknown UI check: ${only}`);
 const workspace = await mkdtemp(join(tmpdir(), 'san-ngon-ui-check-'));
 const screenshots = resolve(process.env.UX_SCREENSHOT_DIR || join(root, 'output/automated-ui'));
@@ -50,6 +50,9 @@ async function ready(url, process) {
 }
 try {
   const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+  for (const check of checks.filter(check => !selectedChecks || selectedChecks.includes(check))) {
+    if (!files.includes(`scripts/${check}.mjs`)) throw new Error(`UI check script is not tracked: scripts/${check}.mjs`);
+  }
   for (const path of files) {
     if (path.startsWith('.env') || path.startsWith('output/')) continue;
     const content = staged ? execFileSync('git', ['show', ':' + path], { cwd: root, maxBuffer: 64 * 1024 * 1024 }) : await readFile(join(root, path));
