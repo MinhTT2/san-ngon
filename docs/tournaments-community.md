@@ -138,3 +138,9 @@ Không dùng `app/(site)/loading.tsx` bọc toàn bộ website: Next.js 15 có l
 - Chỉ tạo phần tử video/tải file sau khi người dùng bấm xem; có controls, tua/phát lại, đóng/Escape, trả focus và dừng khi ẩn tab. Không tự tải video khi mới vào trang, kể cả mobile/tiết kiệm dữ liệu. Khi lỗi có thử lại và ba bước bằng văn bản; không có JavaScript thì vẫn có liên kết mở video. Không thêm thư viện video/animation vào ứng dụng.
 - Dựng lại video bằng `PLAYWRIGHT_MODULE=/duong-dan/playwright/index.mjs node scripts/generate-tournament-guide.mjs http://localhost:3112` trên app local đang chạy. Dùng canvas/MediaRecorder trong Chromium headless và hai font hiện có; script thêm metadata thời lượng để trình duyệt hiển thị thanh tua 18 giây. Không cần ffmpeg, footage tải về hay dependency runtime mới.
 - Kiểm tra: `PLAYWRIGHT_MODULE=/duong-dan/playwright/index.mjs node scripts/check-tournament-media.mjs http://localhost:3112`. Chỉ đọc dữ liệu công khai, không đăng nhập hoặc đổi ảnh trong database. Kiểm tra tải theo yêu cầu, phát/tua/đóng và phục hồi lỗi video, ảnh sân dự phòng, thư viện ảnh, layout 320–1440px và chế độ giảm chuyển động/không JavaScript.
+
+## Admin xóa giải
+
+Tại `/admin/giai-dau`, mỗi thẻ giải có nút **Xóa giải** và xác nhận trước khi xóa vĩnh viễn. RPC `delete_tournament` chỉ cho admin thực hiện. Giải chưa có bất kỳ đăng ký nào và không có tiền thuê chưa chốt, tiền thuê phải trả hoặc lịch sử chuyển quyết toán mới được xóa. SQL mở lại lịch sân, dọn thông báo của giải và bản thỏa thuận bằng 0 trong cùng giao dịch. Giải có đăng ký hoặc nghĩa vụ tài chính giữ hồ sơ để hủy/hoàn và đối soát qua luồng hiện có.
+
+Kiểm tra quyền, các điều kiện chặn xóa và việc mở lịch bằng `npx supabase db query --linked --file scripts/check-admin-delete-tournament.sql`. Dữ liệu kiểm tra nằm trong giao dịch rollback.

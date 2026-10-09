@@ -1588,6 +1588,7 @@ export type Database = {
       }
 
       cancel_tournament: { Args: { p_id: string }; Returns: undefined }
+      delete_tournament: { Args: { p_id: string }; Returns: undefined }
       cancel_tournament_registration: {
         Args: { p_id: string }
         Returns: undefined
