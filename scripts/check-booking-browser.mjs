@@ -26,9 +26,15 @@ export default async function checkBooking(page, origin = 'http://localhost:3000
   await page.route('**/api/bookings', offline);
   try {
     await submit.click();
-    await page.getByRole('alert').filter({ hasText: 'Không kết nối được' }).waitFor();
-    check(await submit.isEnabled(), 'Submit remains disabled after a network error');
+    await page.getByRole('alert').filter({ hasText: 'Đơn có thể đã được tạo' }).waitFor();
+    check(await page.getByRole('link', { name: 'Kiểm tra Đơn của tôi', exact: true }).getAttribute('href') === '/don-cua-toi?filter=all', 'Unknown result must lead to existing bookings');
+    check(await submit.count() === 0, 'Unknown result must not immediately create another booking');
   } finally { await page.unroute('**/api/bookings', offline); }
+  await page.goto(venueUrl);
+  await page.locator('button[aria-pressed]:enabled:visible').first().click();
+  await page.getByRole('button', { name: 'Tiếp tục đặt sân' }).click();
+  await page.getByLabel('Tên người đặt').fill('Kiểm tra hệ thống');
+  await page.getByLabel('Số điện thoại').fill('0900000000');
   const signedOut = route => route.fulfill({ status: 401, contentType: 'application/json', body: '{}' });
   await page.route('**/api/bookings', signedOut);
   try {
@@ -41,5 +47,5 @@ export default async function checkBooking(page, origin = 'http://localhost:3000
     check(await page.getByLabel('Tên người đặt').inputValue() === 'Kiểm tra hệ thống', 'Booking contact was not restored');
     await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
   } finally { await page.unroute('**/api/bookings', signedOut); }
-  return 'OK: desktop/mobile selection, network retry, and login draft restoration.';
+  return 'OK: desktop/mobile selection, unknown-result review, and login draft restoration.';
 }

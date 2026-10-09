@@ -42,12 +42,23 @@ export function BookingForm({
   const [note, setNote] = useState(defaultNote ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uncertain, setUncertain] = useState(false);
+  const submitting = useRef(false);
+  const feedback = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => { if (error) feedback.current?.focus(); }, [error]);
+
+  function showUncertainResult() {
+    setUncertain(true);
+    setError('Chưa nhận được kết quả tạo đơn. Đơn có thể đã được tạo và đang giữ sân. Hãy kiểm tra Đơn của tôi trước khi đặt lại để tránh tạo thêm đơn.');
+  }
 
   const deposit = Math.min(selection.total, Math.ceil((selection.total * depositPct) / 100 / 1000) * 1000);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy) return;
+    if (submitting.current || uncertain) return;
+    submitting.current = true;
     setBusy(true);
     setError(null);
 
@@ -67,21 +78,24 @@ export function BookingForm({
 
       if (res.status === 401) {
         // Giữ cả form và khung đã chọn để đăng nhập xong quay lại đặt tiếp.
-        sessionStorage.setItem('san-ngon:booking-draft', JSON.stringify({
+        try { sessionStorage.setItem('san-ngon:booking-draft', JSON.stringify({
           selection, name, phone, note, pathname, savedAt: Date.now(),
-        }));
+        })); } catch { /* Sign-in remains available when storage is blocked. */ }
         router.push(`/dang-nhap?next=${encodeURIComponent(pathname + window.location.search)}`);
         return;
       }
 
+      if (res.status >= 500) { showUncertainResult(); return; }
       const json = await res.json();
 
       if (!res.ok) { setError(json.error ?? 'Không đặt được sân.'); return; }
+      if (!/^SAN[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(json.booking?.code ?? '')) { showUncertainResult(); return; }
       try { sessionStorage.removeItem('san-ngon:booking-draft'); } catch { /* Storage can be blocked; the server-created order still opens. */ }
       router.push(`/dat-san/${json.booking.code}`);
     } catch {
-      setError('Không kết nối được. Kiểm tra mạng và thử lại.');
+      showUncertainResult();
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -101,10 +115,12 @@ export function BookingForm({
               {hhmm(selection.startsAt)} – {hhmm(selection.endsAt)} · {selection.slots.length} khung
             </span>
           </div>
-          <span className="shrink-0 rounded-pill bg-sunk px-2.5 py-1 text-xs text-ink-secondary">Chưa giữ chỗ</span>
+          <span className="shrink-0 rounded-pill bg-sunk px-2.5 py-1 text-xs text-ink-secondary">{uncertain ? 'Chưa rõ trạng thái' : 'Chưa giữ chỗ'}</span>
         </div>
         <p className="text-sm leading-relaxed text-ink-secondary">
-          {isAuthenticated
+          {uncertain
+            ? 'Kiểm tra đơn vừa đặt trong Đơn của tôi. Nếu đã có mã đơn, mở đơn đó để tiếp tục thanh toán; đừng tạo đơn mới.'
+            : isAuthenticated
             ? 'Bấm giữ chỗ sẽ tạo một mã đơn mới và giữ khung giờ 15 phút để bạn chuyển cọc. Chưa nhận cọc khi hết hạn, sân tự mở lại.'
             : 'Nhập thông tin liên hệ, sau đó đăng nhập để tiếp tục đặt sân. Khung giờ chưa được giữ ở bước này.'}
         </p>
@@ -153,20 +169,20 @@ export function BookingForm({
 
       <p className="text-xs leading-5 text-ink-secondary">Theo chính sách hiện tại, hủy trước giờ chơi ít nhất {CANCEL_WINDOW_HOURS} tiếng được hoàn cọc; hoàn tiền được xử lý thủ công. <Link href="/chinh-sach-huy" target="_blank" rel="noopener noreferrer" className="font-semibold text-pitch underline underline-offset-2">Xem chính sách (mở tab mới)</Link>.</p>
 
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {error && <p ref={feedback} tabIndex={-1} role="alert" className="rounded-control border border-danger/30 p-3 text-sm leading-6 text-danger">{error}</p>}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" disabled={busy} onClick={() => {
+        <button type="button" disabled={busy || uncertain} onClick={() => {
           try { sessionStorage.removeItem('san-ngon:booking-draft'); } catch { /* Keep choosing hours available when storage is blocked. */ }
           onCancel({ name, phone, note });
         }}
           className="pf-action inline-flex min-h-11 items-center justify-center rounded-control border border-hairline px-4 text-sm font-semibold hover:bg-sunk disabled:opacity-60">
           Chọn lại
         </button>
-        <button type="submit" disabled={busy}
+        {uncertain ? <Link href="/don-cua-toi?filter=all" className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-3 text-sm font-semibold text-pitch-ink">Kiểm tra Đơn của tôi<ArrowRight className="size-4" aria-hidden="true" /></Link> : <button type="submit" disabled={busy}
           className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-2 text-sm font-semibold text-pitch-ink hover:bg-ink disabled:opacity-60">
           {busy && <span aria-hidden="true" className="pf-spin size-3.5 rounded-full border-2 border-white/40 border-t-white" />}{busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? 'Giữ chỗ 15 phút' : 'Đăng nhập để tiếp tục'}{!busy && <ArrowRight className="pf-arrow size-4" aria-hidden="true" />}
-        </button>
+        </button>}
       </div>
 
       <p className="flex items-start gap-2 text-xs leading-6 text-ink-secondary"><Clock3 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />Sau khi tạo đơn, bạn có 15 phút để chuyển cọc. Lịch đặt chỉ được xác nhận khi đã nhận đủ cọc.</p>

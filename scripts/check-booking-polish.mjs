@@ -193,6 +193,54 @@ try {
   await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
   assert.equal(await page.getByRole('button', { name: /^10:00, còn sân/ }).getAttribute('aria-pressed'), 'true');
   assert.equal(writes.length, ownerWrites, 'Reviewing contact information does not create a booking');
+  let bookingAttempts = 0;
+  const bookingResponse = async route => {
+    bookingAttempts++;
+    assert.equal(route.request().method(), 'POST');
+    await new Promise(resolve => setTimeout(resolve, 150));
+    if (bookingMode === 'offline') return route.abort('failed');
+    if (bookingMode === 'server') return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"Temporarily unavailable"}' });
+    if (bookingMode === 'malformed') return route.fulfill({ status: 201, contentType: 'application/json', body: '{"booking":{}}' });
+    if (bookingMode === 'invalid-json') return route.fulfill({ status: 201, contentType: 'application/json', body: 'broken' });
+    return route.fulfill({ status: 409, contentType: 'application/json', body: '{"error":"Khung giờ vừa được đặt."}' });
+  };
+  let bookingMode = 'offline';
+  await page.route('**/api/bookings', bookingResponse);
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (bookingMode of ['offline', 'server', 'malformed', 'invalid-json', 'rejected']) {
+      await page.goto(`${origin}/san/san-cau-giay`);
+      await page.getByRole('button', { name: 'Chọn giờ sớm nhất · 10:00', exact: true }).click();
+      await page.getByRole('button', { name: 'Tiếp tục đặt sân', exact: true }).click();
+      await page.getByLabel('Tên người đặt', { exact: true }).fill('Khách giữ thông tin');
+      await page.getByLabel('Số điện thoại', { exact: true }).fill('0912345678');
+      const create = page.getByRole('button', { name: 'Giữ chỗ 15 phút', exact: true });
+      const before = bookingAttempts;
+      await create.evaluate(button => { button.click(); button.click(); });
+      const error = page.getByRole('region', { name: 'Thông tin đặt sân', exact: true }).getByRole('alert');
+      await error.waitFor();
+      assert.equal(bookingAttempts, before + 1, 'Duplicate clicks only send one create request');
+      assert.equal(await page.getByLabel('Tên người đặt', { exact: true }).inputValue(), 'Khách giữ thông tin');
+      await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'alert');
+      assert(await error.evaluate(element => element === document.activeElement), 'Create error receives focus');
+      if (bookingMode === 'rejected') {
+        assert(await create.isEnabled(), 'Known rejection remains retryable');
+        assert.equal(await page.getByRole('link', { name: 'Kiểm tra Đơn của tôi', exact: true }).count(), 0);
+      } else {
+        assert.match(await error.innerText(), /Đơn có thể đã được tạo/);
+        assert.equal(await create.count(), 0, 'Unknown result never invites immediate resubmission');
+        assert(await page.getByRole('button', { name: 'Chọn lại', exact: true }).isDisabled());
+        const review = page.getByRole('link', { name: 'Kiểm tra Đơn của tôi', exact: true });
+        assert.equal(await review.getAttribute('href'), '/don-cua-toi?filter=all');
+        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        if (bookingMode === 'offline') await screenshot(`review-booking-unknown-${width}`);
+        await review.click();
+        await page.waitForURL('**/don-cua-toi?filter=all');
+        await page.getByText('SANDEF567', { exact: true }).waitFor();
+        assert.equal(bookingAttempts, before + 1, 'Reviewing existing bookings sends no second create request');
+      }
+    }
+  }
   assert.deepEqual(errors, []);
   console.log('OK: populated tournaments, adaptive orders, cancellation safety/focus, owner confirmation context/cancellation/focus/duplicate-submit/recovery and booking review.');
 } finally { await context.close(); await browser.close(); }
