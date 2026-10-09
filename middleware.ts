@@ -1,3 +1,4 @@
+import { isAllowedWriteRequest } from '@/lib/request-origin';
 import { safeNext } from '@/lib/safe-next';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -6,6 +7,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 export async function middleware(request: NextRequest) {
+  // Reject before session refresh or any database call, for every write route.
+  if (!isAllowedWriteRequest(request)) {
+    return NextResponse.json({ error: 'Yêu cầu không hợp lệ. Hãy thao tác từ website Sân Ngon.' }, { status: 403 });
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

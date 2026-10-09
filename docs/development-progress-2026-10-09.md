@@ -164,3 +164,23 @@ npm run check:ui -- --only=check-booking-details-snapshot,check-checkout-ux,chec
 Trạng thái: **A15 đã triển khai ngày 09/10/2026**. Migration `20261009000200_booking_details_snapshot.sql` được áp dụng riêng; bài SQL mới cùng các hồi quy giữ chỗ/thanh toán/retry/lịch sử đã chạy lại sau triển khai. Lint và bản dựng production/typecheck riêng đạt; kiểm tra checkout hiện có và phân trang người chơi đạt.
 
 Bổ sung nghiệm thu: bài giao diện snapshot đạt trên 390/1440px ở các trạng thái chờ/đã xác nhận/hoàn tất/hủy; tên/địa chỉ cũ xuất hiện đúng trong phần chi tiết, lịch sử riêng của chủ sân/người chơi. Xác minh sau rollback: không còn tài khoản fixture, không có đơn thiếu bản thông tin, cờ nhiều chủ sân vẫn là giá trị trước đợt này. Những mục cần vận hành/tiền thật trong đánh giá vẫn chưa được coi là hoàn thành.
+
+
+## Đợt 8 — bảo vệ nguồn yêu cầu ghi dữ liệu (D3-F01)
+
+- Middleware kiểm tra Origin trước làm mới phiên/truy cập database, áp dụng POST/PATCH/PUT/DELETE cho cả route hiện tại và route thêm sau này. Origin ngoài, null, thiếu, khác giao thức/cổng hoặc Fetch Metadata báo cross-site trả 403.
+- Không tin x-forwarded-host/x-forwarded-proto do caller gửi. Browser-facing Host và cổng local vẫn được nhận đúng theo helper hiện tại.
+- Chỉ POST ở đúng hai đường webhook SePay/Telegram được miễn kiểm Origin; webhook tiếp tục kiểm khóa riêng. GET/HEAD/OPTIONS và callback OAuth GET vẫn chạy.
+- SePay từ chối thông tin xác thực thiếu/sai trước khởi tạo client đặc quyền, trả 401 ngay cả khi service role chưa cấu hình.
+- Client tự gọi API bằng cookie phải gửi Origin đúng; browser fetch/form POST có sẵn header này. Các script tích hợp dùng cookie cần cập nhật header, không mở ngoại lệ cho client thiếu Origin.
+
+Kiểm tra đạt: lint/typecheck, production build riêng; bài boundary với mock đếm auth/DB, webhook sai khóa không mở service role; HTTP qua Next với cookie giả lập chặn 48 yêu cầu ở 16 endpoint, yêu cầu cùng nguồn đi tới validation, native browser fetch và logout hoạt động, webhook thiếu khóa trả 401. Hồi quy đăng ký/khôi phục mật khẩu/đặt sân và form quản lý sân đạt. Các bài chạy trong môi trường synthetic, không ghi tiền hoặc gửi email thật.
+
+Lệnh chạy lại:
+
+```sh
+node scripts/check-request-origin.mjs
+npm run check:ui -- --only=check-request-origin-browser,check-auth-ux,check-booking-polish,check-owner-forms
+```
+
+Trạng thái: **hoàn thành ngày 09/10/2026**. Đã sửa lỗi D3-F01; không diễn giải bài HTTP gắn cookie thành bằng chứng khai thác CSRF qua trình duyệt. Các phần nghiệm thu thật khác trong D3 vẫn mở.

@@ -28,20 +28,23 @@ const IncomingTransfer = z.object({
 export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization') ?? '';
   const connectionId = req.nextUrl.searchParams.get('connection');
-  const supabase = createAdminClient();
-  let bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim().toLowerCase();
-  let account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim();
+  // Validate credentials before opening a privileged database client.
   if (connectionId !== null) {
     if (!z.string().uuid().safeParse(connectionId).success || !auth.startsWith('Apikey ') || auth.length > 256) {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
+  } else if (!process.env.SEPAY_WEBHOOK_API_KEY || auth !== `Apikey ${process.env.SEPAY_WEBHOOK_API_KEY}`) {
+    return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+  }
+  const supabase = createAdminClient();
+  let bank = process.env.NEXT_PUBLIC_SEPAY_BANK?.trim().toLowerCase();
+  let account = process.env.NEXT_PUBLIC_SEPAY_ACCOUNT?.trim();
+  if (connectionId !== null) {
     const { data, error } = await supabase.from('sepay_connections').select('bank, account_number')
       .eq('id', connectionId).eq('webhook_key_hash', secretHash(auth.slice(7))).maybeSingle();
     if (error) return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
     if (!data) return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     bank = data.bank?.trim().toLowerCase(); account = data.account_number;
-  } else if (!process.env.SEPAY_WEBHOOK_API_KEY || auth !== `Apikey ${process.env.SEPAY_WEBHOOK_API_KEY}`) {
-    return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
   let raw: unknown;
