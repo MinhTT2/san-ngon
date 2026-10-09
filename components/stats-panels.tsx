@@ -49,15 +49,15 @@ export function AdminStatsPanel({ stats }: { stats: AdminStats }) {
 }
 
 function StatsHeader({ eyebrow, from, to, suffix = 'Đơn đã thanh toán mới tính vào doanh thu' }: { eyebrow: string; from: string; to: string; suffix?: string }) {
-  return <div data-motion-item className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">{eyebrow}</p><h2 id="stats-heading" className="mt-1 font-display text-xl font-bold tracking-tight text-pitch">Kết quả trong kỳ</h2></div><div className="text-xs text-ink-secondary sm:text-right"><p>{from} → {to}</p><p className="mt-1">{suffix}</p></div></div>;
+  return <div data-motion-item className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-pitch">{eyebrow}</p><h2 id="stats-heading" className="mt-1 font-display text-xl font-bold tracking-tight text-pitch">Kết quả trong kỳ</h2></div><div className="text-xs text-ink-secondary sm:text-right"><p>{from.split('-').reverse().join('/')} → {to.split('-').reverse().join('/')}</p><p className="mt-1">{suffix}</p></div></div>;
 }
 
 function DarkPill({ label, value }: { label: string; value: number | string }) {
-  return <span className="border-r border-white/20 py-1 pr-4 last:border-0"><strong className="block font-display text-lg font-bold text-pitch-ink">{value}</strong><span className="mt-1 block text-[11px] text-strong">{label}</span></span>;
+  return <span className="border-r border-white/20 py-1 pr-4 last:border-0"><strong className="block font-display text-lg font-bold text-pitch-ink">{value}</strong><span className="mt-1 block text-xs text-strong">{label}</span></span>;
 }
 
 function HeroMetric({ label, value, icon: Icon, danger }: { label: string; value: string | number; icon: typeof Target; danger?: boolean }) {
-  return <div className="flex items-center gap-3 px-6 py-4 lg:px-8"><Icon className={`size-4 ${danger ? 'text-[#F4B3A8]' : 'text-strong'}`} aria-hidden="true" /><span><strong className={`block text-sm ${danger ? 'text-[#F4B3A8]' : 'text-pitch-ink'}`}>{typeof value === 'number' ? <CountUp to={value} /> : value}</strong><span className="text-[11px] text-strong">{label}</span></span></div>;
+  return <div className="flex items-center gap-3 px-6 py-4 lg:px-8"><Icon className={`size-4 ${danger ? 'text-[#F4B3A8]' : 'text-strong'}`} aria-hidden="true" /><span><strong className={`block text-sm ${danger ? 'text-[#F4B3A8]' : 'text-pitch-ink'}`}>{typeof value === 'number' ? <CountUp to={value} /> : value}</strong><span className="text-xs text-strong">{label}</span></span></div>;
 }
 
 function OccupancyRing({ value, booked, capacity }: { value: number; booked: number; capacity: number }) {
@@ -67,7 +67,7 @@ function OccupancyRing({ value, booked, capacity }: { value: number; booked: num
       <circle cx="80" cy="80" r="71" strokeWidth="18" className="stroke-white/15" />
       <circle cx="80" cy="80" r="71" strokeWidth="18" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - safe} className="pf-ring-stroke stroke-free-line" />
     </svg>
-    <div className="relative flex size-[124px] flex-col items-center justify-center rounded-full bg-pitch text-center"><strong className="font-display text-3xl font-extrabold">{value}%</strong><span className="mt-1 text-[11px] text-strong">lấp đầy</span><span className="mt-1 text-[10px] text-strong">{booked}/{capacity} giờ</span></div>
+    <div className="relative flex size-[124px] flex-col items-center justify-center rounded-full bg-pitch text-center"><strong className="font-display text-3xl font-extrabold">{value}%</strong><span className="mt-1 text-xs text-strong">lấp đầy</span><span className="mt-1 text-[10px] text-strong">{booked}/{capacity} giờ</span></div>
   </div></div>;
 }
 
@@ -78,7 +78,7 @@ function OwnerActions({ pending, cancelled }: { pending: number; cancelled: numb
 function RevenueChart({ points }: { points: StatsPoint[] }) {
   const peak = Math.max(...points.map(point => point.revenue), 0);
   const max = Math.max(peak, 1);
-  return <section data-motion-item className="rounded-card border border-hairline bg-card p-5 lg:p-6"><div className="flex items-start justify-between gap-4"><div><div className="flex items-center gap-2"><BarChart3 className="size-4 text-pitch" aria-hidden="true" /><h3 className="font-semibold">Doanh thu theo ngày</h3></div><p className="mt-1 text-xs text-ink-secondary">Giá trị đơn đã thanh toán trong từng ngày.</p></div><span className="rounded-pill bg-free-fill px-2.5 py-1 text-[11px] font-semibold text-free-ink">Đỉnh {vnd(peak)}</span></div><div className="pf-chart-plot mt-7 flex h-36 items-end gap-1.5 border-b border-hairline">{points.map((point, index) => <div key={point.date} tabIndex={0} aria-label={`${point.date}: ${vnd(point.revenue)}`} className="group relative flex h-full min-w-0 flex-1 items-end" title={`${point.date}: ${vnd(point.revenue)}`}><div className="absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-control bg-ink px-2 py-1 text-[10px] text-pitch-ink group-hover:block group-focus:block">{vnd(point.revenue)}</div><div className="pf-chart-bar w-full rounded-t-slot bg-pitch transition-opacity group-hover:opacity-70" style={{ ['--pf-chart-delay' as string]: `${Math.min(index, 12) * 25}ms`, height: `${Math.max(point.revenue ? 5 : 1, point.revenue / max * 100)}%` }} /></div>)}</div><div className="mt-2 flex justify-between text-[10px] text-ink-secondary"><span>{points[0]?.date ?? '—'}</span><span>{points.at(-1)?.date ?? '—'}</span></div></section>;
+  return <section data-motion-item className="rounded-card border border-hairline bg-card p-5 lg:p-6"><div className="flex items-start justify-between gap-4"><div><div className="flex items-center gap-2"><BarChart3 className="size-4 text-pitch" aria-hidden="true" /><h3 className="font-semibold">Doanh thu theo ngày</h3></div><p className="mt-1 text-xs text-ink-secondary">Giá trị đơn đã thanh toán trong từng ngày.</p></div><span className="rounded-pill bg-free-fill px-2.5 py-1 text-xs font-semibold text-free-ink">Đỉnh {vnd(peak)}</span></div><div className="pf-chart-plot mt-7 flex h-36 items-end gap-1.5 border-b border-hairline">{points.map((point, index) => <div key={point.date} tabIndex={0} aria-label={`${point.date}: ${vnd(point.revenue)}`} className="group relative flex h-full min-w-0 flex-1 items-end" title={`${point.date}: ${vnd(point.revenue)}`}><div className="absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-control bg-ink px-2 py-1 text-[10px] text-pitch-ink group-hover:block group-focus:block">{vnd(point.revenue)}</div><div className="pf-chart-bar w-full rounded-t-slot bg-pitch transition-opacity group-hover:opacity-70" style={{ ['--pf-chart-delay' as string]: `${Math.min(index, 12) * 25}ms`, height: `${Math.max(point.revenue ? 5 : 1, point.revenue / max * 100)}%` }} /></div>)}</div><div className="mt-2 flex justify-between text-[10px] text-ink-secondary"><span>{points[0]?.date ?? '—'}</span><span>{points.at(-1)?.date ?? '—'}</span></div></section>;
 }
 
 function CourtRanking({ courts }: { courts: OwnerStats['courts'] }) {

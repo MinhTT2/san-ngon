@@ -123,6 +123,8 @@ export type Database = {
       }
       feedback: {
         Row: {
+          booking_id: string | null
+          receipt_path: string | null
           category: string
           created_at: string
           handled_by: string | null
@@ -136,6 +138,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_id?: string | null
+          receipt_path?: string | null
           category: string
           created_at?: string
           handled_by?: string | null
@@ -149,6 +153,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_id?: string | null
+          receipt_path?: string | null
           category?: string
           created_at?: string
           handled_by?: string | null
@@ -162,6 +168,7 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          { foreignKeyName: "feedback_booking_id_fkey"; columns: ["booking_id"]; isOneToOne: false; referencedRelation: "bookings"; referencedColumns: ["id"] },
           {
             foreignKeyName: "feedback_handled_by_fkey"
             columns: ["handled_by"]
@@ -1581,6 +1588,7 @@ export type Database = {
         Args: { p_saved: boolean; p_venue_id: string }
         Returns: boolean
       }
+      submit_payment_support: { Args: { p_id: string; p_code: string; p_message: string; p_receipt_path?: string | null }; Returns: string }
       submit_feedback: {
         Args: {
           p_category: string
@@ -1935,6 +1943,11 @@ export type Database = {
       delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       expire_pending_bookings: { Args: never; Returns: number }
       gen_booking_code: { Args: never; Returns: string }
+      get_owner_reconciliation_export: { Args: { p_venue_id: string; p_from: string; p_to: string }; Returns: Json }
+      get_owner_operating_calendar: { Args: { p_venue_id: string }; Returns: Json }
+      get_owner_refund_page: { Args: { p_venue_id: string; p_status?: string; p_query?: string; p_page?: number }; Returns: Json }
+      get_owner_price_preview: { Args: { p_court_id: string; p_date?: string | null }; Returns: Json }
+      search_venues_for_time: { Args: { p_query?: string; p_sport?: Database["public"]["Enums"]["sport_type"] | null; p_district?: string; p_date?: string | null; p_indoor?: boolean | null; p_available?: boolean; p_sort?: string; p_page?: number; p_time?: string | null; p_duration?: number | null }; Returns: Json }
       get_owner_email: { Args: { p_owner_id: string }; Returns: string }
       get_venue_availability: {
         Args: { p_date: string; p_venue_id: string }

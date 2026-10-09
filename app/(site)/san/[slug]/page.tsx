@@ -9,15 +9,16 @@ import { VenueSearchParams } from '@/lib/search-params';
 import { CANCEL_WINDOW_HOURS, SPORT_LABELS } from '@/lib/constants';
 import { ArrowDown, ArrowLeft, Check, Clock3, Layers3, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { VenueGallery } from '@/components/venue-gallery';
+import { VenueActions } from '@/components/venue-actions';
 
 export default async function Page({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ngay?: string; sport?: string; from?: string }>;
+  searchParams: Promise<{ ngay?: string; sport?: string; from?: string; gio?: string; phut?: string }>;
 }) {
-  const [{ slug }, { ngay, sport, from }] = await Promise.all([params, searchParams]);
+  const [{ slug }, { ngay, sport, from, gio, phut }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
 
   const { data: venue } = await supabase
@@ -36,6 +37,8 @@ export default async function Page({
   if (calendarError || !calendarData) throw new Error('Không tải được ngày đặt sân. Vui lòng thử lại.');
   const calendar = calendarData as unknown as VenueCalendar;
   const initialSport = VenueSearchParams.shape.sport.parse(sport);
+  const initialTime = VenueSearchParams.shape.gio.parse(gio);
+  const initialDuration = VenueSearchParams.shape.phut.parse(phut);
   const returnPath = venueDiscoveryReturn(from, calendar.date) ?? `/tim-san?ngay=${calendar.date}#ket-qua`;
 
   const { data: acceptsBookings, error: bookingAvailabilityError } = await supabase.rpc('venue_accepts_bookings', { p_venue_id: venue.id });
@@ -61,6 +64,7 @@ export default async function Page({
         </div>
         {acceptsBookings && <a href="#lich-san" className="pf-action inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink hover:bg-ink">Chọn giờ đặt sân<ArrowDown size={16} aria-hidden="true" /></a>}
       </header>
+      <VenueActions id={venue.id} name={venue.name} slug={slug} />
       <dl className="my-5 grid grid-cols-1 gap-3 rounded-card border border-hairline bg-card px-4 py-4 sm:grid-cols-3 sm:gap-0">
         <div className="flex items-center gap-3 sm:pr-4"><Layers3 size={20} className="shrink-0 text-pitch" aria-hidden="true" /><div><dt className="text-[11px] text-ink-secondary">Quy mô cụm sân</dt><dd className="mt-1 text-sm font-semibold text-pitch">{courts?.length ?? 0} sân cho bạn chọn</dd></div></div>
         <div className="flex items-center gap-3 border-t border-hairline pt-3 sm:border-l sm:border-t-0 sm:px-4 sm:pt-0"><Clock3 size={20} className="shrink-0 text-pitch" aria-hidden="true" /><div><dt className="text-[11px] text-ink-secondary">Giờ mở cửa của cụm</dt><dd className="mt-1 text-sm font-semibold tabular-nums text-pitch">{venue.open_time.slice(0, 5)} – {venue.close_time.slice(0, 5)}</dd></div></div>
@@ -87,6 +91,8 @@ export default async function Page({
           key={calendar.date}
           calendar={calendar}
           initialSport={initialSport}
+          initialTime={initialTime}
+          initialDuration={initialDuration ? Number(initialDuration) : undefined}
           returnPath={returnPath}
           venueId={venue.id}
           depositPct={venue.deposit_pct}

@@ -24,6 +24,7 @@ const OWNER_LINKS = [
   { href: '/chu-san/giai-dau', label: 'Giải đấu', icon: Trophy },
   { href: '/chu-san/lich', label: 'Lịch sân', icon: CalendarDays },
   { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
+  { href: '/chu-san/hoan-coc', label: 'Hoàn cọc', icon: WalletCards },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
   { href: '/chu-san/phi-dich-vu', label: 'Phí sử dụng website', icon: WalletCards },
   { href: '/chu-san/thanh-toan', label: 'Tài khoản nhận cọc', icon: WalletCards },

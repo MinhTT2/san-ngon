@@ -10,14 +10,13 @@ export const metadata: Metadata = {
  * Trang này là thứ khách mở ra khi trời chuyển mưa lúc 4 giờ chiều.
  * Viết bằng câu họ hỏi, không bằng ngôn ngữ điều khoản.
  *
- * TODO: mốc {CANCEL_WINDOW_HOURS} tiếng CHƯA CHỐT với chủ sân. Đổi ở
- * lib/constants.ts và trong hàm cancel_booking() cùng lúc.
+ * Mốc hủy giữ nguyên và khớp cancel_booking(). Hoàn tiền vẫn thủ công.
  */
 export default function Page() {
   const rules: [string, string][] = [
     [
       `Hủy trước giờ chơi từ ${CANCEL_WINDOW_HOURS} tiếng trở lên`,
-      'Đơn được đánh dấu cần hoàn cọc. Liên hệ chủ sân kèm mã đơn để đối soát và xác nhận thông tin nhận lại tiền. Việc hoàn tiền được xử lý thủ công.',
+      'Đơn được đánh dấu cần hoàn cọc. Liên hệ chủ sân kèm mã đơn để đối soát và xác nhận thông tin nhận lại tiền. Chủ sân thực hiện hoàn thủ công trong 3 ngày làm việc sau khi đối soát đủ giao dịch và thông tin nhận tiền.',
     ],
     [
       `Hủy muộn hơn ${CANCEL_WINDOW_HOURS} tiếng`,
@@ -66,8 +65,7 @@ export default function Page() {
       </dl>
 
       <p className="mt-8 rounded-card bg-sunk p-5 text-sm leading-relaxed text-ink-secondary">
-        Mốc {CANCEL_WINDOW_HOURS} tiếng đang được thống nhất lại với các chủ sân đầu tiên. Nếu có
-        thay đổi, chính sách áp dụng cho đơn đặt sau ngày công bố, không hồi tố.
+        Chủ sân chịu trách nhiệm đối soát và hoàn tiền. Ngày làm việc tính từ thứ Hai đến thứ Sáu, không gồm ngày lễ. Nếu quá 3 ngày làm việc sau khi cung cấp đủ thông tin mà chưa nhận tiền, liên hệ Sân Ngon kèm mã đơn và biên lai để được hỗ trợ. Đơn cũ giữ chính sách tại lúc đặt; thay đổi chỉ áp dụng cho đơn mới sau ngày công bố.
       </p>
       <section className="mt-10 rounded-card border border-strong bg-free-fill p-6">
         <h2 className="font-display text-2xl font-bold text-pitch">Đăng ký giải đấu</h2>

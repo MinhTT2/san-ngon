@@ -7,7 +7,7 @@ import { SPORT_LABELS } from '@/lib/constants';
 import type { TournamentFilters } from '@/lib/tournament-discovery';
 
 export function TournamentFilterPanel({ filters, view }: { filters: TournamentFilters; view: string }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(!!(filters.q || filters.location || filters.sport || filters.status));
   const optionsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (expanded && optionsRef.current && !window.matchMedia('(min-width: 1024px)').matches) return enterMotion(optionsRef.current, 0, -8);

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { vnd } from '@/lib/format';
 import { OWNER_INPUT, OWNER_PRIMARY, OWNER_SECONDARY } from '@/components/owner-form-field';
 import { useUnsavedChanges } from '@/lib/use-unsaved-changes';
+import { OwnerPricePreview } from '@/components/owner-price-preview';
 
 type Rule = { id: string; label: string | null; days: number[]; start_time: string; end_time: string; price_per_hour: number; priority: number };
 type Draft = Omit<Rule, 'id'> & { id: string | null };
@@ -93,5 +94,6 @@ export function PriceEditor({ courtId, initialRules }: { courtId: string; initia
       <div className="min-w-0"><h3 className="font-semibold text-pitch">{rule.label ?? 'Mức giá'}</h3><p className="mt-1 text-sm text-ink-secondary">{DAYS.filter(day => rule.days.includes(day.value)).map(day => day.label).join(', ')} · {rule.start_time.slice(0, 5)}–{rule.end_time.slice(0, 5)}</p><p className="mt-1 text-sm"><strong>{vnd(rule.price_per_hour)}/giờ</strong><span className="ml-3 text-xs text-ink-secondary">Ưu tiên {rule.priority}</span></p></div>
       <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => edit(rule)} aria-label={`Sửa ${rule.label}`} className={OWNER_SECONDARY}>Sửa</button>{rule.label !== 'Giá chung' && <button type="button" disabled={busy} onClick={() => remove(rule)} aria-label={`Xóa ${rule.label}`} className={`${OWNER_SECONDARY} text-danger`}>Xóa</button>}</div>
     </li>)}</ul>
+    <OwnerPricePreview courtId={courtId} revision={JSON.stringify(rules)} />
   </section>;
 }

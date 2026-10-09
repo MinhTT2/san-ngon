@@ -30,7 +30,12 @@ try {
     const video = document.querySelector('[data-ambient-scene="court"] video');
     return video && !video.paused && video.readyState >= 2;
   });
-  assert.equal(await scene.getByRole('button').count(), 0, 'Ambient video has no playback button');
+  const pause=scene.getByRole('button',{name:'Dừng video nền',exact:true});
+  assert.equal(await pause.count(),1,'Ambient video has a pause control');
+  await pause.click();
+  await page.waitForFunction(()=>document.querySelector('[data-ambient-scene="court"] video')?.paused);
+  await scene.getByRole('button',{name:'Tiếp tục video nền',exact:true}).click();
+  await page.waitForFunction(()=>!document.querySelector('[data-ambient-scene="court"] video')?.paused);
   const video = scene.locator('video');
   assert(await video.evaluate(element => !element.paused && element.videoWidth === 960 && element.muted));
   const time = await video.evaluate(element => element.currentTime);
@@ -49,7 +54,7 @@ try {
   assert(await page.locator('[data-motion-seen]').count() > 0, 'Filter navigation still receives motion');
   await page.goBack(); await page.waitForTimeout(650);
   assert(await page.locator('h1').isVisible());
-  console.log('OK: new film plays without controls; typing retains value/focus; filter and back navigation settle.');
+  console.log('OK: film pauses/resumes; typing retains value/focus; filter and back navigation settle.');
 
   for (const mode of ['reduced', 'save-data', 'no-js', 'failed-video']) {
     const quiet = await browser.newContext(mode === 'reduced' ? { reducedMotion: 'reduce' } : mode === 'no-js' ? { javaScriptEnabled: false } : {});

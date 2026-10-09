@@ -28,7 +28,7 @@ try {
         const select = await control.boundingBox();
         assert(select.height >= 43.99 && select.width >= 119.99, `${route}: filter must remain usable`);
         if (width === 390) {
-          const guide = page.locator('main details');
+          const guide = route === 'giai-dau' ? page.locator('main details').filter({ has: page.locator('summary', { hasText: 'Cách tham gia' }) }) : page.locator('main details').first();
           assert.equal(await guide.getAttribute('open'), null);
           await guide.locator('summary').focus();
           await page.keyboard.press('Enter');

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Copy, LoaderCircle, MapPin, QrCode, RefreshCw, ShieldCheck, Smartphone, WifiOff } from 'lucide-react';
 import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { BrandMark } from '@/components/brand-mark';
+import { QrImageActions } from '@/components/qr-image-actions';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { vietQrUrl } from '@/lib/sepay';
 import { countdown, dayLabel, hhmm, vnd } from '@/lib/format';
@@ -184,7 +185,7 @@ export function PaymentPanel(p: {
                 <div className="mb-6 grid size-16 place-items-center rounded-2xl bg-sunk text-pitch"><QrCode size={28} aria-hidden="true" /></div>
                 <h2 className="font-display text-2xl font-bold text-pitch">Chưa thể chuyển khoản</h2>
                 <p className="mt-3 max-w-sm text-sm leading-7 text-ink-secondary">Thông tin nhận cọc đang được cập nhật. Vui lòng liên hệ hỗ trợ trước khi chuyển tiền.</p>
-                <Link href="/lien-he" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-control bg-pitch px-6 text-sm font-semibold text-pitch-ink">Liên hệ hỗ trợ</Link>
+                <Link href={'/ho-tro-giao-dich?code='+p.code} className="mt-6 inline-flex min-h-12 items-center justify-center rounded-control bg-pitch px-6 text-sm font-semibold text-pitch-ink">Liên hệ hỗ trợ</Link>
               </div>
             ) : paid || closed ? (
               <div key={completed ? 'completed' : paid ? 'paid' : 'closed'} className="checkout-enter flex h-full flex-col items-center justify-center px-6 py-12 text-center sm:px-12 sm:py-16" role="status">
@@ -197,13 +198,13 @@ export function PaymentPanel(p: {
                 <div className="my-7 w-full max-w-sm rounded-xl border border-dashed border-strong bg-free-fill px-5 py-4"><p className="text-xs text-ink-secondary">Mã đặt sân của bạn</p><p className="mt-2 font-mono text-2xl font-semibold tracking-widest text-pitch">{p.code}</p></div>
                 <Link href={completed ? '/tim-san' : paid ? '/don-cua-toi' : '/tim-san'} className="group flex min-h-13 w-full max-w-sm items-center justify-center gap-3 rounded-xl bg-pitch px-4 text-sm font-semibold text-pitch-ink transition-colors hover:bg-success">{completed ? 'Đặt lịch chơi mới' : paid ? 'Xem sân đã đặt' : 'Tìm khung giờ khác'}<ArrowRight size={17} className="transition-transform group-hover:translate-x-1" aria-hidden="true" /></Link>
                 {completed && <Link href="/don-cua-toi?filter=history" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline underline-offset-4">Xem lịch sử đặt sân</Link>}
-                {!paid && <Link href="/lien-he" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline underline-offset-4">Liên hệ hỗ trợ</Link>}
+                {!paid && <Link href={'/ho-tro-giao-dich?code='+p.code} className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline underline-offset-4">Liên hệ hỗ trợ</Link>}
               </div>
             ) : (
               <>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-6 py-5 sm:px-8">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-pitch"><QrCode size={18} aria-hidden="true" />Quét mã để giữ sân</h2>
-                  <span className="hidden items-center gap-1.5 text-[11px] text-ink-secondary sm:flex"><ShieldCheck size={15} className="text-success" aria-hidden="true" />Chuyển khoản ngân hàng</span>
+                  <span className="hidden items-center gap-1.5 text-xs text-ink-secondary sm:flex"><ShieldCheck size={15} className="text-success" aria-hidden="true" />Chuyển khoản ngân hàng</span>
                 </div>
                 <div className="px-6 py-7 sm:px-8">
                   <div className="mb-7 text-center">
@@ -214,8 +215,9 @@ export function PaymentPanel(p: {
                   <div className="grid items-start gap-7 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
                     <div className="text-center">
                       <PaymentQr code={p.code} amount={p.deposit} bank={bank} account={account} />
+                      <QrImageActions src={vietQrUrl(p.code, p.deposit, bank, account)} filename={p.code} />
                       <p className="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-pitch"><Smartphone size={15} aria-hidden="true" />Mở app ngân hàng để quét mã</p>
-                      <p className="mx-auto mt-2 max-w-64 text-[11px] leading-5 text-ink-secondary">Dùng điện thoại? Lưu ảnh QR rồi chọn ảnh trong mục quét mã của app ngân hàng.</p>
+                      <p className="mx-auto mt-2 max-w-64 text-xs leading-5 text-ink-secondary">Dùng điện thoại? Lưu ảnh QR rồi chọn ảnh trong mục quét mã của app ngân hàng.</p>
                     </div>
                     <div className="min-w-0">
                       <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">Thông tin chuyển khoản</p>
@@ -226,7 +228,7 @@ export function PaymentPanel(p: {
                         <TransferRow label="Số tiền" value={vnd(p.deposit)} copy={String(p.deposit)} />
                       </dl>
                       <div className="mt-4 rounded-xl border border-strong bg-free-fill p-3.5">
-                        <div className="flex items-center justify-between gap-2"><div className="min-w-0"><p className="text-[11px] text-ink-secondary">Nội dung chuyển khoản</p><p className="mt-1 break-all font-mono text-lg font-bold tracking-wider text-pitch">{p.code}</p></div><CopyButton value={p.code} label="nội dung chuyển khoản" /></div>
+                        <div className="flex items-center justify-between gap-2"><div className="min-w-0"><p className="text-xs text-ink-secondary">Nội dung chuyển khoản</p><p className="mt-1 break-all font-mono text-lg font-bold tracking-wider text-pitch">{p.code}</p></div><CopyButton value={p.code} label="nội dung chuyển khoản" /></div>
                         <p className="mt-2 text-[10px] leading-5 text-ink-secondary">Giữ nguyên mã để cọc vào đúng đơn.</p>
                       </div>
                     </div>
@@ -234,7 +236,7 @@ export function PaymentPanel(p: {
                 </div>
                 <div className="mx-6 mb-6 flex items-start gap-3 rounded-xl border border-peak-line bg-peak-fill px-4 py-3.5 text-peak-ink sm:mx-8" role="status">
                   <span className="checkout-wait mt-1.5 size-2 shrink-0 rounded-full bg-peak-ink" aria-hidden="true" />
-                  <div><p className="text-xs font-semibold">Đang chờ tiền cọc</p><p className="mt-1 text-[11px] leading-6">{connection === 'live' ? 'Chuyển xong, quay lại trang này. Xác nhận sẽ tự hiện khi hệ thống nhận được tiền.' : 'Nếu đã chuyển cọc, giữ lại biên lai và kiểm tra trạng thái đơn khi kết nối hoạt động trở lại.'}</p></div>
+                  <div><p className="text-xs font-semibold">Đang chờ tiền cọc</p><p className="mt-1 text-xs leading-6">{connection === 'live' ? 'Chuyển xong, quay lại trang này. Xác nhận sẽ tự hiện khi hệ thống nhận được tiền.' : 'Nếu đã chuyển cọc, giữ lại biên lai và kiểm tra trạng thái đơn khi kết nối hoạt động trở lại.'}</p></div>
                 </div>
               </>
             )}
@@ -243,7 +245,7 @@ export function PaymentPanel(p: {
 
         <div className="mt-5 flex flex-wrap items-start justify-between gap-x-8 gap-y-4 text-xs leading-6 text-ink-secondary">
           {!paid && !closed ? <div className="max-w-xl"><p>Về trang chủ vẫn giữ chỗ đến hết thời gian trên. Chưa nhận đủ cọc khi hết hạn, sân sẽ mở lại.</p><div className="mt-1"><CancelBookingButton code={p.code} refundable={false} pending onCancelled={() => setStatus('cancelled')} className="inline-flex min-h-11 items-center" /></div></div> : <p className="flex items-center gap-2"><ShieldCheck size={16} className="text-success" aria-hidden="true" />Giữ mã đơn để tra cứu hoặc liên hệ hỗ trợ.</p>}
-          <p className="flex flex-wrap items-center gap-x-2">Cần một tay?<Link href="/lien-he" className="inline-flex min-h-11 items-center gap-1 font-semibold text-pitch underline underline-offset-4">Liên hệ hỗ trợ<ArrowRight size={13} aria-hidden="true" /></Link></p>
+          <p className="flex flex-wrap items-center gap-x-2">Cần một tay?<Link href={'/ho-tro-giao-dich?code='+p.code} className="inline-flex min-h-11 items-center gap-1 font-semibold text-pitch underline underline-offset-4">Liên hệ hỗ trợ<ArrowRight size={13} aria-hidden="true" /></Link></p>
         </div>
       </main>
     </div>
@@ -297,7 +299,7 @@ function PaymentQr({ code, amount, bank, account }: { code: string; amount: numb
 }
 
 function TransferRow({ label, value, copy }: { label: string; value: string; copy?: string }) {
-  return <div className="relative min-h-10 pr-12"><dt className="text-[11px] text-ink-secondary">{label}</dt><dd className="mt-0.5 break-all text-sm font-semibold text-pitch tabular-nums">{value || 'Chưa cấu hình'}{copy && <span className="absolute right-0 top-0"><CopyButton value={copy} label={label.toLowerCase()} /></span>}</dd></div>;
+  return <div className="relative min-h-10 pr-12"><dt className="text-xs text-ink-secondary">{label}</dt><dd className="mt-0.5 break-all text-sm font-semibold text-pitch tabular-nums">{value || 'Chưa cấu hình'}{copy && <span className="absolute right-0 top-0"><CopyButton value={copy} label={label.toLowerCase()} /></span>}</dd></div>;
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {

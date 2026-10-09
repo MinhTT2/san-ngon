@@ -11,7 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const staged = process.argv.includes('--staged');
 const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
 const selectedChecks = only?.split(',');
-const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-player-discovery', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-booking-recovery', 'check-checkout-ux', 'check-personal-ui', 'check-auth-ux', 'check-calendar-ux', 'check-owner-forms', 'check-owner-booking-search', 'check-player-booking-search', 'check-booking-details-snapshot', 'check-dashboard-ui', 'check-query-errors', 'check-image-optimizer', 'capture-ui-review'];
+const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-player-discovery', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-booking-recovery', 'check-checkout-ux', 'check-personal-ui', 'check-auth-ux', 'check-calendar-ux', 'check-owner-forms', 'check-owner-booking-search', 'check-player-booking-search', 'check-booking-details-snapshot', 'check-remaining-ux', 'check-dashboard-ui', 'check-query-errors', 'check-image-optimizer', 'capture-ui-review'];
 if (selectedChecks?.some(check => !checks.includes(check))) throw new Error(`Unknown UI check: ${only}`);
 const workspace = await mkdtemp(join(tmpdir(), 'san-ngon-ui-check-'));
 const screenshots = resolve(process.env.UX_SCREENSHOT_DIR || join(root, 'output/automated-ui'));
@@ -74,7 +74,12 @@ try {
   const app = start(['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', String(appPort)]);
   await ready(`${origin}/dang-nhap`, app);
   const testEnv = { UX_SCREENSHOT_DIR: screenshots };
-  for (const check of checks.filter(check => !selectedChecks || selectedChecks.includes(check))) await run([`scripts/${check}.mjs`, origin], testEnv);
+  const failures = [];
+  for (const check of checks.filter(check => !selectedChecks || selectedChecks.includes(check))) {
+    try { await run(['scripts/' + check + '.mjs', origin], testEnv); }
+    catch { failures.push(check); console.error('FAILED: ' + check); }
+  }
+  if (failures.length) throw new Error('UI checks failed: ' + failures.join(', '));
   console.log(`UI checks passed. Desktop/mobile images: ${screenshots}`);
 } finally {
   await Promise.all([...children].map(async child => {

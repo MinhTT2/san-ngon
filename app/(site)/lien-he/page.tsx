@@ -45,8 +45,7 @@ export default function Page() {
         <Card title="Chuyển khoản rồi mà đơn chưa xác nhận">
           <p>
             Đợi thêm khoảng một phút — hệ thống nhận tiền qua ngân hàng nên đôi lúc trễ. Quá năm
-            phút mà vẫn chưa chuyển trạng thái thì nhắn cho chúng tôi kèm mã đơn và ảnh chụp màn
-            hình giao dịch.
+            phút mà vẫn chưa chuyển trạng thái thì gửi mã đơn và chứng từ qua biểu mẫu riêng tư.
           </p>
         </Card>
       </div>

@@ -22,6 +22,6 @@ export async function TournamentIntro() {
         <details className="group"><summary className="flex min-h-11 list-none items-center gap-2 text-xs text-ink-secondary [&::-webkit-details-marker]:hidden">Cách tham gia<ChevronDown size={14} aria-hidden="true" className="group-open:rotate-180" /></summary><ol className="space-y-2 pb-2 text-xs leading-6 text-ink-secondary">{['Chọn giải và đọc thể lệ.', 'Gửi đăng ký để ban tổ chức duyệt.', 'Đóng cọc sau duyệt để xác nhận suất.'].map((step, index) => <li key={step}>{index + 1}. {step}</li>)}</ol></details>
       </div>
     </div>
-    <div className="max-w-[280px] lg:max-w-none [&>button]:mt-0"><TournamentGuideVideo /></div>
+    <div><details className="rounded-control border border-hairline px-4 lg:hidden"><summary className="flex min-h-11 cursor-pointer items-center justify-between text-sm font-semibold text-pitch">Video hướng dẫn · 18 giây<ChevronDown size={16} aria-hidden="true" /></summary><div className="max-w-[280px] pb-4"><TournamentGuideVideo /></div></details><div className="hidden lg:block [&>button]:mt-0"><TournamentGuideVideo /></div></div>
   </header>;
 }

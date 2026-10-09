@@ -65,6 +65,7 @@ const server = createServer(async (req, res) => {
   let role = 'admin';
   let readFailure = '';
   let ownerHistory = false, playerHistory = false, bookingSnapshot = false;
+  let manyCourts=false,pendingInvoice=false;
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
@@ -72,6 +73,7 @@ const server = createServer(async (req, res) => {
     readFailure = claims.fixture_read_failure || '';
     ownerHistory = !!claims.fixture_owner_history;
     playerHistory = !!claims.fixture_player_history;
+    manyCourts=!!claims.fixture_many_courts; pendingInvoice=!!claims.fixture_pending_invoice;
     bookingSnapshot = !!claims.fixture_booking_snapshot;
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
     catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
@@ -139,7 +141,7 @@ const server = createServer(async (req, res) => {
         confirmed: rows.filter(b => ['confirmed','completed'].includes(b.status)).length, pending: rows.filter(b => b.status === 'pending').length,
         from: args.p_from || (!query && !args.p_show_history ? '2026-10-09' : null), to: args.p_to || (!query && !args.p_show_history ? '2026-11-08' : null) }); return;
     }
-    if (name === 'search_venues') {
+    if (name === 'search_venues' || name === 'search_venues_for_time') {
       const candidates = catalog === 'many' ? [...publicVenues.map(v => ({ ...v, indoor: true })), ...additionalVenues] : publicVenues.map(v => ({ ...v, indoor: true }));
       const matching = candidates.filter(v => (!args.p_sport || v.sports.includes(args.p_sport)) && (!args.p_district || v.district === args.p_district)
         && (args.p_indoor == null || v.indoor === args.p_indoor) && (!args.p_available || v.available_slots > 0)
@@ -157,6 +159,21 @@ const server = createServer(async (req, res) => {
     if (name === 'get_venue_calendar') {
       send({ today: '2026-10-08', date: args.p_date || '2026-10-08', last_date: '2026-11-07', days: [{ date: '2026-10-08', weekday: 4 }, { date: '2026-10-09', weekday: 5 }] }); return;
     }
+    if (name === 'get_my_subscription' && pendingInvoice) {send({...subscription,fee_required:true});return;}
+    if (name === 'get_owner_operating_calendar') {
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
+    }
+    if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_owner_refund_page') {
+      const rows=[{id:'refund-1',code:'SANABC234',starts_at:created,ends_at:future,deposit_amount:100000,customer_name:'Lê Hải',customer_phone:base.phone,court_name:court.name,refund_status:'needed'},{id:'refund-2',code:'SANHJK234',starts_at:created,ends_at:future,deposit_amount:100000,customer_name:'Khách đã hoàn',customer_phone:base.phone,court_name:court.name,refund_status:'done'}].filter(row=>(args.p_status==='all'||row.refund_status===args.p_status)&&(!args.p_query || row.code.includes(args.p_query)));
+      send({rows,total:rows.length,page:1,pages:1,needed:1,done:1});return;
+    }
+    if (name === 'get_owner_reconciliation_export') {
+      if(args.p_from>args.p_to){send({code:'22023',message:'INVALID_DATE_RANGE'},400);return;}
+      send({total:1,rows:[{...bookings[0],court_name:court.name,customer_name:'=HYPERLINK("unsafe")'}]});return;
+    }
+    if (name === 'get_community_profile') {send({user_id:me.id,display_name:'Minh',location:'Cầu Giấy',sport:'badminton',skill_level:'intermediate',usual_play_times:'Tối cuối tuần',bio:'Giao lưu cầu lông',phone:base.phone,zalo_phone:'0912345678',facebook_url:'https://www.facebook.com/test',is_public:false,show_phone:false,show_zalo:false,show_facebook:false});return;}
     if (name === 'venue_accepts_bookings') { send(true); return; }
     if (name === 'get_venue_availability') {
       const date = args.p_date || '2026-10-08';
@@ -180,6 +197,8 @@ const server = createServer(async (req, res) => {
   if (table === 'venue_favorites' && favoriteState === 'error') { send({ message: 'Favorite read interrupted' }, 503); return; }
   let rows = table === 'venues' && catalog === 'many' ? [...venues, ...additionalVenues]
     : table === 'venue_favorites' && favoriteState === 'saved' ? [{ user_id: me.id, venue_id: venueId }] : [...tables[table]];
+  if(table==='courts' && manyCourts) rows=[court,...Array.from({length:14},(_,i)=>({...court,id:'dddddddd-dddd-4ddd-8ddd-'+String(i+1).padStart(12,'0'),name:'Sân kiểm thử '+String(i+1).padStart(2,'0'),sport:i%2?'badminton':'pickleball'}))];
+  if(table==='subscription_invoices' && pendingInvoice) rows=[{...invoice,status:'pending',bank:'MB',account_number:'0987654321',account_name:'SAN NGON'}];
   if (table === 'bookings' && includeRefund) rows = rows.map(row => row.id === 'booking-1' ? { ...row, status: 'cancelled', refund_status: 'needed' } : row);
   if (table === 'notifications') {
     rows = rows.filter(row => row.user_id === me.id);

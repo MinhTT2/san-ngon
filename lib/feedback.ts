@@ -19,6 +19,7 @@ export const feedbackReviewSchema = z.object({
 }).refine(data => !['resolved', 'closed'].includes(data.status) || data.reply.length >= 5);
 export type Feedback = {
   id: string; category: keyof typeof FEEDBACK_CATEGORIES; title: string; message: string;
+  booking_id?: string | null; receipt_path?: string | null;
   page_path: string | null; status: keyof typeof FEEDBACK_STATUSES; reply: string;
   created_at: string; updated_at: string;
 };

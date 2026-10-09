@@ -18,7 +18,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect(`/dang-nhap?next=${encodeURIComponent(href(page))}`);
-  let query = db.from('feedback').select('id,category,title,message,page_path,status,reply,created_at,updated_at', { count: 'exact' }).eq('user_id', user.id);
+  let query = db.from('feedback').select('id,category,title,message,booking_id,receipt_path,page_path,status,reply,created_at,updated_at', { count: 'exact' }).eq('user_id', user.id);
   if (status === 'open') query = query.in('status', ['new','reviewing']);
   if (status === 'done') query = query.in('status', ['resolved','closed']);
   const [{ data, count, error }, all, open] = await Promise.all([

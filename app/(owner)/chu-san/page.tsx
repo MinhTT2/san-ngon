@@ -10,6 +10,7 @@ import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booki
 import { TelegramConnect } from '@/components/telegram-connect';
 import { OwnerStatsPanel, PeriodLinks } from '@/components/stats-panels';
 import { parseOwnerStats } from '@/lib/stats';
+import { OwnerReadiness } from '@/components/owner-readiness';
 import { OwnerVenuePicker } from '@/components/owner-venue-picker';
 
 export const dynamic = 'force-dynamic';
@@ -43,16 +44,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   });
   const stats = statsError || !statsData ? null : parseOwnerStats(statsData);
 
-  const from = new Date();
-  const to = new Date();
-  to.setDate(to.getDate() + 6);
+  const { data: calendarData, error: calendarError } = await supabase.rpc('get_owner_operating_calendar', { p_venue_id: venue.id });
+  if (calendarError || !calendarData) throw new Error('Chưa tải được ngày vận hành.');
+  const calendar = calendarData as unknown as { today:string; from:string; until:string; days:string[] };
 
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
-    .select('id, code, starts_at, ends_at, status, total_amount, deposit_amount, refund_status, customer_name, customer_phone, courts!inner(name, venue_id, venues(name))')
+    .select('id, code, starts_at, ends_at, expires_at, status, total_amount, deposit_amount, refund_status, customer_name, customer_phone, courts!inner(name, venue_id, venues(name))')
     .eq('courts.venue_id', venue.id)
-    .gte('starts_at', `${ymd(from)}T00:00:00+07:00`)
-    .lte('starts_at', `${ymd(to)}T23:59:59+07:00`)
+    .gte('starts_at', calendar.from)
+    .lt('starts_at', calendar.until)
     .order('starts_at');
 
   const { data: refunds, error: refundsError } = await supabase
@@ -70,21 +71,19 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     const c = b.courts as unknown as { name: string };
     return { ...b, courtName: c?.name ?? '' };
   });
-  const pendingRows = rows.filter((b) => b.status === 'pending');
+  const pendingRows = rows.filter((b) => b.status === 'pending' && Date.parse(b.expires_at) > Date.now());
 
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const days = calendar.days.map(date => new Date(date + 'T12:00:00+07:00'));
 
-  const today = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(new Date()));
+  const today = rows.filter((b) => ymd(new Date(b.starts_at)) === calendar.today);
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <DashboardPageHeader eyebrow="Chủ sân / Tổng quan" title={venue.name} description={`${dayLabel(new Date())} · Theo dõi lịch chơi và các việc cần xử lý tại cụm sân.`}
-        actions={<><DashboardLink href={`/chu-san/don?venue=${venue.id}`}>Xem đơn</DashboardLink><DashboardLink href="/chu-san/lich">Lịch sân</DashboardLink></>} />
+        actions={<><DashboardLink href={`/chu-san/don?venue=${venue.id}`}>Xem đơn</DashboardLink><DashboardLink href="/chu-san/lich">Lịch sân</DashboardLink><DashboardLink href="/chu-san/doi-soat">Xuất đối soát</DashboardLink></>} />
 
       <OwnerVenuePicker venues={venues} selectedId={venue.id} pathname="/chu-san" query={{ period: String(period) }} />
+
+      <OwnerReadiness venueId={venue.id} />
 
       {venue.status !== 'active' && (
         <p className="mt-5 rounded-card border border-peak-line bg-peak-fill p-4 text-sm leading-relaxed text-peak-ink">
@@ -93,17 +92,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-ink-secondary">Theo dõi doanh thu và công suất để biết sân nào cần lấp lịch.</p>
-        <PeriodLinks path={`/chu-san?venue=${venue.id}`} period={period} />
-      </div>
-      {stats ? <OwnerStatsPanel stats={stats} /> : <QueryError className="mt-3" title="Chưa tải được thống kê" />}
-
-      {profileError || !profile ? <QueryError className="mt-6" title="Chưa tải được kết nối Telegram" /> : <TelegramConnect connected={Boolean(profile.telegram_chat_id)} />}
 
       {refundsError ? <QueryError className="mt-8" title="Chưa tải được danh sách cần hoàn cọc" /> : refundRows.length > 0 && (
         <section className="mt-8 rounded-card border border-peak-line bg-peak-fill p-4">
-          <h2 className="font-semibold text-peak-ink">Danh sách cần hoàn cọc</h2>
+          <h2 className="font-semibold text-peak-ink">Danh sách cần hoàn cọc</h2><Link href={"/chu-san/hoan-coc?venue="+venue.id} className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Xem cần hoàn và lịch sử đã hoàn →</Link>
           <ul className="mt-3 flex flex-col divide-y divide-peak-line">
             {refundRows.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
@@ -136,41 +128,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </section>
       )}
 
-      <h2 id="calendar" className="mt-10 scroll-mt-6 text-[15px] font-semibold">Bảy ngày tới</h2>
-      {bookingsError ? <QueryError className="mt-3" title="Chưa tải được lịch đặt sân" /> : <>
-      <div className="mt-3 hidden overflow-x-auto rounded-card border border-hairline bg-card p-4 lg:block">
-        <div className="grid min-w-[900px] gap-3" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
-          {days.map((d) => {
-            const dayRows = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(d));
-            return (
-              <div key={ymd(d)} className="flex flex-col gap-2">
-                <div className="flex items-baseline justify-between border-b border-hairline pb-2">
-                  <span className="text-xs font-semibold text-pitch">{dayLabel(d).split(',')[0]}</span>
-                  <span className="text-xs tabular-nums text-ink-secondary">{d.getDate()}/{d.getMonth() + 1}</span>
-                </div>
-                {dayRows.length === 0 ? (
-                  <span className="rounded-slot border border-dashed border-strong py-3 text-center text-[11px] text-ink-secondary">
-                    Trống
-                  </span>
-                ) : (
-                  dayRows.map((b) => (
-                    <div
-                      key={b.id}
-                      className={`flex flex-col gap-0.5 rounded-slot px-2 py-1.5 text-[11px] ${
-                        b.status === 'confirmed' ? 'bg-free-fill text-free-ink' : 'bg-peak-fill text-peak-ink'
-                      }`}
-                    >
-                      <span className="font-semibold tabular-nums">{hhmm(b.starts_at)} {b.courtName}</span>
-                      <span className="truncate opacity-80">{b.customer_name ?? 'Khách'}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
+      {!bookingsError && <>
       <h2 id="bookings" className="mt-10 scroll-mt-6 text-[15px] font-semibold">Đơn hôm nay</h2>
       <ul className="mt-3 flex flex-col gap-2">
         {today.map((b) => (
@@ -179,7 +137,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
             <div className="flex min-w-0 flex-grow flex-col gap-0.5">
               <span className="text-sm font-semibold">{b.customer_name ?? 'Khách'} · {b.courtName}</span>
               <span className="text-xs text-ink-secondary">
-                {b.customer_phone} · cọc {vnd(b.deposit_amount)} · thu tại sân {vnd(b.total_amount - b.deposit_amount)}
+                {b.customer_phone} · cọc {vnd(b.deposit_amount)} · {b.total_amount === b.deposit_amount && (b.status === 'confirmed' || b.status === 'completed') ? 'Đã thanh toán đủ tiền sân' : b.total_amount === b.deposit_amount ? 'Cọc bằng toàn bộ tiền sân' : 'Thu tại sân ' + vnd(b.total_amount - b.deposit_amount)}
               </span>
             </div>
             <StatusBadge status={b.status as BookingStatus} />
@@ -193,6 +151,51 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </p>
       )}
       </>}
+      <h2 id="calendar" className="mt-10 hidden scroll-mt-6 text-[15px] font-semibold lg:block">Bảy ngày tới</h2>
+      {bookingsError ? <QueryError className="mt-3" title="Chưa tải được lịch đặt sân" /> : <>
+      <Link href="/chu-san/lich" className="mt-6 inline-flex min-h-11 items-center rounded-control border border-hairline px-4 text-sm font-semibold text-pitch lg:hidden">Mở lịch 7 ngày của từng sân →</Link>
+      <div className="mt-3 hidden overflow-x-auto rounded-card border border-hairline bg-card p-4 lg:block">
+        <div className="grid min-w-[900px] gap-3" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
+          {days.map((d) => {
+            const dayRows = rows.filter((b) => ymd(new Date(b.starts_at)) === ymd(d));
+            return (
+              <div key={ymd(d)} className="flex flex-col gap-2">
+                <div className="flex items-baseline justify-between border-b border-hairline pb-2">
+                  <span className="text-xs font-semibold text-pitch">{dayLabel(d).split(',')[0]}</span>
+                  <span className="text-xs tabular-nums text-ink-secondary">{ymd(d).slice(8,10)}/{ymd(d).slice(5,7)}</span>
+                </div>
+                {dayRows.length === 0 ? (
+                  <span className="rounded-slot border border-dashed border-strong py-3 text-center text-xs text-ink-secondary">
+                    Trống
+                  </span>
+                ) : (
+                  dayRows.map((b) => (
+                    <div
+                      key={b.id}
+                      className={`flex flex-col gap-0.5 rounded-slot px-2 py-1.5 text-xs ${
+                        b.status === 'confirmed' ? 'bg-free-fill text-free-ink' : b.status === 'pending' ? 'bg-peak-fill text-peak-ink' : 'bg-sunk text-ink-secondary'
+                      }`}
+                    >
+                      <span className="font-semibold tabular-nums">{hhmm(b.starts_at)} {b.courtName}</span>
+                      <span className="truncate opacity-80">{b.customer_name ?? 'Khách'}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      </>}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-secondary">Theo dõi doanh thu và công suất để biết sân nào cần lấp lịch.</p>
+        <PeriodLinks path={`/chu-san?venue=${venue.id}`} period={period} />
+      </div>
+      {stats ? <OwnerStatsPanel stats={stats} /> : <QueryError className="mt-3" title="Chưa tải được thống kê" />}
+
+      {profileError || !profile ? <QueryError className="mt-6" title="Chưa tải được kết nối Telegram" /> : <TelegramConnect connected={Boolean(profile.telegram_chat_id)} />}
+
     </main>
   );
 }
@@ -212,6 +215,7 @@ function NoVenue() {
       >
         Tạo cụm sân
       </Link>
+      <OwnerReadiness />
     </main>
   );
 }

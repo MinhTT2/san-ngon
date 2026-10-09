@@ -12,6 +12,7 @@ export function FeedbackList({ rows, admin = false }: { rows: (Feedback & { send
     {admin && <p className="mt-2 text-xs text-ink-secondary">Người gửi: {row.sender?.full_name || 'Chưa đặt tên'}</p>}
     <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7">{row.message}</p>
     {row.page_path && safeNext(row.page_path) === row.page_path && <Link href={row.page_path} className="mt-3 inline-flex min-h-11 items-center break-all text-sm font-semibold text-pitch underline">Mở trang liên quan</Link>}
+    {row.receipt_path && <a href={'/api/feedback/'+row.id+'/receipt'} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Xem chứng từ riêng tư ↗</a>}
     {!admin && row.reply && <div className="mt-4 rounded-control bg-free-fill p-4"><p className="text-sm font-semibold text-pitch">Phản hồi từ Sân Ngon</p><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7">{row.reply}</p></div>}
     {admin && <FeedbackReviewForm key={row.updated_at} feedback={row} />}
   </article>)}</div>;

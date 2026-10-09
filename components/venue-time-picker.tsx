@@ -12,18 +12,22 @@ import type { Court, Sport } from '@/lib/types';
 export function VenueTimePicker({
   availability: a,
   initialSport,
+  initialTime,
+  initialDuration,
   courts = [],
   depositPct,
   onConfirm,
 }: {
   availability: ReturnType<typeof useAvailability>;
   initialSport?: Sport;
+  initialTime?: string;
+  initialDuration?: number;
   courts?: Pick<Court, 'id' | 'surface' | 'is_indoor'>[];
   depositPct: number;
   onConfirm: () => void;
 }) {
   const [chosenSport, setChosenSport] = useState<Sport | null>(a.selection?.slots[0].sport ?? initialSport ?? null);
-  const [chosenDuration, setChosenDuration] = useState<number | null>(a.selection?.slots.reduce((sum, slot) => sum + slot.slot_minutes, 0) ?? null);
+  const [chosenDuration, setChosenDuration] = useState<number | null>(a.selection?.slots.reduce((sum, slot) => sum + slot.slot_minutes, 0) ?? initialDuration ?? null);
   const sports = [...new Set(a.slots.map((slot) => slot.sport))];
   const sport = chosenSport && sports.includes(chosenSport) ? chosenSport : sports[0];
   const sportSlots = useMemo(() => a.slots.filter((slot) => slot.sport === sport), [a.slots, sport]);
@@ -46,6 +50,15 @@ export function VenueTimePicker({
     return `${court.is_indoor ? 'Trong nhà' : 'Ngoài trời'} · ${court.surface?.trim() || 'Chưa cập nhật mặt sân'}`;
   };
   const choices = times.find((time) => time.startsAt === selection?.startsAt)?.choices ?? [];
+  const initialChoice = useRef(false);
+  const [requestedUnavailable, setRequestedUnavailable] = useState(false);
+  useEffect(() => {
+    if (initialChoice.current || !initialTime || a.loading || a.failed) return;
+    initialChoice.current = true;
+    const picked = times.find(time => hhmm(time.startsAt) === initialTime)?.choices[0];
+    if (picked && (!initialDuration || duration === initialDuration)) a.choose(picked);
+    else setRequestedUnavailable(true);
+  }, [initialTime, initialDuration, duration, times, a]);
   const deposit = selection ? Math.min(selection.total, Math.ceil(selection.total * depositPct / 100 / 1000) * 1000) : 0;
   const summaryRef = useRef<HTMLElement>(null);
   const summaryContentRef = useRef<HTMLDivElement>(null);
@@ -53,11 +66,6 @@ export function VenueTimePicker({
     if (summaryContentRef.current) return enterMotion(summaryContentRef.current, 0, 8);
   }, [selection?.startsAt, selection?.courtId]);
 
-  useEffect(() => {
-    if (selection?.startsAt && window.matchMedia('(max-width: 1023px)').matches) {
-      summaryRef.current?.scrollIntoView({ block: 'nearest' });
-    }
-  }, [selection?.startsAt]);
 
   if (a.loading) return <div className="h-96 animate-pulse rounded-card border border-hairline bg-sunk" aria-label="Đang tải giờ trống" aria-busy="true" />;
   if (a.failed) return (
@@ -68,7 +76,7 @@ export function VenueTimePicker({
   if (!times.length) return <p className="rounded-card border border-hairline p-8 text-center text-sm text-ink-secondary">Sân chưa mở lịch cho ngày này. Bạn thử chọn ngày khác nhé.</p>;
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className={`grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] ${selection ? 'pb-24 lg:pb-0' : ''}`}>
       <section aria-label="Giờ chơi của cụm sân" className="min-w-0 rounded-card border border-hairline bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -106,29 +114,32 @@ export function VenueTimePicker({
           <h3 className="font-semibold text-pitch">Giờ bắt đầu · {duration} phút chơi</h3>
           <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-peak-line bg-peak-fill" />Giờ vàng</span>
         </div>
+        {requestedUnavailable && !selection && <p role="status" className="mb-3 text-sm leading-6 text-ink-secondary">Giờ hoặc thời lượng từ tìm kiếm không còn phù hợp. Chọn lại một giờ đủ thời gian bên dưới.</p>}
         {a.selectionLost && <p role="status" className="mb-3 text-sm text-ink-secondary">Sân vừa chọn không còn trống đủ thời gian. Bạn chọn lại một giờ còn sân nhé.</p>}
         {!availableTimes && <p role="status" className="mb-4 rounded-control bg-sunk p-3 text-sm leading-6 text-ink-secondary">Không còn sân trống đủ {duration} phút cho môn này. Bạn thử thời lượng ngắn hơn hoặc ngày khác nhé.</p>}
         {firstAvailable && <button type="button" onClick={() => a.choose(firstAvailable)} className="pf-action mb-4 inline-flex min-h-11 items-center gap-2 rounded-control border border-hairline bg-page px-3 text-xs font-semibold text-pitch hover:border-strong"><Clock3 className="size-4" aria-hidden="true" />Chọn giờ sớm nhất · {hhmm(firstAvailable.startsAt)}</button>}
         <div className="space-y-5">
         {sessions.map(session => <section key={session.key} aria-label={session.label}>
-          <div className="mb-2.5 flex items-center justify-between gap-3"><h4 className="text-xs font-semibold text-pitch">{session.label}</h4><span className="text-[11px] text-ink-secondary">{session.times.filter(time => time.choices.length).length} giờ còn sân</span></div>
+          <div className="mb-2.5 flex items-center justify-between gap-3"><h4 className="text-xs font-semibold text-pitch">{session.label}</h4><span className="text-xs text-ink-secondary">{session.times.filter(time => time.choices.length).length} giờ còn sân</span></div>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
           {session.times.map(({ startsAt, choices }) => {
             const best = choices[0];
             const selected = selection?.startsAt === startsAt;
             const isPeak = hourOf(startsAt) >= PEAK_FROM_HOUR && hourOf(startsAt) < PEAK_TO_HOUR;
+            const past = new Date(startsAt).getTime() <= Date.now();
+            const unavailableLabel = past ? 'Đã qua giờ' : sportSlots.some(slot => slot.starts_at === startsAt && slot.is_available) ? 'Không đủ thời lượng' : 'Hết sân';
             const tone = !best ? 'border-hairline bg-taken-fill text-taken-ink'
               : selected ? 'border-pitch bg-pitch text-pitch-ink'
               : isPeak ? 'border-peak-line bg-peak-fill text-peak-ink hover:border-peak-ink'
               : 'border-free-line bg-free-fill text-free-ink hover:border-pitch';
             return (
               <button key={startsAt} type="button" disabled={!best} aria-pressed={selected}
-                aria-label={`${hhmm(startsAt)}, ${best ? `còn sân, từ ${vnd(best.total)} cho ${duration} phút` : `không còn sân cho ${duration} phút`}`}
+                aria-label={`${hhmm(startsAt)}, ${best ? `còn sân, từ ${vnd(best.total)} cho ${duration} phút` : unavailableLabel}`}
                 onClick={() => a.choose(best)}
                 className={`pf-slot relative flex min-h-19 flex-col items-start justify-center gap-0.5 rounded-control border px-2 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch ${tone}`}>
                 <span className="text-sm font-semibold tabular-nums">{hhmm(startsAt)}</span>
-                <span className="text-xs">{best ? 'Còn sân' : 'Không còn sân'}</span>
-                {best && <span className="text-[11px] font-semibold sm:text-xs">Từ {vnd(best.total)}</span>}
+                <span className="text-xs">{best ? 'Còn sân' : unavailableLabel}</span>
+                {best && <span className="text-xs font-semibold sm:text-xs">Từ {vnd(best.total)}</span>}
                 {selected && <span aria-hidden="true" className="absolute right-2 top-2">✓</span>}
               </button>
             );
@@ -171,6 +182,7 @@ export function VenueTimePicker({
           </div>
         )}
       </aside>
+      {selection && <section aria-label="Lựa chọn nhanh trên điện thoại" className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-strong bg-card px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] text-pitch lg:hidden"><div className="min-w-0"><p className="text-xs font-semibold tabular-nums">{hhmm(selection.startsAt)}–{hhmm(selection.endsAt)} · {duration} phút</p><p className="mt-1 font-display text-lg font-bold tabular-nums">{vnd(selection.total)}</p></div><button type="button" onClick={onConfirm} className="min-h-11 shrink-0 rounded-control bg-pitch px-3 text-sm font-semibold text-pitch-ink">Tiếp tục →</button></section>}
     </div>
   );
 }

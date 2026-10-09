@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { enterMotion } from '@/lib/motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
 
 const SLIDES = [
   {
@@ -120,7 +120,10 @@ export function HeroCarousel() {
         className="pf-action absolute right-1.5 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch focus-visible:outline-free-line sm:right-3 lg:right-6">
         <ArrowRight size={19} aria-hidden="true" />
       </button>
-
+      <button type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? 'Tiếp tục chuyển ảnh' : 'Dừng chuyển ảnh'} aria-pressed={paused}
+        className="absolute bottom-3 right-3 z-20 inline-flex min-h-11 items-center gap-2 rounded-control border border-white/30 bg-pitch px-3 text-xs font-semibold text-white">
+        {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}{paused ? 'Tiếp tục' : 'Dừng chuyển ảnh'}
+      </button>
     </div>
   );
 }

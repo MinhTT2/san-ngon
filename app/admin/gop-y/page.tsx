@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const { data: admin, error: permissionError } = await db.rpc('is_admin');
   if (permissionError) throw new Error('Không kiểm tra được quyền quản trị.');
   if (!admin) redirect('/');
-  let query = db.from('feedback').select('id,category,title,message,page_path,status,reply,created_at,updated_at,sender:profiles!feedback_user_id_fkey(full_name)', { count: 'exact' });
+  let query = db.from('feedback').select('id,category,title,message,booking_id,receipt_path,page_path,status,reply,created_at,updated_at,sender:profiles!feedback_user_id_fkey(full_name)', { count: 'exact' });
   if (status) query = query.eq('status', status);
   if (category) query = query.eq('category', category);
   const { data, count, error } = await query.order('created_at', { ascending: false }).order('id', { ascending: false }).range((page - 1) * 20, page * 20 - 1);

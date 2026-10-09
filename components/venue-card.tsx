@@ -11,16 +11,19 @@ export type VenueCardData = {
   amenities: string[]; court_count: number; sports: string[]; available_slots: number;
   min_price: number | null; next_slot: string | null;
 };
-export function VenueCard({ venue: v, date, signedIn, saved, returnPath, sport }: {
+export function VenueCard({ venue: v, date, signedIn, saved, returnPath, sport, startTime, duration }: {
   venue: VenueCardData; date: string; signedIn: boolean; saved: boolean | null; returnPath: string; sport?: Sport;
+  startTime?: string; duration?: string;
 }) {
   const query = new URLSearchParams({ ngay: date, from: returnPath });
   if (sport) query.set('sport', sport);
+  if (startTime) query.set('gio', startTime);
+  if (duration) query.set('phut', duration);
   const href = `/san/${v.slug}?${query}`;
   const feedbackId = `favorite-feedback-${v.id}`;
   const src = v.images?.[0] ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${v.images[0]}` : undefined;
   return <li className="pf-venue-card pf-card group relative flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-hairline bg-card">
-    <Link href={href} aria-label={`Xem lịch ${v.name}`} className="pf-venue-cover relative block">
+    <Link href={href + '#lich-san'} aria-label={`Xem lịch ${v.name}`} className="pf-venue-cover relative block">
       <VenueCardPhoto src={src} name={v.name} />
       <span className={`absolute bottom-3 left-3 rounded-pill border px-3 py-1.5 text-xs font-semibold ${v.available_slots ? 'border-free-line bg-free-fill text-pitch' : 'border-hairline bg-card text-ink-secondary'}`}>
         {v.available_slots ? `Còn ${v.available_slots} khung trống` : 'Hết giờ trống ngày này'}
@@ -35,7 +38,7 @@ export function VenueCard({ venue: v, date, signedIn, saved, returnPath, sport }
       <p className="mb-4 mt-4 flex items-center gap-1.5 text-xs text-ink-secondary"><Clock3 size={14} aria-hidden="true" />{v.next_slot ? `Sớm nhất ${hhmm(v.next_slot)}` : 'Thử chọn một ngày khác'}</p>
       <div className="flex flex-wrap items-end justify-between gap-3 border-t border-hairline pt-4 mt-auto">
         <div><p className="text-[11px] text-ink-secondary">Giá từ / giờ</p><p className="mt-1 font-display text-xl font-bold tabular-nums text-pitch">{v.min_price != null ? vnd(v.min_price) : 'Chưa có giá'}</p></div>
-        <Link href={href} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control border border-strong px-3 text-xs font-semibold text-pitch hover:border-pitch hover:bg-pitch hover:text-white">Xem lịch<ArrowUpRight size={16} className="pf-arrow" aria-hidden="true" /></Link>
+        <Link href={href + '#lich-san'} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control border border-strong px-3 text-xs font-semibold text-pitch hover:border-pitch hover:bg-pitch hover:text-white">Xem lịch<ArrowUpRight size={16} className="pf-arrow" aria-hidden="true" /></Link>
       </div>
       <div id={feedbackId} />
     </div>

@@ -34,7 +34,7 @@ email khôi phục mật khẩu dùng liên kết xác thực (giữ `Confirmati
 mẫu recovery). Cho phép `/auth/callback` trên domain thật trong Supabase
 Redirect URLs. Kiểm tra nhận thư bằng tài khoản của người nghiệm thu.
 
-Chốt với chủ sân mốc hoàn cọc (hiện 2 giờ) và người thực hiện chuyển hoàn
+Chính sách sân thường giữ mốc 2 giờ; chủ sân hoàn thủ công trong 3 ngày làm việc sau khi đủ thông tin đối soát (chốt 09/10/2026). Nghiệm thu với chủ sân việc chuyển hoàn
 cho từng tài khoản nhận cọc. Chưa thay đổi mốc SQL khi chưa có quyết định.
 
 ## Kịch bản nghiệm thu trên domain thật

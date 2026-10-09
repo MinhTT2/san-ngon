@@ -281,7 +281,7 @@ Phí dịch vụ không vượt qua cờ nghiệm thu `multi_owner_enabled`.
 | Đơn chờ tối đa mỗi người | 2 | `MAX_PENDING` và `create_booking` |
 | Đặt trước | mặc định 30 ngày, cấu hình 1–180 ngày | `venues.booking_horizon_days` |
 | Giờ vàng | 16:00–21:00 | chỉ để tô màu, giá thật ở `price_rules` |
-| Hạn hủy được hoàn cọc | 2 giờ — **CHƯA CHỐT** | `CANCEL_WINDOW_HOURS`, chờ hỏi chủ sân |
+| Hạn hủy được hoàn cọc | 2 giờ, chốt ngày 09/10/2026 | `CANCEL_WINDOW_HOURS`; chủ sân hoàn thủ công trong 3 ngày làm việc sau khi đủ thông tin đối soát |
 
 ## Thiết kế
 
@@ -318,10 +318,10 @@ SMTP và cấu hình gửi thư vẫn cần nghiệm thu theo
 
 ## Việc cần chốt trước demo
 
-- Chốt mốc hủy được hoàn cọc với chủ sân; hiện cả SQL và giao diện dùng 2 giờ.
+- Chính sách sân thường giữ mốc 2 giờ; chủ sân hoàn thủ công trong 3 ngày làm việc sau khi đủ thông tin đối soát (chốt 09/10/2026). Nghiệm thu vận hành với chủ sân trước khi nhận tiền thật.
 - `/chinh-sach-huy` đã hướng dẫn chuyển theo tài khoản hiển thị trên từng
-  đơn và nói rõ hoàn tiền thủ công. Vẫn cần chốt người thực hiện hoàn/chuyển
-  tiền và cách đối soát trước khi nhận tiền thật.
+  đơn, trách nhiệm chủ sân và hạn hoàn tiền thủ công. Vẫn cần nghiệm thu
+  thao tác chuyển hoàn và cách đối soát trước khi nhận tiền thật.
 - Kiểm tra luồng xác minh → tạo cụm nháp → lưu ảnh → tìm sân → đặt/cọc → hủy
   và hoàn theo [hướng dẫn demo](docs/dev-setup.md#8-chạy-và-kiểm-tra).
 - Hoàn tất và kiểm tra các task bảng giá/tài khoản/email đang làm trước khi

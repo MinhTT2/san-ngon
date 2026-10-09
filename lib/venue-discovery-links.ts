@@ -15,6 +15,7 @@ export function venueDiscoveryReturn(raw?: string, date?: string): string | null
       q: filters.q, sport: filters.sport, ngay: date ?? filters.ngay,
       district: filters.district && DISTRICTS.includes(filters.district) ? filters.district : undefined,
       indoor: filters.indoor, available: filters.available,
+      gio: filters.gio, phut: filters.phut,
       sort: filters.sort !== 'name' ? filters.sort : undefined,
       page: filters.page > 1 ? String(filters.page) : undefined,
     };

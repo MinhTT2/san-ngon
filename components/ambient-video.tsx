@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { Pause, Play } from 'lucide-react';
 
 /** Chỉ tải/chạy video khi vào màn hình, không chạy khi giảm chuyển động/tiết kiệm dữ liệu. */
 export function AmbientVideo({ scene = 'soccer' }: { scene?: 'soccer' | 'court' }) {
@@ -15,6 +16,7 @@ export function AmbientVideo({ scene = 'soccer' }: { scene?: 'soccer' | 'court' 
   const [visible, setVisible] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -34,7 +36,7 @@ export function AmbientVideo({ scene = 'soccer' }: { scene?: 'soccer' | 'court' 
     };
   }, []);
 
-  const shouldPlay = allowed && inView && visible && !failed;
+  const shouldPlay = allowed && inView && visible && !failed && !paused;
   useEffect(() => {
     if (shouldPlay) setLoaded(true);
     const element = video.current;
@@ -55,5 +57,6 @@ export function AmbientVideo({ scene = 'soccer' }: { scene?: 'soccer' | 'court' 
       muted loop playsInline preload="none" poster={poster} aria-hidden="true" onError={() => { setFailed(true); setPlaying(false); }}>
       <source src={source} type={scene === 'court' ? 'video/webm' : 'video/mp4'} onError={() => { setFailed(true); setPlaying(false); }} />
     </video>}
+    {allowed && !failed && <button type="button" onClick={() => setPaused(value => !value)} aria-pressed={paused} aria-label={paused ? 'Tiếp tục video nền' : 'Dừng video nền'} className="absolute bottom-3 right-3 z-20 inline-flex min-h-11 items-center gap-2 rounded-control border border-white/30 bg-pitch px-3 text-xs font-semibold text-white">{paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}{paused ? 'Tiếp tục video' : 'Dừng video'}</button>}
   </div>;
 }
