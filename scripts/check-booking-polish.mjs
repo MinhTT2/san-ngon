@@ -59,6 +59,12 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(`${origin}/don-cua-toi?filter=all`);
     await page.getByRole('heading', { name: 'Đơn của tôi', exact: true }).waitFor();
+    const confirmedPayment = page.locator('.pf-player-booking').filter({ hasText: 'SANABC234' });
+    const pendingPayment = page.locator('.pf-player-booking').filter({ hasText: 'SANDEF567' });
+    assert.match(await confirmedPayment.innerText(), /Đã thanh toán đủ tiền sân/);
+    assert.match(await pendingPayment.innerText(), /Cọc bằng toàn bộ tiền sân/);
+    assert.doesNotMatch(await pendingPayment.innerText(), /Đã thanh toán đủ tiền sân/);
+    assert.doesNotMatch(await page.locator('main').innerText(), /Trả tại sân 0đ/);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     if ([390, 1440].includes(width)) await screenshot(`review-my-bookings-${width}`);
     const cancel = page.getByRole('button', { name: 'Hủy giữ chỗ', exact: true });
@@ -189,6 +195,8 @@ try {
   await page.waitForTimeout(450);
   assert.equal(await page.getByLabel('Tên người đặt', { exact: true }).inputValue(), 'Người thử giao diện');
   assert.equal(await page.getByLabel('Tiến trình đặt sân').locator('[aria-current="step"]').textContent(), 'Thông tin');
+  assert(await page.getByText('Cọc bằng toàn bộ tiền sân. Sau khi nhận đủ cọc, bạn không cần trả thêm tiền sân khi đến chơi.', { exact: true }).isVisible());
+  assert.equal(await page.getByText('Trả tại sân', { exact: true }).count(), 0);
   await screenshot('review-booking-form-1440');
   await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
   assert.equal(await page.getByRole('button', { name: /^10:00, còn sân/ }).getAttribute('aria-pressed'), 'true');

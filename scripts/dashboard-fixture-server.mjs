@@ -19,6 +19,7 @@ bookings.forEach((booking, i) => { booking.expires_at = new Date(Date.now() + 15
 const checkoutBase = { ...bookings[1], id: 'checkout-pending', payment_bank: 'MB', payment_account: '0123456789', payment_account_name: 'SAN NGON KIEM THU', courts: { ...bookings[1].courts, venues: { ...bookings[1].courts.venues, address: venues[0].address } } };
 const checkoutBookings = {
   SANDEF567: checkoutBase,
+  SANPRT234: { ...checkoutBase, id: 'checkout-partial', code: 'SANPRT234', deposit_amount: 60000 },
   SANABC234: { ...checkoutBase, id: 'checkout-confirmed', code: 'SANABC234', status: 'confirmed' },
   SANHJK234: { ...checkoutBase, id: 'checkout-completed', code: 'SANHJK234', status: 'completed', starts_at: created, ends_at: '2026-10-01T04:00:00Z' },
   SANCAN234: { ...checkoutBase, id: 'checkout-cancelled', code: 'SANCAN234', status: 'cancelled' },

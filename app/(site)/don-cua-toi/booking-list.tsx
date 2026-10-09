@@ -179,7 +179,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
                       <p className={`mt-1.5 text-xs leading-5 ${b.pending ? 'text-peak-ink' : 'text-ink-secondary'}`}>
                         {b.pending ? `Cần cọc ${vnd(b.deposit_amount)}` : b.paid_at ? `Đã cọc ${vnd(b.deposit_amount)}` : b.refund_status === 'needed' || b.refund_status === 'done' ? 'Có giao dịch chuyển khoản' : 'Chưa ghi nhận cọc'}
                       </p>
-                      {(b.status === 'confirmed' || b.status === 'completed' || b.pending) && <p className="mt-1 text-xs leading-5 text-ink-secondary">{b.pending ? 'Sau cọc, trả tại sân' : 'Trả tại sân'} {vnd(b.total_amount - b.deposit_amount)}</p>}
+                      {(b.status === 'confirmed' || b.status === 'completed' || b.pending) && <p className="mt-1 text-xs leading-5 text-ink-secondary">{b.deposit_amount >= b.total_amount ? b.pending ? 'Cọc bằng toàn bộ tiền sân' : 'Đã thanh toán đủ tiền sân' : <>{b.pending ? 'Sau cọc, trả tại sân' : 'Trả tại sân'} {vnd(b.total_amount - b.deposit_amount)}</>}</p>}
                       {b.refund_status === 'needed' && <p className="mt-1 text-xs font-medium text-peak-ink">Đang chờ hoàn cọc</p>}
                       {b.refund_status === 'done' && <p className="mt-1 text-xs font-medium text-success">Đã hoàn cọc</p>}
                     </td>

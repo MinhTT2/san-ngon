@@ -168,7 +168,9 @@ export function BookingForm({
         <Row label="Tổng tiền sân" value={vnd(selection.total)} />
         <Row label={`Cọc trước ${depositPct}%`} value={vnd(deposit)} />
         <div className="h-px bg-strong" />
-        <Row label="Trả tại sân" value={vnd(selection.total - deposit)} />
+        {deposit >= selection.total
+          ? <p className="text-sm leading-6 text-free-ink">Cọc bằng toàn bộ tiền sân. Sau khi nhận đủ cọc, bạn không cần trả thêm tiền sân khi đến chơi.</p>
+          : <Row label="Trả tại sân" value={vnd(selection.total - deposit)} />}
       </div>
 
       <p className="text-xs leading-5 text-ink-secondary">Theo chính sách hiện tại, hủy trước giờ chơi ít nhất {CANCEL_WINDOW_HOURS} tiếng được hoàn cọc; hoàn tiền được xử lý thủ công. <Link href="/chinh-sach-huy" target="_blank" rel="noopener noreferrer" className="font-semibold text-pitch underline underline-offset-2">Xem chính sách (mở tab mới)</Link>.</p>

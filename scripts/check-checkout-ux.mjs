@@ -80,6 +80,9 @@ try {
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await open();
+    assert.equal(await page.getByText('Đã thanh toán đủ tiền sân', { exact: true }).count(), 0, 'Pending booking never claims payment has arrived');
+    assert.equal(await page.getByText('Trả khi đến sân', { exact: true }).count(), 0, 'Full deposit has no zero-amount balance row');
+    assert(await page.getByText('Cọc bằng toàn bộ tiền sân', { exact: true }).first().isVisible() || width >= 1024);
     await page.getByRole('button', { name: 'Tải lại mã QR', exact: true }).waitFor();
     await noOverflow(`Pending checkout overflow at ${width}`);
     assert.equal(await page.locator('footer').count(), 0, 'Checkout keeps its own compact header and no footer');
@@ -112,6 +115,26 @@ try {
   await screenshot('review-checkout-1440');
   await page.setViewportSize({ width: 390, height: 1000 });
   await screenshot('review-checkout-390');
+
+  // Old partial deposits keep their frozen amount and the remaining payment.
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    status = 'pending'; await open('SANPRT234');
+    assert.equal(await page.locator('[data-payment-amount]').innerText(), '60.000đ');
+    const region = page.getByRole('region', { name: width < 1024 ? 'Tóm tắt lịch chơi' : 'Thông tin sân đã chọn', exact: true });
+    if (width < 1024) await region.locator('summary').click();
+    const balance = region.locator('div').filter({ has: page.getByText('Trả khi đến sân', { exact: true }) }).last();
+    assert.match(await balance.innerText(), /60\.000đ/);
+    assert.equal(await page.getByText('Đã thanh toán đủ tiền sân', { exact: true }).count(), 0);
+    await noOverflow('Partial payment at ' + width);
+    status = 'confirmed';
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await page.getByRole('heading', { name: 'Đặt cọc thành công!', exact: true }).waitFor();
+    assert.equal(await page.getByText('Đã thanh toán đủ tiền sân', { exact: true }).count(), 0, 'Partial confirmation never claims payment in full');
+    assert.match(await page.getByRole('region', { name: 'Thanh toán đơn đặt sân', exact: true }).innerText(), /thanh toán phần còn lại/);
+  }
+  status = 'pending'; await open();
+  await page.setViewportSize({ width: 390, height: 1000 });
 
   // Waiting for payment must not issue a periodic HTTP status request.
   const steadyReads = reads.length;
@@ -173,6 +196,12 @@ try {
       await open(code); await page.getByRole('heading', { name: heading, exact: true }).waitFor();
       await noOverflow(`${nextStatus}/${code} overflow at ${width}`);
       assert.equal(qrRequests.length, imagesBefore, 'Terminal or unconfigured bookings never request a payment QR');
+      if (nextStatus === 'confirmed' || nextStatus === 'completed') {
+        assert(await page.getByText('Đã thanh toán đủ tiền sân', { exact: true }).first().isVisible() || width >= 1024);
+        assert.equal(await page.getByText('Trả khi đến sân', { exact: true }).count(), 0);
+        assert.equal(await page.getByText('Phần thanh toán tại sân', { exact: true }).count(), 0);
+        if (width === 320 || width === 1440) await screenshot('review-full-payment-' + nextStatus + '-' + width);
+      }
       if (nextStatus === 'completed') {
         assert.equal(await page.getByText('Lịch chơi đã được xác nhận. Chỉ còn chờ đến giờ ra sân.', { exact: true }).count(), 0);
         assert.equal(await page.getByRole('link', { name: 'Xem lịch sử đặt sân', exact: true }).getAttribute('href'), '/don-cua-toi?filter=history');
