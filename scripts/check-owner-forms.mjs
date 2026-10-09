@@ -145,6 +145,55 @@ try {
   console.log('OK: venue/court generic and field errors stay inside the modal, retain values and restore focus on repeated failures.');
 
 
+  // Court status is a saved change, never an immediate toggle or deletion.
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    let statusWrites = 0;
+    await page.route(`**/api/courts/${court}`, route => {
+      assert.equal(route.request().method(), 'PATCH');
+      statusWrites++;
+      return json(route, { error: 'Không thể đổi môn, giờ hoặc tắt sân khi đang có đơn trong tương lai.' }, 400);
+    });
+    await page.getByRole('button', { name: /^(Sửa|Đổi tên \/ sửa)$/, exact: true }).click();
+    modal = page.getByRole('dialog', { name: 'Sửa sân con', exact: true });
+    const status = modal.getByLabel('Trạng thái nhận đặt', { exact: true });
+    assert.equal(await status.inputValue(), 'active');
+    await status.selectOption('inactive');
+    assert.equal(statusWrites, 0, 'Choosing status does not mutate until saved');
+    await modal.getByRole('button', { name: 'Lưu sân', exact: true }).click();
+    await modal.locator('[data-owner-save-error]').waitFor();
+    assert.equal(await status.inputValue(), 'inactive', 'Rejected change retains the selected status');
+    await page.getByText('Đang mở', { exact: true }).waitFor();
+    assert.equal(await page.getByText('Đang tắt', { exact: true }).count(), 0, 'Rejected change does not change saved status');
+    await rejectDialog(page, () => modal.getByRole('button', { name: 'Hủy', exact: true }).click());
+    await shot(page, 'court-status-rejected');
+    const discardStatus = page.waitForEvent('dialog');
+    const closeStatus = modal.getByRole('button', { name: 'Hủy', exact: true }).click();
+    await (await discardStatus).accept(); await closeStatus;
+    await modal.waitFor({ state: 'detached' });
+    await page.setViewportSize({ width, height: 1000 });
+
+    const savedStates = [];
+    await page.route(`**/api/courts/${court}`, route => {
+      assert.equal(route.request().method(), 'PATCH');
+      const draft = route.request().postDataJSON();
+      savedStates.push(draft.is_active);
+      return json(route, { court: { ...draft, id: court } });
+    });
+    for (const target of ['inactive', 'active']) {
+      await page.getByRole('button', { name: /^(Sửa|Đổi tên \/ sửa)$/, exact: true }).click();
+      modal = page.getByRole('dialog', { name: 'Sửa sân con', exact: true });
+      assert.equal(await modal.getByLabel('Trạng thái nhận đặt', { exact: true }).inputValue(), target === 'inactive' ? 'active' : 'inactive');
+      await modal.getByLabel('Trạng thái nhận đặt', { exact: true }).selectOption(target);
+      await modal.getByRole('button', { name: 'Lưu sân', exact: true }).click();
+      await modal.waitFor({ state: 'detached' });
+      await page.getByText(target === 'active' ? 'Đang mở' : 'Đang tắt', { exact: true }).waitFor();
+      assert(await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), 'Successful status save clears unsaved guard');
+    }
+    assert.deepEqual(savedStates, [false, true]);
+  }
+  console.log('OK: court off/on saves through PATCH; rejected status retains draft and saved badge, and successful changes clear the guard.');
+
   let created = 0, uploads = 0, publications = 0;
   const uploadedPaths = [];
   await page.route('**/api/venues', route => { created++; return json(route, { venue: { id: venue } }); });
