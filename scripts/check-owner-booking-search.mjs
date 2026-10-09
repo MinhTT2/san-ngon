@@ -34,7 +34,7 @@ try {
    await page.getByRole('button',{name:'Lọc đơn',exact:true}).click();
    await page.getByText('Khách lịch sử',{exact:true}).waitFor();
    assert.equal(await page.locator('.pf-booking-record').count(),1);
-   if(process.env.UX_SCREENSHOT_DIR) {await mkdir(process.env.UX_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:`${process.env.UX_SCREENSHOT_DIR}/owner-order-search-${width}.png`,fullPage:true});}
+   if(process.env.UX_SCREENSHOT_DIR) {await page.locator('main form').scrollIntoViewIfNeeded();await page.evaluate(async () => {await document.fonts.ready;await Promise.allSettled(document.getAnimations().map(a=>a.finished));});await mkdir(process.env.UX_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:`${process.env.UX_SCREENSHOT_DIR}/owner-order-search-${width}.png`,fullPage:true});}
    await page.getByRole('link',{name:'Xóa lọc',exact:true}).click();
    await page.waitForURL(url => !url.searchParams.has('q'));
    await page.waitForFunction(() => document.querySelector('input[name=q]')?.value === '');

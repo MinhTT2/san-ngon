@@ -125,3 +125,23 @@ npm run check:ui -- --only=check-owner-booking-search,check-dashboard-ui,check-q
 ```
 
 Trạng thái: **hoàn thành phần chủ sân ngày 09/10/2026**. Bản dựng production riêng cùng lint/typecheck đạt; tìm/lọc/phân trang/ngày sai ở 390/1440px, khu quản lý ở 320–1440px, giả lập lỗi/phục hồi và thao tác xác nhận/hoàn cọc đều đạt. Đã áp dụng riêng migration `20261009000002_owner_booking_search.sql`, chạy lại bài SQL sau triển khai và rollback dữ liệu thử. Không triển khai migration tìm sân đang làm ở task khác.
+
+
+## Đợt 6 — A12: lịch sử đơn của người chơi
+
+- `search_my_bookings` chỉ đọc đơn của `auth.uid()`, kiểm tra tài khoản đang hoạt động; không nhận user ID từ trình duyệt và không có quyền gọi anon. Trả đúng các thông tin cần hiển thị, không trả liên hệ khách đặt.
+- Chuyển tìm mã/tên sân/khu vực/môn sang SQL với tìm không dấu theo từng từ; phân trang 30 đơn, tổng số và số chờ cọc/sắp chơi/lịch sử tính trên toàn bộ kết quả tìm kiếm và khoảng ngày.
+- SQL phân loại giữ chỗ hết hạn và buổi đã qua ngay khi đọc, không đợi cron. Sắp đơn còn hoạt động trước, ưu tiên chờ cọc, rồi lịch sử gần nhất; thứ tự có ID làm khóa cuối để phân trang ổn định.
+- Người chơi lọc khoảng ngày, chuyển trang giữ tìm kiếm/bộ lọc; tìm kiếm có trì hoãn ngắn để không gọi server mỗi phím, giữ focus, hiện trạng thái đang tải. Đổi mục/tìm kiếm trở về trang đầu; reload và điều hướng giữ tham số.
+- Giữ realtime, đồng bộ khi focus/nối mạng/kết nối lại và timer hiển thị hạn trên trang; giữ nguyên thao tác hủy, thanh toán và phục hồi yêu cầu đặt sân.
+
+Trạng thái: **A12 hoàn thành ngày 09/10/2026**. Migration `20261009000100_player_booking_search.sql` đã áp dụng riêng, không triển khai các migration chưa nghiệm thu của task khác. Các migration mang số nhỏ hơn nhưng chưa triển khai cần kiểm tra và dùng `--include-all` khi bàn giao sau; không xóa/sửa lịch sử migration.
+
+Kiểm tra SQL ứng viên và bản đã triển khai đều đạt, rollback riêng: 42 trạng thái đơn, phân trang/tổng số, mã cũ/hoàn cọc, không dấu/nhiều từ, giới hạn ngày theo Việt Nam, dữ liệu rỗng/tham số sai/quyền tài khoản; thêm 1.001 đơn lịch sử để xác nhận tổng 1.043 đơn vẫn đầy đủ và trang cuối trả đúng 18 đơn lịch sử. Không để dữ liệu thử tồn tại sau rollback.
+
+Lint và bản dựng production riêng/typecheck đạt. Trình duyệt headless với context riêng ở 390/1440px kiểm tra lịch sử nhiều trang, tìm đơn cũ, reset trang, reload/focus, không dấu, ngày sai và lỗi đọc/phục hồi. Hồi quy đặt sân/hủy/xác nhận/hoàn cọc và phục hồi yêu cầu đạt; ảnh giao diện chủ sân/người chơi đã được xem lại. Không nghiệm thu tiền thật trong đợt này.
+
+```sh
+npx supabase db query --linked --file scripts/check-player-booking-search.sql
+npm run check:ui -- --only=check-player-booking-search,check-booking-polish,check-booking-recovery,check-owner-booking-search
+```

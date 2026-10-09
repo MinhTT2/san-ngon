@@ -1466,6 +1466,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      search_my_bookings: {
+        Args: {
+          p_filter?: string
+          p_from?: string
+          p_page?: number
+          p_query?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+
       search_owner_bookings: {
         Args: {
           p_from?: string

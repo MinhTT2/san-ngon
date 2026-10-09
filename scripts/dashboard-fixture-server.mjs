@@ -64,13 +64,14 @@ const server = createServer(async (req, res) => {
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
   let readFailure = '';
-  let ownerHistory = false;
+  let ownerHistory = false, playerHistory = false;
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
     readFailure = claims.fixture_read_failure || '';
     ownerHistory = !!claims.fixture_owner_history;
+    playerHistory = !!claims.fixture_player_history;
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
     catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
   } catch { /* Anonymous requests use only public fixture data. */ }
@@ -98,6 +99,27 @@ const server = createServer(async (req, res) => {
   const args = body ? JSON.parse(body) : {};
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const name = url.pathname.split('/').at(-1);
+    if (name === 'search_my_bookings') {
+      if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
+      const now = Date.now();
+      let rows = [...bookings];
+      if (playerHistory) rows.push(...Array.from({ length:42 }, (_,i) => ({ ...bookings[0], id:`player-history-${i}`, code:i===41 ? 'SANXYZ234' : `SAN${String(i+1).padStart(6,'B')}`, starts_at:new Date(now-(i+1)*86400000).toISOString(), ends_at:new Date(now-(i+1)*86400000+3600000).toISOString(), status:i===41 ? 'cancelled' : 'completed', refund_status:i===41 ? 'needed' : null })));
+      if (includeRefund) rows = rows.map(row => row.id === 'booking-1' ? { ...row, status:'cancelled',refund_status:'needed' } : row);
+      const norm = text => text.normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[đĐ]/g,'d').toLowerCase();
+      const words = norm(args.p_query || '').trim().split(/\s+/).filter(Boolean);
+      rows = rows.filter(b => words.every(word => norm(`${b.code} ${b.courts.name} ${b.courts.venues.name} ${b.courts.venues.district} Cầu lông`).includes(word)));
+      const day = iso => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));
+      if (args.p_from) rows = rows.filter(b => day(b.starts_at)>=args.p_from);
+      if (args.p_to) rows = rows.filter(b => day(b.starts_at)<=args.p_to);
+      const pending = b => b.status==='pending' && Date.parse(b.expires_at)>now;
+      const confirmed = b => b.status==='confirmed' && Date.parse(b.ends_at)>now;
+      const active = b => pending(b) || confirmed(b);
+      const counts = {total:rows.length,pending:rows.filter(pending).length,confirmed:rows.filter(confirmed).length,history:rows.filter(b=>!active(b)).length};
+      rows = rows.filter(b => args.p_filter==='all' || (args.p_filter==='history' ? !active(b) : args.p_filter==='pending' ? pending(b) : args.p_filter==='confirmed' ? confirmed(b) : active(b)));
+      rows.sort((a,b)=>Number(active(b))-Number(active(a)) || Number(pending(b))-Number(pending(a)) || (active(a) ? Date.parse(a.starts_at)-Date.parse(b.starts_at) : Date.parse(b.starts_at)-Date.parse(a.starts_at)) || b.id.localeCompare(a.id));
+      const matched=rows.length,pages=Math.max(1,Math.ceil(matched/30)),page=Math.max(1,Math.min(args.p_page || 1,pages));
+      send({...counts,matched,page,pages,page_size:30,now_ms:now,rows:rows.slice((page-1)*30,page*30)}); return;
+    }
     if (name === 'search_owner_bookings') {
       if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
       let rows = ownerHistory ? Array.from({ length: 42 }, (_, i) => ({ ...bookings[0], id: `history-${i}`, code: i === 41 ? 'SANXYZ234' : `SAN${String(i+1).padStart(6,'A')}`, starts_at: new Date(Date.now()-(i+1)*86400000).toISOString(), ends_at: new Date(Date.now()-(i+1)*86400000+3600000).toISOString(), status: i === 41 ? 'cancelled' : 'completed', refund_status: i === 41 ? 'needed' : null, customer_name: i === 41 ? 'Khách lịch sử' : 'Khách kiểm tra', customer_phone: i === 41 ? '0912345678' : '0901234567', courtName: court.name })) : bookings.map(b => ({ ...b, courtName: court.name }));

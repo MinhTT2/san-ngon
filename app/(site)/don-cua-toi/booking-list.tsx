@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { playMotion } from '@/lib/motion';
 import { NavigationMarker } from '@/components/navigation-marker';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,6 @@ import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import { CANCEL_WINDOW_HOURS, HOLD_MINUTES, SPORT_LABELS } from '@/lib/constants';
 import type { Booking } from '@/lib/types';
 import { useQueryControls } from '@/lib/use-query-controls';
-import { matchesSearch } from '@/lib/text-search';
 import { CopyButton } from '@/components/copy-button';
 
 export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 'status' | 'total_amount' | 'deposit_amount' | 'expires_at' | 'paid_at' | 'refund_status'> & {
@@ -22,18 +21,38 @@ export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 
 
 type Filter = 'active' | 'pending' | 'confirmed' | 'history' | 'all';
 
-export function BookingList({ bookings, userId, initialNow, failed = false }: {
+export function BookingList({ bookings, userId, initialNow, failed = false, summary, invalidRange = false }: {
   bookings: MyBooking[];
   userId: string;
   initialNow: number;
   failed?: boolean;
+  invalidRange?: boolean;
+  summary?: { total: number; pending: number; confirmed: number; history: number; matched: number; page: number; pages: number; page_size: number };
 }) {
   const router = useRouter();
-  const { params, update } = useQueryControls();
+  const { params } = useQueryControls();
+  const [isNavigating, startTransition] = useTransition();
+  const navigate = (values: Record<string, string | null>, push = false) => {
+    const url = new URL(window.location.href);
+    for (const [key,value] of Object.entries(values)) {
+      if (value) url.searchParams.set(key,value); else url.searchParams.delete(key);
+    }
+    if (!Object.hasOwn(values,'page')) url.searchParams.delete('page');
+    startTransition(() => { if (push) router.push(url.pathname+url.search, {scroll:false}); else router.replace(url.pathname+url.search, {scroll:false}); });
+  };
   const requestedFilter = params.get('filter') ?? '';
   const filter: Filter = ['active', 'pending', 'confirmed', 'history', 'all'].includes(requestedFilter) ? requestedFilter as Filter : 'active';
-  const query = (params.get('q') ?? '').slice(0, 100);
-  const setFilter = (value: Filter) => update({ filter: value === 'active' ? null : value }, true);
+  const urlQuery = (params.get('q') ?? '').slice(0, 100);
+  const [query,setQuery] = useState(urlQuery);
+  useEffect(() => { setQuery(urlQuery); }, [urlQuery]);
+  useEffect(() => {
+    if (query === urlQuery) return;
+    const timer = setTimeout(() => navigate({q:query || null}),300);
+    return () => clearTimeout(timer);
+    // navigate reads the latest URL; typing stays local until the debounce ends.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query,urlQuery]);
+  const setFilter = (value: Filter) => navigate({filter:value === 'active' ? null : value,q:query || null},true);
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (resultsRef.current) return playMotion(resultsRef.current, { opacity: [0.45, 1] }, { duration: 0.28 });
@@ -75,15 +94,15 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
     const confirmed = b.status === 'confirmed' && Date.parse(b.ends_at) > now;
     return { ...b, expired, pending, confirmed, active: pending || confirmed };
   });
-  const pendingCount = rows.filter((b) => b.pending).length;
-  const confirmedCount = rows.filter((b) => b.confirmed).length;
-  const historyCount = rows.filter((b) => !b.active).length;
-  const visible = rows.filter((b) => (filter === 'all' || (filter === 'active' ? b.active
-    : filter === 'history' ? !b.active : b[filter])) && matchesSearch(`${b.code} ${b.courts?.name ?? ''} ${b.courts?.venues?.name ?? ''} ${b.courts?.venues?.district ?? ''} ${SPORT_LABELS[b.courts?.sport ?? ''] ?? ''}`, query)).sort((a, b) => {
-    if (a.active !== b.active) return a.active ? -1 : 1;
-    if (a.pending !== b.pending) return a.pending ? -1 : 1;
-    return a.active ? Date.parse(a.starts_at) - Date.parse(b.starts_at) : Date.parse(b.starts_at) - Date.parse(a.starts_at);
-  });
+  const pendingCount = summary?.pending ?? 0;
+  const confirmedCount = summary?.confirmed ?? 0;
+  const historyCount = summary?.history ?? 0;
+  const visible = rows;
+  const matched = summary?.matched ?? 0;
+  const pageHref = (page: number) => {
+    const next = new URLSearchParams(params.toString()); next.set('page',String(page));
+    return `/don-cua-toi?${next}`;
+  };
   const summaries = [
     { key: 'pending' as const, label: 'Chờ cọc', count: pendingCount, note: 'Thanh toán để xác nhận sân', Icon: Clock3 },
     { key: 'confirmed' as const, label: 'Sắp chơi / đang chơi', count: confirmedCount, note: 'Sân đã được xác nhận', Icon: CalendarDays },
@@ -103,9 +122,17 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
         </Link>
       </header>
 
+      <form key={`${params.get('from')}:${params.get('to')}`} method="get" className="mt-6 flex flex-wrap items-end gap-3 rounded-card border border-hairline bg-card p-4">
+        <input type="hidden" name="filter" value={filter} /><input type="hidden" name="q" value={query} />
+        <label className="min-w-0 text-xs font-semibold text-ink-secondary">Từ ngày<input type="date" name="from" defaultValue={params.get('from') ?? ''} className="mt-1 block min-h-11 rounded-control border border-hairline bg-page px-3 text-sm" /></label>
+        <label className="min-w-0 text-xs font-semibold text-ink-secondary">Đến ngày<input type="date" name="to" defaultValue={params.get('to') ?? ''} className="mt-1 block min-h-11 rounded-control border border-hairline bg-page px-3 text-sm" /></label>
+        <button type="submit" className="min-h-11 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink">Lọc ngày</button>
+        <Link href={`/don-cua-toi?${new URLSearchParams({filter,...(query ? {q:query} : {})})}`} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-pitch underline">Xóa lọc ngày</Link>
+      </form>
+
       {failed ? (
         <div role="alert" className="mt-8 rounded-card border border-hairline bg-card p-8 text-center">
-          <p className="font-semibold">Chưa tải được đơn của bạn</p>
+          <p className="font-semibold">{invalidRange ? 'Khoảng ngày không hợp lệ. Hãy chọn lại ngày lọc.' : 'Chưa tải được đơn của bạn'}</p>
           <p className="mt-2 text-sm text-ink-secondary">Vui lòng thử lại để xem tình trạng đặt sân mới nhất.</p>
           <button onClick={() => router.refresh()} className="mt-4 rounded-control border border-pitch px-5 py-3 text-sm font-semibold text-pitch">Thử lại</button>
         </div>
@@ -124,16 +151,16 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-card border border-hairline bg-card p-4">
-          <label htmlFor="booking-search" className="relative min-w-0 flex-1"><span className="sr-only">Tìm đơn theo mã hoặc tên sân</span><Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input id="booking-search" type="search" value={query} maxLength={100} onChange={event => update({ q: event.target.value })} placeholder="Tìm mã đơn, tên sân, khu vực…" className="min-h-11 w-full rounded-control border border-hairline bg-page pl-10 pr-3 text-sm" /></label>
-          {query && <button type="button" onClick={() => update({ q: null })} className="min-h-11 px-2 text-sm font-semibold text-pitch underline">Xóa tìm kiếm</button>}
-          <p role="status" className="w-full text-xs text-ink-secondary sm:w-auto">{visible.length} đơn trong mục đang xem</p>
+          <label htmlFor="booking-search" className="relative min-w-0 flex-1"><span className="sr-only">Tìm đơn theo mã hoặc tên sân</span><Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input id="booking-search" type="search" value={query} maxLength={100} onChange={event => setQuery(event.target.value)} placeholder="Tìm mã đơn, tên sân, khu vực…" className="min-h-11 w-full rounded-control border border-hairline bg-page pl-10 pr-3 text-sm" /></label>
+          {query && <button type="button" onClick={() => { setQuery(''); navigate({q:null}); }} className="min-h-11 px-2 text-sm font-semibold text-pitch underline">Xóa tìm kiếm</button>}
+          <p role="status" className="w-full text-xs text-ink-secondary sm:w-auto">{isNavigating ? 'Đang tải kết quả…' : `${matched} đơn trong mục đang xem`}</p>
         </div>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-hairline">
           <div role="group" aria-label="Lọc đơn đặt sân" className="pf-tab-rail relative isolate flex gap-1"><NavigationMarker activeKey={filter} variant="underline" />
             {([
               ['active', 'Đang đặt', pendingCount + confirmedCount],
               ['history', 'Lịch sử', historyCount],
-              ['all', 'Tất cả', rows.length],
+              ['all', 'Tất cả', summary?.total ?? 0],
             ] as const).map(([key, label, count]) => (
               <button key={key} type="button" aria-pressed={filter === key || (key === 'active' && (filter === 'pending' || filter === 'confirmed'))} onClick={() => setFilter(key)}
                 className={`pf-tab-link relative z-10 flex min-h-12 items-center gap-2 border-b-2 px-2 text-sm font-semibold sm:px-4 ${filter === key || (key === 'active' && (filter === 'pending' || filter === 'confirmed')) ? 'border-pitch text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>
@@ -144,12 +171,12 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
           <p className="pb-3 text-xs text-ink-secondary sm:pb-0">{filter === 'pending' ? 'Chỉ hiện đơn chờ cọc' : filter === 'confirmed' ? 'Chỉ hiện sân đã xác nhận' : 'Giờ chơi theo giờ Việt Nam'}</p>
         </div>
 
-        <div ref={resultsRef} data-booking-results>
+        <div ref={resultsRef} data-booking-results aria-busy={isNavigating}>
         {visible.length === 0 ? (
           <div className="mt-5 rounded-card border border-hairline bg-card px-5 py-14 text-center">
             <CalendarDays className="mx-auto text-pitch" size={32} strokeWidth={1.5} aria-hidden="true" />
-            <h2 className="mt-4 font-display text-2xl font-bold text-pitch">{query.trim() ? 'Không có đơn khớp trong mục này' : rows.length === 0 ? 'Chưa có buổi chơi nào' : filter === 'pending' ? 'Không có đơn chờ cọc' : filter === 'history' ? 'Chưa có lịch sử đặt sân' : 'Bạn chưa có lịch chơi sắp tới'}</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">{query.trim() ? 'Thử tên sân hoặc mã đơn ngắn hơn, hoặc tìm trong tất cả đơn của bạn.' : rows.length && filter !== 'history' ? 'Đơn đã kết thúc, hủy hoặc hết hạn nằm trong Lịch sử.' : 'Chọn sân và khung giờ phù hợp. Các đơn của bạn sẽ xuất hiện tại đây.'}</p>
+            <h2 className="mt-4 font-display text-2xl font-bold text-pitch">{query.trim() ? 'Không có đơn khớp trong mục này' : (summary?.total ?? 0) === 0 ? 'Chưa có buổi chơi nào' : filter === 'pending' ? 'Không có đơn chờ cọc' : filter === 'history' ? 'Chưa có lịch sử đặt sân' : 'Bạn chưa có lịch chơi sắp tới'}</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">{query.trim() ? 'Thử tên sân hoặc mã đơn ngắn hơn, hoặc tìm trong tất cả đơn của bạn.' : (summary?.total ?? 0) > 0 && filter !== 'history' ? 'Đơn đã kết thúc, hủy hoặc hết hạn nằm trong Lịch sử.' : 'Chọn sân và khung giờ phù hợp. Các đơn của bạn sẽ xuất hiện tại đây.'}</p>
             {query.trim() && filter !== 'all' ? <button type="button" onClick={() => setFilter('all')} className="mt-5 min-h-11 rounded-control border border-hairline px-5 text-sm font-semibold text-pitch">Tìm trong tất cả đơn</button> : <Link href="/tim-san" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-pitch underline underline-offset-4">Tìm sân để chơi <ArrowRight size={16} aria-hidden="true" /></Link>}
           </div>
         ) : (
@@ -194,7 +221,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
                         <details className="w-full text-xs"><summary className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Các thao tác khác</summary><div className="flex flex-col items-start gap-1">
                           {b.courts?.venues?.status === 'active' && <Link href={`/san/${b.courts.venues.slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Đặt lại sân này</Link>}
                           {(b.status === 'confirmed' || b.status === 'completed') && <><a href={`/api/bookings/${b.code}/calendar`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tải lịch buổi chơi</a><p className="text-xs leading-5 text-ink-secondary">Lịch đã tải không tự cập nhật khi hủy đơn.</p></>}
-                          <Link href={`/gop-y?trang=${encodeURIComponent(`/dat-san/${b.code}`)}`} className="inline-flex min-h-11 items-center text-sm text-ink-secondary underline">Cần hỗ trợ đơn này?</Link>
+                          <Link href={'/ho-tro-giao-dich?code='+b.code} className="inline-flex min-h-11 items-center text-sm text-ink-secondary underline">Cần hỗ trợ đơn này?</Link>
                         </div></details>
                       </div>
                     </td>
@@ -205,6 +232,11 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
           </div>
         )}
         </div>
+        {summary && summary.pages > 1 && <nav aria-label="Phân trang đơn của tôi" className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          {summary.page > 1 ? <Link href={pageHref(summary.page-1)} scroll={false} className="inline-flex min-h-11 items-center rounded-control border border-hairline px-4 text-sm font-semibold text-pitch">Trang trước</Link> : <span />}
+          <p className="text-sm text-ink-secondary">Trang {summary.page} / {summary.pages} · {(summary.page-1)*summary.page_size+1}–{(summary.page-1)*summary.page_size+visible.length} / {matched} đơn</p>
+          {summary.page < summary.pages ? <Link href={pageHref(summary.page+1)} scroll={false} className="inline-flex min-h-11 items-center rounded-control border border-hairline px-4 text-sm font-semibold text-pitch">Trang sau</Link> : <span />}
+        </nav>}
       </>}
 
       <aside className="mt-8 rounded-card border border-hairline bg-sunk/50 p-5 sm:flex sm:items-start sm:gap-4">
