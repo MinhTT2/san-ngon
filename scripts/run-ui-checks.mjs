@@ -9,6 +9,9 @@ import { setTimeout as wait } from 'node:timers/promises';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const staged = process.argv.includes('--staged');
+const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
+const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-personal-ui', 'check-dashboard-ui', 'capture-ui-review'];
+if (only && !checks.includes(only)) throw new Error(`Unknown UI check: ${only}`);
 const workspace = await mkdtemp(join(tmpdir(), 'san-ngon-ui-check-'));
 const screenshots = resolve(process.env.UX_SCREENSHOT_DIR || join(root, 'output/automated-ui'));
 const envNames = ['PATH', 'HOME', 'LANG', 'LC_ALL', 'CI', 'XDG_CACHE_HOME', 'PLAYWRIGHT_BROWSERS_PATH', 'CHROMIUM_EXECUTABLE', 'SystemRoot', 'TEMP', 'TMP', 'USERPROFILE', 'LOCALAPPDATA', 'APPDATA', 'PATHEXT'];
@@ -67,14 +70,7 @@ try {
   const app = start(['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', String(appPort)]);
   await ready(`${origin}/dang-nhap`, app);
   const testEnv = { UX_SCREENSHOT_DIR: screenshots };
-  await run(['scripts/check-live-refresh-browser.mjs', origin]);
-  await run(['scripts/check-public-ui.mjs', origin], testEnv);
-  await run(['scripts/check-discovery-ux.mjs', origin], testEnv);
-  await run(['scripts/check-site-motion.mjs', origin], testEnv);
-  await run(['scripts/check-motion-interactions.mjs', origin], testEnv);
-  await run(['scripts/check-booking-polish.mjs', origin], testEnv);
-  await run(['scripts/check-dashboard-ui.mjs', origin], testEnv);
-  await run(['scripts/capture-ui-review.mjs', origin], testEnv);
+  for (const check of checks.filter(check => !only || check === only)) await run([`scripts/${check}.mjs`, origin], testEnv);
   console.log(`UI checks passed. Desktop/mobile images: ${screenshots}`);
 } finally {
   await Promise.all([...children].map(async child => {

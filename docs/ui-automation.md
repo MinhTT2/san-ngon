@@ -19,6 +19,8 @@ Kiểm tra trang chủ, tìm sân, giải đấu, kết nối, xác thực, hỗ
 admin/chủ sân ở nhiều cỡ màn hình. Ảnh lưu ở `output/automated-ui/`;
 thư mục tạm và server kiểm thử được dọn khi chạy xong. Có thể đặt
 `CHROMIUM_EXECUTABLE` nếu máy đã có Chromium riêng.
+Có thể chạy riêng phần thông báo/tài khoản bằng
+`npm run check:ui -- --only=check-personal-ui`; vẫn dựng bản production cô lập.
 
 Animation dùng `motion/mini` (Motion), kết hợp observer cho nội dung khi cuộn
 và CSS cho trạng thái hover/lịch. Nội dung HTML luôn đọc được trước khi JS
@@ -32,6 +34,12 @@ ngày trên đơn chủ sân và form xem lại trước khi giữ chỗ. Mở h
 không gửi request; đóng hộp thoại trả focus về nút ban đầu. Các trường hợp
 hủy lỗi và xác nhận cọc mất mạng được mô phỏng để kiểm tra thông báo/thử lại.
 Mọi request thay đổi đơn trong bài kiểm tra đều bị chặn và trả kết quả giả.
+
+Trang thông báo và tài khoản có dữ liệu kiểm thử riêng: phân nhóm theo ngày,
+lọc chưa đọc, lỗi đánh dấu đã đọc, chống bấm lặp và thao tác bàn phím trên
+popover. Form đánh dấu đã đọc vẫn gửi theo cách thông thường khi tắt JS.
+Form tài khoản được kiểm tra khi bỏ thay đổi, chuẩn hóa số điện thoại,
+lưu lỗi/mất mạng và lưu thành công; request cập nhật hồ sơ đều bị chặn.
 
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.

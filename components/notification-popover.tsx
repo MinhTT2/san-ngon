@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { Bell, X } from 'lucide-react';
+import { NotificationReadButton } from './notification-read-button';
 
 type Notification = {
   id: string;
@@ -24,9 +25,18 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
 }) {
   const id = useId();
   const panel = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const router = useRouter();
-  const [pending, setPending] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const close = () => { panel.current?.hidePopover(); trigger.current?.focus(); };
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !panel.current?.matches(':popover-open')) return;
+      event.preventDefault(); event.stopPropagation();
+      panel.current.hidePopover(); trigger.current?.focus();
+    };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, []);
 
   useEffect(() => {
     const db = createClient();
@@ -40,26 +50,10 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
     return () => { stop(); clearTimeout(refreshTimer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', visible); };
   }, [router]);
 
-  async function markRead(notificationId: string) {
-    setPending(notificationId);
-    setError('');
-    try {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'POST',
-        headers: { Accept: 'application/json' },
-      });
-      if (!response.ok) throw new Error('read failed');
-      router.refresh();
-    } catch {
-      setError('Chưa đánh dấu đã đọc được. Bạn thử lại nhé.');
-    } finally {
-      setPending(null);
-    }
-  }
-
   return (
     <>
       <button
+        ref={trigger}
         type="button"
         popoverTarget={id}
         onClick={() => router.refresh()}
@@ -87,15 +81,14 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
             <h2 id={`${id}-title`} className="font-display text-lg font-bold text-pitch">Thông báo</h2>
             <p className="mt-1 text-xs text-ink-secondary">{unreadCount ? `${unreadCount} thông báo chưa đọc` : 'Bạn đã đọc hết thông báo'}</p>
           </div>
-          <button type="button" popoverTarget={id} popoverTargetAction="hide" aria-label="Đóng thông báo" className="flex size-11 items-center justify-center rounded-control hover:bg-sunk">
+          <button type="button" popoverTarget={id} popoverTargetAction="hide" onClick={close} aria-label="Đóng thông báo" className="flex size-11 items-center justify-center rounded-control hover:bg-sunk">
             <X size={18} aria-hidden="true" />
           </button>
         </div>
 
-        {error && <p role="alert" className="px-5 py-3 text-sm text-danger">{error}</p>}
         <div className="max-h-[min(26rem,calc(100dvh-16rem))] overflow-y-auto overscroll-contain">
           {loadError ? (
-            <p role="alert" className="p-6 text-sm text-danger">Chưa tải được thông báo. Bạn thử mở lại nhé.</p>
+            <div className="p-6"><p role="alert" className="text-sm leading-6 text-danger">Chưa tải được thông báo.</p><button type="button" onClick={() => router.refresh()} className="pf-action mt-3 min-h-11 rounded-control border border-hairline px-4 text-xs font-semibold text-pitch">Thử lại</button></div>
           ) : notifications.length === 0 ? (
             <div className="px-6 py-10 text-center">
               <Bell className="mx-auto mb-4 text-free-line" size={32} aria-hidden="true" />
@@ -112,20 +105,18 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
                       {notification.booking_id || notification.tournament_id ? (
                         // Route mở đơn có cập nhật read_at, không prefetch link này.
                         <a href={`/api/notifications/${notification.id}/open`} className="block rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-pitch">
-                          <p className="text-sm font-semibold">{notification.title}</p>
-                          {notification.body && <p className="mt-1 text-sm leading-6 text-ink-secondary">{notification.body}</p>}
+                          <p className="break-words text-sm font-semibold">{notification.title}</p>
+                          {notification.body && <p className="mt-1 break-words text-sm leading-6 text-ink-secondary">{notification.body}</p>}
                         </a>
                       ) : (
                         <>
-                          <p className="text-sm font-semibold">{notification.title}</p>
-                          {notification.body && <p className="mt-1 text-sm leading-6 text-ink-secondary">{notification.body}</p>}
+                          <p className="break-words text-sm font-semibold">{notification.title}</p>
+                          {notification.body && <p className="mt-1 break-words text-sm leading-6 text-ink-secondary">{notification.body}</p>}
                         </>
                       )}
                       <p className="mt-2 text-xs text-ink-secondary">{notification.timeLabel}</p>
                       {!notification.read_at && (
-                        <button type="button" disabled={pending !== null} onClick={() => markRead(notification.id)} className="mt-1 min-h-11 text-xs font-semibold text-pitch underline underline-offset-4 disabled:opacity-50">
-                          {pending === notification.id ? 'Đang lưu…' : 'Đánh dấu đã đọc'}
-                        </button>
+                        <NotificationReadButton id={notification.id} title={notification.title} />
                       )}
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Check, CheckCheck, CircleUserRound, LoaderCircle, LockKeyhole, Mail, Phone, Save, Ticket, UserRound } from 'lucide-react';
@@ -18,11 +18,24 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [baseline, setBaseline] = useState({ name: fullName, phone });
+  const dirty = name.trim() !== baseline.name.trim() || normalizePhone(number) !== normalizePhone(baseline.phone);
   const roleLabel = role === 'admin' ? 'Quản trị viên' : role === 'owner' ? 'Chủ sân' : 'Người chơi';
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  function discard() {
+    setName(baseline.name); setNumber(baseline.phone); setError(null); setSaved(false);
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || !dirty) return;
     setBusy(true); setError(null); setSaved(false);
     try {
       const response = await fetch('/api/profile', {
@@ -32,6 +45,7 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
       const json = await response.json();
       if (!response.ok) { setError(json.error ?? 'Chưa lưu được thông tin. Vui lòng thử lại.'); return; }
       setName(json.profile.full_name); setNumber(json.profile.phone); setSaved(true);
+      setBaseline({ name: json.profile.full_name, phone: json.profile.phone });
       router.refresh();
     } catch { setError('Không kết nối được. Kiểm tra mạng và thử lại.'); }
     finally { setBusy(false); }
@@ -56,7 +70,7 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
       </section>
 
       <div className="min-w-0 space-y-5">
-        <form onSubmit={submit} className="profile-enter profile-delay-2 overflow-hidden rounded-card border border-hairline bg-card">
+        <form onSubmit={submit} aria-busy={busy} className="profile-enter profile-delay-2 overflow-hidden rounded-card border border-hairline bg-card">
           <div className="flex items-center gap-4 border-b border-hairline p-5 sm:px-7 sm:py-6">
             <span className="grid size-11 place-items-center rounded-control bg-free-fill text-pitch"><CircleUserRound aria-hidden="true" className="size-5" strokeWidth={1.5} /></span>
             <div><h2 className="font-display text-xl font-bold text-pitch">Thông tin cá nhân</h2><p className="mt-1 text-xs leading-5 text-ink-secondary">Để mỗi lần đặt sân đều nhanh hơn một chút.</p></div>
@@ -85,12 +99,14 @@ export function ProfileForm({ userId, fullName, phone, email, avatar, role }: {
             </div>
             <div className="flex gap-3 rounded-control bg-free-fill p-4"><LockKeyhole aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-pitch" /><p className="text-xs leading-6 text-ink-secondary">Tên và số điện thoại sẽ được điền sẵn khi đặt sân. Thông tin trên những đơn đã đặt được giữ nguyên.</p></div>
             {error && <p role="alert" className="profile-feedback text-sm text-danger">{error}</p>}
-            {saved && <p role="status" className="profile-feedback flex items-center gap-2 text-sm text-pitch"><Check aria-hidden="true" className="pf-check-pop size-5" />Đã lưu thông tin tài khoản.</p>}
             <div className="flex flex-col-reverse gap-4 border-t border-hairline pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-center text-[11px] text-ink-secondary sm:text-left">Thông tin đúng. Cuộc hẹn trọn vẹn.</p>
-              <button type="submit" disabled={busy} className="pf-action profile-save flex h-12 items-center justify-center gap-2.5 rounded-control bg-pitch px-6 text-sm font-semibold text-pitch-ink disabled:opacity-60">
-                {busy ? <LoaderCircle aria-hidden="true" className="pf-spin size-4" /> : saved ? <Check aria-hidden="true" className="size-4" /> : <Save aria-hidden="true" className="size-4" />}{busy ? 'Đang lưu…' : 'Lưu thay đổi'}
+              <p role="status" className="text-xs leading-6 text-ink-secondary">{busy ? 'Đang lưu thông tin…' : dirty ? 'Có thay đổi chưa lưu.' : saved ? 'Đã lưu thông tin tài khoản.' : 'Chưa có thay đổi.'}</p>
+              <div className="flex flex-wrap items-center gap-2">
+              {dirty && <button type="button" onClick={discard} disabled={busy} className="pf-action min-h-11 rounded-control border border-hairline px-4 text-xs font-semibold text-ink-secondary disabled:opacity-60">Bỏ thay đổi</button>}
+              <button type="submit" disabled={busy || !dirty} className="pf-action profile-save flex min-h-11 flex-1 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-2.5 text-sm font-semibold text-pitch-ink disabled:opacity-60 sm:flex-none">
+                {busy ? <LoaderCircle aria-hidden="true" className="pf-spin size-4" /> : saved ? <Check aria-hidden="true" className="size-4" /> : <Save aria-hidden="true" className="size-4" />}{busy ? 'Đang lưu…' : saved && !dirty ? 'Đã lưu' : 'Lưu thay đổi'}
               </button>
+              </div>
             </div>
           </fieldset>
         </form>

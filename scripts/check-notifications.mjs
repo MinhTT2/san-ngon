@@ -29,7 +29,9 @@ async function load(path) {
     if (name === '@/lib/supabase/server') return { createClient: async () => db };
     if (name === '@/lib/search-params') return { NotificationSearchParams };
     if (name === '@/lib/request-origin') return { requestOrigin };
-    if (name === '@/lib/format') return { dayLabel: () => '05/10', hhmm: () => '18:00' };
+    if (name === '@/lib/format') return { dayLabel: () => '05/10', hhmm: () => '18:00', ymd: () => '2026-10-05' };
+    if (name === '@/components/navigation-marker') return { NavigationMarker: 'span' };
+    if (name === '@/components/notification-read-button') return { NotificationReadButton: 'button' };
     if (name === 'next/navigation') return { redirect: url => { throw Error(`redirect:${url}`); } };
     if (name === 'next/link') return { default: 'a' };
     return require(name);

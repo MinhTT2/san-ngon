@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileForm } from './profile-form';
+import { ArrowUpRight, UsersRound } from 'lucide-react';
 
 export const metadata: Metadata = { title: 'Thông tin tài khoản' };
 export const dynamic = 'force-dynamic';
@@ -22,12 +23,16 @@ export default async function Page() {
         <div><p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-secondary">Không gian của bạn</p><h1 className="font-display text-4xl font-extrabold tracking-tight text-pitch sm:text-5xl">Hồ sơ của bạn<span className="text-success">.</span></h1><p className="mt-4 max-w-lg text-sm leading-6 text-ink-secondary">Một chút về bạn. Sẵn sàng cho những cuộc hẹn trên sân.</p></div>
         <span className="hidden pb-1 font-display text-sm font-bold text-pitch md:block">Gặp nhau trên sân ↗</span>
       </header>
-      <Link href="/ket-noi/ho-so" className="mb-6 block text-sm font-semibold text-pitch underline">Thiết lập hồ sơ kết nối cộng đồng →</Link>
       {error || !profile ? (
         <p role="alert" className="mt-8 rounded-card border border-hairline bg-card p-6 text-sm text-danger">
           Chưa tải được thông tin tài khoản. Vui lòng tải lại trang.
         </p>
-      ) : <ProfileForm userId={user.id} fullName={profile.full_name ?? ''} phone={profile.phone ?? ''} email={user.email ?? ''} avatar={profile.avatar_url} role={profile.role} />}
+      ) : <><ProfileForm userId={user.id} fullName={profile.full_name ?? ''} phone={profile.phone ?? ''} email={user.email ?? ''} avatar={profile.avatar_url} role={profile.role} />
+        <aside data-motion-item className="mt-6 flex flex-wrap items-center gap-4 rounded-card border border-hairline bg-card p-5 sm:p-6">
+          <UsersRound className="size-6 shrink-0 text-pitch" strokeWidth={1.5} aria-hidden="true" />
+          <div className="min-w-0 flex-[1_1_240px]"><h2 className="text-sm font-semibold text-pitch">Muốn tìm người chơi cùng môn?</h2><p className="mt-2 text-xs leading-6 text-ink-secondary">Thiết lập hồ sơ kết nối và chọn thông tin liên hệ muốn công khai. Hồ sơ chỉ hiển thị khi bạn đồng ý.</p></div>
+          <Link href="/ket-noi/ho-so" className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control border border-strong px-4 text-xs font-semibold text-pitch">Thiết lập hồ sơ kết nối<ArrowUpRight className="pf-arrow size-4" aria-hidden="true" /></Link>
+        </aside></>}
     </main>
   );
 }

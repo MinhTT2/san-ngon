@@ -29,7 +29,12 @@ const publicPlayers = [
   { user_id: ownerId, display_name: 'Minh', location: 'Cầu Giấy, Hà Nội', sport: 'badminton', skill_level: 'intermediate', usual_play_times: 'Tối thứ ba và thứ năm', bio: 'Chơi đôi, thường đặt sân trong nhà.', avatar_url: null },
   { user_id: adminId, display_name: 'Hà', location: 'Ba Đình, Hà Nội', sport: 'pickleball', skill_level: 'beginner', usual_play_times: 'Sáng cuối tuần', bio: 'Mới chơi, muốn tập đều cuối tuần.', avatar_url: null },
 ];
-const tables = { profiles: people, venues, courts: [court], bookings, subscription_receiver: [{ bank: 'MB', account_number: '0987654321', account_name: 'SAN NGON' }], subscription_invoices: [invoice], subscription_payment_events: [{ transaction_key: 'fixture-tx', invoice_id: invoice.id, amount: 299000, created_at: created, outcome: 'paid', subscription_invoices: { code: invoice.code, owner_id: ownerId } }], feedback, tournaments, notifications: [], venue_favorites: [] };
+const notifications = [adminId, ownerId].flatMap(user_id => [
+  { id: `${user_id.slice(0, 8)}-1111-4111-8111-111111111111`, user_id, title: 'Đã nhận cọc cho lịch cầu lông', body: 'Đơn SANABC234 đã được xác nhận. Xem lại sân và giờ chơi trước khi ra sân.', created_at: '2026-10-08T11:00:00Z', read_at: null, booking_id: 'booking-1', booking: { code: 'SANABC234' }, tournament_id: null },
+  { id: `${user_id.slice(0, 8)}-2222-4222-8222-222222222222`, user_id, title: 'Đăng ký giải cầu lông đã được duyệt', body: 'Ban tổ chức đã duyệt suất tham gia của bạn. Xem chi tiết giải để kiểm tra hạn chuyển cọc.', created_at: '2026-10-08T03:00:00Z', read_at: null, booking_id: null, booking: null, tournament_id: tournaments[1].id },
+  { id: `${user_id.slice(0, 8)}-3333-4333-8333-333333333333`, user_id, title: 'Hồ sơ chủ sân đã được duyệt', body: 'Bạn có thể tạo cụm sân và bổ sung ảnh thật để bắt đầu nhận đặt sân.', created_at: '2026-10-01T03:00:00Z', read_at: '2026-10-01T04:00:00Z', booking_id: null, booking: null, tournament_id: null },
+]);
+const tables = { profiles: people, venues, courts: [court], bookings, subscription_receiver: [{ bank: 'MB', account_number: '0987654321', account_name: 'SAN NGON' }], subscription_invoices: [invoice], subscription_payment_events: [{ transaction_key: 'fixture-tx', invoice_id: invoice.id, amount: 299000, created_at: created, outcome: 'paid', subscription_invoices: { code: invoice.code, owner_id: ownerId } }], feedback, tournaments, notifications, venue_favorites: [] };
 const server = createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', '*');
@@ -75,6 +80,10 @@ const server = createServer(async (req, res) => {
   const table = url.pathname.split('/').at(-1);
   if (!(table in tables)) { send({ message: `Unknown fixture table ${table}` }, 404); return; }
   let rows = [...tables[table]];
+  if (table === 'notifications') {
+    rows = rows.filter(row => row.user_id === me.id);
+    if (url.searchParams.get('read_at') === 'is.null') rows = rows.filter(row => row.read_at === null);
+  }
   for (const field of ['id', 'owner_id', 'status', 'category', 'refund_status', 'sport', 'slug']) {
     const value = url.searchParams.get(field);
     if (value?.startsWith('eq.')) rows = rows.filter(row => String(row[field]) === value.slice(3));
