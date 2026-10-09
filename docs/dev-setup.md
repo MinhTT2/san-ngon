@@ -175,8 +175,11 @@ nội bộ để không tạo open redirect.
 
 Luồng quên mật khẩu: `/quen-mat-khau` gửi email qua Supabase Auth; giữ
 `{{ .ConfirmationURL }}` trong mẫu **Reset password**. Link quay về
-`/auth/callback?next=/dat-lai-mat-khau` để đổi code PKCE lấy phiên rồi nhập
-mật khẩu mới. Phải mở email bằng chính trình duyệt đã yêu cầu; link hết hạn,
+`/auth/callback` để đổi code PKCE lấy phiên rồi nhập mật khẩu mới. Tham số
+`next` chứa đường dẫn `/dat-lai-mat-khau?next=...` đã mã hóa; đường dẫn bên
+trong giữ trang sân/ngày đang đặt. Sau khi lưu mật khẩu, người dùng bấm
+Tiếp tục để quay lại trang đó. Liên kết cũ không có đường về vẫn dùng được.
+Phải mở email bằng chính trình duyệt đã yêu cầu; link hết hạn,
 đã dùng hoặc thiếu phiên sẽ hướng dẫn yêu cầu email mới. Trang đặt mật khẩu
 không cho khách chưa xác thực sửa mật khẩu.
 

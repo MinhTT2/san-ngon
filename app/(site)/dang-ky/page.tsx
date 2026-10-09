@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { authHref, safeNext } from '@/lib/safe-next';
 import { LoginForm } from '../dang-nhap/login-form';
 
 export const metadata: Metadata = {
@@ -8,7 +9,9 @@ export const metadata: Metadata = {
   description: 'Tạo tài khoản Sân Ngon để đặt sân và theo dõi đơn.',
 };
 
-export default function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const params = await searchParams;
+  const next = safeNext(params.next ?? null);
   return (
     <main className="mx-auto max-w-lg px-5 py-10 lg:py-16">
       <section className="rounded-card border border-hairline bg-card p-7 lg:p-10">
@@ -25,7 +28,7 @@ export default function Page() {
         </div>
         <p className="mt-7 border-t border-hairline pt-5 text-[13px] text-ink-secondary">
           Đã có tài khoản?{' '}
-          <Link href="/dang-nhap" className="font-semibold text-pitch underline underline-offset-2">
+          <Link href={authHref('/dang-nhap', next)} className="font-semibold text-pitch underline underline-offset-2">
             Đăng nhập
           </Link>
         </p>

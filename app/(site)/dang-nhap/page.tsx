@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PitchNight } from '@/components/pitch-night';
+import { authHref, safeNext } from '@/lib/safe-next';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = {
@@ -21,8 +22,9 @@ export default async function Page({
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  const { next } = await searchParams;
-  const signupHref = next ? `/dang-ky?next=${encodeURIComponent(next)}` : '/dang-ky';
+  const params = await searchParams;
+  const next = safeNext(params.next ?? null);
+  const signupHref = authHref('/dang-ky', next);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-16 lg:py-16">
@@ -43,7 +45,7 @@ export default async function Page({
             <LoginForm />
           </Suspense>
 
-          <Link href="/quen-mat-khau" className="text-sm font-semibold text-pitch underline underline-offset-2">Quên mật khẩu?</Link>
+          <Link href={authHref('/quen-mat-khau', next)} className="text-sm font-semibold text-pitch underline underline-offset-2">Quên mật khẩu?</Link>
 
           <p className="border-t border-hairline pt-5 text-[13px] leading-relaxed text-ink-secondary">
             Chưa có tài khoản?{' '}

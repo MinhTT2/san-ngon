@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { safeNext } from '@/lib/safe-next';
+import { authHref, safeNext } from '@/lib/safe-next';
 
 /**
  * Sau khi đăng nhập, trả người dùng về đúng nơi họ đang đứng.
@@ -18,5 +18,8 @@ export async function GET(request: Request) {
     if (!error) return NextResponse.redirect(`${origin}${next}`);
     console.error('[auth] đổi code lấy phiên hỏng', error.message);
   }
-  return NextResponse.redirect(`${origin}${next === '/dat-lai-mat-khau' ? '/quen-mat-khau' : '/dang-nhap'}?loi=1`);
+  const returnURL = new URL(next, origin);
+  const recovery = returnURL.pathname === '/dat-lai-mat-khau';
+  const destination = recovery ? safeNext(returnURL.searchParams.get('next') ?? '/don-cua-toi') : next;
+  return NextResponse.redirect(`${origin}${authHref(recovery ? '/quen-mat-khau' : '/dang-nhap', destination)}&loi=1`);
 }

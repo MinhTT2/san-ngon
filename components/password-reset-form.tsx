@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { authHref, safeNext } from '@/lib/safe-next';
 import { createClient } from '@/lib/supabase/client';
 
-export function PasswordResetForm({ mode }: { mode: 'request' | 'update' }) {
+export function PasswordResetForm({ mode, next = '/don-cua-toi' }: { mode: 'request' | 'update'; next?: string }) {
+  const destination = safeNext(next);
+  const resetPath = authHref('/dat-lai-mat-khau', destination);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -32,7 +35,7 @@ export function PasswordResetForm({ mode }: { mode: 'request' | 'update' }) {
       const supabase = createClient();
       const { error } = mode === 'request'
         ? await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dat-lai-mat-khau`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(resetPath)}`,
         })
         : await supabase.auth.updateUser({ password });
       if (error) {
@@ -55,7 +58,7 @@ export function PasswordResetForm({ mode }: { mode: 'request' | 'update' }) {
     }
   }
 
-  if (mode === 'update' && done) return <div role="status" className="space-y-4"><p className="font-semibold text-pitch">Đã cập nhật mật khẩu.</p><p className="text-sm text-ink-secondary">Lần đăng nhập sau, hãy dùng mật khẩu mới.</p><Link href="/don-cua-toi" className="inline-flex min-h-12 items-center rounded-control bg-pitch px-5 font-semibold text-pitch-ink">Về đơn của tôi</Link></div>;
+  if (mode === 'update' && done) return <div role="status" className="space-y-4"><p className="font-semibold text-pitch">Đã cập nhật mật khẩu.</p><p className="text-sm text-ink-secondary">Lần đăng nhập sau, hãy dùng mật khẩu mới.</p><Link href={destination} className="inline-flex min-h-12 items-center rounded-control bg-pitch px-5 font-semibold text-pitch-ink">{destination.startsWith('/san/') ? 'Tiếp tục đặt sân' : destination === '/don-cua-toi' ? 'Về đơn của tôi' : 'Tiếp tục'}</Link></div>;
 
   return <form onSubmit={submit} className="flex flex-col gap-4">
     {mode === 'request' ? <label className="flex flex-col gap-2 text-sm font-semibold">Email đã đăng ký
@@ -72,7 +75,7 @@ export function PasswordResetForm({ mode }: { mode: 'request' | 'update' }) {
     {done && <p role="status" className="rounded-control bg-free-fill p-4 text-sm leading-6 text-free-ink">Nếu email này có tài khoản, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. Kiểm tra cả thư rác và mở liên kết bằng trình duyệt đang dùng. Chỉ sử dụng email mới nhất.</p>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     <button disabled={busy || cooldown > 0} className="min-h-12 rounded-control bg-pitch px-4 py-3 text-sm font-semibold text-pitch-ink disabled:opacity-60">{busy ? 'Đang xử lý…' : cooldown ? `Thử lại sau ${cooldown} giây` : mode === 'update' ? 'Lưu mật khẩu mới' : done ? 'Gửi lại email' : 'Gửi email đặt lại mật khẩu'}</button>
-    {mode === 'update' && <Link href="/quen-mat-khau" className="text-sm font-semibold text-pitch underline">Yêu cầu email mới</Link>}
-    <Link href="/dang-nhap" className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Quay lại đăng nhập</Link>
+    {mode === 'update' && <Link href={authHref('/quen-mat-khau', destination)} className="text-sm font-semibold text-pitch underline">Yêu cầu email mới</Link>}
+    <Link href={authHref('/dang-nhap', destination)} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Quay lại đăng nhập</Link>
   </form>;
 }
