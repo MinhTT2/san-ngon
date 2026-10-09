@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { QueryError } from '@/components/query-error';
 import { ArrowUpRight, Building2, ShieldCheck, Users } from 'lucide-react';
 import { DashboardPageHeader, DashboardLink } from '@/components/dashboard-page-header';
 import { DashboardRecords } from '@/components/dashboard-records';
@@ -23,7 +24,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/admin');
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  if (profileError) throw new Error('Không kiểm tra được quyền truy cập. Vui lòng thử lại.');
   if (profile?.role !== 'admin') redirect('/');
 
   const params = await searchParams;
@@ -32,51 +34,53 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const statsTo = new Date();
   const statsFrom = new Date();
   statsFrom.setDate(statsFrom.getDate() - period + 1);
-  const [{ data: venues, error: venuesError }, { data: ownerProfiles }, { data: statsData }] = await Promise.all([
+  const [{ data: venues, error: venuesError }, { data: ownerProfiles, error: ownersError }, { data: statsData, error: statsError }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
     supabase.rpc('get_admin_stats', { p_from: ymd(statsFrom), p_to: ymd(statsTo) }),
   ]);
-  if (venuesError) throw new Error('Không tải được hồ sơ sân. Vui lòng thử lại.');
+  // Only stop views that need these records; other sections can still be used.
+  const recordsError = (view === 'overview' || view === 'owners' || view === 'venues') && (venuesError || ownersError);
 
   const pendingVenues = (venues ?? []).filter((venue) => venue.status === 'pending');
   const pendingOwners = (ownerProfiles ?? []).filter((profile) => profile.owner_application_status === 'pending');
   const activeVenues = (venues ?? []).filter((venue) => venue.status === 'active');
   const profileById = new Map((ownerProfiles ?? []).map((profile) => [profile.id, profile]));
-  const stats = parseAdminStats(statsData);
+  const stats = statsError || !statsData ? null : parseAdminStats(statsData);
 
-  const bookings = view === 'bookings'
+  const bookingsResult = view === 'bookings'
     ? (await supabase
       .from('bookings')
       .select('id, code, starts_at, status, total_amount, customer_name, courts(name, venues(name))')
       .in('status', params.status === 'pending' ? ['pending'] : Object.keys(BOOKING_STATUS_LABELS))
-      .order('starts_at', { ascending: false }).limit(30)).data ?? []
-    : [];
-  const users = view === 'users'
-    ? (await supabase.from('profiles').select('id, full_name, phone, role, created_at').order('created_at', { ascending: false }).limit(30)).data ?? []
-    : [];
+      .order('starts_at', { ascending: false }).limit(30))
+    : null;
+  const usersResult = view === 'users'
+    ? (await supabase.from('profiles').select('id, full_name, phone, role, created_at').order('created_at', { ascending: false }).limit(30))
+    : null;
 
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <DashboardPageHeader eyebrow="Quản trị / Vận hành" title={{ overview: 'Tổng quan vận hành', owners: 'Hồ sơ chủ sân', venues: 'Hồ sơ cụm sân', bookings: 'Đơn đặt sân', users: 'Tài khoản gần đây' }[view]}
         description={{ overview: 'Theo dõi giao dịch và xử lý các hồ sơ đang chờ.', owners: 'Kiểm tra thông tin đại diện và giấy tờ trước khi duyệt tài khoản chủ sân.', venues: 'Theo dõi trạng thái các cụm sân. Hồ sơ chờ từ luồng cũ được duyệt tại đây.', bookings: params.status === 'pending' ? 'Theo dõi 30 đơn chờ cọc gần nhất và thông tin khách.' : 'Xem 30 đơn gần nhất, thông tin khách và trạng thái thanh toán.', users: 'Xem tài khoản mới hoặc mở quản lý người dùng để chỉnh quyền truy cập.' }[view]}
         actions={view === 'overview' ? <DashboardLink href="/admin?view=owners">Duyệt hồ sơ chủ sân</DashboardLink> : view === 'users' ? <DashboardLink href="/admin/users">Quản lý người dùng</DashboardLink> : undefined} />
-      {view === 'overview' && <>
+      {recordsError && <QueryError className="mt-6" title="Chưa tải được hồ sơ sân và tài khoản" />}
+      {view === 'overview' && !recordsError && <>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {[{ href: '/admin?view=owners', label: 'Chủ sân chờ duyệt', value: pendingOwners.length, icon: ShieldCheck }, { href: '/admin?view=venues', label: 'Cụm sân hoạt động', value: activeVenues.length, icon: Building2 }, { href: '/admin/users', label: 'Tài khoản trên hệ thống', value: ownerProfiles?.length ?? 0, icon: Users }].map(({ href, label, value, icon: Icon }) => <Link key={href} href={href} className="pf-card flex items-center gap-3 rounded-card border border-hairline bg-card p-4 hover:border-strong"><span className="grid size-10 shrink-0 place-items-center rounded-control bg-free-fill text-pitch"><Icon size={19} aria-hidden="true" /></span><div className="min-w-0 flex-1"><strong className="block font-display text-2xl font-bold tabular-nums text-pitch">{value}</strong><span className="text-xs text-ink-secondary">{label}</span></div><ArrowUpRight size={15} className="shrink-0 text-ink-secondary" aria-hidden="true" /></Link>)}
         </div>
         <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-pitch">Thống kê giao dịch</p><PeriodLinks path="/admin" period={period} /></div>
-            <AdminStatsPanel stats={stats} />
+            {stats ? <AdminStatsPanel stats={stats} /> : <QueryError className="mt-3" title="Chưa tải được thống kê giao dịch" />}
           </div>
           <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
         </div>
       </>}
-      {view === 'owners' && <OwnerTable key={`owners-${params.status ?? ''}`} initialStatus={params.status} owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
-      {view === 'venues' && <VenueTable key={`venues-${params.status ?? ''}`} initialStatus={params.status} venues={venues ?? []} profileById={profileById} />}
-      {view === 'bookings' && <BookingTable key={`bookings-${params.status ?? ''}`} pendingOnly={params.status === 'pending'} bookings={bookings} />}
-      {view === 'users' && <UserTable users={users} />}
+      {view === 'owners' && !recordsError && <OwnerTable key={`owners-${params.status ?? ''}`} initialStatus={params.status} owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
+      {view === 'venues' && !recordsError && <VenueTable key={`venues-${params.status ?? ''}`} initialStatus={params.status} venues={venues ?? []} profileById={profileById} />}
+      {view === 'bookings' && (bookingsResult?.error ? <QueryError className="mt-6" title="Chưa tải được danh sách đơn đặt sân" /> : <BookingTable key={`bookings-${params.status ?? ''}`} pendingOnly={params.status === 'pending'} bookings={bookingsResult?.data ?? []} />)}
+      {view === 'users' && (usersResult?.error ? <QueryError className="mt-6" title="Chưa tải được danh sách tài khoản" /> : <UserTable users={usersResult?.data ?? []} />)}
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { QueryError } from '@/components/query-error';
 import { DashboardPageHeader, DashboardLink } from '@/components/dashboard-page-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -27,7 +28,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
 
   const { venue: selectedVenueId, period: rawPeriod } = await searchParams;
   const period = rawPeriod === '7' || rawPeriod === '90' ? Number(rawPeriod) : 30;
-  const [{ data: venues, error: venuesError }, { data: profile }] = await Promise.all([
+  const [{ data: venues, error: venuesError }, { data: profile, error: profileError }] = await Promise.all([
     supabase.from('venues').select('id, name, status').eq('owner_id', user.id).order('created_at').order('id'),
     supabase.from('profiles').select('telegram_chat_id').eq('id', user.id).maybeSingle(),
   ]);
@@ -40,14 +41,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     p_venue_id: venue.id,
     p_days: period,
   });
-  if (statsError) throw new Error('Không tải được thống kê. Vui lòng thử lại.');
-  const stats = parseOwnerStats(statsData);
+  const stats = statsError || !statsData ? null : parseOwnerStats(statsData);
 
   const from = new Date();
   const to = new Date();
   to.setDate(to.getDate() + 6);
 
-  const { data: bookings } = await supabase
+  const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select('id, code, starts_at, ends_at, status, total_amount, deposit_amount, refund_status, customer_name, customer_phone, courts!inner(name, venue_id, venues(name))')
     .eq('courts.venue_id', venue.id)
@@ -55,7 +55,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     .lte('starts_at', `${ymd(to)}T23:59:59+07:00`)
     .order('starts_at');
 
-  const { data: refunds } = await supabase
+  const { data: refunds, error: refundsError } = await supabase
     .from('bookings')
     .select('id, code, starts_at, deposit_amount, customer_name, customer_phone, courts!inner(name, venue_id)')
     .eq('courts.venue_id', venue.id)
@@ -97,11 +97,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         <p className="text-sm text-ink-secondary">Theo dõi doanh thu và công suất để biết sân nào cần lấp lịch.</p>
         <PeriodLinks path={`/chu-san?venue=${venue.id}`} period={period} />
       </div>
-      <OwnerStatsPanel stats={stats} />
+      {stats ? <OwnerStatsPanel stats={stats} /> : <QueryError className="mt-3" title="Chưa tải được thống kê" />}
 
-      <TelegramConnect connected={Boolean(profile?.telegram_chat_id)} />
+      {profileError || !profile ? <QueryError className="mt-6" title="Chưa tải được kết nối Telegram" /> : <TelegramConnect connected={Boolean(profile.telegram_chat_id)} />}
 
-      {refundRows.length > 0 && (
+      {refundsError ? <QueryError className="mt-8" title="Chưa tải được danh sách cần hoàn cọc" /> : refundRows.length > 0 && (
         <section className="mt-8 rounded-card border border-peak-line bg-peak-fill p-4">
           <h2 className="font-semibold text-peak-ink">Danh sách cần hoàn cọc</h2>
           <ul className="mt-3 flex flex-col divide-y divide-peak-line">
@@ -118,7 +118,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </section>
       )}
 
-      {pendingRows.length > 0 && (
+      {!bookingsError && pendingRows.length > 0 && (
         <section className="mt-8 rounded-card border border-hairline bg-card p-4">
           <h2 className="font-semibold">Đơn chờ chuyển khoản</h2>
           <p className="mt-1 text-xs text-ink-secondary">Dùng xác nhận tay khi SePay không gửi webhook.</p>
@@ -137,6 +137,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       )}
 
       <h2 id="calendar" className="mt-10 scroll-mt-6 text-[15px] font-semibold">Bảy ngày tới</h2>
+      {bookingsError ? <QueryError className="mt-3" title="Chưa tải được lịch đặt sân" /> : <>
       <div className="mt-3 hidden overflow-x-auto rounded-card border border-hairline bg-card p-4 lg:block">
         <div className="grid min-w-[900px] gap-3" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
           {days.map((d) => {
@@ -191,6 +192,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
           Hôm nay chưa có đơn nào.
         </p>
       )}
+      </>}
     </main>
   );
 }

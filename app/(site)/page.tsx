@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { QueryError } from '@/components/query-error';
 import { HeroCarousel } from '@/components/hero-carousel';
 import { AmbientVideo } from '@/components/ambient-video';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
@@ -38,7 +39,7 @@ const HERO_TIMES = 6;
 export default async function Page() {
   const supabase = await createClient();
 
-  const [{ count: venueCount }, { count: courtCount }, { data: districts }, { data: featured }] =
+  const [{ count: venueCount, error: venuesError }, { count: courtCount, error: courtsError }, { data: districts, error: districtsError }, { data: featured, error: featuredError }] =
     await Promise.all([
       supabase.from('venues').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('courts').select('id', { count: 'exact', head: true }).eq('is_active', true),
@@ -47,13 +48,19 @@ export default async function Page() {
     ]);
 
   const districtCount = new Set((districts ?? []).map((d) => d.district)).size;
-  const hero = featured ? await loadHeroSlots(supabase, featured.id) : null;
+  const statsUnavailable = venuesError || courtsError || districtsError || venueCount === null || courtCount === null;
+  let hero: Awaited<ReturnType<typeof loadHeroSlots>> = null;
+  let heroUnavailable = Boolean(featuredError);
+  if (featured && !featuredError) {
+    try { hero = await loadHeroSlots(supabase, featured.id); }
+    catch { heroUnavailable = true; }
+  }
 
   return (
     <>
       <Hero
         grid={
-          hero && featured ? (
+          heroUnavailable ? <QueryError title="Chưa tải được lịch sân" /> : hero && featured ? (
             <HeroGrid
               venueName={featured.name}
               venueSlug={featured.slug}
@@ -66,7 +73,7 @@ export default async function Page() {
           )
         }
       />
-      {venueCount ? (
+      {statsUnavailable ? <div className="mx-auto max-w-7xl px-5 py-6 lg:px-16"><QueryError title="Chưa tải được số liệu sân" /></div> : venueCount ? (
         <Reveal>
           <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} />
         </Reveal>
@@ -92,11 +99,12 @@ async function loadHeroSlots(
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   for (const [date, isTomorrow] of [[today, false], [tomorrow, true]] as const) {
-    const { data } = await supabase.rpc('get_venue_availability', {
+    const { data, error } = await supabase.rpc('get_venue_availability', {
       p_venue_id: venueId,
       p_date: ymd(date),
     });
 
+    if (error) throw new Error('Không tải được lịch sân.');
     const upcoming = ((data ?? []) as Slot[]).filter((s) => new Date(s.starts_at) > new Date());
     if (upcoming.length === 0) continue;
 

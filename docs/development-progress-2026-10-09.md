@@ -43,3 +43,23 @@ Trạng thái: **hoàn thành ngày 09/10/2026**.
 ## Những việc cần thông tin vận hành
 
 SMTP/domain gửi thư, dữ liệu sân thật, chính sách hủy và nghiệm thu chuyển khoản vẫn là các mục riêng. Đợt này không đổi người nhận tiền, cờ nhận đơn nhiều chủ sân, giá/cọc hoặc mốc hoàn tiền.
+
+## Đợt 2 — A13: báo lỗi tải dữ liệu và thử lại
+
+- Tổng quan chủ sân phân biệt lỗi lịch/đơn, hoàn cọc, thống kê và kết nối Telegram với dữ liệu trống. Không hiện lịch «Trống», «Hôm nay chưa có đơn nào» hoặc trạng thái chưa kết nối khi query tương ứng thất bại.
+- Tổng quan admin, hồ sơ sân/chủ sân, đơn và tài khoản không biến lỗi query thành số 0 hoặc bảng rỗng. Lỗi kiểm tra quyền không bị hiểu thành tài khoản không có quyền.
+- Trang chủ không hiển thị số 0 thay dữ liệu bị lỗi; lỗi lịch thật có thông báo riêng, không rơi về lịch minh họa.
+- Thông báo tiếng Việt và nút «Thử lại» tải lại dữ liệu từ server; các phần độc lập tải thành công vẫn sử dụng được. Không lộ nội dung lỗi database cho người dùng.
+- Thêm giả lập lỗi đọc vào fixture cục bộ và bài kiểm tra trình duyệt riêng, chạy cùng CI giao diện.
+
+Kiểm tra: lint, typecheck và production build đạt. Kiểm tra giao diện trang chủ/tổng quan chủ sân/admin ở 320/390/768/1024/1440px; 11 trường hợp lỗi và phục hồi ở 390/1440px. Tất cả dùng dữ liệu giả lập và Chromium headless với context riêng, không dùng phiên cá nhân hay ghi dữ liệu thật.
+
+Lệnh chạy lại:
+
+```sh
+npm run lint
+npm run typecheck
+npm run check:ui -- --only=check-query-errors,check-dashboard-ui,check-public-ui
+```
+
+Trạng thái: **hoàn thành ngày 09/10/2026**.

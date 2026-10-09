@@ -62,15 +62,28 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${fixturePort}`);
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
+  let readFailure = '';
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    readFailure = claims.fixture_read_failure || '';
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
     catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
   } catch { /* Anonymous requests use only public fixture data. */ }
   const me = role === 'owner' ? people[1] : people[0];
   const send = (data, code = 200) => { res.statusCode = code; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
+  const selection = url.searchParams.get('select') || '';
+  const failedRead = readFailure && (
+    url.pathname === `/rest/v1/rpc/${readFailure}` ||
+    (readFailure === 'refunds' && url.pathname === '/rest/v1/bookings' && url.searchParams.get('refund_status') === 'eq.needed') ||
+    (readFailure === 'bookings' && url.pathname === '/rest/v1/bookings' && !url.searchParams.has('refund_status')) ||
+    (readFailure === 'telegram' && url.pathname === '/rest/v1/profiles' && selection === 'telegram_chat_id') ||
+    (readFailure === 'profiles' && url.pathname === '/rest/v1/profiles' && !url.searchParams.has('id')) ||
+    (readFailure === 'home-count' && url.pathname === '/rest/v1/courts' && req.method === 'HEAD') ||
+    (readFailure === 'featured' && url.pathname === '/rest/v1/venues' && selection === 'id,slug,name')
+  );
+  if (failedRead) { send({ code: 'FIXTURE_READ_ERROR', message: 'Read interrupted in isolated fixture' }, 503); return; }
   if (url.pathname.startsWith('/storage/')) {
     if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture storage is read-only.' }, 403); return; }
     try { res.setHeader('Content-Type', 'image/webp'); res.end(await readFile(new URL('../public/media/badminton-editorial.webp', import.meta.url))); } catch { res.statusCode = 404; res.end(); }
