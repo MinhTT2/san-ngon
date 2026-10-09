@@ -87,6 +87,7 @@ const server = createServer(async (req, res) => {
   for (const field of ['id', 'owner_id', 'status', 'category', 'refund_status', 'sport', 'slug']) {
     const value = url.searchParams.get(field);
     if (value?.startsWith('eq.')) rows = rows.filter(row => String(row[field]) === value.slice(3));
+    if (value?.startsWith('in.(') && value.endsWith(')')) rows = rows.filter(row => value.slice(4, -1).split(',').includes(String(row[field])));
   }
   const count = rows.length;
   const range = req.headers.range?.split('-').map(Number);

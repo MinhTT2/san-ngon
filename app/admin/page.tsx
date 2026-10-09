@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
-import { VENUE_STATUS_LABELS } from '@/lib/constants';
+import { BOOKING_STATUS_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import type { BookingStatus, VenueStatus } from '@/lib/types';
 import { StatusBadge } from '@/components/status-badge';
@@ -18,7 +18,7 @@ export const metadata = { title: 'Quản trị · Sân Ngon' };
 
 type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string; period?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string; period?: string; status?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/admin');
@@ -49,6 +49,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     ? (await supabase
       .from('bookings')
       .select('id, code, starts_at, status, total_amount, customer_name, courts(name, venues(name))')
+      .in('status', params.status === 'pending' ? ['pending'] : Object.keys(BOOKING_STATUS_LABELS))
       .order('starts_at', { ascending: false }).limit(30)).data ?? []
     : [];
   const users = view === 'users'
@@ -58,7 +59,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <DashboardPageHeader eyebrow="Quản trị / Vận hành" title={{ overview: 'Tổng quan vận hành', owners: 'Hồ sơ chủ sân', venues: 'Hồ sơ cụm sân', bookings: 'Đơn đặt sân', users: 'Tài khoản gần đây' }[view]}
-        description={{ overview: 'Theo dõi giao dịch và xử lý các hồ sơ đang chờ.', owners: 'Kiểm tra thông tin đại diện và giấy tờ trước khi duyệt tài khoản chủ sân.', venues: 'Theo dõi trạng thái các cụm sân. Hồ sơ chờ từ luồng cũ được duyệt tại đây.', bookings: 'Xem 30 đơn gần nhất, thông tin khách và trạng thái thanh toán.', users: 'Xem tài khoản mới hoặc mở quản lý người dùng để chỉnh quyền truy cập.' }[view]}
+        description={{ overview: 'Theo dõi giao dịch và xử lý các hồ sơ đang chờ.', owners: 'Kiểm tra thông tin đại diện và giấy tờ trước khi duyệt tài khoản chủ sân.', venues: 'Theo dõi trạng thái các cụm sân. Hồ sơ chờ từ luồng cũ được duyệt tại đây.', bookings: params.status === 'pending' ? 'Theo dõi 30 đơn chờ cọc gần nhất và thông tin khách.' : 'Xem 30 đơn gần nhất, thông tin khách và trạng thái thanh toán.', users: 'Xem tài khoản mới hoặc mở quản lý người dùng để chỉnh quyền truy cập.' }[view]}
         actions={view === 'overview' ? <DashboardLink href="/admin?view=owners">Duyệt hồ sơ chủ sân</DashboardLink> : view === 'users' ? <DashboardLink href="/admin/users">Quản lý người dùng</DashboardLink> : undefined} />
       {view === 'overview' && <>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -72,9 +73,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <Overview pendingOwners={pendingOwners} pendingVenues={pendingVenues} activeVenueCount={activeVenues.length} profileById={profileById} />
         </div>
       </>}
-      {view === 'owners' && <OwnerTable owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
-      {view === 'venues' && <VenueTable venues={venues ?? []} profileById={profileById} />}
-      {view === 'bookings' && <BookingTable bookings={bookings} />}
+      {view === 'owners' && <OwnerTable key={`owners-${params.status ?? ''}`} initialStatus={params.status} owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
+      {view === 'venues' && <VenueTable key={`venues-${params.status ?? ''}`} initialStatus={params.status} venues={venues ?? []} profileById={profileById} />}
+      {view === 'bookings' && <BookingTable key={`bookings-${params.status ?? ''}`} pendingOnly={params.status === 'pending'} bookings={bookings} />}
       {view === 'users' && <UserTable users={users} />}
     </main>
   );
@@ -137,13 +138,13 @@ function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
   return <li className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch underline-offset-4 hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'} · Đăng ký tài khoản chủ sân</p></div><div className="flex items-center gap-3">{owner.business_license_path && <a href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminOwnerAction ownerId={owner.id} /></div></li>;
 }
 
-function OwnerTable({ owners }: { owners: OwnerProfile[] }) {
+function OwnerTable({ owners, initialStatus }: { owners: OwnerProfile[]; initialStatus?: string }) {
   const sortedOwners = [...owners].sort((a, b) => {
     if (a.owner_application_status === 'pending' && b.owner_application_status !== 'pending') return -1;
     if (a.owner_application_status !== 'pending' && b.owner_application_status === 'pending') return 1;
     return (b.created_at ?? '').localeCompare(a.created_at ?? '');
   });
-  return <DashboardRecords title="Danh sách hồ sơ chủ sân" description="Hồ sơ chờ duyệt được xếp trước. Tìm theo tên hoặc số điện thoại."
+  return <DashboardRecords initialStatus={initialStatus} title="Danh sách hồ sơ chủ sân" description="Hồ sơ chờ duyệt được xếp trước. Tìm theo tên hoặc số điện thoại."
     mobilePrimary={[4, 5]} columns={['Người đại diện', 'Tài khoản nhận cọc', 'Giấy tờ', 'Ngày gửi', 'Trạng thái', 'Thao tác']}
     statuses={[{ value: 'pending', label: 'Chờ duyệt' }, { value: 'active', label: 'Đã duyệt' }, { value: 'rejected', label: 'Bị từ chối' }]}
     records={sortedOwners.map(owner => ({ id: owner.id, search: `${owner.full_name ?? ''} ${owner.phone ?? ''}`, status: owner.owner_application_status ?? '', cells: [
@@ -178,8 +179,8 @@ function VenueRowItem({ venue, profile }: { venue: VenueRow; profile?: OwnerProf
   );
 }
 
-function VenueTable({ venues, profileById }: { venues: VenueRow[]; profileById: Map<string, OwnerProfile> }) {
-  return <DashboardRecords title="Danh sách cụm sân" description="Tìm theo tên sân, khu vực hoặc người đại diện."
+function VenueTable({ venues, profileById, initialStatus }: { venues: VenueRow[]; profileById: Map<string, OwnerProfile>; initialStatus?: string }) {
+  return <DashboardRecords initialStatus={initialStatus} title="Danh sách cụm sân" description="Tìm theo tên sân, khu vực hoặc người đại diện."
     mobilePrimary={[2, 4, 5]} columns={['Cụm sân', 'Người đại diện', 'Khu vực', 'Ngày tạo', 'Trạng thái', 'Thao tác']}
     statuses={Object.entries(VENUE_STATUS_LABELS).map(([value, label]) => ({ value, label }))}
     records={venues.map(venue => ({ id: venue.id, search: `${venue.name} ${venue.district} ${profileById.get(venue.owner_id)?.full_name ?? ''} ${venue.phone ?? ''}`, status: venue.status, cells: [
@@ -191,10 +192,10 @@ function VenueTable({ venues, profileById }: { venues: VenueRow[]; profileById: 
     ] }))} />;
 }
 
-function BookingTable({ bookings }: { bookings: Array<{ id: string; code: string; starts_at: string; status: BookingStatus; total_amount: number; customer_name: string | null; courts: unknown }> }) {
-  return <DashboardRecords title="Đơn đặt sân gần đây" description="30 đơn gần nhất theo thời gian chơi."
+function BookingTable({ bookings, pendingOnly }: { pendingOnly: boolean; bookings: Array<{ id: string; code: string; starts_at: string; status: BookingStatus; total_amount: number; customer_name: string | null; courts: unknown }> }) {
+  return <><div className="mt-6 flex flex-wrap gap-2"><Link href="/admin?view=bookings" aria-current={!pendingOnly ? 'page' : undefined} className={`${pendingOnly ? 'border-hairline text-pitch' : 'border-pitch bg-pitch text-pitch-ink'} pf-action inline-flex min-h-11 items-center rounded-control border px-4 text-sm font-semibold`}>Đơn gần nhất</Link><Link href="/admin?view=bookings&status=pending" aria-current={pendingOnly ? 'page' : undefined} className={`${pendingOnly ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline text-pitch'} pf-action inline-flex min-h-11 items-center rounded-control border px-4 text-sm font-semibold`}>Chờ cọc</Link></div><DashboardRecords title="Đơn đặt sân gần đây" description={pendingOnly ? '30 đơn chờ cọc gần nhất theo thời gian chơi.' : '30 đơn gần nhất theo thời gian chơi.'}
     mobilePrimary={[1, 4]} columns={['Mã đơn', 'Khách', 'Thời gian', 'Giá trị', 'Trạng thái']}
-    records={bookings.map(b => ({ id: b.id, search: `${b.code} ${b.customer_name ?? ''}`, status: b.status, cells: [<strong key="code" className="font-mono text-pitch">{b.code}</strong>, b.customer_name ?? 'Khách đặt sân', `${dayLabel(new Date(b.starts_at))} · ${hhmm(b.starts_at)}`, <span key="amount" className="font-semibold tabular-nums text-pitch">{vnd(b.total_amount)}</span>, <StatusBadge key="status" status={b.status} />] }))} />;
+    records={bookings.map(b => ({ id: b.id, search: `${b.code} ${b.customer_name ?? ''}`, status: b.status, cells: [<strong key="code" className="font-mono text-pitch">{b.code}</strong>, b.customer_name ?? 'Khách đặt sân', `${dayLabel(new Date(b.starts_at))} · ${hhmm(b.starts_at)}`, <span key="amount" className="font-semibold tabular-nums text-pitch">{vnd(b.total_amount)}</span>, <StatusBadge key="status" status={b.status} />] }))} /></>;
 }
 
 function UserTable({ users }: { users: Array<{ id: string; full_name: string | null; phone: string | null; role: string; created_at: string }> }) {

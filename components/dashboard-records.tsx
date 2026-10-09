@@ -6,12 +6,12 @@ import { ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 export type DashboardRecord = { id: string; search: string; status: string; cells: ReactNode[] };
 /** Read-only display filters. The server supplies every record and action. */
-export function DashboardRecords({ title, description, columns, records, statuses = [], mobilePrimary = [] }: {
+export function DashboardRecords({ title, description, columns, records, statuses = [], mobilePrimary = [], initialStatus = '' }: {
   title: string; description: string; columns: string[]; records: DashboardRecord[];
-  statuses?: { value: string; label: string }[]; mobilePrimary?: number[];
+  statuses?: { value: string; label: string }[]; mobilePrimary?: number[]; initialStatus?: string;
 }) {
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(() => statuses.some(item => item.value === initialStatus) ? initialStatus : '');
   const [page, setPage] = useState(1);
   const term = query.trim().toLocaleLowerCase('vi');
   const matches = records.filter(row => (!status || row.status === status) && (!term || row.search.toLocaleLowerCase('vi').includes(term)));

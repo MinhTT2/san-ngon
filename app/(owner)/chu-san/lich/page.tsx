@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
   return <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
     <DashboardPageHeader eyebrow="Chủ sân / Vận hành" title="Lịch sân" description="Chọn sân để xem khung trống, đơn đã đặt và khóa lịch bảo trì." actions={<DashboardLink href="/chu-san">Tổng quan</DashboardLink>} />
     <nav aria-label="Chọn sân" className="mt-7 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{courts.map((item) => { const itemVenue = item.venues as unknown as { name: string }; return <Link key={item.id} href={`/chu-san/lich?court=${item.id}`} className={`rounded-card border p-4 transition-colors ${item.id === id ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card hover:border-strong'}`}><span className="block text-xs opacity-70">{itemVenue.name}</span><span className="mt-1 block font-semibold">{item.name}</span><span className="mt-1 block text-xs opacity-75">Khung {item.slot_minutes} phút · {SPORT_LABELS[item.sport] ?? item.sport}</span></Link>; })}</nav>
-    <div className="mt-2"><CourtCalendar courtId={court.id} /></div>
+    <div className="mt-2"><CourtCalendar key={court.id} courtId={court.id} /></div>
   </main>;
 }
 

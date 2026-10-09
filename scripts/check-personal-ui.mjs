@@ -23,6 +23,7 @@ await page.route('**/api/notifications/*/read', async route => {
   writes.push({ type: 'read', url: route.request().url() });
   await wait(150);
   if (mode === 'offline') return route.abort('failed');
+  if (mode === 'expired') return route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Bạn cần đăng nhập."}' });
   return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
 });
 await page.route('**/api/profile', async route => {
@@ -73,6 +74,14 @@ try {
   assert(await popover.getByRole('button', { name: /Đánh dấu đã đọc:/ }).first().isEnabled());
   await page.keyboard.press('Escape');
   assert(await bell.evaluate(element => element === document.activeElement), await page.evaluate(() => `Focus after Escape: ${document.activeElement?.outerHTML}`));
+  mode = 'expired';
+  const unreadCard = page.locator('[data-notification-id]').last();
+  await unreadCard.getByRole('button', { name: /Đánh dấu đã đọc:/ }).click();
+  await unreadCard.getByRole('alert').filter({ hasText: 'Phiên đăng nhập đã hết.' }).waitFor();
+  const login = unreadCard.getByRole('link', { name: 'Đăng nhập lại', exact: true });
+  const returnURL = new URL(await login.getAttribute('href'), origin);
+  assert.equal(returnURL.pathname, '/dang-nhap');
+  assert.equal(returnURL.searchParams.get('next'), new URL(page.url()).pathname + new URL(page.url()).search);
 
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });

@@ -21,6 +21,8 @@ thư mục tạm và server kiểm thử được dọn khi chạy xong. Có th�
 `CHROMIUM_EXECUTABLE` nếu máy đã có Chromium riêng.
 Có thể chạy riêng phần thông báo/tài khoản bằng
 `npm run check:ui -- --only=check-personal-ui`; vẫn dựng bản production cô lập.
+Có thể chọn nhiều nhóm bằng dấu phẩy trong `--only`, ví dụ
+`--only=check-personal-ui,check-calendar-ux,check-dashboard-ui`.
 
 Animation dùng `motion/mini` (Motion), kết hợp observer cho nội dung khi cuộn
 và CSS cho trạng thái hover/lịch. Nội dung HTML luôn đọc được trước khi JS
@@ -40,6 +42,14 @@ lọc chưa đọc, lỗi đánh dấu đã đọc, chống bấm lặp và thao
 popover. Form đánh dấu đã đọc vẫn gửi theo cách thông thường khi tắt JS.
 Form tài khoản được kiểm tra khi bỏ thay đổi, chuẩn hóa số điện thoại,
 lưu lỗi/mất mạng và lưu thành công; request cập nhật hồ sơ đều bị chặn.
+Phiên đọc thông báo hết hạn có hướng dẫn đăng nhập và giữ đường về hiện tại.
+
+Lịch chủ sân được kiểm tra riêng bằng `--only=check-calendar-ux`: phân biệt
+đang tải, ngày trống và lỗi; đổi ngày nhanh với phản hồi đến trễ; tải lại mất
+mạng; xem khách từ khung đặt; giữ nội dung hộp thoại khi khóa lịch lỗi và
+thử lại khóa/mở lịch. Request thay đổi lịch đều bị chặn, không ghi database.
+Menu tài khoản được kiểm tra mũi tên, Home/End, Escape và Tab. Các liên kết
+admin “Cần xử lý” được kiểm tra bộ lọc hồ sơ và đơn chờ cọc.
 
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.
