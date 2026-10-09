@@ -4,10 +4,11 @@ begin;
 insert into auth.users (id) values ('a0000000-0000-4000-8000-000000000001');
 update profiles set payout_bank = 'MB', payout_account = '1234567890', role='owner', owner_application_status='active'
   where id = 'a0000000-0000-4000-8000-000000000001';
-insert into booking_operator (owner_id, bank, account_number, account_name, accepts_new_bookings)
-values ('a0000000-0000-4000-8000-000000000001', 'MBBank', '1234567890', 'CHECK OWNER', true)
+insert into booking_operator (owner_id, bank, account_number, account_name, accepts_new_bookings, multi_owner_enabled)
+values ('a0000000-0000-4000-8000-000000000001', 'MBBank', '1234567890', 'CHECK OWNER', true, false)
 on conflict (singleton) do update set owner_id = excluded.owner_id, bank = excluded.bank,
-  account_number = excluded.account_number, account_name = excluded.account_name, accepts_new_bookings = true;
+  account_number = excluded.account_number, account_name = excluded.account_name,
+  accepts_new_bookings = true, multi_owner_enabled = false;
 insert into venues (id, owner_id, slug, name, address, district, status)
 values ('a0000000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001',
   'check-holds-rollback', 'Hold check', 'Test', 'Test', 'active');

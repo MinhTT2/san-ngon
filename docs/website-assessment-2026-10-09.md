@@ -48,6 +48,8 @@ Căn cứ: `scripts/configure-auth-email.mjs`, `scripts/check-env.mjs`, `docs/mv
 
 ### 2. Giới hạn 3 khung đang được bảo vệ ở giao diện, chưa được bảo vệ trong SQL — P0
 
+**Cập nhật 09/10/2026: đã xử lý A02.** Migration giới hạn khung/đầu vào đã triển khai lên Supabase, kiểm tra RPC và hồi quy giữ chỗ đạt. Nội dung bên dưới ghi phát hiện trước khi sửa. Xem [tiến độ và kết quả kiểm tra](development-progress-2026-10-09.md).
+
 `lib/venue-time-options.ts` dừng ở `MAX_SLOTS = 3`. API tạo đơn xác thực thời điểm nhưng không kiểm số khung. Bản `create_booking` cuối trong migrations và định nghĩa đang chạy trên database cộng tất cả khung trống nằm trong khoảng, không giới hạn số khung. Người dùng có thể gửi khoảng dài hơn qua API/RPC, miễn thỏa các điều kiện còn lại. Điều này làm yếu giới hạn chống giữ lịch hàng loạt dù đã có tối đa 2 đơn chờ mỗi người.
 
 Cần chặn ngay trong SQL bằng số khung thực tế của sân, không mặc định 3 khung = 3 giờ vì sân có `slot_minutes` khác nhau. Đồng thời đưa kiểm tra định dạng số điện thoại và giới hạn tên/ghi chú vào SQL: route đang kiểm những dữ liệu này, RPC trực tiếp chỉ kiểm điện thoại không rỗng. Giữ Zod ở Next.js để trả lỗi dễ hiểu và giữ GiST để xử lý đặt đồng thời.

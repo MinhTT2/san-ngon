@@ -14,12 +14,12 @@ export const dynamic = 'force-dynamic';
  * "Invalid datetime" — không ai đặt được sân.
  */
 const Body = z.object({
-  court_id: z.string().uuid(),
-  starts_at: z.string().datetime({ offset: true }),
-  ends_at: z.string().datetime({ offset: true }),
-  customer_name: z.string().trim().max(100).optional(),
+  court_id: z.string().uuid('Thông tin sân không hợp lệ.'),
+  starts_at: z.string().datetime({ offset: true, message: 'Giờ bắt đầu không hợp lệ.' }),
+  ends_at: z.string().datetime({ offset: true, message: 'Giờ kết thúc không hợp lệ.' }),
+  customer_name: z.string().trim().max(100, 'Tên người đặt không quá 100 ký tự.').optional(),
   customer_phone: z.string().trim().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0'),
-  note: z.string().trim().max(500).optional(),
+  note: z.string().trim().max(500, 'Ghi chú không quá 500 ký tự.').optional(),
 });
 
 export async function POST(req: NextRequest) {

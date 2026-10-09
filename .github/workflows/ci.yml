@@ -21,6 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run ci
       - run: npm run check:refresh
+      - run: node scripts/check-booking-inputs.mjs
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
