@@ -145,3 +145,22 @@ Lint và bản dựng production riêng/typecheck đạt. Trình duyệt headles
 npx supabase db query --linked --file scripts/check-player-booking-search.sql
 npm run check:ui -- --only=check-player-booking-search,check-booking-polish,check-booking-recovery,check-owner-booking-search
 ```
+
+
+## Đợt 7 — A15: giữ thông tin buổi chơi trong đơn
+
+- SQL lưu tên sân con, môn, tên cụm, địa chỉ, quận và thành phố cùng thời điểm ghi vào mỗi đơn. Trigger tự lấy từ sân, bỏ qua giá trị truyền từ bên ngoài; cấm sửa thông tin đã lưu và chuyển đơn sang sân con khác.
+- Những đơn tồn tại trước nâng cấp giữ thông tin đang biết lúc triển khai. Không thể phục hồi tên/địa chỉ lịch sử đã bị thay trước đó; `details_recorded_at` ghi thời điểm thực sự giữ bản thông tin, không giả thành thời điểm đặt ban đầu.
+- Checkout, lịch sử người chơi/chủ sân, tìm lịch sử theo tên/môn, lịch tải xuống và thông báo xác nhận cọc tự động/tay dùng thông tin đã giữ. Link đặt lại vẫn dùng slug/trạng thái hiện tại của cụm để đi tới trang còn hoạt động.
+- Giữ nguyên giá/cọc/người nhận/hạn giữ chỗ và chính sách hủy. RPC retry trả bản thông tin gốc; đơn mới sau khi đổi sân lấy thông tin mới. Quyền update trực tiếp của trình duyệt giữ đúng nhóm trường xử lý chủ sân đã khai báo trong migration OAuth; trigger vẫn chặn sửa snapshot kể cả qua quyền quản trị.
+
+Kiểm tra SQL ứng viên: tạo đơn, đổi tên/môn/địa chỉ, sửa snapshot bị chặn, retry/hủy vẫn giữ thông tin gốc, đơn kế tiếp lấy thông tin mới, thông báo thanh toán và lịch tải xuống đúng, tìm/lịch sử chủ sân và người chơi đúng. Các bài giữ chỗ/thanh toán, retry và lịch sử/phân trang >1.000 đơn chạy lại cùng migration ứng viên trong từng transaction và rollback, đều đạt. Không gửi email/Telegram hoặc chuyển tiền thật.
+
+```sh
+npx supabase db query --linked --file scripts/check-booking-details-snapshot.sql
+npm run check:ui -- --only=check-booking-details-snapshot,check-checkout-ux,check-player-booking-search
+```
+
+Trạng thái: **A15 đã triển khai ngày 09/10/2026**. Migration `20261009000200_booking_details_snapshot.sql` được áp dụng riêng; bài SQL mới cùng các hồi quy giữ chỗ/thanh toán/retry/lịch sử đã chạy lại sau triển khai. Lint và bản dựng production/typecheck riêng đạt; kiểm tra checkout hiện có và phân trang người chơi đạt.
+
+Bổ sung nghiệm thu: bài giao diện snapshot đạt trên 390/1440px ở các trạng thái chờ/đã xác nhận/hoàn tất/hủy; tên/địa chỉ cũ xuất hiện đúng trong phần chi tiết, lịch sử riêng của chủ sân/người chơi. Xác minh sau rollback: không còn tài khoản fixture, không có đơn thiếu bản thông tin, cờ nhiều chủ sân vẫn là giá trị trước đợt này. Những mục cần vận hành/tiền thật trong đánh giá vẫn chưa được coi là hoàn thành.

@@ -879,6 +879,13 @@ export type Database = {
       }
       bookings: {
         Row: {
+          court_name_snapshot: string | null
+          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
+          venue_name_snapshot: string | null
+          venue_address_snapshot: string | null
+          venue_district_snapshot: string | null
+          venue_city_snapshot: string | null
+          details_recorded_at: string | null
           cancelled_at: string | null
           code: string
           court_id: string
@@ -903,6 +910,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          court_name_snapshot?: string | null
+          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
+          venue_name_snapshot?: string | null
+          venue_address_snapshot?: string | null
+          venue_district_snapshot?: string | null
+          venue_city_snapshot?: string | null
+          details_recorded_at?: string | null
           cancelled_at?: string | null
           code: string
           court_id: string
@@ -927,6 +941,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          court_name_snapshot?: string | null
+          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
+          venue_name_snapshot?: string | null
+          venue_address_snapshot?: string | null
+          venue_district_snapshot?: string | null
+          venue_city_snapshot?: string | null
+          details_recorded_at?: string | null
           cancelled_at?: string | null
           code?: string
           court_id?: string

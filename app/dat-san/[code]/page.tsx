@@ -8,7 +8,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
 
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, code, starts_at, ends_at, total_amount, deposit_amount, status, expires_at, payment_bank, payment_account, payment_account_name, courts(name, venues(name, address))')
+    .select('id, code, starts_at, ends_at, total_amount, deposit_amount, status, expires_at, payment_bank, payment_account, payment_account_name, court_name_snapshot, venue_name_snapshot, venue_address_snapshot, courts(name, venues(name, address))')
     .eq('code', code)
     .single();
 
@@ -30,9 +30,9 @@ export default async function Page({ params }: { params: Promise<{ code: string 
       initialSeconds={Math.floor((new Date(booking.expires_at).getTime() - Date.now()) / 1000)}
       total={booking.total_amount}
       deposit={booking.deposit_amount}
-      courtName={court?.name ?? ''}
-      venueName={court?.venues?.name ?? ''}
-      venueAddress={court?.venues?.address ?? ''}
+      courtName={booking.court_name_snapshot ?? court?.name ?? ''}
+      venueName={booking.venue_name_snapshot ?? court?.venues?.name ?? ''}
+      venueAddress={booking.venue_address_snapshot ?? court?.venues?.address ?? ''}
     />
   );
 }
