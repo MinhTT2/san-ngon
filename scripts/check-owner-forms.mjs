@@ -92,13 +92,58 @@ try {
   await modal.getByLabel(/^Tên sân/).fill('Sân thử giữ nội dung');
   await page.route('**/api/courts', route => json(route, { error: 'Lỗi kiểm thử', fieldErrors: { name: 'Tên sân chưa hợp lệ.' } }, 400));
   await modal.getByRole('button', { name: 'Lưu và thêm tiếp', exact: true }).click();
-  await modal.getByRole('alert').waitFor();
+  await modal.locator('[data-owner-save-error]').waitFor();
   assert.equal(await modal.getByLabel(/^Tên sân/).inputValue(), 'Sân thử giữ nội dung');
   await rejectDialog(page, () => modal.getByRole('button', { name: 'Hủy', exact: true }).click());
   const courtClose = page.waitForEvent('dialog'); const courtEscape = page.keyboard.press('Escape');
   await (await courtClose).accept(); await courtEscape;
   await modal.waitFor({ state: 'detached' });
   console.log('OK: unsaved price/create/edit forms preserve values on cancelled discard; successful save clears the guard.');
+
+  // Generic server errors used to be rendered behind the editing dialog.
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.getByRole('button', { name: 'Sửa cụm sân', exact: true }).click();
+    modal = page.getByRole('dialog', { name: 'Sửa cụm sân', exact: true });
+    assert.equal(await modal.locator('[data-owner-save-error]').count(), 0, 'A new editor does not inherit old errors');
+    await modal.getByLabel('Tên cụm sân', { exact: true }).fill('Tên cụm giữ sau lỗi');
+    await modal.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+    const feedback = modal.locator('[data-owner-save-error]');
+    await feedback.waitFor();
+    assert(await feedback.isVisible(), 'The save error is inside the visible dialog');
+    assert(await feedback.evaluate(element => element === document.activeElement), 'Save error receives focus');
+    assert.equal(await modal.getByLabel('Tên cụm sân', { exact: true }).inputValue(), 'Tên cụm giữ sau lỗi');
+    assert.match(await modal.getByRole('alert').filter({ hasText: 'Số điện thoại chưa hợp lệ.' }).innerText(), /Số điện thoại/);
+    await modal.getByLabel('Tên cụm sân', { exact: true }).focus();
+    await modal.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+    await feedback.waitFor();
+    await page.waitForTimeout(100);
+    assert(await feedback.evaluate(element => element === document.activeElement), 'Repeated errors receive focus again');
+    const discard = page.waitForEvent('dialog');
+    const close = modal.getByRole('button', { name: 'Hủy', exact: true }).click();
+    await (await discard).accept(); await close;
+    await modal.waitFor({ state: 'detached' });
+
+    await page.route('**/api/courts/*', route => json(route, { error: 'Không lưu được sân. Thử lại.' }, 503));
+    const editCourt = page.getByRole('button', { name: /^(Sửa|Đổi tên \/ sửa)$/, exact: true });
+    await editCourt.click();
+    modal = page.getByRole('dialog', { name: 'Sửa sân con', exact: true });
+    assert.equal(await modal.locator('[data-owner-save-error]').count(), 0);
+    await modal.getByLabel(/^Tên sân/).fill('Tên sân giữ sau lỗi');
+    await modal.getByRole('button', { name: 'Lưu sân', exact: true }).click();
+    const courtFeedback = modal.locator('[data-owner-save-error]');
+    await courtFeedback.waitFor();
+    assert(await courtFeedback.evaluate(element => element === document.activeElement));
+    assert.equal(await modal.getByLabel(/^Tên sân/).inputValue(), 'Tên sân giữ sau lỗi');
+    assert.equal(await modal.getByRole('alert').count(), 1, 'Generic errors are visible without field errors');
+    await shot(page, 'court-save-error');
+    const discardCourt = page.waitForEvent('dialog');
+    const closeCourt = modal.getByRole('button', { name: 'Hủy', exact: true }).click();
+    await (await discardCourt).accept(); await closeCourt;
+    await modal.waitFor({ state: 'detached' });
+  }
+  console.log('OK: venue/court generic and field errors stay inside the modal, retain values and restore focus on repeated failures.');
+
 
   let created = 0, uploads = 0, publications = 0;
   const uploadedPaths = [];
