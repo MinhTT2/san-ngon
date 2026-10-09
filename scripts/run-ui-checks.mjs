@@ -72,6 +72,7 @@ try {
   await run(['scripts/check-discovery-ux.mjs', origin], testEnv);
   await run(['scripts/check-site-motion.mjs', origin], testEnv);
   await run(['scripts/check-motion-interactions.mjs', origin], testEnv);
+  await run(['scripts/check-booking-polish.mjs', origin], testEnv);
   await run(['scripts/check-dashboard-ui.mjs', origin], testEnv);
   await run(['scripts/capture-ui-review.mjs', origin], testEnv);
   console.log(`UI checks passed. Desktop/mobile images: ${screenshots}`);

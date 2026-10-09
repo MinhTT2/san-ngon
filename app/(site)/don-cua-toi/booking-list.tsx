@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { playMotion } from '@/lib/motion';
+import { NavigationMarker } from '@/components/navigation-marker';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, CalendarDays, Clock3, History, Plus, Search } from 'lucide-react';
 import { CancelBookingButton } from '@/components/cancel-booking-button';
@@ -32,6 +34,10 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
   const filter: Filter = ['active', 'pending', 'confirmed', 'history', 'all'].includes(requestedFilter) ? requestedFilter as Filter : 'active';
   const query = (params.get('q') ?? '').slice(0, 100);
   const setFilter = (value: Filter) => update({ filter: value === 'active' ? null : value }, true);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (resultsRef.current) return playMotion(resultsRef.current, { opacity: [0.45, 1] }, { duration: 0.28 });
+  }, [filter]);
   const [clock, setClock] = useState(initialNow);
   const now = Math.max(clock, initialNow);
 
@@ -92,7 +98,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
           <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight text-pitch sm:text-5xl">Đơn của tôi</h1>
           <p className="mt-3 text-sm leading-6 text-ink-secondary">Xem sân đã đặt, tiếp tục chuyển cọc và quản lý lịch chơi.</p>
         </div>
-        <Link href="/tim-san" className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink hover:bg-pitch/90">
+        <Link href="/tim-san" className="pf-action inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink hover:bg-pitch/90">
           <Plus size={17} aria-hidden="true" /> Đặt sân mới
         </Link>
       </header>
@@ -107,7 +113,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           {summaries.map(({ key, label, count, note, Icon }) => (
             <button key={key} type="button" onClick={() => setFilter(key)} aria-pressed={filter === key}
-              className={`flex items-center gap-4 rounded-card border p-4 text-left transition-colors sm:items-start sm:p-5 ${filter === key ? 'border-pitch bg-free-fill' : 'border-hairline bg-card hover:border-strong'}`}>
+              className={`pf-action flex items-center gap-4 rounded-card border p-4 text-left transition-colors sm:items-start sm:p-5 ${filter === key ? 'border-pitch bg-free-fill' : 'border-hairline bg-card hover:border-strong'}`}>
               <span className={`grid size-10 shrink-0 place-items-center rounded-control ${key === 'pending' && count ? 'bg-peak-fill text-peak-ink' : 'bg-sunk text-pitch'}`}><Icon size={20} aria-hidden="true" /></span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3 sm:block"><p className="text-sm text-ink-secondary">{label}</p><p className="font-display text-3xl font-bold tabular-nums text-pitch sm:mt-2">{count}</p></div>
@@ -123,14 +129,14 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
           <p role="status" className="w-full text-xs text-ink-secondary sm:w-auto">{visible.length} đơn trong mục đang xem</p>
         </div>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-hairline">
-          <div role="group" aria-label="Lọc đơn đặt sân" className="flex gap-1">
+          <div role="group" aria-label="Lọc đơn đặt sân" className="pf-tab-rail relative isolate flex gap-1"><NavigationMarker activeKey={filter} variant="underline" />
             {([
               ['active', 'Đang đặt', pendingCount + confirmedCount],
               ['history', 'Lịch sử', historyCount],
               ['all', 'Tất cả', rows.length],
             ] as const).map(([key, label, count]) => (
               <button key={key} type="button" aria-pressed={filter === key || (key === 'active' && (filter === 'pending' || filter === 'confirmed'))} onClick={() => setFilter(key)}
-                className={`flex min-h-12 items-center gap-2 border-b-2 px-2 text-sm font-semibold sm:px-4 ${filter === key || (key === 'active' && (filter === 'pending' || filter === 'confirmed')) ? 'border-pitch text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>
+                className={`pf-tab-link relative z-10 flex min-h-12 items-center gap-2 border-b-2 px-2 text-sm font-semibold sm:px-4 ${filter === key || (key === 'active' && (filter === 'pending' || filter === 'confirmed')) ? 'border-pitch text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>
                 {label}<span className="rounded-pill bg-sunk px-2 py-0.5 text-xs tabular-nums">{count}</span>
               </button>
             ))}
@@ -138,6 +144,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
           <p className="pb-3 text-xs text-ink-secondary sm:pb-0">{filter === 'pending' ? 'Chỉ hiện đơn chờ cọc' : filter === 'confirmed' ? 'Chỉ hiện sân đã xác nhận' : 'Giờ chơi theo giờ Việt Nam'}</p>
         </div>
 
+        <div ref={resultsRef} data-booking-results>
         {visible.length === 0 ? (
           <div className="mt-5 rounded-card border border-hairline bg-card px-5 py-14 text-center">
             <CalendarDays className="mx-auto text-pitch" size={32} strokeWidth={1.5} aria-hidden="true" />
@@ -146,7 +153,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
             {query.trim() && filter !== 'all' ? <button type="button" onClick={() => setFilter('all')} className="mt-5 min-h-11 rounded-control border border-hairline px-5 text-sm font-semibold text-pitch">Tìm trong tất cả đơn</button> : <Link href="/tim-san" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-pitch underline underline-offset-4">Tìm sân để chơi <ArrowRight size={16} aria-hidden="true" /></Link>}
           </div>
         ) : (
-          <div className="mt-5 lg:overflow-hidden lg:rounded-card lg:border lg:border-hairline lg:bg-card">
+          <div className="pf-booking-table mt-5 lg:overflow-hidden lg:rounded-card lg:border lg:border-hairline lg:bg-card">
             <table className="block w-full text-left text-sm lg:table lg:table-fixed">
               <caption className="sr-only">Danh sách đơn đặt sân, {visible.length} đơn</caption>
               <thead className="hidden border-b border-hairline bg-sunk text-xs text-ink-secondary lg:table-header-group">
@@ -154,7 +161,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
               </thead>
               <tbody className="flex flex-col gap-4 lg:table-row-group">
                 {visible.map((b) => (
-                  <tr key={b.id} className="grid grid-cols-2 gap-x-4 gap-y-5 rounded-card border border-hairline bg-card p-5 lg:table-row lg:rounded-none lg:border-x-0 lg:border-t-0 lg:p-0 lg:align-top lg:last:border-b-0">
+                  <tr key={b.id} className="pf-player-booking grid grid-cols-2 gap-x-4 gap-y-5 rounded-card border border-hairline bg-card p-5 lg:table-row lg:rounded-none lg:border-x-0 lg:border-t-0 lg:p-0 lg:align-top lg:last:border-b-0">
                     <td className="col-span-2 block min-w-0 lg:table-cell lg:px-5 lg:py-6">
                       <p className="font-display text-lg font-bold leading-snug text-pitch">{b.courts?.venues?.name ?? 'Thông tin sân đang cập nhật'}</p>
                       <p className="mt-1.5 font-medium">{b.courts?.name ?? 'Sân đã đặt'}{b.courts?.sport && <span className="font-normal text-ink-secondary"> · {SPORT_LABELS[b.courts.sport]}</span>}</p>
@@ -197,6 +204,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false }: {
             </table>
           </div>
         )}
+        </div>
       </>}
 
       <aside className="mt-8 rounded-card border border-hairline bg-sunk/50 p-5 sm:flex sm:items-start sm:gap-4">

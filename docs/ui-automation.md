@@ -27,6 +27,12 @@ người dùng bật giảm chuyển động. Không dùng animation để thay/
 Bài kiểm tra tương tác kiểm tra vùng chọn, bố cục thẻ sân ít kết quả,
 phóng to ảnh, focus hộp thoại và đổi tùy chọn giảm chuyển động ngay lúc mở.
 
+Bài kiểm tra đặt sân còn kiểm tra thẻ giải có dữ liệu, chế độ danh sách,
+ngày trên đơn chủ sân và form xem lại trước khi giữ chỗ. Mở hộp thoại hủy
+không gửi request; đóng hộp thoại trả focus về nút ban đầu. Các trường hợp
+hủy lỗi và xác nhận cọc mất mạng được mô phỏng để kiểm tra thông báo/thử lại.
+Mọi request thay đổi đơn trong bài kiểm tra đều bị chặn và trả kết quả giả.
+
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.
 Ảnh desktop/mobile được lưu trong artifact `ui-desktop-mobile` 14 ngày,

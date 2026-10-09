@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Clock3 } from 'lucide-react';
 import { enterMotion } from '@/lib/motion';
 import { MAX_SLOTS, PEAK_FROM_HOUR, PEAK_TO_HOUR, SPORT_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, hourOf, vnd } from '@/lib/format';
@@ -29,6 +30,12 @@ export function VenueTimePicker({
   const duration = chosenDuration && durations.includes(chosenDuration) ? chosenDuration : durations[0];
   const times = useMemo(() => venueTimeOptions(sportSlots, duration), [sportSlots, duration]);
   const availableTimes = times.filter((time) => time.choices.length).length;
+  const sessions = [
+    { label: 'Buổi sáng', key: 'morning', from: 0, to: 12 },
+    { label: 'Buổi chiều', key: 'afternoon', from: 12, to: 18 },
+    { label: 'Buổi tối', key: 'evening', from: 18, to: 24 },
+  ].map(session => ({ ...session, times: times.filter(time => hourOf(time.startsAt) >= session.from && hourOf(time.startsAt) < session.to) })).filter(session => session.times.length);
+  const firstAvailable = times.find(time => time.choices.length)?.choices[0];
   const selection = a.selection;
   const courtById = new Map(courts.map((court) => [court.id, court]));
   const describeCourt = (id: string) => {
@@ -99,8 +106,12 @@ export function VenueTimePicker({
         </div>
         {a.selectionLost && <p role="status" className="mb-3 text-sm text-ink-secondary">Sân vừa chọn không còn trống đủ thời gian. Bạn chọn lại một giờ còn sân nhé.</p>}
         {!availableTimes && <p role="status" className="mb-4 rounded-control bg-sunk p-3 text-sm leading-6 text-ink-secondary">Không còn sân trống đủ {duration} phút cho môn này. Bạn thử thời lượng ngắn hơn hoặc ngày khác nhé.</p>}
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
-          {times.map(({ startsAt, choices }) => {
+        {firstAvailable && <button type="button" onClick={() => a.choose(firstAvailable)} className="pf-action mb-4 inline-flex min-h-11 items-center gap-2 rounded-control border border-hairline bg-page px-3 text-xs font-semibold text-pitch hover:border-strong"><Clock3 className="size-4" aria-hidden="true" />Chọn giờ sớm nhất · {hhmm(firstAvailable.startsAt)}</button>}
+        <div className="space-y-5">
+        {sessions.map(session => <section key={session.key} aria-label={session.label}>
+          <div className="mb-2.5 flex items-center justify-between gap-3"><h4 className="text-xs font-semibold text-pitch">{session.label}</h4><span className="text-[11px] text-ink-secondary">{session.times.filter(time => time.choices.length).length} giờ còn sân</span></div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
+          {session.times.map(({ startsAt, choices }) => {
             const best = choices[0];
             const selected = selection?.startsAt === startsAt;
             const isPeak = hourOf(startsAt) >= PEAK_FROM_HOUR && hourOf(startsAt) < PEAK_TO_HOUR;
@@ -120,6 +131,8 @@ export function VenueTimePicker({
               </button>
             );
           })}
+          </div>
+        </section>)}
         </div>
         <p className="mt-4 text-xs leading-5 text-ink-secondary">Giá cho toàn bộ {duration} phút. Chỉ gợi ý sân trống liền mạch suốt thời gian chơi.</p>
       </section>

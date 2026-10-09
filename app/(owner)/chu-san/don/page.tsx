@@ -5,8 +5,9 @@ import { CalendarDays, Filter, ReceiptText } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { ConfirmPaymentButton, RefundDoneButton } from '@/components/owner-booking-actions';
 import { StatusBadge } from '@/components/status-badge';
-import { hhmm, vnd, ymd } from '@/lib/format';
+import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import type { BookingStatus } from '@/lib/types';
+import { CountUp } from '@/components/count-up';
 import { OwnerVenuePicker } from '@/components/owner-venue-picker';
 
 export const dynamic = 'force-dynamic';
@@ -52,11 +53,11 @@ export default async function OwnerBookingsPage({ searchParams }: { searchParams
 }
 
 function BookingRow({ booking }: { booking: { id: string; code: string; starts_at: string; ends_at: string; status: BookingStatus; total_amount: number; deposit_amount: number; refund_status: string | null; customer_name: string | null; customer_phone: string; courtName: string } }) {
-  return <article className="flex flex-wrap items-center gap-4 px-5 py-4 transition-colors hover:bg-page"><div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-control bg-sunk text-pitch"><span className="text-xs font-semibold">{hhmm(booking.starts_at)}</span><span className="mt-0.5 text-[10px] text-ink-secondary">{hhmm(booking.ends_at)}</span></div><div className="min-w-0 flex-[1_1_180px]"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{booking.customer_name ?? 'Khách đặt sân'}</p><StatusBadge status={booking.status} /></div><p className="mt-1 text-xs text-ink-secondary">{booking.code} · {booking.courtName} · {booking.customer_phone}</p></div><div className="text-left sm:text-right"><p className="text-sm font-semibold tabular-nums text-pitch">{vnd(booking.total_amount)}</p><p className="mt-1 text-xs text-ink-secondary">cọc {vnd(booking.deposit_amount)}</p></div>{booking.status === 'pending' && <ConfirmPaymentButton code={booking.code} />}{booking.refund_status === 'needed' && <RefundDoneButton code={booking.code} />}</article>;
+  return <article data-motion-item className="pf-booking-record grid items-start gap-4 px-4 py-5 sm:px-5 xl:grid-cols-[minmax(0,1fr)_130px_minmax(0,230px)]"><div className="flex min-w-0 items-start gap-4"><time dateTime={booking.starts_at} className="flex w-16 shrink-0 flex-col overflow-hidden rounded-control border border-hairline bg-page text-center text-pitch"><span className="border-b border-hairline bg-free-fill py-1 text-[10px] font-semibold">{ymd(new Date(booking.starts_at)).slice(5, 7)}/{ymd(new Date(booking.starts_at)).slice(0, 4)}</span><span className="py-1 font-display text-2xl font-bold">{ymd(new Date(booking.starts_at)).slice(8, 10)}</span></time><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{booking.customer_name ?? 'Khách đặt sân'}</p><StatusBadge status={booking.status} /></div><p className="mt-1.5 text-xs font-semibold text-pitch">{hhmm(booking.starts_at)} – {hhmm(booking.ends_at)} · {booking.courtName}</p><p className="mt-1 text-xs leading-5 text-ink-secondary">{dayLabel(new Date(booking.starts_at))}</p><p className="mt-2 break-all text-[11px] font-medium text-ink-secondary">{booking.code} · <a href={`tel:${booking.customer_phone}`} className="underline underline-offset-4">{booking.customer_phone}</a></p></div></div><div className="border-t border-hairline pt-3 xl:border-0 xl:pt-0 xl:text-right"><p className="text-sm font-semibold tabular-nums text-pitch">{vnd(booking.total_amount)}</p><p className="mt-1 text-xs text-ink-secondary">cọc {vnd(booking.deposit_amount)}</p></div><div className="flex flex-wrap gap-2 xl:justify-end">{booking.status === 'pending' && <ConfirmPaymentButton code={booking.code} />}{booking.refund_status === 'needed' && <RefundDoneButton code={booking.code} />}</div></article>;
 }
 
 function MiniStat({ label, value, icon: Icon, tone }: { label: string; value: number; icon: typeof ReceiptText; tone?: 'peak' }) {
-  return <div className={`flex items-center gap-3 rounded-card border p-4 ${tone === 'peak' ? 'border-peak-line bg-peak-fill' : 'border-hairline bg-card'}`}><Icon className={`size-5 ${tone === 'peak' ? 'text-peak-ink' : 'text-pitch'}`} aria-hidden="true" /><span><strong className="block font-display text-2xl font-bold text-pitch">{value}</strong><span className="text-xs text-ink-secondary">{label}</span></span></div>;
+  return <div data-motion-item className={`flex items-center gap-3 rounded-card border p-4 ${tone === 'peak' ? 'border-peak-line bg-peak-fill' : 'border-hairline bg-card'}`}><Icon className={`size-5 ${tone === 'peak' ? 'text-peak-ink' : 'text-pitch'}`} aria-hidden="true" /><span><strong className="block font-display text-2xl font-bold text-pitch"><CountUp to={value} /></strong><span className="text-xs text-ink-secondary">{label}</span></span></div>;
 }
 
 function Empty() {

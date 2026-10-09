@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { playMotion } from '@/lib/motion';
+import { ArrowRight, Check, Clock3, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
@@ -28,6 +30,10 @@ export function BookingForm({
   isAuthenticated: boolean;
   onCancel: () => void;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (formRef.current) return playMotion(formRef.current, { opacity: [0, 1] }, { duration: 0.32 });
+  }, []);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -81,9 +87,12 @@ export function BookingForm({
   }
 
   return (
-    <form onSubmit={submit} aria-busy={busy} className="pf-settle flex flex-col gap-4 rounded-card border border-strong bg-card p-5">
+    <form ref={formRef} onSubmit={submit} aria-busy={busy} className="flex flex-col gap-5 overflow-hidden rounded-[20px] border border-strong bg-card p-5 sm:p-6">
+      <ol aria-label="Tiến trình đặt sân" className="flex items-center justify-between gap-2 border-b border-hairline pb-4 text-[11px] font-semibold">
+        <li className="flex items-center gap-1.5 text-pitch"><Check className="size-3.5" aria-hidden="true" />Chọn giờ</li><li aria-hidden="true" className="h-px min-w-3 flex-1 bg-hairline" /><li aria-current="step" className="text-pitch">Thông tin</li><li aria-hidden="true" className="h-px min-w-3 flex-1 bg-hairline" /><li className="text-ink-secondary">Thanh toán</li>
+      </ol>
       <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Bước 2 · Thông tin đặt sân</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Kiểm tra trước khi giữ chỗ</h2></div>
-      <div className="flex flex-col gap-3 border-b border-hairline pb-4">
+      <div className="flex flex-col gap-3 rounded-control border border-hairline bg-page p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <span className="font-display text-lg font-extrabold text-pitch">{selection.courtName}</span>
@@ -128,14 +137,14 @@ export function BookingForm({
 
       {!isAuthenticated && (
         <div className="flex gap-3 rounded-control border border-strong bg-free-fill p-3.5 text-sm text-free-ink">
-          <span aria-hidden="true" className="mt-0.5 text-base">✦</span>
+          <LogIn className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <p className="leading-relaxed">
             Bước tiếp theo: đăng nhập bằng Google hoặc email. Thông tin vừa nhập được giữ lại để bạn tiếp tục đặt sân.
           </p>
         </div>
       )}
 
-      <div className="flex flex-col gap-2 rounded-control bg-free-fill p-4 text-sm">
+      <div className="flex flex-col gap-3 rounded-control border border-free-line bg-free-fill p-4 text-sm">
         <Row label="Tổng tiền sân" value={vnd(selection.total)} />
         <Row label={`Cọc trước ${depositPct}%`} value={vnd(deposit)} />
         <div className="h-px bg-strong" />
@@ -156,11 +165,11 @@ export function BookingForm({
         </button>
         <button type="submit" disabled={busy}
           className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-2 text-sm font-semibold text-pitch-ink hover:bg-ink disabled:opacity-60">
-          {busy && <span aria-hidden="true" className="pf-spin size-3.5 rounded-full border-2 border-white/40 border-t-white" />}{busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? 'Giữ chỗ 15 phút' : 'Đăng nhập để tiếp tục'}
+          {busy && <span aria-hidden="true" className="pf-spin size-3.5 rounded-full border-2 border-white/40 border-t-white" />}{busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? 'Giữ chỗ 15 phút' : 'Đăng nhập để tiếp tục'}{!busy && <ArrowRight className="pf-arrow size-4" aria-hidden="true" />}
         </button>
       </div>
 
-      <p className="text-center text-xs leading-5 text-ink-secondary">Sau khi tạo đơn, bạn có 15 phút để chuyển cọc. Lịch đặt chỉ được xác nhận khi đã nhận đủ cọc.</p>
+      <p className="flex items-start gap-2 text-xs leading-6 text-ink-secondary"><Clock3 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />Sau khi tạo đơn, bạn có 15 phút để chuyển cọc. Lịch đặt chỉ được xác nhận khi đã nhận đủ cọc.</p>
     </form>
   );
 }
