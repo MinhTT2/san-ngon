@@ -11,7 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const staged = process.argv.includes('--staged');
 const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
 const selectedChecks = only?.split(',');
-const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-player-discovery', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-booking-recovery', 'check-checkout-ux', 'check-personal-ui', 'check-auth-ux', 'check-calendar-ux', 'check-owner-forms', 'check-dashboard-ui', 'check-query-errors', 'check-image-optimizer', 'capture-ui-review'];
+const checks = ['check-live-refresh-browser', 'check-public-ui', 'check-discovery-ux', 'check-player-discovery', 'check-site-motion', 'check-motion-interactions', 'check-booking-polish', 'check-booking-recovery', 'check-checkout-ux', 'check-personal-ui', 'check-auth-ux', 'check-calendar-ux', 'check-owner-forms', 'check-owner-booking-search', 'check-dashboard-ui', 'check-query-errors', 'check-image-optimizer', 'capture-ui-review'];
 if (selectedChecks?.some(check => !checks.includes(check))) throw new Error(`Unknown UI check: ${only}`);
 const workspace = await mkdtemp(join(tmpdir(), 'san-ngon-ui-check-'));
 const screenshots = resolve(process.env.UX_SCREENSHOT_DIR || join(root, 'output/automated-ui'));

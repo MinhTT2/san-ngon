@@ -105,3 +105,23 @@ npm run check:ui -- --only=check-booking-recovery,check-booking-polish,check-che
 ```
 
 Nếu trình duyệt chặn sessionStorage, dữ liệu thử lại không tồn tại qua reload; danh sách đơn thật vẫn là cách kiểm tra. Không tự tạo đơn khi mở Đơn của tôi. Chưa nghiệm thu chuyển khoản thật hoặc HTTP đồng thời với tài khoản thật trong đợt này.
+
+
+## Đợt 5 — A12: lịch sử đơn của chủ sân
+
+- RPC `search_owner_bookings` kiểm tra tài khoản và quyền chủ cụm/admin, tìm mã đơn, tên khách hoặc số điện thoại; hỗ trợ số điện thoại dạng +84 có dấu cách. Tìm chuỗi ký tự nguyên văn, không biến `%`/`_` thành wildcard.
+- Bộ lọc trạng thái, khoảng ngày, cả lịch sử và đơn cần hoàn cọc. Tìm mã/liên hệ và lọc hoàn cọc bao gồm đơn cũ nếu không chọn giới hạn ngày; mặc định xem 30 ngày tới do SQL tính theo múi giờ Việt Nam.
+- Mỗi trang tối đa 30 đơn, thứ tự ổn định; tổng số và thống kê tính trên toàn bộ kết quả lọc. Chuyển trang giữ bộ lọc; tìm/lọc hoặc đổi cụm sân trở về trang đầu.
+- Giữ các nút xác nhận cọc và đánh dấu hoàn hiện tại, realtime của khu chủ sân và đường dẫn ngày cũ. Lỗi tải/ngày sai có thông báo, không bị hiểu thành không có đơn.
+- A12 còn phần phân trang lịch sử của người chơi; đợt này chỉ hoàn tất khu chủ sân.
+
+Kiểm tra SQL: 40 đơn trải qua quá khứ/tương lai, tổng số vượt một trang, phân trang không trùng, trang quá lớn, mã cũ, số điện thoại +84, tên chứa `%_`, khoảng ngày, trạng thái, hoàn cọc cũ, dữ liệu rỗng, tham số sai, tài khoản khác/chủ sân khác/bị khóa và quyền anon. Migration ứng viên chạy cùng bài thử trong transaction rollback trước triển khai.
+
+Lệnh chạy lại:
+
+```sh
+npx supabase db query --linked --file scripts/check-owner-booking-search.sql
+npm run check:ui -- --only=check-owner-booking-search,check-dashboard-ui,check-query-errors,check-booking-polish
+```
+
+Trạng thái: **hoàn thành phần chủ sân ngày 09/10/2026**. Bản dựng production riêng cùng lint/typecheck đạt; tìm/lọc/phân trang/ngày sai ở 390/1440px, khu quản lý ở 320–1440px, giả lập lỗi/phục hồi và thao tác xác nhận/hoàn cọc đều đạt. Đã áp dụng riêng migration `20261009000002_owner_booking_search.sql`, chạy lại bài SQL sau triển khai và rollback dữ liệu thử. Không triển khai migration tìm sân đang làm ở task khác.

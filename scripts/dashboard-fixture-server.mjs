@@ -64,11 +64,13 @@ const server = createServer(async (req, res) => {
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
   let readFailure = '';
+  let ownerHistory = false;
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
     readFailure = claims.fixture_read_failure || '';
+    ownerHistory = !!claims.fixture_owner_history;
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
     catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
   } catch { /* Anonymous requests use only public fixture data. */ }
@@ -96,6 +98,22 @@ const server = createServer(async (req, res) => {
   const args = body ? JSON.parse(body) : {};
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const name = url.pathname.split('/').at(-1);
+    if (name === 'search_owner_bookings') {
+      if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
+      let rows = ownerHistory ? Array.from({ length: 42 }, (_, i) => ({ ...bookings[0], id: `history-${i}`, code: i === 41 ? 'SANXYZ234' : `SAN${String(i+1).padStart(6,'A')}`, starts_at: new Date(Date.now()-(i+1)*86400000).toISOString(), ends_at: new Date(Date.now()-(i+1)*86400000+3600000).toISOString(), status: i === 41 ? 'cancelled' : 'completed', refund_status: i === 41 ? 'needed' : null, customer_name: i === 41 ? 'Khách lịch sử' : 'Khách kiểm tra', customer_phone: i === 41 ? '0912345678' : '0901234567', courtName: court.name })) : bookings.map(b => ({ ...b, courtName: court.name }));
+      if (includeRefund) rows = rows.map(row => row.id === 'booking-1' ? { ...row, status: 'cancelled', refund_status: 'needed' } : row);
+      const query = (args.p_query || '').trim().toLowerCase();
+      if (query) rows = rows.filter(b => `${b.code} ${b.customer_phone} ${b.customer_name}`.toLowerCase().includes(query));
+      if (args.p_refund_needed) rows = rows.filter(b => b.refund_status === 'needed');
+      if (args.p_status !== 'all') rows = rows.filter(b => b.status === args.p_status);
+      if (args.p_from) rows = rows.filter(b => b.starts_at.slice(0,10) >= args.p_from);
+      if (args.p_to) rows = rows.filter(b => b.starts_at.slice(0,10) <= args.p_to);
+      const total = rows.length, pages = Math.max(1,Math.ceil(total/30));
+      const page = Math.max(1,Math.min(args.p_page || 1,pages));
+      send({ rows: rows.slice((page-1)*30,page*30), total, page, pages, page_size: 30,
+        confirmed: rows.filter(b => ['confirmed','completed'].includes(b.status)).length, pending: rows.filter(b => b.status === 'pending').length,
+        from: args.p_from || (!query && !args.p_show_history ? '2026-10-09' : null), to: args.p_to || (!query && !args.p_show_history ? '2026-11-08' : null) }); return;
+    }
     if (name === 'search_venues') {
       const candidates = catalog === 'many' ? [...publicVenues.map(v => ({ ...v, indoor: true })), ...additionalVenues] : publicVenues.map(v => ({ ...v, indoor: true }));
       const matching = candidates.filter(v => (!args.p_sport || v.sports.includes(args.p_sport)) && (!args.p_district || v.district === args.p_district)

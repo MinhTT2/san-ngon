@@ -1466,6 +1466,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      search_owner_bookings: {
+        Args: {
+          p_from?: string
+          p_page?: number
+          p_query?: string
+          p_refund_needed?: boolean
+          p_show_history?: boolean
+          p_status?: string
+          p_to?: string
+          p_venue_id: string
+        }
+        Returns: Json
+      }
+
       cancel_tournament: { Args: { p_id: string }; Returns: undefined }
       cancel_tournament_registration: {
         Args: { p_id: string }
