@@ -15,12 +15,12 @@ const sandbox = {
   exports: {},
   require(name) {
     if (name === '@/lib/profile') return { normalizePhone };
-    if (name === '@/lib/constants') return { bookingErrorMessage };
+    if (name === '@/lib/constants') return { BOOKING_ERRORS, bookingErrorMessage };
     if (name === '@/lib/supabase/server') return { createClient: async () => ({
-      auth: { getUser: async () => ({ data: { user: signedIn ? { id: 'fixture-only' } : null } }) },
+      auth: { getUser: async () => ({ data: { user: signedIn ? { id: 'e0900000-0000-4000-8000-000000000002' } : null } }) },
       rpc(name, args) {
         rpcCalls.push({ name, args: JSON.parse(JSON.stringify(args)) });
-        return { single: async () => ({ data: databaseError ? null : { code: 'SANABC234' }, error: databaseError }) };
+        return { single: async () => ({ data: databaseError ? null : { id: 'fixture-only', code: 'SANABC234' }, error: databaseError }) };
       },
     }) };
     return require(name);
@@ -89,3 +89,28 @@ for (const phone of ['+84 912 345 6789', '0912345678x', '+1 912 345 678', '0'.re
   assert.equal(rpcCalls.length, 0);
 }
 console.log('OK: booking API rejects invalid inputs, translates SQL guards, preserves auth/conflict handling and never accepts client prices.');
+
+const requestId = 'e0900000-0000-4000-8000-000000000099';
+rpcCalls = [];
+databaseError = null;
+assert.equal((await post({ ...valid, request_id: requestId })).status, 201);
+assert.equal(rpcCalls[0].name, 'create_booking_once');
+assert.equal(rpcCalls[0].args.p_request_id, requestId);
+rpcCalls = [];
+assert.equal((await post({ ...valid, request_id: 'bad' })).status, 400);
+assert.equal(rpcCalls.length, 0);
+assert.equal((await post({ ...valid, request_id: requestId, request_user_id: requestId })).status, 401);
+assert.equal(rpcCalls.length, 0, 'account switch never creates an intent for a different account');
+databaseError = { message: 'REQUEST_CONFLICT' };
+const conflict = await post({ ...valid, request_id: requestId });
+assert.equal(conflict.status, 409);
+assert.equal((await conflict.json()).request_conflict, true);
+databaseError = { message: 'ACCOUNT_BANNED', code: '42501' };
+assert.equal((await post({ ...valid, request_id: requestId })).status, 403);
+for (const message of ['TypeError: fetch failed', 'statement timeout', 'connection closed']) {
+  databaseError = { message };
+  const unavailable = await post({ ...valid, request_id: requestId });
+  assert.equal(unavailable.status, 503, 'unknown SQL/network results remain uncertain');
+  assert(!(await unavailable.json()).error.includes(message), 'no database details exposed');
+}
+console.log('OK: request IDs select replay RPC, identity switches are rejected, conflicts are distinguished and unknown database results return 503.');

@@ -8,6 +8,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { CANCEL_WINDOW_HOURS } from '@/lib/constants';
 import { normalizePhone } from '@/lib/profile';
+import { savePendingBookingRequest, clearPendingBookingRequest, BOOKING_REQUEST_EVENT } from '@/lib/pending-booking-request';
 import type { Selection } from '@/lib/types';
 
 /**
@@ -21,6 +22,7 @@ export function BookingForm({
   defaultPhone,
   defaultNote,
   isAuthenticated,
+  userId,
   onCancel,
 }: {
   selection: Selection;
@@ -29,6 +31,7 @@ export function BookingForm({
   defaultPhone?: string | null;
   defaultNote?: string;
   isAuthenticated: boolean;
+  userId?: string;
   onCancel: (contact: { name: string; phone: string; note: string }) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -45,12 +48,14 @@ export function BookingForm({
   const [error, setError] = useState<string | null>(null);
   const [uncertain, setUncertain] = useState(false);
   const submitting = useRef(false);
+  const requestId = useRef<string | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => { if (error) feedback.current?.focus(); }, [error]);
 
   function showUncertainResult() {
     setUncertain(true);
+    window.dispatchEvent(new Event(BOOKING_REQUEST_EVENT));
     setError('Chưa nhận được kết quả tạo đơn. Đơn có thể đã được tạo và đang giữ sân. Hãy kiểm tra Đơn của tôi trước khi đặt lại để tránh tạo thêm đơn.');
   }
 
@@ -66,21 +71,24 @@ export function BookingForm({
     setBusy(true);
     setError(null);
 
+    const intent = {
+      request_user_id: userId,
+      request_id: requestId.current ??= crypto.randomUUID(),
+      court_id: selection.courtId, starts_at: selection.startsAt, ends_at: selection.endsAt,
+      customer_name: name.trim() || undefined, customer_phone: normalizedPhone, note: note.trim() || undefined,
+    };
+    if (userId) savePendingBookingRequest({ userId, body: intent });
+
     try {
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          court_id: selection.courtId,
-          starts_at: selection.startsAt,
-          ends_at: selection.endsAt,
-          customer_name: name || undefined,
-          customer_phone: normalizedPhone,
-          note: note || undefined,
-        }),
+        body: JSON.stringify(intent),
       });
 
       if (res.status === 401) {
+        clearPendingBookingRequest(intent.request_id);
+        requestId.current = null;
         // Giữ cả form và khung đã chọn để đăng nhập xong quay lại đặt tiếp.
         try { sessionStorage.setItem('san-ngon:booking-draft', JSON.stringify({
           selection, name, phone, note, pathname, savedAt: Date.now(),
@@ -92,8 +100,14 @@ export function BookingForm({
       if (res.status >= 500) { showUncertainResult(); return; }
       const json = await res.json();
 
-      if (!res.ok) { setError(json.error ?? 'Không đặt được sân.'); return; }
+      if (!res.ok) {
+        if (res.status === 409 && json.request_conflict) { showUncertainResult(); return; }
+        clearPendingBookingRequest(intent.request_id);
+        requestId.current = null;
+        setError(json.error ?? 'Không đặt được sân.'); return;
+      }
       if (!/^SAN[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(json.booking?.code ?? '')) { showUncertainResult(); return; }
+      clearPendingBookingRequest(intent.request_id);
       try { sessionStorage.removeItem('san-ngon:booking-draft'); } catch { /* Storage can be blocked; the server-created order still opens. */ }
       router.push(`/dat-san/${json.booking.code}`);
     } catch {

@@ -18,6 +18,7 @@ export function VenueSchedule({
   defaultName,
   defaultPhone,
   isAuthenticated,
+  userId,
 }: {
   venueId: string;
   initialSport?: import('@/lib/types').Sport;
@@ -27,6 +28,7 @@ export function VenueSchedule({
   defaultName?: string | null;
   defaultPhone?: string | null;
   isAuthenticated: boolean;
+  userId?: string;
 }) {
   const date = calendar.date;
   const pathname = usePathname();
@@ -79,6 +81,7 @@ export function VenueSchedule({
           defaultPhone={draftContact?.phone ?? defaultPhone}
           defaultNote={draftContact?.note}
           isAuthenticated={isAuthenticated}
+          userId={userId}
           onCancel={(contact) => { setDraftContact(contact); setConfirming(false); }}
         />
       </div>

@@ -838,6 +838,45 @@ export type Database = {
           },
         ]
       }
+      booking_requests: {
+        Row: {
+          booking_id: string
+          created_at: string
+          payload_hash: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          payload_hash: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          payload_hash?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancelled_at: string | null
@@ -1719,6 +1758,47 @@ export type Database = {
           id: string
           note: string | null
           paid_at: string | null
+          refund_status: Database["public"]["Enums"]["refund_status"] | null
+          starts_at: string
+          status: Database["public"]["Enums"]["booking_status"]
+          total_amount: number
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_booking_once: {
+        Args: {
+          p_court_id: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_ends_at: string
+          p_note?: string
+          p_request_id: string
+          p_starts_at: string
+        }
+        Returns: {
+          cancelled_at: string | null
+          code: string
+          court_id: string
+          created_at: string
+          customer_name: string | null
+          customer_phone: string
+          deposit_amount: number
+          ends_at: string
+          expires_at: string
+          id: string
+          note: string | null
+          paid_at: string | null
+          payment_account: string | null
+          payment_account_name: string | null
+          payment_bank: string | null
+          payment_connection_id: string | null
+          payment_owner_id: string | null
           refund_status: Database["public"]["Enums"]["refund_status"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]

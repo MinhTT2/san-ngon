@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { BookingRequestRecovery } from '@/components/booking-request-recovery';
 import { BookingList, type MyBooking } from './booking-list';
 
 export const dynamic = 'force-dynamic';
@@ -18,5 +19,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     .eq('user_id', user.id)
     .order('starts_at', { ascending: false });
 
-  return <BookingList bookings={(data ?? []) as unknown as MyBooking[]} userId={user.id} initialNow={Date.now()} failed={Boolean(error)} />;
+  return <><BookingRequestRecovery userId={user.id} /><BookingList bookings={(data ?? []) as unknown as MyBooking[]} userId={user.id} initialNow={Date.now()} failed={Boolean(error)} /></>;
 }

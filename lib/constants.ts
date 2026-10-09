@@ -44,6 +44,9 @@ export const BOOKING_STATUS_LABELS: Record<string, string> = {
 export const BOOKING_ERRORS: Record<string, string> = {
   VENUE_NOT_ACCEPTING_BOOKINGS: 'Cụm sân này hiện chưa nhận đặt trực tuyến. Vui lòng liên hệ chủ sân.',
   AUTH_REQUIRED: 'Bạn cần đăng nhập để đặt sân.',
+  ACCOUNT_BANNED: 'Tài khoản hiện bị khóa. Liên hệ hỗ trợ để kiểm tra.',
+  REQUEST_ID_REQUIRED: 'Thông tin lần đặt không hợp lệ.',
+  REQUEST_CONFLICT: 'Thông tin lần đặt đã thay đổi. Kiểm tra Đơn của tôi để mở đơn đã tạo.',
   SLOT_TAKEN: 'Khung giờ này vừa có người đặt. Chọn giờ khác giúp bạn nhé.',
   SLOT_IN_PAST: 'Khung giờ đã qua rồi.',
   INVALID_RANGE: 'Khoảng thời gian không hợp lệ.',

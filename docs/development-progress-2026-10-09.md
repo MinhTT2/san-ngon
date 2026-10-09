@@ -76,3 +76,32 @@ Kiểm tra: lint, typecheck, production build, hợp đồng API đặt sân và
 Trạng thái: **hoàn thành phần runtime ngày 09/10/2026**; A07 còn ngoại lệ công cụ phát triển. Biên bản đã ghi rõ 37 cảnh báo còn lại, gồm critical trong tar của cây Vercel CLI.
 
 Bổ sung guard cho runner để từ chối sớm khi danh sách kiểm tra nhắc tới script chưa được Git theo dõi. Tham chiếu tạm tới bài auth trong đợt trước đã có file tương ứng được bàn giao ở commit kế tiếp; danh sách kiểm tra của bản push hiện tại đầy đủ.
+
+## Đợt 4 — A09: phục hồi đúng yêu cầu đặt sân
+
+- RPC `create_booking_once` nhận khóa riêng từng lần đặt, gắn với tài khoản đăng nhập và hash đầu vào đã chuẩn hóa. Cùng khóa/nội dung trả đúng đơn cũ; khác nội dung báo xung đột. Bảng hash không có quyền đọc/ghi trực tiếp từ trình duyệt.
+- Khóa dòng hồ sơ giống `create_booking` để các lần thử lại của cùng tài khoản được xử lý lần lượt. GiST vẫn chống trùng sân giữa các người đặt; việc tạo đơn/tính giá vẫn gọi SQL `create_booking` hiện tại.
+- Retry trả trạng thái hiện tại, giá/người nhận/hạn giữ chỗ cũ; không kéo dài hoặc khôi phục đơn hủy/hết hạn. Giao dịch tạo đơn, payment và khóa retry là một transaction.
+- API chấp nhận khóa mới, giữ tương thích với tab cũ không gửi khóa. Lỗi database/kết nối chưa rõ kết quả trả 503, không bị coi là từ chối nghiệp vụ.
+- Form lưu yêu cầu đang gửi trong sessionStorage theo tài khoản. Khi chưa rõ kết quả, người dùng vào Đơn của tôi để tiếp tục đúng yêu cầu; tải lại trang không tự gửi lại. Chuyển tài khoản không tái sử dụng thông tin cũ. API cũng kiểm tra tài khoản kỳ vọng khi client gửi thông tin này.
+
+Kiểm tra đã đạt trước triển khai: migration ứng viên + bài SQL trong một transaction và rollback; quyền RPC/bảng, normalize/timezone, retry tại giới hạn 2 đơn, xung đột từng trường, snapshot giá/người nhận, đơn hủy/hết hạn/đã xác nhận, tài khoản bị khóa/khác tài khoản, giới hạn 3 khung và 1 payment/đơn. Bài API, lint và typecheck đạt. Các bài SQL không gửi email hoặc tiền thật; chưa phải nghiệm thu nhiều kết nối HTTP đồng thời.
+
+Trạng thái: **hoàn thành ngày 09/10/2026**.
+
+- Production build và các bài giao diện đặt sân/khôi phục/checkout/tài khoản đạt. Khôi phục được sau reload ở 390/1440px, bấm hai lần chỉ gửi một lần, cùng UUID và thông tin gốc, dữ liệu sai hoặc khác tài khoản không được tái sử dụng.
+- Dry-run chỉ liệt kê migration mới `20261009000001_booking_requests.sql`; đã áp dụng lên Supabase liên kết.
+- Sau triển khai, bài SQL retry, bài giới hạn đầu vào và hồi quy giữ chỗ đều đạt, mỗi bài rollback riêng và chạy lần lượt.
+- Các phần types của bảng/RPC mới lấy từ database đã triển khai; không gộp thay đổi types/hiển thị sân đang làm ở task khác.
+
+Lệnh chạy lại:
+
+```sh
+node scripts/check-booking-inputs.mjs
+npx supabase db query --linked --file scripts/check-booking-requests.sql
+npx supabase db query --linked --file scripts/check-booking-input-guards.sql
+npx supabase db query --linked --file scripts/check-booking-holds.sql
+npm run check:ui -- --only=check-booking-recovery,check-booking-polish,check-checkout-ux,check-personal-ui
+```
+
+Nếu trình duyệt chặn sessionStorage, dữ liệu thử lại không tồn tại qua reload; danh sách đơn thật vẫn là cách kiểm tra. Không tự tạo đơn khi mở Đơn của tôi. Chưa nghiệm thu chuyển khoản thật hoặc HTTP đồng thời với tài khoản thật trong đợt này.

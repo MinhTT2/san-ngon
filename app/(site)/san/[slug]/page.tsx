@@ -93,6 +93,7 @@ export default async function Page({
           defaultName={profile?.full_name}
           defaultPhone={profile?.phone}
           isAuthenticated={!!user}
+          userId={user?.id}
         /> : <div role="status" className="rounded-card border border-hairline bg-card p-5"><h2 className="font-display text-xl font-bold text-pitch">Hiện chưa nhận đặt trực tuyến</h2><p className="mt-2 text-sm leading-7 text-ink-secondary">Liên hệ chủ sân để biết thêm về lịch nhận khách của cụm sân.</p></div>}
       </section>
     </main>

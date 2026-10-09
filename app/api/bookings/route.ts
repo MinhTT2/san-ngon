@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { bookingErrorMessage } from '@/lib/constants';
+import { BOOKING_ERRORS, bookingErrorMessage } from '@/lib/constants';
+import type { Database } from '@/lib/database.types';
 import { normalizePhone } from '@/lib/profile';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,8 @@ export const dynamic = 'force-dynamic';
  * "Invalid datetime" — không ai đặt được sân.
  */
 const Body = z.object({
+  request_id: z.string().uuid('Thông tin lần đặt không hợp lệ.').optional(),
+  request_user_id: z.string().uuid('Thông tin tài khoản không hợp lệ.').optional(),
   court_id: z.string().uuid('Thông tin sân không hợp lệ.'),
   starts_at: z.string().datetime({ offset: true, message: 'Giờ bắt đầu không hợp lệ.' }),
   ends_at: z.string().datetime({ offset: true, message: 'Giờ kết thúc không hợp lệ.' }),
@@ -39,22 +42,33 @@ export async function POST(req: NextRequest) {
   }
 
   const b = parsed.data;
+  if (b.request_user_id && b.request_user_id !== user.id) {
+    return NextResponse.json({ error: 'Tài khoản đăng nhập đã thay đổi. Đăng nhập lại tài khoản đã đặt sân để tiếp tục.' }, { status: 401 });
+  }
   // Giá KHÔNG nhận từ client. create_booking tự tra price_rules và tính lại.
-  const { data, error } = await supabase.rpc('create_booking', {
+  const args = {
     p_court_id: b.court_id,
     p_starts_at: b.starts_at,
     p_ends_at: b.ends_at,
     p_customer_name: b.customer_name ?? null,
     p_customer_phone: b.customer_phone,
     p_note: b.note ?? null,
-  }).single();
+  };
+  const { data, error } = await (b.request_id
+    ? supabase.rpc('create_booking_once', { ...args, p_request_id: b.request_id })
+    : supabase.rpc('create_booking', args)).single<Database['public']['Tables']['bookings']['Row']>();
 
   if (error) {
-    const status = error.message.includes('SLOT_TAKEN') ? 409
+    const known = Object.keys(BOOKING_ERRORS).some(code => error.message.includes(code));
+    const status = error.message.includes('SLOT_TAKEN') || error.message.includes('REQUEST_CONFLICT') ? 409
       : error.message.includes('AUTH_REQUIRED') ? 401
-      : 400;
-    return NextResponse.json({ error: bookingErrorMessage(error.message) }, { status });
+      : error.message.includes('ACCOUNT_BANNED') ? 403
+      : known ? 400 : 503;
+    return NextResponse.json({ request_conflict: error.message.includes('REQUEST_CONFLICT'), error: status === 503 ? 'Chưa nhận được kết quả tạo đơn. Kiểm tra Đơn của tôi để tiếp tục lần đặt này.' : bookingErrorMessage(error.message) }, { status });
   }
 
+  if (!data?.id || !/^SAN[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(data.code ?? '')) {
+    return NextResponse.json({ error: 'Chưa nhận được kết quả tạo đơn. Kiểm tra Đơn của tôi để tiếp tục lần đặt này.' }, { status: 503 });
+  }
   return NextResponse.json({ booking: data }, { status: 201 });
 }
