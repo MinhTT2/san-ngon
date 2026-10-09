@@ -6,6 +6,8 @@ import { DISTRICTS, SPORT_LABELS } from '@/lib/constants';
 import { OWNER_INPUT, OWNER_PRIMARY, OWNER_SECONDARY, OwnerField } from '@/components/owner-form-field';
 import { createClient } from '@/lib/supabase/client';
 import { Check, ImagePlus, X } from 'lucide-react';
+import { useUnsavedChanges } from '@/lib/use-unsaved-changes';
+import { PhotoUploadStatus, type PhotoPhase } from '@/components/photo-upload-status';
 
 type SportRow = { sport: string; courtCount: string; price: string };
 const SPORT_KEYS = Object.keys(SPORT_LABELS);
@@ -25,6 +27,11 @@ export function VenueForm({ defaultPhone, embedded = false, onSuccess }: { defau
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const draftId = useRef<string | null>(null);
   const uploaded = useRef(new Map<File, string>());
+  const [photoPhases, setPhotoPhases] = useState(new Map<File, PhotoPhase>());
+  const initialDetails = useRef(JSON.stringify(details));
+  const dirty = JSON.stringify(details) !== initialDetails.current || JSON.stringify(sports) !== JSON.stringify([EMPTY]) || photos.length > 0;
+  const { markSaved } = useUnsavedChanges(dirty, busy);
+  const phase = (photo: File, state: PhotoPhase) => setPhotoPhases(current => new Map(current).set(photo, state));
   const photoInput = useRef<HTMLInputElement>(null);
   const updateDetails = (key: keyof typeof details, value: string) => setDetails((current) => ({ ...current, [key]: value }));
   const updateSport = (index: number, patch: Partial<SportRow>) => setSports((current) => current.map((item, i) => i === index ? { ...item, ...patch } : item));
@@ -53,6 +60,7 @@ export function VenueForm({ defaultPhone, embedded = false, onSuccess }: { defau
     setPhotos(next);
   }
   async function submit() {
+    if (busy) return;
     setBusy(true); setError(null); setFieldErrors({});
     if (totalCourts < 1 || totalCourts > 20) { setError('Tổng số sân con phải từ 1 đến 20 sân.'); setBusy(false); return; }
     if (photos.length < 3) { setError('Hãy thêm ít nhất 3 ảnh thật của cụm sân.'); setBusy(false); return; }
@@ -69,11 +77,18 @@ export function VenueForm({ defaultPhone, embedded = false, onSuccess }: { defau
       if (!user) throw new Error('Bạn cần đăng nhập lại để tải ảnh. Bản nháp vẫn được giữ trong Quản lý sân.');
       for (const photo of photos) {
         if (uploaded.current.has(photo)) continue;
+        phase(photo, 'uploading');
         const extension = photo.type === 'image/jpeg' ? 'jpg' : photo.type.split('/')[1];
         const path = `${user.id}/${draftId.current}/${crypto.randomUUID()}.${extension}`;
-        const { error } = await supabase.storage.from('venue-photos').upload(path, photo, { contentType: photo.type, upsert: false });
-        if (error) throw new Error('Chưa tải hết ảnh. Bấm thử lại để tiếp tục; bản nháp đã được giữ trong Quản lý sân.');
+        try {
+          const { error } = await supabase.storage.from('venue-photos').upload(path, photo, { contentType: photo.type, upsert: false });
+          if (error) throw error;
+        } catch {
+          phase(photo, 'error');
+          throw new Error(`Không tải được ảnh “${photo.name}”. Bấm thử lại để tải tiếp ảnh còn thiếu; bản nháp đã được giữ trong Quản lý sân.`);
+        }
         uploaded.current.set(photo, path);
+        phase(photo, 'uploaded');
       }
       const paths = photos.map((photo) => uploaded.current.get(photo)!);
       const { error: publishError } = await supabase.rpc('set_venue_images', { p_venue_id: draftId.current, p_images: paths, p_expected: [] });
@@ -83,14 +98,16 @@ export function VenueForm({ defaultPhone, embedded = false, onSuccess }: { defau
         if (saved?.status !== 'active' || JSON.stringify(saved.images) !== JSON.stringify(paths)) throw new Error('Chưa công khai được cụm sân. Bản nháp và ảnh đã tải vẫn được giữ để thử lại.');
       }
       const result = { venue: { id: draftId.current } };
+      markSaved();
       if (onSuccess) onSuccess(result.venue.id ?? undefined);
       else { router.push(`/chu-san/quan-ly?venue=${result.venue?.id ?? ''}`); router.refresh(); }
     } catch (error) { setError(error instanceof Error ? error.message : 'Không kết nối được. Kiểm tra mạng rồi thử lại.'); }
     finally { setBusy(false); }
   }
 
-  return <div className={embedded ? '' : 'rounded-card border border-hairline bg-card p-5 sm:p-8'}>
+  return <div data-unsaved-changes={dirty} data-unsaved-busy={busy} className={embedded ? '' : 'rounded-card border border-hairline bg-card p-5 sm:p-8'}>
     <div className="mb-8 flex items-center gap-3 text-sm"><Step number={1} active={step === 1} done={step > 1} label="Thông tin cụm" /><span className="h-px flex-1 bg-hairline" /><Step number={2} active={step === 2} done={step > 2} label="Thiết lập sân" /><span className="h-px flex-1 bg-hairline" /><Step number={3} active={step === 3} done={false} label="Thêm ảnh" /></div>
+    {dirty && <p className="mb-5 border-l-2 border-strong pl-3 text-xs leading-6 text-ink-secondary">{draftId.current ? 'Thông tin cụm đã lưu thành bản nháp. Bộ ảnh chỉ công khai khi tải đủ và lưu thành công.' : 'Thông tin đang nhập chưa được lưu. Bạn có thể quay lại các bước để chỉnh trước khi tạo cụm.'}</p>}
     {step === 1 ? <form onSubmit={goToSetup}>
       <div className="grid gap-4 sm:grid-cols-2"><OwnerField label="Tên cụm sân" error={fieldErrors.name}><input ref={firstField} className={OWNER_INPUT} value={details.name} onChange={(e) => updateDetails('name', e.target.value)} placeholder="Ví dụ: Sân bóng Mỹ Đình" required maxLength={120} /></OwnerField><OwnerField label="Số điện thoại tại sân" error={fieldErrors.phone}><input className={OWNER_INPUT} value={details.phone} onChange={(e) => updateDetails('phone', e.target.value)} placeholder="0987654321" required pattern="0\d{9}" /></OwnerField></div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]"><OwnerField label="Địa chỉ" error={fieldErrors.address}><input className={OWNER_INPUT} value={details.address} onChange={(e) => updateDetails('address', e.target.value)} placeholder="Số nhà, đường, phường/xã" required maxLength={200} /></OwnerField><OwnerField label="Quận/huyện" error={fieldErrors.district}><select className={OWNER_INPUT} value={details.district} onChange={(e) => updateDetails('district', e.target.value)} required><option value="" disabled>Chọn quận/huyện</option>{DISTRICTS.map((district) => <option key={district}>{district}</option>)}</select></OwnerField></div>
@@ -107,10 +124,11 @@ export function VenueForm({ defaultPhone, embedded = false, onSuccess }: { defau
     </div> : <div>
       <div><h2 className="font-display text-xl font-bold text-pitch">Ảnh thật của cụm sân</h2><p className="mt-2 text-sm leading-6 text-ink-secondary">Thêm tối thiểu 3 ảnh: ảnh bìa, mặt sân và một góc tiện ích. Ảnh đầu tiên sẽ xuất hiện trên thẻ tìm sân.</p></div>
       <div className="mt-5 rounded-control border-2 border-dashed border-strong bg-sunk p-4"><button type="button" disabled={busy || photos.length >= 8} onClick={() => photoInput.current?.click()} className="flex w-full flex-col items-center justify-center rounded-control border border-transparent bg-card px-4 py-8 text-center transition-colors hover:border-pitch"><span className="flex size-12 items-center justify-center rounded-full bg-free-fill text-free-ink"><ImagePlus className="size-6" aria-hidden="true" /></span><span className="mt-3 text-sm font-semibold text-pitch">Chọn ảnh từ thiết bị</span><span className="mt-1 text-xs text-ink-secondary">JPG, PNG hoặc WebP · tối đa 5MB/ảnh · {photos.length}/8 ảnh</span></button><input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(event) => { if (event.target.files) choosePhotos(event.target.files); event.target.value = ''; }} /></div>
-      {photos.length > 0 && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{photos.map((photo, index) => <div key={`${photo.name}-${index}`} className="overflow-hidden rounded-control border border-hairline bg-card"><div className="aspect-[4/3] bg-cover bg-center" style={{ backgroundImage: `url(${photoUrls[index]})` }} /><div className="flex items-center justify-between gap-2 p-2"><span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-pitch">{index === 0 && <Check className="size-3.5" aria-hidden="true" />}<span className="truncate">{index === 0 ? 'Ảnh bìa' : <button type="button" disabled={busy} onClick={() => { setPhotos([photo, ...photos.filter((_, i) => i !== index)]);  }} className="pf-action min-h-11 py-2">Đặt làm bìa</button>}</span></span><button type="button" disabled={busy} onClick={() => removePhoto(index)} className="pf-action flex size-11 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-sunk hover:text-danger" aria-label={`Xóa ảnh ${index + 1}`}><X className="size-4" /></button></div></div>)}</div>}
+      {photos.length > 0 && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{photos.map((photo, index) => <div key={`${photo.name}-${index}`} className="overflow-hidden rounded-control border border-hairline bg-card"><div className="aspect-[4/3] bg-cover bg-center" style={{ backgroundImage: `url(${photoUrls[index]})` }} /><div className="flex items-center justify-between gap-2 p-2"><span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-pitch">{index === 0 && <Check className="size-3.5" aria-hidden="true" />}<span className="truncate">{index === 0 ? 'Ảnh bìa' : <button type="button" disabled={busy} onClick={() => { setPhotos([photo, ...photos.filter((_, i) => i !== index)]);  }} className="pf-action min-h-11 py-2">Đặt làm bìa</button>}</span></span><button type="button" disabled={busy} onClick={() => removePhoto(index)} className="pf-action flex size-11 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-sunk hover:text-danger" aria-label={`Xóa ảnh ${index + 1}`}><X className="size-4" /></button></div><PhotoUploadStatus phase={photoPhases.get(photo) ?? 'waiting'} /></div>)}</div>}
+      {photos.length > 0 && <p role="status" className="mt-4 text-sm text-ink-secondary">{photos.filter(photo => photoPhases.get(photo) === 'uploaded').length}/{photos.length} ảnh đã tải{busy ? ' · đang hoàn tất bộ ảnh…' : ' · ảnh đã tải được giữ để thử lại trong lần mở form này.'}</p>}
       <div className="mt-5 rounded-control border border-strong bg-free-fill p-4 text-sm leading-6 text-free-ink"><p className="font-semibold">Vì sao cần 3 ảnh?</p><p className="mt-1">Người chơi thường quyết định dựa vào mặt sân, ánh sáng và tiện ích. Ảnh thật giúp cụm sân nổi bật và tạo tin tưởng hơn.</p></div>
       {error && <p role="alert" className="mt-6 border-l-2 border-danger bg-[#FFF5F5] px-4 py-3 text-sm text-danger">{error}</p>}
-      <div className="mt-8 flex flex-wrap justify-between gap-3 border-t border-hairline pt-6"><button type="button" disabled={busy || !!draftId.current} onClick={() => setStep(2)} className={OWNER_SECONDARY}>← Quay lại</button><button type="button" onClick={submit} disabled={busy || photos.length < 3} className={OWNER_PRIMARY}>{busy ? 'Đang tải ảnh…' : 'Tạo cụm và mở nhận đặt'} <span aria-hidden="true" className="ml-3">→</span></button></div>
+      <div className="mt-8 flex flex-wrap justify-between gap-3 border-t border-hairline pt-6"><button type="button" disabled={busy || !!draftId.current} onClick={() => setStep(2)} className={OWNER_SECONDARY}>← Quay lại</button><button type="button" onClick={submit} disabled={busy || photos.length < 3} className={OWNER_PRIMARY}>{busy ? 'Đang hoàn tất…' : draftId.current ? 'Thử lại và công khai cụm' : 'Tạo cụm và mở nhận đặt'} <span aria-hidden="true" className="ml-3">→</span></button></div>
     </div>}
   </div>;
 }

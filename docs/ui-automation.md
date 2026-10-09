@@ -59,6 +59,18 @@ WebSocket, QR và dữ liệu đơn đều được giả lập trên trình duy
 không tải QR thật, gửi tiền hoặc ghi database. Bài kiểm tra chờ qua 15 giây
 để xác nhận checkout không polling trạng thái thanh toán.
 
+Form chủ sân có nhóm `--only=check-owner-forms`: cảnh báo chưa lưu khi
+đổi mức giá, rời trang, hủy chỉnh sửa và đóng hộp thoại tạo/sửa cụm sân;
+giữ dữ liệu sau lỗi lưu; tải từng ảnh bị gián đoạn và thử lại với bản nháp
+cũ; chỉ công khai bộ ảnh khi lưu đủ và dùng lại ảnh đã tải thành công.
+Kết nối SePay có các trạng thái chưa cấp quyền/đã cấp quyền/cần kết nối
+lại/sẵn sàng; kết nối sẵn sàng vẫn phân biệt với quyền mở nhận đơn.
+Request tạo cụm, lưu giá, tải ảnh và kết nối đều trả dữ liệu giả trên localhost.
+Cảnh báo rời trang dùng `beforeunload`; liên kết trong website và các nút
+đóng form có xác nhận bỏ thay đổi. Trình duyệt hỗ trợ Navigation API còn
+chặn được Back/Forward trong cùng tài liệu. Không tự lưu dữ liệu ngân hàng
+hay form vào bộ nhớ trình duyệt.
+
 Trên GitHub Actions, mỗi lần push `main` hoặc mở/cập nhật PR tự chạy
 lint, typecheck, build, kiểm tra hàng đợi refresh và kiểm tra trình duyệt.
 Ảnh desktop/mobile được lưu trong artifact `ui-desktop-mobile` 14 ngày,

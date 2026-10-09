@@ -20,8 +20,11 @@ export function LivePageRefresh({ scope }: { scope: keyof typeof TABLES | 'disco
       dirty.forEach(form => { if (!form.isConnected) dirty.delete(form); });
       return document.visibilityState === 'visible' && navigator.onLine && !dirty.size
         && !document.querySelector('dialog[open], [role="dialog"]')
+        && !document.querySelector('[data-unsaved-changes="true"], [data-unsaved-busy="true"]')
         && !document.activeElement?.matches('input, select, textarea, [contenteditable="true"]');
     });
+    const formState = new MutationObserver(queue.flush);
+    formState.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-unsaved-changes', 'data-unsaved-busy'] });
     const request = () => queue.request();
     const edit = (event: Event) => {
       const form = event.target instanceof Element ? event.target.closest('form') : null;
@@ -55,7 +58,7 @@ export function LivePageRefresh({ scope }: { scope: keyof typeof TABLES | 'disco
     document.addEventListener('focusout', queue.flush);
     return () => {
       disposed = true;
-      queue.dispose(); stop(); clearInterval(interval);
+      queue.dispose(); formState.disconnect(); stop(); clearInterval(interval);
       window.removeEventListener('focus', request);
       window.removeEventListener('online', request);
       window.removeEventListener('san-ngon:page-refresh', request);

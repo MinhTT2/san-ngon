@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { vnd } from '@/lib/format';
 import { OWNER_INPUT, OWNER_PRIMARY, OWNER_SECONDARY } from '@/components/owner-form-field';
+import { useUnsavedChanges } from '@/lib/use-unsaved-changes';
 
 type Rule = { id: string; label: string | null; days: number[]; start_time: string; end_time: string; price_per_hour: number; priority: number };
 type Draft = Omit<Rule, 'id'> & { id: string | null };
@@ -14,13 +15,19 @@ export function PriceEditor({ courtId, initialRules }: { courtId: string; initia
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const baseline = useRef('');
+  const dirty = !!draft && JSON.stringify(draft) !== baseline.current;
+  const { confirmDiscard, markSaved } = useUnsavedChanges(dirty, busy);
   const base = draft?.label === 'Giá chung' && !!draft.id;
 
   function edit(rule?: Rule) {
+    if (!confirmDiscard()) return;
     setError(''); setMessage('');
-    setDraft(rule ? { ...rule, start_time: rule.start_time.slice(0, 5), end_time: rule.end_time.slice(0, 5) } : {
+    const next = rule ? { ...rule, start_time: rule.start_time.slice(0, 5), end_time: rule.end_time.slice(0, 5) } : {
       id: null, label: '', days: [1, 2, 3, 4, 5, 6, 0], start_time: '16:00', end_time: '21:00', price_per_hour: 250000, priority: 10,
-    });
+    };
+    baseline.current = JSON.stringify(next);
+    setDraft(next);
   }
 
   async function save(event: React.FormEvent) {
@@ -37,6 +44,7 @@ export function PriceEditor({ courtId, initialRules }: { courtId: string; initia
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? 'Không lưu được bảng giá.');
       const saved = result.rule as Rule;
+      markSaved();
       setRules(current => draft.id ? current.map(rule => rule.id === saved.id ? saved : rule) : [...current, saved]);
       setDraft(null); setMessage('Đã lưu mức giá. Giá mới áp dụng cho các đơn tạo sau khi lưu.');
     } catch (error) {
@@ -45,7 +53,7 @@ export function PriceEditor({ courtId, initialRules }: { courtId: string; initia
   }
 
   async function remove(rule: Rule) {
-    if (busy || !window.confirm(`Xóa mức giá “${rule.label}”? Các khung giờ liên quan sẽ dùng mức giá còn lại phù hợp. Đơn đã tạo giữ nguyên giá.`)) return;
+    if (busy || (draft?.id === rule.id && !confirmDiscard()) || !window.confirm(`Xóa mức giá “${rule.label}”? Các khung giờ liên quan sẽ dùng mức giá còn lại phù hợp. Đơn đã tạo giữ nguyên giá.`)) return;
     setBusy(true); setError(''); setMessage('');
     try {
       const response = await fetch(`/api/courts/${courtId}/prices`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rule.id }) });
@@ -59,12 +67,13 @@ export function PriceEditor({ courtId, initialRules }: { courtId: string; initia
     } finally { setBusy(false); }
   }
 
-  return <section className="mt-8 space-y-5 rounded-card border border-hairline bg-card p-5">
+  return <section data-unsaved-changes={dirty} data-unsaved-busy={busy} className="mt-8 space-y-5 rounded-card border border-hairline bg-card p-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-xl font-bold text-pitch">Các mức giá</h2><button type="button" disabled={busy} onClick={() => edit()} className={OWNER_PRIMARY}>Thêm mức giá</button></div>
     <p className="text-sm leading-6 text-ink-secondary">Giữ Giá chung làm mức mặc định. Thêm mức riêng cho giờ vàng hoặc cuối tuần, chọn ngày và khoảng giờ áp dụng.</p>
     {message && <p role="status" className="rounded-control bg-free-fill p-3 text-sm text-free-ink">{message}</p>}
     {error && <p role="alert" className="rounded-control border border-danger p-3 text-sm text-danger">{error}</p>}
     {draft && <form onSubmit={save} className="rounded-card border border-strong bg-page p-4">
+      {dirty && <p className="mb-4 text-xs text-ink-secondary">Có thay đổi chưa lưu · giá hiện tại vẫn được áp dụng.</p>}
       <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-4 font-semibold text-pitch">{draft.id ? 'Sửa mức giá' : 'Mức giá mới'}</legend>
         <label className="space-y-2 text-sm font-semibold">Tên mức giá<input required maxLength={80} disabled={base} className={OWNER_INPUT} value={draft.label ?? ''} onChange={event => setDraft({ ...draft, label: event.target.value })} placeholder="VD: Cuối tuần buổi tối" /></label>
@@ -77,7 +86,7 @@ export function PriceEditor({ courtId, initialRules }: { courtId: string; initia
           <p className="self-end text-xs leading-6 text-ink-secondary">Số lớn hơn được áp dụng trước khi trùng ngày/giờ. Cùng độ ưu tiên thì áp dụng giá cao hơn.</p>
         </>}
         {base && <p className="text-sm leading-6 text-ink-secondary sm:col-span-2">Giá chung luôn bao phủ giờ hoạt động của sân, không thể xóa hoặc đổi ngày/giờ tại đây.</p>}
-        <div className="flex gap-3 sm:col-span-2"><button className={OWNER_PRIMARY}>{busy ? 'Đang lưu…' : 'Lưu mức giá'}</button><button type="button" className={OWNER_SECONDARY} onClick={() => setDraft(null)}>Hủy chỉnh sửa</button></div>
+        <div className="flex flex-wrap gap-3 sm:col-span-2"><button className={OWNER_PRIMARY}>{busy ? 'Đang lưu…' : 'Lưu mức giá'}</button><button type="button" className={OWNER_SECONDARY} onClick={() => { if (confirmDiscard()) setDraft(null); }}>Hủy chỉnh sửa</button></div>
       </fieldset>
     </form>}
     <ul className="divide-y divide-hairline border-y border-hairline">{[...rules].sort((a, b) => b.priority - a.priority || b.price_per_hour - a.price_per_hour).map(rule => <li key={rule.id} className="flex flex-wrap items-center justify-between gap-4 py-5">

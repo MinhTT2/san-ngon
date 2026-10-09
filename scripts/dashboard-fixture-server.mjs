@@ -12,7 +12,7 @@ const fixturePort = Number(process.env.DASHBOARD_FIXTURE_PORT || 3210);
 const future = '2026-12-01T03:00:00Z';
 const base = { phone: '0901234567', created_at: created, avatar_url: null, banned_until: null, telegram_chat_id: 'fixture', owner_application_status: 'active', business_license_path: 'fixture/license.pdf', business_license_name: 'Giấy đăng ký', payout_bank: 'MB', payout_account: '0123456789' };
 const people = [{ ...base, id: adminId, full_name: 'Quản trị viên kiểm tra', role: 'admin' }, { ...base, id: ownerId, full_name: 'Nguyễn Minh', role: 'owner' }, ...Array.from({ length: 23 }, (_, i) => ({ ...base, id: `owner-${i}`, full_name: `Chủ sân ${i + 1}`, role: 'player', owner_application_status: i === 22 ? 'rejected' : 'pending' }))];
-const court = { id: courtId, venue_id: venueId, name: 'Cầu lông 01', sport: 'badminton', slot_minutes: 60, surface: 'tham', is_indoor: true, open_time: null, close_time: null, is_active: true, sort_order: 1, price_rules: [{ price_per_hour: 100000, start_time: '06:00:00', end_time: '23:00:00', label: 'Giá chung' }], venues: { id: venueId, name: 'Sân Cầu Giấy', owner_id: ownerId } };
+const court = { id: courtId, venue_id: venueId, name: 'Cầu lông 01', sport: 'badminton', slot_minutes: 60, surface: 'tham', is_indoor: true, open_time: null, close_time: null, is_active: true, sort_order: 1, price_rules: [{ id: 'price-base', days: [1, 2, 3, 4, 5, 6, 0], priority: 0, price_per_hour: 100000, start_time: '06:00:00', end_time: '23:00:00', label: 'Giá chung' }], venues: { id: venueId, name: 'Sân Cầu Giấy', owner_id: ownerId } };
 const venues = [{ id: venueId, name: 'Sân Cầu Giấy', slug: 'san-cau-giay', address: '123 Cầu Giấy, Hà Nội', district: 'Cầu Giấy', status: 'active', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: null, images: ['fixture1.webp', 'fixture2.webp', 'fixture3.webp'], open_time: '06:00:00', close_time: '23:00:00', deposit_pct: 100, booking_horizon_days: 30, description: 'Sân trong nhà, đủ ánh sáng và có chỗ để xe.', amenities: ['Chỗ để xe'], courts: [court] }, { id: 'venue-pending', name: 'Sân chờ duyệt', slug: 'san-cho-duyet', district: 'Ba Đình', status: 'pending', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: 'fixture.pdf', courts: [] }];
 const bookings = [{ id: 'booking-1', code: 'SANABC234', court_id: courtId, starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 3600000).toISOString(), status: 'confirmed', total_amount: 100000, deposit_amount: 100000, refund_status: null, customer_name: 'Lê Hải', customer_phone: base.phone, courts: { name: court.name, venue_id: venueId, venues: { name: venues[0].name, slug: venues[0].slug, district: venues[0].district, status: 'active' }, sport: 'badminton' } }, { id: 'booking-2', code: 'SANDEF567', court_id: courtId, starts_at: future, ends_at: '2026-12-01T04:00:00Z', status: 'pending', total_amount: 120000, deposit_amount: 120000, refund_status: null, customer_name: 'Mai Anh', customer_phone: base.phone, courts: { name: court.name, venue_id: venueId, venues: { name: venues[0].name, slug: venues[0].slug, district: venues[0].district, status: 'active' }, sport: 'badminton' } }];
 bookings.forEach((booking, i) => { booking.expires_at = new Date(Date.now() + 15 * 60000).toISOString(); booking.paid_at = i === 0 ? created : null; });
@@ -53,10 +53,15 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${fixturePort}`);
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
-  try { role = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).fixture_role || 'admin'; } catch { /* Anonymous requests use only public fixture data. */ }
+  let connectionState = 'ready';
+  try {
+    const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
+  } catch { /* Anonymous requests use only public fixture data. */ }
   const me = role === 'owner' ? people[1] : people[0];
   const send = (data, code = 200) => { res.statusCode = code; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
   if (url.pathname.startsWith('/storage/')) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture storage is read-only.' }, 403); return; }
     try { res.setHeader('Content-Type', 'image/webp'); res.end(await readFile(new URL('../public/media/badminton-editorial.webp', import.meta.url))); } catch { res.statusCode = 404; res.end(); }
     return;
   }
@@ -81,6 +86,9 @@ const server = createServer(async (req, res) => {
     if (name === 'get_venue_availability') {
       const date = args.p_date || '2026-10-08';
       send([10, 11, 12, 13, 14, 15, 16, 17].map(hour => ({ court_id: courtId, court_name: court.name, sport: court.sport, slot_minutes: 60, starts_at: `${date}T${hour}:00:00+07:00`, ends_at: `${date}T${hour + 1}:00:00+07:00`, price: 100000, is_available: true }))); return;
+    }
+    if (name === 'get_my_sepay_connection' && connectionState !== 'ready') {
+      send({ status: connectionState === 'authorized' ? 'setup' : connectionState, bank: null, account_number: null, account_name: null, bank_account_id: null, has_authorization: connectionState === 'authorized', rollout_enabled: false, checked_at: null, last_webhook_at: null }); return;
     }
     const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
