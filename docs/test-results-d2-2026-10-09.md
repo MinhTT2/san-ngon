@@ -2,6 +2,8 @@
 
 Ngày kiểm tra: **09/10/2026**. Lượt tích hợp chính **15:39–15:45 giờ Việt Nam**; kiểm tra bổ sung và dọn sổ giao dịch sau đó.
 
+**Cập nhật sau lượt đầu:** xem [biên bản bổ sung sáu case](test-results-d2-followup-2026-10-09.md). D2-01/02/03/04/15/16 đã bổ sung đạt trong phạm vi ghi nhận; có quan sát tìm mã chậm cần theo dõi ở D9. Bảng dưới giữ nguyên kết quả lịch sử của lượt đầu.
+
 **16 nhóm biến thể đã chạy đều đạt, chưa phát hiện lỗi sản phẩm mới.** Khi đối chiếu toàn bộ kế hoạch, ghi **10 case đạt trong phạm vi dưới đây, 6 case chưa chạy đủ**. D2 chưa đóng: không dùng một biến thể đạt để thay thế các biến thể còn thiếu của cùng case. Đợt này không sửa mã sản phẩm hoặc nghiệm thu chuyển khoản thật.
 
 ## Bản kiểm tra và dữ liệu
@@ -65,4 +67,4 @@ Lượt chuẩn bị đầu chỉ sao chép file được Git theo dõi, thiếu
 
 ## Tiếp theo
 
-Bổ sung sáu case chưa chạy đủ: **D2-01/02/03/04/15/16**, ưu tiên trạng thái checkout/đơn và retry trước phần điều hướng/phân trang. Chụp lại bản nguồn đã thay đổi, ghi baseline mới và dọn fixture sau chạy. Khi phần D2 cần thiết hoàn tất, tiếp tục D3 về phân quyền.
+Phần bổ sung đã ghi ở [biên bản mới](test-results-d2-followup-2026-10-09.md). Tiếp tục D3 về phân quyền; theo dõi thời gian tìm mã ở D9.
