@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { CANCEL_WINDOW_HOURS } from '@/lib/constants';
+import { normalizePhone } from '@/lib/profile';
 import type { Selection } from '@/lib/types';
 
 /**
@@ -38,7 +39,7 @@ export function BookingForm({
   const pathname = usePathname();
 
   const [name, setName] = useState(defaultName ?? '');
-  const [phone, setPhone] = useState(defaultPhone ?? '');
+  const [phone, setPhone] = useState(normalizePhone(defaultPhone ?? ''));
   const [note, setNote] = useState(defaultNote ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +59,9 @@ export function BookingForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting.current || uncertain) return;
+    const normalizedPhone = normalizePhone(phone);
+    setPhone(normalizedPhone);
+    if (!/^0\d{9}$/.test(normalizedPhone)) { setError('Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0 (hoặc +84).'); return; }
     submitting.current = true;
     setBusy(true);
     setError(null);
@@ -71,7 +75,7 @@ export function BookingForm({
           starts_at: selection.startsAt,
           ends_at: selection.endsAt,
           customer_name: name || undefined,
-          customer_phone: phone,
+          customer_phone: normalizedPhone,
           note: note || undefined,
         }),
       });
@@ -135,11 +139,11 @@ export function BookingForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="sdt" className="text-sm font-semibold">Số điện thoại</label>
-        <input id="sdt" type="tel" required inputMode="numeric" pattern="0\d{9}"
-          maxLength={10} title="Nhập 10 chữ số, bắt đầu bằng 0 (ví dụ 0912345678)" autoComplete="tel" placeholder="0912345678"
-          value={phone} onChange={(e) => setPhone(e.target.value)}
+        <input id="sdt" type="tel" required inputMode="tel"
+          maxLength={30} title="Nhập số điện thoại bắt đầu bằng 0 hoặc +84" autoComplete="tel" placeholder="0912345678"
+          value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => setPhone(normalizePhone(phone))}
           className="h-12 rounded-control border border-hairline px-3.5 focus:border-pitch focus:outline-none" />
-        <span className="text-xs text-ink-secondary">Chủ sân gọi số này nếu có thay đổi.</span>
+        <span className="text-xs text-ink-secondary">Có thể nhập dấu cách hoặc +84. Chủ sân gọi số này nếu có thay đổi.</span>
       </div>
 
       <div className="flex flex-col gap-1.5">

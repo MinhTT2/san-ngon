@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { bookingErrorMessage } from '@/lib/constants';
+import { normalizePhone } from '@/lib/profile';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,7 @@ const Body = z.object({
   starts_at: z.string().datetime({ offset: true, message: 'Giờ bắt đầu không hợp lệ.' }),
   ends_at: z.string().datetime({ offset: true, message: 'Giờ kết thúc không hợp lệ.' }),
   customer_name: z.string().trim().max(100, 'Tên người đặt không quá 100 ký tự.').optional(),
-  customer_phone: z.string().trim().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0'),
+  customer_phone: z.string().max(30, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0').transform(normalizePhone).pipe(z.string().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0')),
   note: z.string().trim().max(500, 'Ghi chú không quá 500 ký tự.').optional(),
 });
 

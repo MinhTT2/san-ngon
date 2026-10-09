@@ -7,12 +7,14 @@ import ts from 'typescript';
 import { BOOKING_ERRORS, bookingErrorMessage } from '../lib/constants.ts';
 
 const require = createRequire(import.meta.url);
+const { normalizePhone } = await import('../lib/profile.ts');
 let signedIn = true;
 let databaseError = null;
 let rpcCalls = [];
 const sandbox = {
   exports: {},
   require(name) {
+    if (name === '@/lib/profile') return { normalizePhone };
     if (name === '@/lib/constants') return { bookingErrorMessage };
     if (name === '@/lib/supabase/server') return { createClient: async () => ({
       auth: { getUser: async () => ({ data: { user: signedIn ? { id: 'fixture-only' } : null } }) },
@@ -76,4 +78,14 @@ assert.deepEqual(rpcCalls, [{ name: 'create_booking', args: {
 } }], 'only validated contact/time fields reach SQL; client amounts are discarded');
 const boundary = await post({ ...valid, customer_name: 'Đ'.repeat(100), note: 'đ'.repeat(500) });
 assert.equal(boundary.status, 201);
+for (const phone of ['0912 345 678', '+84 912 345 678', '+84 (912) 345-678', '0912345678']) {
+  rpcCalls = [];
+  assert.equal((await post({ ...valid, customer_phone: phone })).status, 201);
+  assert.equal(rpcCalls[0].args.p_customer_phone, '0912345678');
+}
+for (const phone of ['+84 912 345 6789', '0912345678x', '+1 912 345 678', '0'.repeat(31)]) {
+  rpcCalls = [];
+  assert.equal((await post({ ...valid, customer_phone: phone })).status, 400);
+  assert.equal(rpcCalls.length, 0);
+}
 console.log('OK: booking API rejects invalid inputs, translates SQL guards, preserves auth/conflict handling and never accepts client prices.');

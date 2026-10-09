@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/safe-next';
+import { normalizePhone } from '@/lib/profile';
 
 /** ?loi=1 là do /auth/callback đá về. */
 const CALLBACK_ERROR =
@@ -126,6 +127,13 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
       setBusy('email');
       setError(null);
       if (signup) {
+        const normalizedPhone = normalizePhone(phone);
+        setPhone(normalizedPhone);
+        if (!/^0\d{9}$/.test(normalizedPhone)) {
+          setBusy(null);
+          setError('Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0 (hoặc +84).');
+          return;
+        }
         if (password.length < 8) {
           setBusy(null);
           setError('Mật khẩu cần ít nhất 8 ký tự.');
@@ -142,7 +150,7 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
           options: {
             data: {
               ...(name.trim() ? { full_name: name.trim() } : {}),
-              ...(phone.trim() ? { phone: phone.trim() } : {}),
+              phone: normalizedPhone,
             },
           },
         });
@@ -298,11 +306,12 @@ export function LoginForm({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
                   id="phone"
                   type="tel"
                   required
-                  inputMode="numeric"
-                  pattern="0\d{9}"
+                  inputMode="tel"
+                  maxLength={30}
                   autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  onBlur={() => setPhone(normalizePhone(phone))}
                   placeholder="0912 345 678"
                   className="h-13 w-full min-w-0 rounded-control border border-hairline bg-page px-4 text-base font-normal focus:border-pitch focus:outline-none"
                 />
