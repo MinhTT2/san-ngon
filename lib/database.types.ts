@@ -1562,6 +1562,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       search_my_bookings: {
         Args: {
           p_filter?: string

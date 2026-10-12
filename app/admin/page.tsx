@@ -6,6 +6,7 @@ import { DashboardRecords } from '@/components/dashboard-records';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
+import { AdminDeleteVenueButton } from '@/components/admin-delete-venue-button';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
 import { BOOKING_STATUS_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
@@ -192,7 +193,7 @@ function VenueTable({ venues, profileById, initialStatus }: { venues: VenueRow[]
       <div key="owner">{profileById.get(venue.owner_id)?.full_name ?? 'Chưa có tên'}<p className="mt-1 text-xs text-ink-secondary">{profileById.get(venue.owner_id)?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}</p></div>,
       venue.district, dayLabel(new Date(venue.created_at)),
       <span key="status" className={`inline-flex rounded-pill px-2.5 py-1.5 text-xs font-semibold ${venue.status === 'active' ? 'bg-free-fill text-pitch' : venue.status === 'pending' ? 'bg-peak-fill text-peak-ink' : 'bg-sunk text-ink-secondary'}`}>{VENUE_STATUS_LABELS[venue.status]}</span>,
-      <div key="action" className="flex flex-wrap gap-2">{venue.status === 'pending' ? <AdminVenueAction venueId={venue.id} /> : venue.status === 'active' ? <Link href={`/san/${venue.slug}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch">Xem sân ↗</Link> : '—'}{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}</div>,
+      <div key="action" className="flex flex-wrap items-start gap-2">{venue.status === 'pending' ? <AdminVenueAction venueId={venue.id} /> : venue.status === 'active' ? <Link href={`/san/${venue.slug}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch">Xem sân ↗</Link> : null}{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}<AdminDeleteVenueButton id={venue.id} name={venue.name} /></div>,
     ] }))} />;
 }
 
