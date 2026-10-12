@@ -82,6 +82,7 @@ try {
   await page.locator('#nguoi-tham-gia').getByText('Trần Hải', { exact: true }).waitFor();
 
   await actor(); await page.goto(`${origin}/admin/giai-dau`);
+  await page.locator('summary:visible').first().click();
   const trigger = page.getByRole('button', { name: 'Xóa giải đấu', exact: true }).first();
   await trigger.click(); const dialog = page.getByRole('dialog', { name: 'Xóa giải đấu', exact: true });
   await dialog.waitFor();

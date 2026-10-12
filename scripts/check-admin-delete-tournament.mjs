@@ -72,7 +72,8 @@ try {
   assert.equal((await admin.request.post(`${origin}/api/tournaments`, { headers: { origin: 'https://example.invalid' }, data: { action: 'delete', id: pending } })).status(), 403);
   assert.equal((await admin.request.post(`${origin}/api/tournaments`, { headers: { origin }, data: { action: 'delete', id: 'invalid' } })).status(), 400);
   await admin.goto(`${origin}/admin/giai-dau?status=pending`);
-  const pendingCard = admin.getByRole('listitem').filter({ hasText: `Giải test xóa ${run} pending 10` });
+  const pendingCard = admin.getByRole('row').filter({ hasText: `Giải test xóa ${run} pending 10` });
+  await pendingCard.locator('summary').click();
   await pendingCard.getByRole('button', { name: 'Xóa giải đấu', exact: true }).waitFor();
   let deletionRequests = 0;
   admin.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/tournaments')) deletionRequests++; });
@@ -94,6 +95,7 @@ try {
   await admin.waitForURL(`${origin}/admin/giai-dau`);
   await admin.goto(`${origin}/admin/giai-dau?status=published`);
   const publishedCard = admin.getByRole('listitem').filter({ hasText: `Giải test xóa ${run} published 11` });
+  await publishedCard.locator('summary').click();
   await publishedCard.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
   await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
   await publishedCard.waitFor({ state: 'detached' });

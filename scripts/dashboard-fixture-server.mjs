@@ -3,6 +3,7 @@
 // Run the app with NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3210 and NEXT_PUBLIC_SUPABASE_ANON_KEY=dashboard-ui-fixture.
 import { createServer } from 'node:http';
 import { adminBookingFixture } from './admin-booking-fixture.mjs';
+import { adminTournamentFixture } from './admin-tournament-fixture.mjs';
 import { readFile } from 'node:fs/promises';
 const adminId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const ownerId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -95,7 +96,7 @@ const server = createServer(async (req, res) => {
     (readFailure === 'home-count' && url.pathname === '/rest/v1/courts' && req.method === 'HEAD') ||
     (readFailure === 'featured' && url.pathname === '/rest/v1/venues' && selection === 'id,slug,name')
   );
-  if (failedRead) { send({ code: 'FIXTURE_READ_ERROR', message: 'Read interrupted in isolated fixture' }, 503); return; }
+  if (failedRead || (readFailure === 'tournaments' && url.pathname === '/rest/v1/tournaments')) { send({ code: 'FIXTURE_READ_ERROR', message: 'Read interrupted in isolated fixture' }, 503); return; }
   if (url.pathname.startsWith('/storage/')) {
     if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture storage is read-only.' }, 403); return; }
     try { res.setHeader('Content-Type', 'image/webp'); res.end(await readFile(new URL('../public/media/badminton-editorial.webp', import.meta.url))); } catch { res.statusCode = 404; res.end(); }
@@ -242,12 +243,14 @@ const server = createServer(async (req, res) => {
     rows = rows.filter(row => row.user_id === me.id);
     if (url.searchParams.get('read_at') === 'is.null') rows = rows.filter(row => row.read_at === null);
   }
+  if (table === 'tournaments') rows=adminTournamentFixture(url,rows,req.headers.authorization,court,people[1]);
   for (const field of ['id', 'owner_id', 'status', 'category', 'refund_status', 'sport', 'slug']) {
     const value = url.searchParams.get(field);
     if (value?.startsWith('eq.')) rows = rows.filter(row => String(row[field]) === value.slice(3));
     if (value?.startsWith('in.(') && value.endsWith(')')) rows = rows.filter(row => value.slice(4, -1).split(',').includes(String(row[field])));
   }
   const count = rows.length;
+  if (table === 'tournaments' && url.searchParams.has('offset')) rows=rows.slice(Number(url.searchParams.get('offset')));
   const range = req.headers.range?.split('-').map(Number);
   if (range) rows = rows.slice(range[0], range[1] + 1);
   if (url.searchParams.has('limit')) rows = rows.slice(0, Number(url.searchParams.get('limit')));
