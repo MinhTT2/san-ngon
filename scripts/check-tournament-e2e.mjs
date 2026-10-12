@@ -223,8 +223,8 @@ try {
   await player.getByText('Đăng ký của bạn', { exact: true }).waitFor();
   await shot(player, '05-player-pending', '#dang-ky');
   await owner.goto(`${origin}/giai-dau/${tid}?view=participants`);
-  await owner.getByRole('button', { name: 'Duyệt tham gia', exact: true }).waitFor({ timeout: 20000 });
   await owner.getByLabel('Trạng thái đăng ký').selectOption('pending');
+  await owner.getByRole('button', { name: 'Duyệt tham gia', exact: true }).waitFor({ timeout: 20000 });
   await owner.getByLabel('Tìm người hoặc đội').fill('doi cau giay');
   assert.equal(await owner.getByRole('button', { name: 'Duyệt tham gia', exact: true }).count(), 1);
   await owner.getByLabel('Tìm người hoặc đội').fill('khong-co-nguoi-nay');
@@ -285,6 +285,7 @@ try {
   await player.getByRole('checkbox', { name: /Tôi đã đọc thể lệ/ }).check();
   await submit(player, 'Gửi đăng ký');
   await organizer.goto(`${origin}/giai-dau/${proposalId}?view=participants`);
+  await organizer.getByLabel('Trạng thái đăng ký').selectOption('pending');
   await organizer.getByRole('button', { name: 'Duyệt tham gia', exact: true }).waitFor({ timeout: 20000 });
   await submit(organizer, 'Duyệt tham gia');
   const secondRegistration = sql(`select code from tournament_registrations where tournament_id='${proposalId}'`)[0];

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { registrationLabel } from '@/lib/tournament-status';
+import { isRegistrationConfirmed, registrationLabel } from '@/lib/tournament-status';
 import type { Registration } from '@/lib/tournaments';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { ActionForm } from './action-form';
@@ -14,20 +14,21 @@ export function TournamentParticipants({ registrations, closed, started, canCanc
   registrations: Registration[]; closed: boolean; started: boolean; canCancel: boolean; userId: string; admin: boolean;
 }) {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('confirmed');
   const matching = registrations.filter(registration => {
-    const category = registration.status === 'approved' ? registration.paid_at || registration.deposit_amount === 0 ? 'confirmed' : 'unpaid' : registration.status;
+    const category = registration.status === 'approved' ? isRegistrationConfirmed(registration) ? 'confirmed' : 'unpaid' : registration.status;
     return (filter === 'all' || category === filter) && normalize(`${registration.full_name} ${registration.team_name ?? ''} ${registration.phone}`).includes(normalize(search.trim()));
   });
   return <section id="nguoi-tham-gia" className="scroll-mt-28 py-6">
-    <h2 className="font-display text-2xl font-bold text-pitch">Người tham gia</h2>
+    <h2 className="font-display text-2xl font-bold text-pitch">{filter === 'confirmed' ? 'Người tham gia đã xác nhận' : 'Quản lý đăng ký'}</h2>
+    <p className="mt-3 text-sm leading-7 text-ink-secondary">Danh sách tham gia chỉ gồm suất đã nhận đủ cọc hoặc được duyệt không yêu cầu cọc. Chọn trạng thái khác để duyệt đăng ký, theo dõi cọc hoặc xem lịch sử.</p>
     <div className="my-5 grid items-end gap-4 sm:grid-cols-[1fr_240px]">
       <Field label="Tìm người hoặc đội"><span className="relative"><Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input className={`${fieldClass} pl-10`} type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Họ tên, tên đội, số điện thoại" /></span></Field>
-      <Field label="Trạng thái đăng ký"><select className={fieldClass} value={filter} onChange={event => setFilter(event.target.value)}>{[['all', 'Tất cả'], ['pending', 'Chờ duyệt'], ['unpaid', 'Chờ đóng cọc'], ['confirmed', 'Đã xác nhận tham gia'], ['expired', 'Hết hạn'], ['rejected', 'Không được duyệt'], ['cancelled', 'Đã hủy']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+      <Field label="Trạng thái đăng ký"><select className={fieldClass} value={filter} onChange={event => setFilter(event.target.value)}>{[['confirmed', 'Đã xác nhận tham gia'], ['pending', 'Chờ duyệt'], ['unpaid', 'Chờ đóng cọc'], ['expired', 'Hết hạn'], ['rejected', 'Không được duyệt'], ['cancelled', 'Đã hủy'], ['all', 'Tất cả đăng ký & lịch sử']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
     </div>
-    <p role="status" className="mb-4 text-xs text-ink-secondary">{matching.length} / {registrations.length} đăng ký</p>
+    <p role="status" className="mb-4 text-xs text-ink-secondary">{filter === 'confirmed' ? `${matching.length} / ${registrations.filter(isRegistrationConfirmed).length} suất đã xác nhận` : `${matching.length} / ${registrations.length} đăng ký`}</p>
     <div className="space-y-3">{matching.map(registration => {
-      const confirmed = registration.status === 'approved' && (registration.paid_at || registration.deposit_amount === 0);
+      const confirmed = isRegistrationConfirmed(registration);
       const canHandleMoney = admin || registration.payment_owner_id === userId;
       const self = registration.user_id === userId;
       return <details key={registration.id} open={registration.status === 'pending'} className="rounded-card border border-hairline bg-card">
@@ -56,6 +57,6 @@ export function TournamentParticipants({ registrations, closed, started, canCanc
         </div>
       </details>;
     })}</div>
-    {!matching.length && <p className="border-y border-hairline py-8 text-sm text-ink-secondary">{registrations.length ? 'Không có đăng ký khớp bộ lọc.' : 'Chưa có người đăng ký tham gia.'}</p>}
+    {!matching.length && <p className="border-y border-hairline py-8 text-sm text-ink-secondary">{filter === 'confirmed' && !search.trim() ? 'Chưa có suất nào được xác nhận tham gia.' : registrations.length ? 'Không có đăng ký khớp bộ lọc.' : 'Chưa có người đăng ký tham gia.'}</p>}
   </section>;
 }

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { tournamentLabel, paymentOutcomes, type Registration, type Tournament } from '@/lib/tournaments';
+import { isRegistrationConfirmed } from '@/lib/tournament-status';
 import { TournamentSettlementPanel } from '@/components/tournament-settlement';
 import { TournamentRegistration } from '@/components/tournament-registration';
 import { TournamentParticipants } from '@/components/tournament-participants';
@@ -56,6 +57,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const { data: registrationData, error: registrationError } = user ? await db.rpc('get_tournament_registrations', { p_id: id }) : { data: [], error: null };
   if (registrationError) throw new Error('Chưa tải được danh sách tham gia.');
   const registrations = (registrationData ?? []) as Registration[];
+  const confirmedCount = registrations.filter(isRegistrationConfirmed).length;
   const own = registrations.find(registration => registration.user_id === user?.id);
   const { data: court, error: courtError } = tournament.court_id ? await db.from('courts').select('name,venues(name,slug,owner_id,images)').eq('id', tournament.court_id).returns<{ name: string; venues: { name: string; slug: string; owner_id: string; images: string[] } }[]>().maybeSingle() : { data: null, error: null };
   if (courtError) throw new Error('Chưa tải được địa điểm giải.');
@@ -112,7 +114,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     {!manager && <nav aria-label="Các mục trong trang giải" className="mb-6 flex gap-1 overflow-x-auto border-b border-hairline">{[['#dang-ky', own ? 'Đăng ký của bạn' : 'Tham gia'], ['#lich-thi-dau', 'Lịch & địa điểm'], ['#the-le', 'Thể lệ'], ...(court?.venues.images.length ? [['#anh-san', 'Ảnh sân']] : []), ['#chinh-sach', 'Cọc & hủy']].map(([href, label]) => <a key={href} href={href} className="inline-flex min-h-12 shrink-0 items-center px-4 text-sm font-semibold text-pitch hover:bg-free-fill">{label}</a>)}</nav>}
     {manager && <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-hairline py-4 text-sm"><p><strong>{pendingCount}</strong> chờ duyệt · <strong>{unpaidCount}</strong> chờ cọc · <strong>{refundCount}</strong> giao dịch cần hoàn</p><span className="text-xs text-ink-secondary">{tournament.manager_id === court?.venues.owner_id ? 'Chủ sân tự tổ chức' : 'Người tổ chức và chủ sân cùng quản lý'}</span></div>
-      <nav aria-label="Quản lý giải đấu" className="mb-6 flex flex-wrap border-b border-hairline">{[['overview', 'Tổng quan'], ['participants', `Người tham gia (${registrations.length})`], ['payments', 'Giao dịch & hoàn tiền'], ['settlement', 'Quyết toán']].map(([key, label]) => <Link key={key} href={key === 'overview' ? `/giai-dau/${id}` : `/giai-dau/${id}?view=${key}`} aria-current={view === key ? 'page' : undefined} className={`inline-flex min-h-12 items-center border-b-2 px-3 text-sm ${view === key ? 'border-pitch font-semibold text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>{label}</Link>)}</nav>
+      <nav aria-label="Quản lý giải đấu" className="mb-6 flex flex-wrap border-b border-hairline">{[['overview', 'Tổng quan'], ['participants', `Người tham gia (${confirmedCount})`], ['payments', 'Giao dịch & hoàn tiền'], ['settlement', 'Quyết toán']].map(([key, label]) => <Link key={key} href={key === 'overview' ? `/giai-dau/${id}` : `/giai-dau/${id}?view=${key}`} aria-current={view === key ? 'page' : undefined} className={`inline-flex min-h-12 items-center border-b-2 px-3 text-sm ${view === key ? 'border-pitch font-semibold text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>{label}</Link>)}</nav>
     </>}
     {view === 'overview' && <>
       {admin && tournament.status === 'pending' && <section id="duyet-giai" className="mb-6 scroll-mt-28 border-b border-hairline pb-6"><h2 className="mb-3 font-display text-2xl font-bold text-pitch">Duyệt & bố trí sân</h2><p className="mb-5 text-sm leading-7 text-ink-secondary">Chốt thỏa thuận với chủ sân và người tổ chức trước khi công khai. Hệ thống kiểm tra lịch và giữ sân trong toàn bộ thời gian giải; cọc luôn về chủ sân được chọn.</p><TournamentReviewForm id={id} courtId={tournament.court_id} courts={courts ?? []} /></section>}
