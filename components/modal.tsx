@@ -57,7 +57,7 @@ function ModalContent({ title, subtitle, onClose, children, size = 'max-w-3xl' }
         <div><h2 id={titleId} className="font-display text-2xl font-bold text-pitch">{title}</h2>{subtitle && <p className="mt-1 text-sm text-ink-secondary">{subtitle}</p>}</div>
         <button type="button" onClick={close} className="pf-action grid size-11 shrink-0 place-items-center rounded-control border border-hairline text-ink-secondary hover:border-strong hover:text-pitch" aria-label="Đóng"><X className="size-5" aria-hidden="true" /></button>
       </header>
-      <div className="overflow-y-auto p-4 sm:p-7">{children}</div>
+      <div className="min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] sm:p-7">{children}</div>
     </section>
   </div>;
 }
