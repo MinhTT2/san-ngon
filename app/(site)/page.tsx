@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { QueryError } from '@/components/query-error';
-import { HeroCarousel } from '@/components/hero-carousel';
+import { HeroCarousel, type FeaturedVenuePhoto } from '@/components/hero-carousel';
 import { PlaygroundDiscovery } from '@/components/playground-discovery';
 import { AmbientVideo } from '@/components/ambient-video';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
@@ -40,12 +40,13 @@ const HERO_TIMES = 6;
 export default async function Page() {
   const supabase = await createClient();
 
-  const [{ count: venueCount, error: venuesError }, { count: courtCount, error: courtsError }, { data: districts, error: districtsError }, { data: featured, error: featuredError }] =
+  const [{ count: venueCount, error: venuesError }, { count: courtCount, error: courtsError }, { data: districts, error: districtsError }, { data: featured, error: featuredError }, { data: photoVenues }] =
     await Promise.all([
       supabase.from('venues').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('courts').select('id', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('venues').select('district').eq('status', 'active'),
       supabase.from('venues').select('id, slug, name').eq('status', 'active').order('name').limit(1).maybeSingle(),
+      supabase.from('venues').select('name, slug, district, images, courts(sport, is_active)').eq('status', 'active').order('name').limit(12),
     ]);
 
   const districtCount = new Set((districts ?? []).map((d) => d.district)).size;
@@ -57,9 +58,21 @@ export default async function Page() {
     catch { heroUnavailable = true; }
   }
 
+  const photos: Partial<Record<string, FeaturedVenuePhoto>> = {};
+  for (const venue of photoVenues ?? []) {
+    if (!venue.images?.[0]) continue;
+    for (const court of venue.courts) {
+      if (!court.is_active) continue;
+      const key = court.sport.startsWith('football') ? 'football' : court.sport;
+      photos[key] ??= { name: venue.name, slug: venue.slug, district: venue.district,
+        image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${venue.images[0].split('/').map(encodeURIComponent).join('/')}` };
+    }
+  }
+
   return (
     <main>
       <Hero
+        photos={photos}
         grid={
           heroUnavailable ? <QueryError title="Chưa tải được lịch sân" /> : hero && featured ? (
             <HeroGrid
@@ -125,10 +138,10 @@ async function loadHeroSlots(
   return null;
 }
 
-function Hero({ grid }: { grid: React.ReactNode }) {
+function Hero({ grid, photos }: { grid: React.ReactNode; photos: Partial<Record<string, FeaturedVenuePhoto>> }) {
   return (
     <section>
-      <HeroCarousel />
+      <HeroCarousel photos={photos} />
       <div className="border-b border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-9">
           <div className="flex min-w-0 flex-col gap-4">

@@ -28,11 +28,14 @@ const SLIDES = [
 ] as const;
 const INTERVAL = 6500;
 
-/** Ảnh minh họa giới thiệu môn; ảnh địa điểm thật vẫn do chủ sân cung cấp. */
-export function HeroCarousel() {
+/** Prefer published venue photos; label the existing editorial fallback explicitly. */
+export type FeaturedVenuePhoto = { name: string; slug: string; district: string; image: string };
+
+export function HeroCarousel({ photos = {} }: { photos?: Partial<Record<string, FeaturedVenuePhoto>> }) {
   const ref = useRef<HTMLDivElement>(null);
   const remaining = useRef(INTERVAL);
   const [index, setIndex] = useState(0);
+  const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -89,35 +92,39 @@ export function HeroCarousel() {
         }
       }}>
       <div className="grid" aria-live={playing ? 'off' : 'polite'}>
-        {SLIDES.map(({ key, label, image, eyebrow, title, description, href, cta }, i) => (
+        {SLIDES.map(({ key, label, image, eyebrow, title, description, href, cta }, i) => {
+          const venue = photos[key];
+          const source = venue?.image ?? image;
+          return (
           <div key={key} role="group" aria-roledescription="slide" aria-label={`${i + 1} / ${SLIDES.length} · ${label}`}
             aria-hidden={i !== index} inert={i !== index}
             className={`relative col-start-1 row-start-1 flex transition-opacity duration-700 motion-reduce:transition-none ${i === index ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'}`}>
             <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
-              <Image src={image} alt="" fill priority={i === 0} sizes="100vw"
-                className="pf-hero-image object-cover object-[65%_center]" />
+              {!failedPhotos.includes(source) && <Image src={source} alt="" fill priority={i === 0} sizes="100vw"
+                data-venue-photo={venue ? venue.slug : undefined} onError={() => setFailedPhotos(current => [...current, source])}
+                className="pf-hero-image object-cover object-[65%_center]" />}
               <div className="absolute inset-0 bg-gradient-to-r from-pitch/95 via-pitch/75 to-pitch/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-pitch/65 via-transparent to-transparent" />
             </div>
             <div className="mx-auto flex min-h-[480px] w-full max-w-7xl items-center px-14 pb-28 pt-12 sm:min-h-[460px] sm:px-16 lg:px-20">
               <div className="w-full max-w-lg text-white">
                 <p className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-free-fill">
-                  <span className="h-px w-6 bg-free-line" aria-hidden="true" />{label} · {eyebrow}
+                  <span className="h-px w-6 bg-free-line" aria-hidden="true" />{label} · {venue?.district ?? eyebrow}
                 </p>
                 <h2 className="pf-hero-copy font-display text-[36px] font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[56px]">
-                  {title}
+                  {venue?.name ?? title}
                 </h2>
-                <p className="pf-hero-copy pf-hero-description mt-4 max-w-sm text-sm leading-6 text-free-fill sm:text-[15px] sm:leading-7">{description}</p>
+                <p className="pf-hero-copy pf-hero-description mt-4 max-w-sm text-sm leading-6 text-free-fill sm:text-[15px] sm:leading-7">{venue ? `Xem ảnh, lịch trống và giá tại ${venue.name}. Chọn giờ phù hợp trước khi giữ chỗ.` : description}</p>
                 <div className="pf-hero-copy pf-hero-cta">
-                  <Link href={href} className="pf-action mt-6 inline-flex min-h-11 items-center justify-center gap-3 rounded-control border border-card bg-card px-4 text-sm font-semibold text-pitch hover:bg-free-fill">
-                    {cta}<ArrowRight size={16} className="pf-arrow" aria-hidden="true" />
+                  <Link href={venue ? `/san/${encodeURIComponent(venue.slug)}#lich-san` : href} className="pf-action mt-6 inline-flex min-h-11 items-center justify-center gap-3 rounded-control border border-card bg-card px-4 text-sm font-semibold text-pitch hover:bg-free-fill">
+                    {venue ? 'Xem lịch sân này' : cta}<ArrowRight size={16} className="pf-arrow" aria-hidden="true" />
                   </Link>
-                  <p className="mt-3 text-[11px] text-free-fill/80">Xem lịch miễn phí · Đăng nhập khi đặt</p>
+                  <p className="mt-3 text-xs leading-5 text-free-fill/90">{venue ? `Ảnh cụm sân do chủ sân cung cấp · ${venue.name}` : 'Ảnh minh họa môn thể thao'}</p>
                 </div>
               </div>
             </div>
           </div>
-        ))}
+        ); })}
       </div>
       <button type="button" onClick={() => select(index - 1)} aria-label="Ảnh trước"
         className="pf-action absolute left-1.5 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch focus-visible:outline-free-line sm:left-3 lg:left-6">

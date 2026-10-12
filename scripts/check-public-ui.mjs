@@ -9,6 +9,8 @@ const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM
 const context = await browser.newContext({ locale: 'vi-VN', timezoneId: 'Asia/Ho_Chi_Minh' });
 const page = await context.newPage();
 const errors = [];
+const thirdPartyFonts = [];
+page.on('request', request => { if (/fonts\.(googleapis|gstatic)\.com/.test(request.url())) thirdPartyFonts.push(request.url()); });
 page.on('pageerror', error => errors.push({ url: page.url(), message: error.message }));
 try {
   for (const width of [320, 390, 768, 1024, 1440]) {
@@ -21,7 +23,7 @@ try {
     assert(await page.getByRole('heading', { name: 'Thanh toán khi đặt sân', exact: true }).count());
     assert.equal(await page.getByText('Tối nay có kèo.', { exact: true }).count(), 0);
     const footer = page.locator('footer');
-    assert((await footer.boundingBox()).height < (width < 768 ? 740 : 440), 'Footer must remain compact');
+    assert((await footer.boundingBox()).height < (width < 768 ? 740 : 440), `Footer must remain compact at ${width}px (height ${(await footer.boundingBox()).height})`);
     const hero = page.locator('[data-hero-carousel]');
     const search = await page.locator('main form').first().boundingBox();
     const carousel = await hero.boundingBox();
@@ -36,6 +38,17 @@ try {
       await page.screenshot({ path: `${output}/home-${width}.png`, fullPage: true });
     }
   }
+  await page.goto(origin);
+  const hero = page.locator('[data-hero-carousel]');
+  await hero.getByRole('button', { name: 'Xem Cầu lông', exact: true }).click();
+  const active = hero.locator('[aria-roledescription="slide"][aria-hidden="false"]');
+  assert(await active.getByRole('heading', { name: 'Sân Cầu Giấy', exact: true }).isVisible(), 'Homepage shows the real published venue');
+  const venueLink = active.getByRole('link', { name: 'Xem lịch sân này', exact: true });
+  assert.equal(await venueLink.getAttribute('href'), '/san/san-cau-giay#lich-san');
+  await active.locator('img[data-venue-photo]').evaluate(image => image.decode());
+  assert(await active.getByText('Ảnh cụm sân do chủ sân cung cấp · Sân Cầu Giấy', { exact: true }).isVisible());
+  assert.deepEqual(thirdPartyFonts, [], 'Fonts are served with the site, including Vietnamese');
+  assert(await page.evaluate(() => document.fonts.check('700 20px "Bricolage Grotesque"', 'Sân Ngon') && document.fonts.check('400 16px "Be Vietnam Pro"', 'Đặt sân')));
   const quiet = await browser.newContext({ javaScriptEnabled: false });
   const fallback = await quiet.newPage();
   await fallback.goto(origin);
