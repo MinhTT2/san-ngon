@@ -67,7 +67,7 @@ const server = createServer(async (req, res) => {
   let readFailure = '';
   let ownerHistory = false, playerHistory = false, bookingSnapshot = false;
   let manyCourts=false,pendingInvoice=false;
-  let applicationState = '';
+  let applicationState = '', newUx = '';
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
@@ -78,6 +78,7 @@ const server = createServer(async (req, res) => {
     manyCourts=!!claims.fixture_many_courts; pendingInvoice=!!claims.fixture_pending_invoice;
     bookingSnapshot = !!claims.fixture_booking_snapshot;
     applicationState = claims.fixture_application || '';
+    newUx = claims.fixture_new_ux || '';
     role = claims.fixture_role || 'admin'; connectionState = claims.fixture_connection || 'ready';
     catalog = claims.fixture_catalog || 'default'; favoriteState = claims.fixture_favorites || 'default'; mixedSports = !!claims.fixture_mixed_sports; includeRefund = !!claims.fixture_refunds;
   } catch { /* Anonymous requests use only public fixture data. */ }
@@ -186,6 +187,17 @@ const server = createServer(async (req, res) => {
     if (name === 'get_my_sepay_connection' && connectionState !== 'ready') {
       send({ status: connectionState === 'authorized' ? 'setup' : connectionState, bank: null, account_number: null, account_name: null, bank_account_id: null, has_authorization: connectionState === 'authorized', rollout_enabled: false, checked_at: null, last_webhook_at: null }); return;
     }
+    if (newUx && ['manages_tournament', 'get_tournament_capacity', 'get_tournament_registrations'].includes(name)) {
+      const registration = { id: 'registration-ux', tournament_id: args.p_id, user_id: ownerId, full_name: 'Người chơi', team_name: null, phone: '0901234567', address: 'Hà Nội', note: null, review_note: null, payment_owner_id: ownerId, entry_fee: 200000, deposit_amount: 100000, paid_at: null, payment_expires_at: future, balance_received_at: null, balance_waived_at: null, balance_receipt: null, balance_refund_due: 0, balance_refunded_at: null, refund_deadline: future };
+      const registrations = [
+        { ...registration, id: 'confirmed-paid', full_name: 'Đỗ Minh', status: 'approved', paid_at: created },
+        { ...registration, id: 'confirmed-free', full_name: 'Mai Anh', status: 'approved', deposit_amount: 0 },
+        { ...registration, id: 'pending-ux', full_name: 'Trần Hải', status: 'pending' },
+        { ...registration, id: 'unpaid-ux', full_name: 'Nguyễn Linh', status: 'approved' },
+        { ...registration, id: 'cancelled-ux', full_name: 'Lê An', status: 'cancelled' },
+      ].filter(row => newUx !== 'no-confirmed' || !row.id.startsWith('confirmed'));
+      send(name === 'manages_tournament' ? true : name === 'get_tournament_capacity' ? 3 : registrations); return;
+    }
     const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     send(rpc[name]); return;
@@ -196,10 +208,12 @@ const server = createServer(async (req, res) => {
     const b=checkoutBookings[url.searchParams.get('code').replace(/^eq\./,'')];
     send(b && bookingSnapshot ? {...b,court_name_snapshot:'Sân con lúc đặt',venue_name_snapshot:'Cụm sân lúc đặt',venue_address_snapshot:'12 Địa chỉ lúc đặt',courts:{...b.courts,name:'Sân con mới',venues:{...b.courts.venues,name:'Cụm sân mới',address:'34 Địa chỉ mới'}}} : b ?? null); return;
   }
+  if (newUx && table === 'tournament_payment_events') { send([]); return; }
   if (!(table in tables)) { send({ message: `Unknown fixture table ${table}` }, 404); return; }
   if (table === 'venue_favorites' && favoriteState === 'error') { send({ message: 'Favorite read interrupted' }, 503); return; }
   let rows = table === 'venues' && catalog === 'many' ? [...venues, ...additionalVenues]
     : table === 'venue_favorites' && favoriteState === 'saved' ? [{ user_id: me.id, venue_id: venueId }] : [...tables[table]];
+  if (newUx && table === 'tournaments') rows = rows.map(row => ({ ...row, court_id: courtId, manager_id: ownerId, description: 'Giải đấu thử giao diện với thể lệ và chính sách đầy đủ.', cancellation_policy: 'Hủy trước 24 giờ được hoàn cọc.', payment_deadline: future }));
   if(table==='profiles' && applicationState) rows=rows.map(row => row.id===me.id ? {...row,owner_application_status:applicationState,owner_rejection_reason:applicationState==='rejected' ? 'Bổ sung giấy tờ rõ nét, thể hiện tên người đại diện.' : null,role:'player'} : row);
   if(table==='courts' && manyCourts) rows=[court,...Array.from({length:14},(_,i)=>({...court,id:'dddddddd-dddd-4ddd-8ddd-'+String(i+1).padStart(12,'0'),name:'Sân kiểm thử '+String(i+1).padStart(2,'0'),sport:i%2?'badminton':'pickleball'}))];
   if(table==='subscription_invoices' && pendingInvoice) rows=[{...invoice,status:'pending',bank:'MB',account_number:'0987654321',account_name:'SAN NGON'}];

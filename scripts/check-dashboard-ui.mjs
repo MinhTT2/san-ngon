@@ -61,7 +61,7 @@ try {
     ['/admin?view=bookings', 'Đơn đặt sân', 'Đơn đặt sân'],
     ['/admin/users', 'Người dùng', 'Người dùng'],
     ['/admin/phi-dich-vu', 'Phí sử dụng của chủ sân', 'Phí chủ sân'],
-    ['/admin/giai-dau', 'Duyệt giải đấu', 'Giải đấu'],
+    ['/admin/giai-dau', 'Quản lý giải đấu', 'Giải đấu'],
     ['/admin/gop-y', 'Góp ý từ người dùng', 'Góp ý người dùng'],
     [`/admin/owners/${ids.owner}`, 'Nguyễn Minh', 'Hồ sơ chủ sân'],
   ]);

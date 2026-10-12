@@ -12,7 +12,7 @@ await page.route('**/api/owner-registration',async route=>{registrations.push(ro
 try{
  for(const width of [390,1440]){
   await page.setViewportSize({width,height:1000});await actor();await page.goto(origin+'/admin/owners/owner-0');
-  await page.getByRole('button',{name:'Từ chối',exact:true}).click();const dialog=page.getByRole('dialog');
+  await page.getByRole('button',{name:'Yêu cầu bổ sung',exact:true}).click();const dialog=page.getByRole('dialog');
   await dialog.getByLabel('Lý do cần bổ sung').fill('ngắn');assert(await dialog.getByRole('button',{name:'Gửi yêu cầu bổ sung'}).isDisabled());
   const reason='Bổ sung giấy tờ rõ nét, thể hiện tên người đại diện.';
   await dialog.getByLabel('Lý do cần bổ sung').fill(reason);const n=reviews.length;
@@ -21,7 +21,7 @@ try{
   await actor({fixture_application:'rejected'});await page.goto(origin+'/dang-ky-san');await page.getByText(reason,{exact:true}).waitFor();
   await page.getByRole('link',{name:/Cập nhật và gửi lại hồ sơ/}).click();
   await page.getByRole('button',{name:/Tiếp theo/}).click();await page.getByText('Sẽ dùng lại giấy tờ đã gửi:',{exact:false}).waitFor();
-  const before=registrations.length;await page.getByRole('button',{name:/Tiếp tục: tài khoản nhận cọc/}).click();await page.getByRole('alert').waitFor();assert.equal(registrations.length,before+1);assert(registrations.at(-1).includes('"reuse_document":true'));assert(!registrations.at(-1).includes('filename='));
+  const before=registrations.length;await page.getByRole('button',{name:/Tiếp tục: tài khoản nhận cọc/}).click();await page.getByRole('alert').filter({hasText:'Lỗi thử: giấy tờ vẫn được giữ.'}).waitFor();assert.equal(registrations.length,before+1);assert(registrations.at(-1).includes('"reuse_document":true'));assert(!registrations.at(-1).includes('filename='));
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  }
  console.log('OK: 390/1440 admin reason validation/failure preserves text, rejected owner sees reason, resubmits with saved document and no new upload.');

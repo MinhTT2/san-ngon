@@ -76,26 +76,26 @@ try {
   await pendingCard.getByRole('button', { name: 'Xóa giải đấu', exact: true }).waitFor();
   let deletionRequests = 0;
   admin.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/tournaments')) deletionRequests++; });
-  admin.once('dialog', dialog => dialog.dismiss());
   await pendingCard.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await admin.getByRole('dialog').getByRole('button', { name: 'Quay lại', exact: true }).click();
   assert.equal(deletionRequests, 0, 'Dismissing confirmation must not send a deletion.');
   await admin.screenshot({ path: `${output}/admin-list-1440.png`, fullPage: true });
   await admin.setViewportSize({ width: 390, height: 844 });
   await admin.screenshot({ path: `${output}/admin-list-390.png`, fullPage: true });
   assert(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await admin.goto(`${origin}/giai-dau/${guarded}`);
-  admin.once('dialog', dialog => dialog.accept());
   await admin.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
   await admin.getByRole('alert').filter({ hasText: 'Cần giữ hồ sơ để đối soát' }).waitFor();
   assert.equal(new URL(admin.url()).pathname, `/giai-dau/${guarded}`);
   await admin.goto(`${origin}/giai-dau/${pending}`);
-  admin.once('dialog', dialog => dialog.accept());
   await admin.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
   await admin.waitForURL(`${origin}/admin/giai-dau`);
   await admin.goto(`${origin}/admin/giai-dau?status=published`);
   const publishedCard = admin.getByRole('listitem').filter({ hasText: `Giải test xóa ${run} published 11` });
-  admin.once('dialog', dialog => dialog.accept());
   await publishedCard.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
   await publishedCard.waitFor({ state: 'detached' });
   const [state] = await sql(`select
     not exists(select 1 from tournaments where id in (${quote(pending)},${quote(published)})) as deleted,

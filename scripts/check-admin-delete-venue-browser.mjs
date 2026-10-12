@@ -83,12 +83,12 @@ try {
     await button.waitFor();
     await admin.screenshot({ path: `${screenshots}/venues-${fixture.width}.png`, fullPage: true });
     assert(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal overflow');
-    admin.once('dialog', dialog => dialog.dismiss());
     await button.click();
+    await admin.getByRole('dialog').getByRole('button', { name: 'Quay lại', exact: true }).click();
     assert(await button.isVisible(), 'Dismissing confirmation keeps venue');
-    admin.once('dialog', dialog => dialog.accept());
     const deleted = admin.waitForResponse(response => response.url().endsWith(`/api/admin/venues/${fixture.venue}`) && response.request().method() === 'DELETE');
     await button.click();
+    await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
     assert.equal((await deleted).status(), 204);
     await button.waitFor({ state: 'detached' });
     const rows = await sql(`select count(*)::int as count from venues where id=${quote(fixture.venue)};`);
@@ -96,8 +96,8 @@ try {
     console.log(`OK: ${fixture.width}px confirmation, deletion and list refresh.`);
   }
   const protectedButton = admin.getByRole('button', { name: `Xóa sân: ${blocked.name}`, exact: true });
-  admin.once('dialog', dialog => dialog.accept());
   await protectedButton.click();
+  await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
   await admin.getByRole('alert').filter({ hasText: 'Không thể xóa cụm sân đã có đơn đặt' }).waitFor();
   assert(await protectedButton.isVisible());
   await admin.screenshot({ path: `${screenshots}/history-protected-390.png`, fullPage: true });

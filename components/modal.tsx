@@ -1,11 +1,21 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { playMotion } from '@/lib/motion';
 import { canCloseUnsavedForm } from '@/lib/use-unsaved-changes';
 
-export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }: { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode; size?: string }) {
+type ModalProps = { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode; size?: string };
+
+export function Modal(props: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  // Keep dialogs above cards and tables, including ancestors with transforms or clipping.
+  return mounted ? createPortal(<ModalContent {...props} />, document.body) : null;
+}
+
+function ModalContent({ title, subtitle, onClose, children, size = 'max-w-3xl' }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -24,7 +34,7 @@ export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }
     const previousOverflow = document.body.style.overflow;
     const dialog = dialogRef.current;
     const controls = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]') ?? []).filter(el => el.getClientRects().length > 0);
-    (dialog?.querySelector<HTMLElement>('input, select, textarea') ?? controls()[0] ?? dialog)?.focus();
+    (dialog?.querySelector<HTMLElement>('[data-modal-initial-focus]') ?? dialog?.querySelector<HTMLElement>('input, select, textarea') ?? controls()[0] ?? dialog)?.focus();
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); if (canCloseUnsavedForm(dialogRef.current)) closeRef.current(); }
       if (event.key === 'Tab') {
