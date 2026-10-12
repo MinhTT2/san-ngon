@@ -13,6 +13,7 @@ import { TournamentSettlementPanel } from '@/components/tournament-settlement';
 import { TournamentRegistration } from '@/components/tournament-registration';
 import { TournamentParticipants } from '@/components/tournament-participants';
 import { TournamentReviewForm } from '@/components/tournament-review-form';
+import { TournamentDeleteForm } from '@/components/tournament-delete-form';
 import { ActionForm } from '@/components/action-form';
 import { Field, fieldClass } from '@/components/form-field';
 import { TournamentRefresh } from '@/components/tournament-refresh';
@@ -145,6 +146,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {!canRegister && !own && !manager ? <p id="dang-ky" className="scroll-mt-28 border-t border-hairline py-6 text-sm text-ink-secondary">{closed ? 'Giải chưa mở hoặc đã đóng đăng ký.' : 'Giải đã đủ suất được duyệt.'} <Link href="/giai-dau" className="font-semibold text-pitch underline">Khám phá giải khác</Link></p> : !canRegister && own && canRegisterAgain && <p className="border-t border-hairline py-5 text-sm text-ink-secondary">{closed ? 'Giải đã đóng đăng ký, không thể gửi đăng ký mới.' : 'Giải đã đủ suất được duyệt, chưa thể đăng ký lại.'}</p>}
       {user && tournament.manager_id === user.id && ['pending', 'rejected'].includes(tournament.status) && <Link href={`/giai-dau/tao?edit=${id}`} className="inline-flex min-h-11 items-center gap-2 rounded-control border border-strong px-5 text-sm font-semibold text-pitch">Chỉnh sửa và gửi lại đề xuất<ArrowUpRight size={16} aria-hidden="true" /></Link>}
     </>}
+    {admin && view === 'overview' && <section className="mt-6 rounded-card border border-danger/30 bg-card p-5"><h2 className="font-display text-xl font-bold text-danger">Xóa giải đấu</h2><p className="mb-4 mt-3 text-sm leading-7 text-ink-secondary">Xóa vĩnh viễn giải, danh sách đăng ký và trả lại lịch sân. Giải đã có thông tin chuyển cọc, giao dịch hoặc thỏa thuận tiền thuê cần giữ hồ sơ để đối soát.</p><TournamentDeleteForm id={id} title={tournament.title} successHref="/admin/giai-dau" /></section>}
     {view === 'participants' && user && <TournamentParticipants registrations={registrations} closed={closed} started={started} canCancel={canCancel} userId={user.id} admin={admin} />}
     {(view === 'payments' || (!manager && !!payments?.length)) && <section id="giao-dich" className="scroll-mt-28 py-6"><h2 className="font-display text-2xl font-bold text-pitch">Giao dịch cọc & hoàn tiền</h2><p className="mt-3 text-sm leading-7 text-ink-secondary">Hoàn tiền qua ngân hàng trước khi xác nhận tại đây. Tiền thiếu, thừa, trùng hoặc chuyển muộn vẫn được ghi nhận để đối soát.{!!historyPayments?.length && !manager && ' Danh sách bao gồm các lần đăng ký cũ.'}</p>
       {!!payments?.length ? <ul className="mt-5 space-y-3">{payments.map(payment => {

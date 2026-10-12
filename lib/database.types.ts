@@ -2008,6 +2008,7 @@ export type Database = {
         }
       }
       delete_court: { Args: { p_court_id: string }; Returns: undefined }
+      delete_tournament: { Args: { p_id: string }; Returns: undefined }
       delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       expire_pending_bookings: { Args: never; Returns: number }
       gen_booking_code: { Args: never; Returns: string }

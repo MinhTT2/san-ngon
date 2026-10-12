@@ -19,6 +19,7 @@ const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('review_registration'), id, approve, note: z.string().trim().max(1000) }),
   z.object({ action: z.literal('cancel_registration'), id }),
   z.object({ action: z.literal('cancel'), id }),
+  z.object({ action: z.literal('delete'), id }),
   z.object({ action: z.literal('refund'), transaction_key: z.string().min(1).max(200), expected_amount: z.number().int().positive().max(2147483647) }),
 ]);
 export async function POST(request: Request) {
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
     : body.action === 'review_registration' ? await db.rpc('review_tournament_registration', { p_id: body.id, p_approve: body.approve, p_note: body.note })
     : body.action === 'cancel_registration' ? await db.rpc('cancel_tournament_registration', { p_id: body.id })
     : body.action === 'cancel' ? await db.rpc('cancel_tournament', { p_id: body.id })
+    : body.action === 'delete' ? await db.rpc('delete_tournament', { p_id: body.id })
     : await db.rpc('mark_tournament_refund', { p_transaction_key: body.transaction_key, p_expected_amount: body.expected_amount });
   if (result.error) {
     console.warn('Tournament action rejected', { action: body.action, code: result.error.code, reason: /^[A-Z_]+$/.test(result.error.message) ? result.error.message : 'DATABASE_ERROR' });

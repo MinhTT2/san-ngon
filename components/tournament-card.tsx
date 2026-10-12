@@ -5,6 +5,7 @@ import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
 import { tournamentLabel, type Tournament } from '@/lib/tournaments';
 import { TournamentCover } from './tournament-cover';
 import { SportGlyph } from './sport-glyph';
+import { TournamentDeleteForm } from './tournament-delete-form';
 
 export type TournamentCardData = Tournament & { courts: { venues: { name: string; images: string[] } | null } | null };
 
@@ -12,8 +13,8 @@ export function TournamentCard({ tournament: t, layout, mode }: { tournament: To
   const state = tournamentLabel(t);
   const live = state === 'Đang diễn ra';
   const date = ymd(new Date(t.starts_at));
-  return <li className="pf-tournament-card pf-card group min-w-0 overflow-hidden rounded-[20px] border border-hairline bg-card" data-layout={layout}>
-    <Link href={`/giai-dau/${t.id}`} className="pf-tournament-link flex h-full min-w-0 flex-col">
+  return <li className="pf-tournament-card pf-card group flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-hairline bg-card" data-layout={layout}>
+    <Link href={`/giai-dau/${t.id}`} className="pf-tournament-link flex min-w-0 flex-1 flex-col">
       <div className="pf-tournament-media relative shrink-0">
         <TournamentCover path={t.cover_path} title={t.title} sport={t.sport} venueImages={t.courts?.venues?.images ?? []} venueName={t.courts?.venues?.name ?? ''} fallback className="pf-tournament-cover aspect-[16/9]" />
         <span className={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1.5 text-[11px] font-semibold ${t.status === 'pending' ? 'border-peak-line bg-peak-fill text-peak-ink' : live ? 'border-free-line bg-free-fill text-free-ink' : 'border-hairline bg-card text-pitch'}`}>
@@ -39,5 +40,6 @@ export function TournamentCard({ tournament: t, layout, mode }: { tournament: To
         </div>
       </div>
     </Link>
+    {mode === 'admin' && <div className="border-t border-hairline p-5"><TournamentDeleteForm id={t.id} title={t.title} /></div>}
   </li>;
 }

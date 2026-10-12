@@ -64,6 +64,8 @@ export function tournamentError(code: string) {
     TERMS_REQUIRED: 'Nhập tiền thuê sân, nội dung thỏa thuận và xác nhận hai bên đã đồng ý.',
     TERMS_ALREADY_FIXED: 'Thỏa thuận đã được chốt, không thể ghi đè.',
     TOURNAMENT_NOT_EDITABLE: 'Chỉ sửa đề xuất đang chờ hoặc bị từ chối.',
+    TOURNAMENT_NOT_FOUND: 'Giải đấu đã được xóa hoặc không còn tồn tại. Tải lại danh sách giải.',
+    TOURNAMENT_HAS_FINANCIAL_HISTORY: 'Giải đã có thông tin chuyển cọc, giao dịch hoặc thỏa thuận tiền thuê. Cần giữ hồ sơ để đối soát; dùng Hủy giải nếu giải còn diễn ra.',
     RECEIPT_REQUIRED: 'Nhập mã giao dịch hoặc ghi chú chứng từ (ít nhất 3 ký tự).',
     BALANCE_NOT_COLLECTIBLE: 'Chỉ ghi thu từ lúc giải bắt đầu, sau khi đã đủ cọc và chưa ghi thu/miễn trước đó.',
     BALANCE_ALREADY_RECORDED: 'Khoản này đã được xử lý hoặc không có tiền cần hoàn.',
