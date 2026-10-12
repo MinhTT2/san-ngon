@@ -8,9 +8,8 @@ export function VenueSearchForm({ children, queryKey }: { children: ReactNode; q
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const submitted = useRef(false);
-  const form = useRef<HTMLFormElement>(null);
-  // Updated URL defaults replace the old draft; background reads keep the same key.
-  useEffect(() => { form.current?.reset(); }, [queryKey]);
+  // The keyed fieldset applies URL defaults once. A post-hydration reset could
+  // erase typing that starts as soon as streamed results appear.
   useEffect(() => {
     if (pending || !submitted.current) return;
     submitted.current = false;
@@ -18,7 +17,7 @@ export function VenueSearchForm({ children, queryKey }: { children: ReactNode; q
     results?.focus({ preventScroll: true });
     results?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }, [pending, queryKey]);
-  return <form ref={form} action="/tim-san#ket-qua" aria-label="Tìm và lọc sân" aria-busy={pending} data-unsaved-busy={pending}
+  return <form action="/tim-san#ket-qua" aria-label="Tìm và lọc sân" aria-busy={pending} data-unsaved-busy={pending}
     className="relative grid grid-cols-2 gap-3 rounded-[20px] border border-hairline bg-card p-4 sm:p-5 lg:grid-cols-1 lg:gap-4"
     onSubmit={event => {
       event.preventDefault();

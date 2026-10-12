@@ -46,6 +46,7 @@ export function BookingForm({
   const [note, setNote] = useState(defaultNote ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [uncertain, setUncertain] = useState(false);
   const submitting = useRef(false);
   const requestId = useRef<string | null>(null);
@@ -66,7 +67,13 @@ export function BookingForm({
     if (submitting.current || uncertain) return;
     const normalizedPhone = normalizePhone(phone);
     setPhone(normalizedPhone);
-    if (!/^0\d{9}$/.test(normalizedPhone)) { setError('Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0 (hoặc +84).'); return; }
+    if (!/^0\d{9}$/.test(normalizedPhone)) {
+      setError(null);
+      setPhoneError('Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0 (hoặc +84).');
+      formRef.current?.querySelector<HTMLInputElement>('#sdt')?.focus();
+      return;
+    }
+    setPhoneError(null);
     submitting.current = true;
     setBusy(true);
     setError(null);
@@ -146,25 +153,27 @@ export function BookingForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="ten" className="text-sm font-semibold">Tên người đặt</label>
-        <input id="ten" value={name} onChange={(e) => setName(e.target.value)}
+        <input id="ten" readOnly={busy || uncertain} value={name} onChange={(e) => setName(e.target.value)}
           required maxLength={100} autoComplete="name" placeholder="Nguyễn Văn A"
           className="h-12 rounded-control border border-hairline px-3.5 focus:border-pitch focus:outline-none" />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="sdt" className="text-sm font-semibold">Số điện thoại</label>
-        <input id="sdt" type="tel" required inputMode="tel"
+        <input id="sdt" type="tel" required inputMode="tel" readOnly={busy || uncertain}
+          aria-invalid={!!phoneError} aria-describedby={phoneError ? 'sdt-hint sdt-error' : 'sdt-hint'}
           maxLength={30} title="Nhập số điện thoại bắt đầu bằng 0 hoặc +84" autoComplete="tel" placeholder="0912345678"
-          value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => setPhone(normalizePhone(phone))}
+          value={phone} onChange={(e) => { setPhone(e.target.value); setPhoneError(null); }} onBlur={() => setPhone(normalizePhone(phone))}
           className="h-12 rounded-control border border-hairline px-3.5 focus:border-pitch focus:outline-none" />
-        <span className="text-xs text-ink-secondary">Có thể nhập dấu cách hoặc +84. Chủ sân gọi số này nếu có thay đổi.</span>
+        <span id="sdt-hint" className="text-xs leading-5 text-ink-secondary">Có thể nhập dấu cách hoặc +84. Chủ sân gọi số này nếu có thay đổi.</span>
+        {phoneError && <p id="sdt-error" role="alert" className="text-sm leading-6 text-danger">{phoneError}</p>}
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="ghichu" className="text-sm font-semibold">
           Ghi chú <span className="font-normal text-ink-secondary">(không bắt buộc)</span>
         </label>
-        <textarea id="ghichu" maxLength={500} rows={2} value={note} onChange={(e) => setNote(e.target.value)}
+        <textarea id="ghichu" readOnly={busy || uncertain} maxLength={500} rows={2} value={note} onChange={(e) => setNote(e.target.value)}
           placeholder="Cần thuê thêm bóng, áo bib…"
           className="resize-none rounded-control border border-hairline p-3" />
       </div>

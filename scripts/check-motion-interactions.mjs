@@ -84,6 +84,9 @@ try {
   await page.keyboard.press('Escape');
   await viewer.waitFor({ state: 'detached' });
   assert(await trigger.evaluate(element => element === document.activeElement), 'Gallery restores keyboard focus');
+  const legend = page.getByRole('list', { name: 'Chú giải giờ chơi', exact: true });
+  assert(await legend.isVisible());
+  assert.match(await legend.innerText(), /Còn sân[\s\S]*Đang chọn[\s\S]*Không thể đặt[\s\S]*Giờ vàng/);
   const slot = page.getByRole('button', { name: /^10:00, còn sân/ });
   await slot.click();
   const summary = page.getByRole('complementary', { name: 'Tóm tắt đặt sân' });

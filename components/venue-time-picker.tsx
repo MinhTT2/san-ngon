@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Clock3 } from 'lucide-react';
+import { Check, Clock3 } from 'lucide-react';
 import { enterMotion } from '@/lib/motion';
 import { MAX_SLOTS, PEAK_FROM_HOUR, PEAK_TO_HOUR, SPORT_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, hourOf, vnd } from '@/lib/format';
 import type { useAvailability } from '@/lib/use-availability';
 import { venueTimeOptions } from '@/lib/venue-time-options';
 import type { Court, Sport } from '@/lib/types';
+import { ScheduleSkeleton } from './page-skeleton';
 
 export function VenueTimePicker({
   availability: a,
@@ -67,7 +68,7 @@ export function VenueTimePicker({
   }, [selection?.startsAt, selection?.courtId]);
 
 
-  if (a.loading) return <div className="h-96 animate-pulse rounded-card border border-hairline bg-sunk" aria-label="Đang tải giờ trống" aria-busy="true" />;
+  if (a.loading) return <ScheduleSkeleton />;
   if (a.failed) return (
     <div role="alert" className="rounded-card border border-hairline p-6 text-center text-sm text-ink-secondary">
       Không tải được lịch sân. <button onClick={a.reload} className="min-h-11 font-semibold text-pitch underline">Tải lại</button>
@@ -76,7 +77,7 @@ export function VenueTimePicker({
   if (!times.length) return <p className="rounded-card border border-hairline p-8 text-center text-sm text-ink-secondary">Sân chưa mở lịch cho ngày này. Bạn thử chọn ngày khác nhé.</p>;
 
   return (
-    <div className={`grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] ${selection ? 'pb-24 lg:pb-0' : ''}`}>
+    <div className={`grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] ${selection ? 'pb-32 lg:pb-0' : ''}`}>
       <section aria-label="Giờ chơi của cụm sân" className="min-w-0 rounded-card border border-hairline bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -112,7 +113,12 @@ export function VenueTimePicker({
 
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-secondary">
           <h3 className="font-semibold text-pitch">Giờ bắt đầu · {duration} phút chơi</h3>
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-peak-line bg-peak-fill" />Giờ vàng</span>
+          <ul aria-label="Chú giải giờ chơi" className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="size-3 rounded-sm border border-free-line bg-free-fill" />Còn sân</li>
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="grid size-3 place-items-center rounded-sm bg-pitch text-pitch-ink"><Check className="size-2.5" /></span>Đang chọn</li>
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="size-3 rounded-sm border border-hairline bg-taken-fill" />Không thể đặt</li>
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="size-3 rounded-sm border border-peak-line bg-peak-fill" />Giờ vàng</li>
+          </ul>
         </div>
         {requestedUnavailable && !selection && <p role="status" className="mb-3 text-sm leading-6 text-ink-secondary">Giờ hoặc thời lượng từ tìm kiếm không còn phù hợp. Chọn lại một giờ đủ thời gian bên dưới.</p>}
         {a.selectionLost && <p role="status" className="mb-3 text-sm text-ink-secondary">Sân vừa chọn không còn trống đủ thời gian. Bạn chọn lại một giờ còn sân nhé.</p>}
@@ -182,7 +188,7 @@ export function VenueTimePicker({
           </div>
         )}
       </aside>
-      {selection && <section aria-label="Lựa chọn nhanh trên điện thoại" className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-strong bg-card px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] text-pitch lg:hidden"><div className="min-w-0"><p className="text-xs font-semibold tabular-nums">{hhmm(selection.startsAt)}–{hhmm(selection.endsAt)} · {duration} phút</p><p className="mt-1 font-display text-lg font-bold tabular-nums">{vnd(selection.total)}</p></div><button type="button" onClick={onConfirm} className="min-h-11 shrink-0 rounded-control bg-pitch px-3 text-sm font-semibold text-pitch-ink">Tiếp tục →</button></section>}
+      {selection && <section aria-label="Lựa chọn nhanh trên điện thoại" className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-strong bg-card px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] text-pitch lg:hidden"><div className="min-w-0"><p className="mb-1 truncate text-xs font-semibold">{selection.courtName}</p><p className="text-xs font-semibold tabular-nums">{hhmm(selection.startsAt)}–{hhmm(selection.endsAt)} · {duration} phút</p><p className="mt-1 font-display text-lg font-bold tabular-nums">{vnd(selection.total)}</p></div><button type="button" onClick={onConfirm} className="min-h-11 shrink-0 rounded-control bg-pitch px-3 text-sm font-semibold text-pitch-ink">Tiếp tục →</button></section>}
     </div>
   );
 }

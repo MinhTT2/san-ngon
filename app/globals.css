@@ -448,3 +448,16 @@ button:disabled,
     details[open]::details-content { block-size: auto; }
   }
 }
+
+/* Shared reading rhythm and predictable controls, including Vietnamese text. */
+:where(h1, h2, h3) { text-wrap: balance; }
+:where(main p) { overflow-wrap: break-word; }
+:where(input, select, textarea) { min-width: 0; }
+@media (max-width: 639px) {
+  /* Prevent automatic focus zoom in mobile Safari. */
+  main :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: max(16px, 1rem); }
+}
+@keyframes pf-skeleton-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: no-preference) {
+  .pf-skeleton { animation: pf-skeleton-pulse 1.6s ease-in-out infinite; }
+}
