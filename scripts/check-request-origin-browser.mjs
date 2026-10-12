@@ -19,6 +19,9 @@ try {
     ['/api/sepay/connect', 'POST'], ['/api/sepay/connection', 'DELETE'],
     ['/api/courts/fixture', 'DELETE'], ['/api/venues/fixture', 'DELETE'],
     ['/api/admin/owners/fixture/status', 'POST'], ['/auth/dang-xuat', 'POST'],
+    ['/api/incoming-transfers/fixture.svg/notes', 'POST'],
+    ['/api/admin/users/fixture.png', 'DELETE'], ['/api/venues/fixture.webp', 'DELETE'],
+    ['/auth/dang-xuat/fixture.jpg', 'POST'],
   ];
   for (const [path, method] of writes) {
     for (const headers of [{ Origin: 'https://untrusted.example' }, { Origin: 'null' }, {}]) {
@@ -40,5 +43,5 @@ try {
   assert.equal(await page.evaluate(async () => (await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status), 400, 'native browser fetch supplies the correct Origin');
   const logout = await context.request.post(origin + '/auth/dang-xuat', { headers: { Origin: origin }, maxRedirects: 0 });
   assert.equal(logout.status(), 303, 'same-origin logout still works');
-  console.log('OK: real Next HTTP boundary rejects 48 foreign/null/missing-Origin authenticated writes, same-origin API/browser/logout work, webhook keys remain enforced.');
+  console.log('OK: real Next HTTP boundary rejects 60 foreign/null/missing-Origin authenticated writes, same-origin API/browser/logout work, webhook keys remain enforced.');
 } finally { await context.close(); await browser.close(); }

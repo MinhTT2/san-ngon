@@ -55,6 +55,12 @@ npm run check:ui -- --only=check-incoming-transfers-browser,check-policy-pages-b
 - Điều khoản khớp 15 phút giữ chỗ, 100% cọc đơn mới, người nhận theo đơn, hủy sân 2 giờ/giải 24 giờ và phí 299.000đ. Trách nhiệm sân/giải và hoàn thủ công được giải thích riêng.
 - UI 390/1440, anonymous và no-JS, đường hỗ trợ/email và sitemap không thêm route riêng tư: đạt. Nội dung cần người vận hành rà soát và chốt thời hạn giữ dữ liệu thực tế; **A17 chưa phải nghiệm thu vận hành/chính sách hoàn tất**.
 
+## Biên ghi dữ liệu — đường dẫn API có đuôi ảnh
+
+Matcher middleware khai báo rõ `/api/:path*` và `/auth/:path*` bên cạnh phần bỏ qua tài nguyên ảnh. Một tham số route có đuôi `.png`, `.webp` hoặc `.jpg` không được vô tình bỏ qua kiểm tra Origin. Giữ các ngoại lệ đúng POST webhook có key, không mở ngoại lệ cho route con.
+
+Kiểm tra HTTP thật trên bản cô lập gồm 60 yêu cầu ghi có phiên với Origin ngoại lai/null/thiếu, cả các đường dẫn có đuôi ảnh; xác thực key webhook, browser cùng nguồn và đăng xuất. Unit kiểm tra từ chối trước auth/DB và production build lint/typecheck: đạt.
+
 ## Bảng công việc còn lại sau rà soát
 
 | Mục | Trạng thái và phần cần làm |
