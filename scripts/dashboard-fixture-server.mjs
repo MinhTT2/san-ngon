@@ -2,6 +2,7 @@
 // Start: node scripts/dashboard-fixture-server.mjs (port 3210).
 // Run the app with NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3210 and NEXT_PUBLIC_SUPABASE_ANON_KEY=dashboard-ui-fixture.
 import { createServer } from 'node:http';
+import { adminBookingFixture } from './admin-booking-fixture.mjs';
 import { readFile } from 'node:fs/promises';
 const adminId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const ownerId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -106,6 +107,10 @@ const server = createServer(async (req, res) => {
   const args = body ? JSON.parse(body) : {};
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const name = url.pathname.split('/').at(-1);
+    if (name === 'search_admin_bookings') {
+      if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
+      send(adminBookingFixture(args,bookings,people[1],ownerHistory,includeRefund));return;
+    }
     if (name === 'search_my_bookings') {
       if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
       const now = Date.now();

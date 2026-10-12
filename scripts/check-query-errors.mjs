@@ -14,7 +14,7 @@ const cases = [
   ['owner', '/chu-san', 'telegram', 'Chưa tải được kết nối Telegram', ['Kết nối Telegram'], 'Đơn hôm nay'],
   ['admin', '/admin', 'get_admin_stats', 'Chưa tải được thống kê giao dịch', ['Doanh thu theo ngày'], 'Hồ sơ cần xử lý'],
   ['admin', '/admin?view=owners', 'profiles', 'Chưa tải được hồ sơ sân và tài khoản', ['Không có hồ sơ'], 'Hồ sơ chủ sân'],
-  ['admin', '/admin?view=bookings', 'bookings', 'Chưa tải được danh sách đơn đặt sân', ['Không có đơn'], 'Đơn đặt sân'],
+  ['admin', '/admin?view=bookings', 'search_admin_bookings', 'Chưa tải được danh sách đơn đặt sân', ['Không có đơn'], 'Đơn đặt sân'],
   ['admin', '/admin?view=users', 'profiles', 'Chưa tải được danh sách tài khoản', ['Chưa có tài khoản'], 'Tài khoản gần đây'],
   ['owner', '/', 'home-count', 'Chưa tải được số liệu sân', ['sân cho bạn lựa chọn'], 'Tìm sân trống.'],
   ['owner', '/', 'featured', 'Chưa tải được lịch sân', ['Cách đọc lịch sân', 'Minh họa'], 'Tìm sân trống.'],
