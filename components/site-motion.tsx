@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { enterMotion } from '@/lib/motion';
+import { useDepthMotion } from '@/lib/use-depth-motion';
 
 const ITEMS = 'main > header, main h1, main > form, main > section > h2, [data-motion-item], .pf-card';
 const SKIP = '.pf-reveal, .pf-in, .profile-enter, .checkout, dialog, [role="dialog"], [data-motion-skip]';
@@ -12,6 +13,7 @@ export function SiteMotion() {
   const pathname = usePathname();
   const params = useSearchParams();
   const route = `${pathname}?${params.toString()}`;
+  useDepthMotion(route);
   const [pending, setPending] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 

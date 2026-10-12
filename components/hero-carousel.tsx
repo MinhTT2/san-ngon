@@ -31,6 +31,7 @@ const INTERVAL = 6500;
 /** Ảnh minh họa giới thiệu môn; ảnh địa điểm thật vẫn do chủ sân cung cấp. */
 export function HeroCarousel() {
   const ref = useRef<HTMLDivElement>(null);
+  const remaining = useRef(INTERVAL);
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -58,10 +59,16 @@ export function HeroCarousel() {
     };
   }, []);
 
+  useEffect(() => { remaining.current = INTERVAL; }, [index, motion]);
+
   useEffect(() => {
     if (!playing) return;
-    const timer = setTimeout(() => setIndex((i) => (i + 1) % SLIDES.length), INTERVAL);
-    return () => clearTimeout(timer);
+    const started = performance.now();
+    const timer = setTimeout(() => setIndex((i) => (i + 1) % SLIDES.length), remaining.current);
+    return () => {
+      clearTimeout(timer);
+      remaining.current = Math.max(0, remaining.current - (performance.now() - started));
+    };
   }, [playing, index]);
 
   function select(next: number) {
@@ -70,7 +77,7 @@ export function HeroCarousel() {
   }
 
   return (
-    <div ref={ref} data-hero-carousel="" data-motion={motion && !paused} data-playing={playing} role="region"
+    <div ref={ref} data-hero-carousel="" data-motion={motion && !paused} data-playing={playing} style={{ '--pf-slide-duration': `${INTERVAL}ms` } as React.CSSProperties} role="region"
       aria-roledescription="carousel" aria-label="Tìm cảm hứng ra sân"
       className="relative isolate overflow-hidden bg-pitch"
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
@@ -92,7 +99,7 @@ export function HeroCarousel() {
               <div className="absolute inset-0 bg-gradient-to-r from-pitch/95 via-pitch/75 to-pitch/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-pitch/65 via-transparent to-transparent" />
             </div>
-            <div className="mx-auto flex min-h-[430px] w-full max-w-7xl items-center px-14 py-12 sm:min-h-[440px] sm:px-16 lg:px-20">
+            <div className="mx-auto flex min-h-[480px] w-full max-w-7xl items-center px-14 pb-28 pt-12 sm:min-h-[460px] sm:px-16 lg:px-20">
               <div className="w-full max-w-lg text-white">
                 <p className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-free-fill">
                   <span className="h-px w-6 bg-free-line" aria-hidden="true" />{label} · {eyebrow}
@@ -120,10 +127,19 @@ export function HeroCarousel() {
         className="pf-action absolute right-1.5 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-pitch/70 text-white hover:bg-pitch focus-visible:outline-free-line sm:right-3 lg:right-6">
         <ArrowRight size={19} aria-hidden="true" />
       </button>
-      <button type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? 'Tiếp tục chuyển ảnh' : 'Dừng chuyển ảnh'} aria-pressed={paused}
-        className="absolute bottom-3 right-3 z-20 inline-flex min-h-11 items-center gap-2 rounded-control border border-white/30 bg-pitch px-3 text-xs font-semibold text-white">
-        {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}{paused ? 'Tiếp tục' : 'Dừng chuyển ảnh'}
-      </button>
+      <div className="absolute inset-x-0 bottom-4 z-20 mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-5 sm:px-16 lg:px-20">
+        <div role="group" aria-label="Chọn môn giới thiệu" className="flex gap-1">
+          {SLIDES.map((slide, i) => <button key={slide.key} type="button" onClick={() => select(i)} aria-label={`Xem ${slide.label}`} aria-pressed={i === index}
+            className={`pf-hero-tab relative min-h-11 overflow-hidden rounded-control px-2.5 text-[11px] font-semibold sm:px-4 sm:text-xs ${i === index ? 'bg-card text-pitch' : 'bg-pitch/70 text-free-fill hover:bg-pitch'}`}>
+            {slide.label}
+            {i === index && <span key={`${index}-${paused}`} aria-hidden="true" className="pf-hero-progress absolute inset-x-0 bottom-0 h-0.5 origin-left bg-free-line" />}
+          </button>)}
+        </div>
+        <button type="button" onClick={() => { remaining.current = INTERVAL; setPaused(value => !value); }} aria-label={paused ? 'Tiếp tục chuyển ảnh' : 'Dừng chuyển ảnh'} aria-pressed={paused}
+          className="inline-flex min-h-11 items-center gap-2 rounded-control border border-white/30 bg-pitch px-3 text-xs font-semibold text-white">
+          {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}<span className="hidden sm:inline">{paused ? 'Tiếp tục' : 'Dừng chuyển ảnh'}</span>
+        </button>
+      </div>
     </div>
   );
 }

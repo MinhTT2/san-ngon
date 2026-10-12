@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { QueryError } from '@/components/query-error';
 import { HeroCarousel } from '@/components/hero-carousel';
+import { PlaygroundDiscovery } from '@/components/playground-discovery';
 import { AmbientVideo } from '@/components/ambient-video';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
 import { Reveal } from '@/components/reveal';
@@ -78,6 +79,7 @@ export default async function Page() {
           <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} />
         </Reveal>
       ) : null}
+      <PlaygroundDiscovery />
       <HowItWorks />
       <Reveal><WhyDeposit /></Reveal>
       <Reveal><ForOwners /></Reveal>

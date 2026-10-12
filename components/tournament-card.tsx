@@ -13,7 +13,7 @@ export function TournamentCard({ tournament: t, layout, mode }: { tournament: To
   const state = tournamentLabel(t);
   const live = state === 'Đang diễn ra';
   const date = ymd(new Date(t.starts_at));
-  return <li className="pf-tournament-card pf-card group flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-hairline bg-card" data-layout={layout}>
+  return <li data-depth={mode !== 'admin' ? '' : undefined} className={`${mode !== 'admin' ? 'pf-depth-card ' : ''}pf-tournament-card pf-card group flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-hairline bg-card`} data-layout={layout}>
     <Link href={`/giai-dau/${t.id}`} className="pf-tournament-link flex min-w-0 flex-1 flex-col">
       <div className="pf-tournament-media relative shrink-0">
         <TournamentCover path={t.cover_path} title={t.title} sport={t.sport} venueImages={t.courts?.venues?.images ?? []} venueName={t.courts?.venues?.name ?? ''} fallback className="pf-tournament-cover aspect-[16/9]" />

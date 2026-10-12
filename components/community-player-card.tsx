@@ -7,7 +7,7 @@ import { SportGlyph } from './sport-glyph';
 
 export function CommunityPlayerCard({ profile: p }: { profile: CommunityProfile }) {
   const tint = p.sport === 'badminton' ? 'bg-story-lilac' : p.sport === 'pickleball' ? 'bg-story-teal' : 'bg-free-fill';
-  return <li className="pf-player-card pf-card group min-w-0 overflow-hidden rounded-[20px] border border-hairline bg-card">
+  return <li data-depth="" className="pf-depth-card pf-player-card pf-card group min-w-0 overflow-hidden rounded-[20px] border border-hairline bg-card">
     <Link href={`/ket-noi/${p.user_id}`} className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-3">
         <span className="text-xs font-medium text-ink-secondary">{SPORT_LABELS[p.sport] ?? p.sport}</span>
