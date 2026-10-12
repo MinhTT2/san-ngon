@@ -886,20 +886,17 @@ export type Database = {
       }
       bookings: {
         Row: {
-          court_name_snapshot: string | null
-          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
-          venue_name_snapshot: string | null
-          venue_address_snapshot: string | null
-          venue_district_snapshot: string | null
-          venue_city_snapshot: string | null
-          details_recorded_at: string | null
+          cancel_window_hours: number
+          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
+          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
+          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
@@ -910,27 +907,31 @@ export type Database = {
           payment_bank: string | null
           payment_connection_id: string | null
           payment_owner_id: string | null
+          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days: number | null
+          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
+          venue_address_snapshot: string | null
+          venue_city_snapshot: string | null
+          venue_district_snapshot: string | null
+          venue_name_snapshot: string | null
         }
         Insert: {
-          court_name_snapshot?: string | null
-          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
-          venue_name_snapshot?: string | null
-          venue_address_snapshot?: string | null
-          venue_district_snapshot?: string | null
-          venue_city_snapshot?: string | null
-          details_recorded_at?: string | null
+          cancel_window_hours?: number
+          cancellation_policy_version?: string
           cancelled_at?: string | null
           code: string
           court_id: string
+          court_name_snapshot?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone: string
           deposit_amount: number
+          details_recorded_at?: string | null
           ends_at: string
           expires_at?: string
           id?: string
@@ -941,27 +942,31 @@ export type Database = {
           payment_bank?: string | null
           payment_connection_id?: string | null
           payment_owner_id?: string | null
+          policy_recorded_at?: string
           refund_status?: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days?: number | null
+          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
+          venue_address_snapshot?: string | null
+          venue_city_snapshot?: string | null
+          venue_district_snapshot?: string | null
+          venue_name_snapshot?: string | null
         }
         Update: {
-          court_name_snapshot?: string | null
-          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
-          venue_name_snapshot?: string | null
-          venue_address_snapshot?: string | null
-          venue_district_snapshot?: string | null
-          venue_city_snapshot?: string | null
-          details_recorded_at?: string | null
+          cancel_window_hours?: number
+          cancellation_policy_version?: string
           cancelled_at?: string | null
           code?: string
           court_id?: string
+          court_name_snapshot?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string
           deposit_amount?: number
+          details_recorded_at?: string | null
           ends_at?: string
           expires_at?: string
           id?: string
@@ -972,11 +977,18 @@ export type Database = {
           payment_bank?: string | null
           payment_connection_id?: string | null
           payment_owner_id?: string | null
+          policy_recorded_at?: string
           refund_status?: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days?: number | null
+          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
           starts_at?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_amount?: number
           user_id?: string
+          venue_address_snapshot?: string | null
+          venue_city_snapshot?: string | null
+          venue_district_snapshot?: string | null
+          venue_name_snapshot?: string | null
         }
         Relationships: [
           {
@@ -1779,23 +1791,39 @@ export type Database = {
       cancel_booking: {
         Args: { p_code: string; p_pending_only?: boolean }
         Returns: {
+          cancel_window_hours: number
+          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
+          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
+          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
           note: string | null
           paid_at: string | null
+          payment_account: string | null
+          payment_account_name: string | null
+          payment_bank: string | null
+          payment_connection_id: string | null
+          payment_owner_id: string | null
+          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days: number | null
+          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
+          venue_address_snapshot: string | null
+          venue_city_snapshot: string | null
+          venue_district_snapshot: string | null
+          venue_name_snapshot: string | null
         }
         SetofOptions: {
           from: "*"

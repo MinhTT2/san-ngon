@@ -8,7 +8,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
 
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, code, starts_at, ends_at, total_amount, deposit_amount, status, expires_at, payment_bank, payment_account, payment_account_name, court_name_snapshot, venue_name_snapshot, venue_address_snapshot, courts(name, venues(name, address))')
+    .select('id, code, starts_at, ends_at, total_amount, deposit_amount, status, expires_at, cancel_window_hours, refund_working_days, cancellation_policy_version, payment_bank, payment_account, payment_account_name, court_name_snapshot, venue_name_snapshot, venue_address_snapshot, courts(name, venues(name, address))')
     .eq('code', code)
     .single();
 
@@ -18,6 +18,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
 
   return (
     <PaymentPanel
+      policy={{ cancel_window_hours: booking.cancel_window_hours, refund_working_days: booking.refund_working_days, cancellation_policy_version: booking.cancellation_policy_version }}
       bookingId={booking.id}
       bank={booking.payment_bank ?? ''}
       account={booking.payment_account ?? ''}

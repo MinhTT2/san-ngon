@@ -112,3 +112,10 @@ export type VenueCalendar = {
   date: string;
   days: { date: string; weekday: number }[];
 };
+
+/** Immutable ordinary-booking policy, computed/stored only by SQL. */
+export type BookingPolicy = {
+  cancel_window_hours: number;
+  refund_working_days: number | null;
+  cancellation_policy_version: string;
+};

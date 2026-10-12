@@ -10,12 +10,14 @@ import { CancelBookingButton } from '@/components/cancel-booking-button';
 import { StatusBadge } from '@/components/status-badge';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
-import { CANCEL_WINDOW_HOURS, HOLD_MINUTES, SPORT_LABELS } from '@/lib/constants';
-import type { Booking } from '@/lib/types';
+import { HOLD_MINUTES, SPORT_LABELS } from '@/lib/constants';
+import { BookingPolicySummary } from '@/components/booking-policy-summary';
+import type { Booking, BookingPolicy } from '@/lib/types';
 import { useQueryControls } from '@/lib/use-query-controls';
 import { CopyButton } from '@/components/copy-button';
 
-export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 'status' | 'total_amount' | 'deposit_amount' | 'expires_at' | 'paid_at' | 'refund_status'> & {
+export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 'status' | 'total_amount' | 'deposit_amount' | 'expires_at' | 'paid_at' | 'refund_status'> & BookingPolicy & {
+  cancel_refund_deadline: string;
   courts: { name: string; sport: string; venues: { name: string; district: string; slug: string; status: string } | null } | null;
 };
 
@@ -217,8 +219,9 @@ export function BookingList({ bookings, userId, initialNow, failed = false, summ
                     <td className="col-span-2 block lg:table-cell lg:px-4 lg:py-6">
                       <div className="flex flex-wrap items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
                         <Link href={`/dat-san/${b.code}`} className={`inline-flex min-h-11 items-center justify-center rounded-control px-3 text-center text-xs font-semibold ${b.pending ? 'bg-pitch text-pitch-ink hover:bg-pitch/90' : 'border border-hairline text-pitch hover:bg-sunk'}`}>{b.pending ? 'Tiếp tục thanh toán' : 'Xem chi tiết'}</Link>
-                        {b.active && <CancelBookingButton code={b.code} pending={b.pending} refundable={b.status === 'confirmed' && Date.parse(b.starts_at) - now >= CANCEL_WINDOW_HOURS * 3600_000} className="min-h-11 lg:min-h-0" />}
+                        {b.active && <CancelBookingButton code={b.code} pending={b.pending} refundable={b.status === 'confirmed' && Date.parse(b.cancel_refund_deadline) >= now} className="min-h-11 lg:min-h-0" />}
                         <details className="w-full text-xs"><summary className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Các thao tác khác</summary><div className="flex flex-col items-start gap-1">
+                          <details className="w-full"><summary className="inline-flex min-h-11 cursor-pointer items-center font-semibold text-pitch">Chính sách của đơn</summary><BookingPolicySummary policy={b} /></details>
                           {b.courts?.venues?.status === 'active' && <Link href={`/san/${b.courts.venues.slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Đặt lại sân này</Link>}
                           {(b.status === 'confirmed' || b.status === 'completed') && <><a href={`/api/bookings/${b.code}/calendar`} className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tải lịch buổi chơi</a><p className="text-xs leading-5 text-ink-secondary">Lịch đã tải không tự cập nhật khi hủy đơn.</p></>}
                           <Link href={'/ho-tro-giao-dich?code='+b.code} className="inline-flex min-h-11 items-center text-sm text-ink-secondary underline">Cần hỗ trợ đơn này?</Link>
