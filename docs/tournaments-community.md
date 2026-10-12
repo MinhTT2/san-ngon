@@ -59,20 +59,26 @@ Bộ lọc thống kê giữ tham số `venue` khi thêm `period`. `get_owner_pe
 Admin có nút **Xóa giải đấu** tại `/admin/giai-dau` và mục Tổng quan của
 trang chi tiết. Xác nhận sẽ xóa vĩnh viễn giải và đăng ký, mở lại lịch sân;
 thông báo cũ được giữ nhưng bỏ liên kết, người tổ chức/chủ sân/người đăng ký
-nhận thông báo xóa. RPC `delete_tournament` kiểm tra admin còn hoạt động
-và khóa dòng giải trong SQL. Không xóa giải đã cấp thông tin chuyển cọc
+nhận thông báo xóa. RPC `delete_tournament` kiểm tra tài khoản còn hoạt động
+và khóa dòng giải trong SQL. Admin được xóa mọi giải, kể cả đã có thông tin
+tài chính; xóa cả giao dịch cọc và quyết toán của giải. Sổ giao dịch ngân hàng
+`incoming_transfers` và khóa chống nhận tiền lặp `sepay_transfer_claims` vẫn giữ.
+Xóa không tự chuyển hoàn tiền; hộp xác nhận nhắc admin đối soát trước khi xóa.
+Chủ sân được xóa giải do mình quản lý hoặc tại sân của mình, nhưng không xóa giải đã cấp thông tin chuyển cọc
 (kể cả suất đã hủy/hết hạn), có giao dịch, thu/hoàn phần còn lại, quyết toán
 hoặc thỏa thuận tiền thuê lớn hơn 0: giữ mã chuyển tiền để đối soát giao dịch
 muộn và dùng luồng hủy/hoàn hiện có. Sổ thuê chưa chốt số tiền cũng được giữ
-để admin kiểm tra nghĩa vụ trước khi xử lý. Kiểm tra bằng
+để kiểm tra nghĩa vụ trước khi xử lý. Người chơi, kể cả người đề xuất quản lý
+giải, không được xóa vĩnh viễn. Kiểm tra bằng
 `npx supabase db query --linked --file scripts/check-admin-delete-tournament.sql`;
 dữ liệu thử luôn rollback.
 
 Kiểm tra nút xóa trên bản production local bằng
 `RUN_TOURNAMENT_E2E=1 node scripts/check-admin-delete-tournament.mjs http://localhost:3126`.
-Script dùng Chromium headless và ba phiên riêng, tạo rồi dọn tài khoản/giải
-thử; kiểm tra xóa từ danh sách/chi tiết, bỏ xác nhận, lỗi đối soát, quyền
-người chơi/chủ sân, kiểm tra origin và bố cục 390/1440 px. Có thể đặt
+Script dùng Chromium headless và bốn phiên riêng, tạo rồi dọn tài khoản/giải
+thử; kiểm tra admin xóa từ danh sách/chi tiết kể cả có tiền, chủ sân bị chặn
+khi có tài chính và xóa được khi chưa có, bỏ xác nhận, quyền người chơi/chủ
+sân khác, kiểm tra origin và bố cục 390/1440 px. Có thể đặt
 `CHROMIUM_EXECUTABLE`/`PLAYWRIGHT_MODULE` khi trình duyệt nằm ngoài repo.
 
 ```sh

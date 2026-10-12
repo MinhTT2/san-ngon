@@ -13,8 +13,9 @@ const project = (await readFile('supabase/.temp/project-ref', 'utf8')).trim();
 assert.equal(new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname, `${project}.supabase.co`);
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const run = randomUUID().slice(0, 8), password = randomBytes(24).toString('hex');
-const users = Object.fromEntries(['admin', 'owner', 'player'].map(role => [role, { id: randomUUID(), email: `delete-${run}-${role}@example.invalid` }]));
-const pending = randomUUID(), published = randomUUID(), guarded = randomUUID(), venue = randomUUID(), court = randomUUID();
+const users = Object.fromEntries(['admin', 'owner', 'otherOwner', 'player'].map(role => [role, { id: randomUUID(), email: `delete-${run}-${role}@example.invalid` }]));
+const pending = randomUUID(), published = randomUUID(), guarded = randomUUID(), ownerAllowed = randomUUID(), venue = randomUUID(), court = randomUUID();
+const registration = randomUUID(), transaction = `delete-test:${run}`, paymentCode = `GIAI${randomBytes(6).toString('hex').toUpperCase()}`;
 const quote = value => `'${String(value).replaceAll("'", "''")}'`;
 const execute = promisify(execFile);
 async function sql(query) {
@@ -37,16 +38,24 @@ try {
     values ${Object.values(users).map(user => `(gen_random_uuid(),${quote(user.id)},${quote(user.id)},${quote(JSON.stringify({ sub: user.id, email: user.email, email_verified: true }))},'email',now(),now())`).join(',')};
     update profiles set role='admin' where id=${quote(users.admin.id)};
     update profiles set role='owner',owner_application_status='active' where id=${quote(users.owner.id)};
+    update profiles set role='owner',owner_application_status='active' where id=${quote(users.otherOwner.id)};
     insert into venues(id,owner_id,name,slug,address,district,open_time,close_time)
     values(${quote(venue)},${quote(users.owner.id)},'Sân kiểm tra xóa giải',${quote(`delete-${run}`)},'Địa chỉ kiểm tra Hà Nội','Cầu Giấy','06:00','23:00');
     insert into courts(id,venue_id,name,sport) values(${quote(court)},${quote(venue)},'Sân thử','badminton');
     insert into tournaments(id,manager_id,court_id,title,description,sport,address,starts_at,ends_at,registration_deadline,payment_deadline,capacity,entry_fee,deposit_amount,status)
-    values ${[[pending, 'pending', 10], [published, 'published', 11], [guarded, 'published', 12]].map(([id, status, days]) => `(${quote(id)},${quote(users.owner.id)},${quote(court)},${quote(`Giải test xóa ${run} ${status} ${days}`)},'Thể lệ kiểm tra đủ dài','badminton','Địa chỉ kiểm tra Hà Nội',now()+interval '${days} days',now()+interval '${days} days 2 hours',now()+interval '9 days',now()+interval '10 days',10,0,0,${quote(status)})`).join(',')};
+    values ${[[pending, 'pending', 10], [published, 'published', 11], [guarded, 'published', 12], [ownerAllowed, 'published', 13]].map(([id, status, days]) => `(${quote(id)},${quote(users.owner.id)},${quote(court)},${quote(`Giải test xóa ${run} ${status} ${days}`)},'Thể lệ kiểm tra đủ dài','badminton','Địa chỉ kiểm tra Hà Nội',now()+interval '${days} days',now()+interval '${days} days 2 hours',now()+interval '9 days',now()+interval '10 days',10,0,0,${quote(status)})`).join(',')};
+    update tournaments set manager_id=${quote(users.player.id)} where id=${quote(pending)};
     insert into court_closures(court_id,starts_at,ends_at,reason,tournament_id)
-    select court_id,starts_at,ends_at,'Giải đấu test',id from tournaments where id in (${quote(published)},${quote(guarded)});
+    select court_id,starts_at,ends_at,'Giải đấu test',id from tournaments where id in (${quote(published)},${quote(guarded)},${quote(ownerAllowed)});
     insert into tournament_settlements(tournament_id,owner_id,venue_fee,agreed_at,due_at)
     select id,manager_id,case when id=${quote(guarded)} then 10000 else 0 end,now(),ends_at+interval '7 days'
-    from tournaments where id in (${quote(published)},${quote(guarded)});
+    from tournaments where id in (${quote(published)},${quote(guarded)},${quote(ownerAllowed)});
+    insert into tournament_registrations(id,tournament_id,user_id,full_name,phone,address,entry_fee,deposit_amount,code,bank,account_number,paid_at)
+    values(${quote(registration)},${quote(guarded)},${quote(users.player.id)},'Người chơi test','0900000003','Hà Nội',200000,100000,${quote(paymentCode)},'TestBank','12345678',now());
+    insert into tournament_payment_events(transaction_key,registration_id,amount,raw,outcome)
+    values(${quote(transaction)},${quote(registration)},100000,'{}','paid');
+    insert into tournament_transfers(tournament_id,amount,receipt,recorded_by)
+    values(${quote(guarded)},10000,'Chứng từ thử',${quote(users.owner.id)});
     commit;`);
   for (const [role, user] of Object.entries(users)) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'vi-VN', timezoneId: 'Asia/Ho_Chi_Minh' });
@@ -59,14 +68,26 @@ try {
     pages[role] = await context.newPage();
     pages[role].on('pageerror', error => errors.push(error.message));
   }
-  const { admin, owner, player } = pages;
-  for (const page of [owner, player]) {
+  const { admin, owner, otherOwner, player } = pages;
+  for (const page of [otherOwner, player]) {
     await page.goto(`${origin}/giai-dau/${published}`);
     assert.equal(await page.getByRole('button', { name: 'Xóa giải đấu', exact: true }).count(), 0);
     const response = await page.request.post(`${origin}/api/tournaments`, { headers: { origin }, data: { action: 'delete', id: published } });
     assert.equal(response.status(), 400);
     assert.equal((await response.json()).error, 'Bạn không có quyền thực hiện thao tác này.');
   }
+  await player.goto(`${origin}/giai-dau/${pending}`);
+  assert.equal(await player.getByRole('button', { name: 'Xóa giải đấu', exact: true }).count(), 0, 'Player organizer cannot delete');
+  await owner.goto(`${origin}/giai-dau/${guarded}`);
+  await owner.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await owner.getByRole('dialog').getByText('Giải đã có thông tin chuyển cọc', { exact: false }).waitFor();
+  await owner.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
+  await owner.getByRole('alert').filter({ hasText: 'Cần giữ hồ sơ để đối soát' }).waitFor();
+  await owner.screenshot({ path: `${output}/owner-financial-guard-1440.png`, fullPage: false });
+  await owner.goto(`${origin}/giai-dau/${ownerAllowed}`);
+  await owner.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await owner.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
+  await owner.waitForURL(`${origin}/chu-san/giai-dau`);
   const anonymous = await browser.newContext(); contexts.push(anonymous);
   assert.equal((await anonymous.request.post(`${origin}/api/tournaments`, { headers: { origin }, data: { action: 'delete', id: pending } })).status(), 401);
   assert.equal((await admin.request.post(`${origin}/api/tournaments`, { headers: { origin: 'https://example.invalid' }, data: { action: 'delete', id: pending } })).status(), 403);
@@ -86,9 +107,11 @@ try {
   assert(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await admin.goto(`${origin}/giai-dau/${guarded}`);
   await admin.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
+  await admin.getByRole('dialog').getByText('Admin được xóa vĩnh viễn', { exact: false }).waitFor();
+  await admin.evaluate(async () => { await document.fonts.ready; await Promise.allSettled(document.getAnimations().map(animation => animation.finished)); });
+  await admin.screenshot({ path: `${output}/admin-financial-delete-390.png`, fullPage: false });
   await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
-  await admin.getByRole('alert').filter({ hasText: 'Cần giữ hồ sơ để đối soát' }).waitFor();
-  assert.equal(new URL(admin.url()).pathname, `/giai-dau/${guarded}`);
+  await admin.waitForURL(`${origin}/admin/giai-dau`);
   await admin.goto(`${origin}/giai-dau/${pending}`);
   await admin.getByRole('button', { name: 'Xóa giải đấu', exact: true }).click();
   await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
@@ -102,19 +125,27 @@ try {
   const [state] = await sql(`select
     not exists(select 1 from tournaments where id in (${quote(pending)},${quote(published)})) as deleted,
     not exists(select 1 from court_closures where tournament_id=${quote(published)}) as released,
-    exists(select 1 from tournaments where id=${quote(guarded)}) as preserved;`);
-  assert.deepEqual(state, { deleted: true, released: true, preserved: true });
+    not exists(select 1 from tournaments where id in (${quote(guarded)},${quote(ownerAllowed)})) as financial_and_owner_deleted,
+    not exists(select 1 from tournament_registrations where id=${quote(registration)}) as registrations_deleted,
+    not exists(select 1 from tournament_payment_events where transaction_key=${quote(transaction)}) as payments_deleted,
+    not exists(select 1 from tournament_transfers where tournament_id=${quote(guarded)}) as transfers_deleted,
+    exists(select 1 from sepay_transfer_claims where transaction_key=${quote(transaction)}) as retry_protected;`);
+  assert.deepEqual(state, { deleted: true, released: true, financial_and_owner_deleted: true, registrations_deleted: true, payments_deleted: true, transfers_deleted: true, retry_protected: true });
   assert.equal((await admin.request.get(`${origin}/giai-dau/${pending}`)).status(), 404);
   assert.deepEqual(errors, []);
-  console.log('OK: admin deletion from list/detail, confirmation dismissal, financial guard, player/owner/API permissions, 390/1440px layouts and released court.');
+  console.log('OK: unrestricted admin deletion from list/detail, owner financial guard and allowed deletion, player/other-owner/API permissions, confirmation dismissal, 390/1440px layouts and released court.');
 } finally {
   try {
     await sql(`begin;
-      update tournaments set status='cancelled' where id in (${quote(pending)},${quote(published)},${quote(guarded)});
-      delete from court_closures where tournament_id in (${quote(pending)},${quote(published)},${quote(guarded)});
-      delete from notifications where tournament_id in (${quote(pending)},${quote(published)},${quote(guarded)}) or user_id in (${Object.values(users).map(u => quote(u.id)).join(',')});
-      delete from tournament_settlements where tournament_id in (${quote(pending)},${quote(published)},${quote(guarded)});
-      delete from tournaments where id in (${quote(pending)},${quote(published)},${quote(guarded)});
+      update tournaments set status='cancelled' where id in (${quote(pending)},${quote(published)},${quote(guarded)},${quote(ownerAllowed)});
+      delete from court_closures where tournament_id in (${quote(pending)},${quote(published)},${quote(guarded)},${quote(ownerAllowed)});
+      delete from notifications where tournament_id in (${quote(pending)},${quote(published)},${quote(guarded)},${quote(ownerAllowed)}) or user_id in (${Object.values(users).map(u => quote(u.id)).join(',')});
+      delete from tournament_payment_events where registration_id=${quote(registration)};
+      delete from tournament_transfers where tournament_id=${quote(guarded)};
+      delete from tournament_registrations where id=${quote(registration)};
+      delete from sepay_transfer_claims where transaction_key=${quote(transaction)};
+      delete from tournament_settlements where tournament_id in (${quote(pending)},${quote(published)},${quote(guarded)},${quote(ownerAllowed)});
+      delete from tournaments where id in (${quote(pending)},${quote(published)},${quote(guarded)},${quote(ownerAllowed)});
       delete from courts where id=${quote(court)};
       delete from venues where id=${quote(venue)};
       delete from auth.users where id in (${Object.values(users).map(u => quote(u.id)).join(',')});
