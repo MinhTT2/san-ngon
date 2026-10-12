@@ -257,6 +257,7 @@ export type Database = {
           receipt_path: string | null
           category: string
           created_at: string
+          deleted_booking_code: string | null
           handled_by: string | null
           id: string
           message: string
@@ -272,6 +273,7 @@ export type Database = {
           receipt_path?: string | null
           category: string
           created_at?: string
+          deleted_booking_code?: string | null
           handled_by?: string | null
           id: string
           message: string
@@ -287,6 +289,7 @@ export type Database = {
           receipt_path?: string | null
           category?: string
           created_at?: string
+          deleted_booking_code?: string | null
           handled_by?: string | null
           id?: string
           message?: string

@@ -95,14 +95,22 @@ try {
     assert.equal(rows[0].count, 0);
     console.log(`OK: ${fixture.width}px confirmation, deletion and list refresh.`);
   }
-  const protectedButton = admin.getByRole('button', { name: `Xóa sân: ${blocked.name}`, exact: true });
-  await protectedButton.click();
+  const historyButton = admin.getByRole('button', { name: `Xóa sân: ${blocked.name}`, exact: true });
+  await historyButton.click();
+  await admin.getByRole('dialog').getByText(/kể cả đã có thanh toán/).waitFor();
+  await admin.waitForFunction(() => {
+    const panel = document.querySelector('[data-modal-panel]');
+    return panel && getComputedStyle(panel).opacity === '1';
+  });
+  await admin.screenshot({ path: `${screenshots}/history-confirmation-390.png`, fullPage: true });
+  const historyDeleted = admin.waitForResponse(response => response.url().endsWith(`/api/admin/venues/${blocked.venue}`) && response.request().method() === 'DELETE');
   await admin.getByRole('dialog').getByRole('button', { name: 'Xác nhận xóa', exact: true }).click();
-  await admin.getByRole('alert').filter({ hasText: 'Không thể xóa cụm sân đã có đơn đặt' }).waitFor();
-  assert(await protectedButton.isVisible());
-  await admin.screenshot({ path: `${screenshots}/history-protected-390.png`, fullPage: true });
+  assert.equal((await historyDeleted).status(), 204);
+  await historyButton.waitFor({ state: 'detached' });
+  const remaining = await sql(`select count(*)::int as count from bookings where id=${quote(blocked.booking)};`);
+  assert.equal(remaining[0].count, 0);
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  console.log('OK: booking history is retained and the refusal is shown in Vietnamese.');
+  console.log('OK: admin can delete a venue with booking history after explicit confirmation.');
 } finally {
   await Promise.all(contexts.map(context => context.close()));
   await browser.close();
