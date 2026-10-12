@@ -5,7 +5,7 @@ import { enterMotion } from '@/lib/motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SceneFootball, SceneBadminton, ScenePickleball } from './pitch-scenes';
-import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 const SLIDES = [
   {
@@ -146,10 +146,6 @@ export function HeroCarousel({ photos = {} }: { photos?: Partial<Record<string, 
             {i === index && <span key={`${index}-${paused}`} aria-hidden="true" className="pf-hero-progress absolute inset-x-0 bottom-0 h-0.5 origin-left bg-free-line" />}
           </button>)}
         </div>
-        <button type="button" onClick={() => { remaining.current = INTERVAL; setPaused(value => !value); }} aria-label={paused ? 'Tiếp tục chuyển ảnh' : 'Dừng chuyển ảnh'} aria-pressed={paused}
-          className="inline-flex min-h-11 items-center gap-2 rounded-control border border-white/30 bg-pitch px-3 text-xs font-semibold text-white">
-          {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}<span className="hidden sm:inline">{paused ? 'Tiếp tục' : 'Dừng chuyển ảnh'}</span>
-        </button>
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ try {
   await page.goto(origin);
   assert.equal(await hero.getByRole('button', { name: /^Xem (Bóng đá|Cầu lông|Pickleball)$/ }).count(), 3, 'All sport tabs remain available');
   assert.equal(await hero.getByText('Ảnh minh họa', { exact: true }).count(), 0);
-  assert.equal(await hero.getByRole('button', { name: /^(Tiếp tục chuyển ảnh|Dừng chuyển ảnh)$/ }).count(), 1, 'Autoplay has an accessible pause/resume control');
+  assert.equal(await hero.getByRole('button', { name: /^(Tiếp tục chuyển ảnh|Dừng chuyển ảnh)$/ }).count(), 0, 'Carousel has no pause/resume button');
   await page.locator('#q').focus(); await page.mouse.move(0, 0);
   await page.waitForFunction(() => document.querySelector('[data-hero-carousel]').dataset.playing === 'true');
   await hero.hover();
@@ -59,7 +59,7 @@ try {
   assert.equal(await hero.locator('[aria-roledescription="slide"][aria-hidden="false"]').getAttribute('aria-label'), '1 / 3 · Bóng đá');
   await page.locator('#q').focus(); await page.mouse.move(0, 0);
   await page.waitForFunction(() => document.querySelector('[data-hero-carousel]').dataset.playing === 'false');
-  console.log('OK: sport tabs and pause control, arrows, wrapping, keyboard, hover/focus pause, manual selection stops autoplay.');
+  console.log('OK: sport tabs, arrows, wrapping, keyboard, hover/focus pause, manual selection stops autoplay without a pause button.');
   await ownerHeading.scrollIntoViewIfNeeded();
   await page.waitForFunction(() => {
     const video = document.querySelector('[data-ambient-scene="court"] video');

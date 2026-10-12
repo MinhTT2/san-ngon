@@ -22,9 +22,9 @@ try{
   const {context,page}=await session(width,{fixture_many_courts:true,fixture_pending_invoice:true});
   try{
    await page.goto(origin+'/');await page.getByRole('heading',{level:1}).waitFor();
-   const search=await page.locator('main form').first().boundingBox(),carousel=await page.getByRole('button',{name:'Dừng chuyển ảnh'}).boundingBox();
-   assert(search.y>carousel.y,'Homepage search follows carousel');
-   await page.getByRole('button',{name:'Dừng chuyển ảnh'}).click();assert.equal(await page.getByRole('button',{name:'Tiếp tục chuyển ảnh'}).getAttribute('aria-pressed'),'true');await fit(page,'Home');
+   const search=await page.locator('main form').first().boundingBox(),carousel=await page.locator('[data-hero-carousel]').boundingBox();
+   assert(search.y>=carousel.y+carousel.height,'Homepage search follows carousel');
+   assert.equal(await page.getByRole('button',{name:/^(Tiếp tục chuyển ảnh|Dừng chuyển ảnh)$/}).count(),0);await fit(page,'Home');
    await shot(page,'home',width);
    await page.goto(origin+'/tim-san?ngay=2026-10-09&gio=10%3A00&phut=120');
    await page.getByRole('heading',{name:'Danh sách sân',exact:true}).waitFor();

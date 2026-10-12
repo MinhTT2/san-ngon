@@ -37,8 +37,8 @@ try {
   await page.setViewportSize({ width: 390, height: 900 });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Homepage fits mobile');
   const pick = await carousel.getByRole('button', { name: 'Xem Pickleball', exact: true }).boundingBox();
-  const pauseHero = await carousel.getByRole('button', { name: 'Tiếp tục chuyển ảnh', exact: true }).boundingBox();
-  assert(pick.x + pick.width <= pauseHero.x || pick.y + pick.height <= pauseHero.y, 'Hero controls never overlap on mobile');
+  assert(pick.x >= 0 && pick.x + pick.width <= 390, 'Sport tabs remain inside the mobile viewport');
+  assert.equal(await carousel.getByRole('button', { name: /^(Tiếp tục chuyển ảnh|Dừng chuyển ảnh)$/ }).count(), 0, 'Carousel has no pause/resume button');
   if (output) await page.screenshot({ path: `${output}/review-home-390.png`, fullPage: true });
   const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } });
   const staticPage = await staticContext.newPage();
