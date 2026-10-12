@@ -21,6 +21,7 @@ import { TournamentCover } from '@/components/tournament-cover';
 import { TournamentShare } from '@/components/tournament-share';
 import { VenueGallery } from '@/components/venue-gallery';
 import { tournamentCoverSrc, venuePhotoSrc } from '@/lib/image-upload';
+import { DEFAULT_SHARE_IMAGE } from '@/lib/public-metadata';
 import { siteUrl } from '@/lib/site-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -33,7 +34,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = `${SPORT_LABELS[data.sport]} · ${dayLabel(new Date(data.starts_at))}. Xem lịch, thể lệ, lệ phí và đăng ký tham gia.`;
   const image = tournamentCoverSrc(data.cover_path) ?? venuePhotoSrc(data.courts?.venues?.images[0]);
   const url = siteUrl(`/giai-dau/${id}`).href;
-  return { title, description, alternates: { canonical: url }, openGraph: { title, description, url, type: 'website', ...(image ? { images: [{ url: image, alt: data.title }] } : {}) } };
+  const images = image ? [{ url: image, alt: data.title }] : [DEFAULT_SHARE_IMAGE];
+  return { title, description, alternates: { canonical: url },
+    openGraph: { title, description, url, type: 'website', locale: 'vi_VN', siteName: 'Sân Ngon', images },
+    twitter: { card: 'summary_large_image', title, description, images },
+  };
 }
 const dateTime = (value: string) => `${dayLabel(new Date(value))} · ${hhmm(value)}`;
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }) {

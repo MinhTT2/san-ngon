@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
+import { publicMetadata } from '@/lib/public-metadata';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import type { CommunityProfile } from '@/lib/community';
@@ -9,7 +10,7 @@ import { ShieldCheck } from 'lucide-react';
 import { CommunityIntro } from '@/components/community-intro';
 import { DiscoveryEmpty } from '@/components/discovery-empty';
 import { fieldClass } from '@/components/form-field';
-export const metadata = { title: 'Kết nối người chơi' };
+export const metadata = publicMetadata('Kết nối người chơi thể thao — Sân Ngon', 'Tìm người chơi cùng môn và khu vực. Liên hệ qua những kênh người chơi tự chọn công khai.', '/ket-noi');
 export default async function Page({ searchParams }: { searchParams: Promise<{ sport?: string; location?: string; page?: string }> }) {
   const params = await searchParams; const sport = Object.hasOwn(SPORT_LABELS,params.sport ?? '') ? params.sport! : '';
   const location = typeof params.location === 'string' ? params.location.slice(0,200) : '';

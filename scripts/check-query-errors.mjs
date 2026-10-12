@@ -39,6 +39,12 @@ try {
       await page.goto(origin + path);
       const alert = page.getByRole('alert').filter({ hasText: title });
       await alert.waitFor();
+      if (role === 'owner' && path === '/chu-san' && ['bookings', 'refunds'].includes(failure)) {
+        const work = page.getByRole('region', { name: 'Việc cần theo dõi', exact: true });
+        const card = work.getByRole('link', { name: failure === 'bookings' ? /Đơn đã xác nhận hôm nay/ : /Cần hoàn tại cụm này/ });
+        assert(await card.getByText('—', { exact: true }).isVisible(), 'Failed reads show unknown counts');
+        assert(await card.getByText('Chưa tải được dữ liệu', { exact: true }).isVisible());
+      }
       for (const text of absent) assert.equal(await page.getByText(text, { exact: true }).count(), 0, `${failure}: no false empty/default content`);
       assert((await page.getByText(retained, { exact: false }).count()) > 0, `${failure}: successful content retained`);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${failure}: no overflow at ${width}`);

@@ -461,3 +461,10 @@ button:disabled,
 @media (prefers-reduced-motion: no-preference) {
   .pf-skeleton { animation: pf-skeleton-pulse 1.6s ease-in-out infinite; }
 }
+
+/* Filters reflow when larger text leaves too little room for native date/time inputs. */
+@media (max-width: 639px) {
+  .pf-search-fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+  .pf-search-fields .col-span-2 { grid-column: 1 / -1; }
+  .pf-slot-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(100px, 6.25rem)), 1fr)); }
+}

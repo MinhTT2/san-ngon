@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { publicMetadata } from '@/lib/public-metadata';
 import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { DISTRICTS } from '@/lib/constants';
@@ -14,6 +15,7 @@ import { LivePageRefresh } from '@/components/live-page-refresh';
 import { CalendarDays, MapPin, Search, SlidersHorizontal, X } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+export const metadata = publicMetadata('Tìm sân thể thao ở Hà Nội — Sân Ngon', 'Tìm sân theo môn, khu vực, ngày và giờ chơi. Xem ảnh, giá và lịch trống trước khi đặt.', '/tim-san');
 
 /**
  * Danh sách sân. ?sport= và ?q= từ thanh tìm kiếm trang chủ lọc thật:

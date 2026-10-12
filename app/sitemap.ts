@@ -23,5 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push(...data.map(venue => ({ url: siteUrl(`/san/${encodeURIComponent(venue.slug)}`).href })));
     if (data.length < 1000) break;
   }
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.from('tournaments').select('id')
+      .in('status', ['published', 'completed']).order('id').range(offset, offset + 999);
+    if (error) throw new Error('Không tải được danh sách giải công khai.');
+    entries.push(...data.map(tournament => ({ url: siteUrl(`/giai-dau/${tournament.id}`).href })));
+    if (data.length < 1000) break;
+  }
   return entries;
 }

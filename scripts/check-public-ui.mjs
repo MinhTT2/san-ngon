@@ -49,6 +49,57 @@ try {
   assert(await active.getByText('Ảnh cụm sân do chủ sân cung cấp · Sân Cầu Giấy', { exact: true }).isVisible());
   assert.deepEqual(thirdPartyFonts, [], 'Fonts are served with the site, including Vietnamese');
   assert(await page.evaluate(() => document.fonts.check('700 20px "Bricolage Grotesque"', 'Sân Ngon') && document.fonts.check('400 16px "Be Vietnam Pro"', 'Đặt sân')));
+  for (const route of ['/', '/tim-san', '/giai-dau', '/ket-noi']) {
+    await page.goto(origin + route);
+    await page.locator('h1').first().waitFor();
+    assert.equal(new URL(await page.locator('link[rel="canonical"]').getAttribute('href')).href, new URL(origin + route).href);
+    assert.equal(await page.locator('meta[property="og:locale"]').getAttribute('content'), 'vi_VN');
+    const preview = await page.locator('meta[property="og:image"]').getAttribute('content');
+    assert.equal(preview, origin + '/media/share-default.png');
+    assert.equal(await page.locator('meta[name="twitter:card"]').getAttribute('content'), 'summary_large_image');
+  }
+  const shareSize = await page.evaluate(async () => {
+    const image = new Image(); image.src = '/media/share-default.png'; await image.decode();
+    return [image.naturalWidth, image.naturalHeight];
+  });
+  assert.deepEqual(shareSize, [1200, 630]);
+  const sitemap = await (await context.request.get(origin + '/sitemap.xml')).text();
+  assert.match(sitemap, /san-cau-giay/);
+  assert.match(sitemap, /eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef/);
+  assert.doesNotMatch(sitemap, /eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee|san-cho-duyet|dat-san|chu-san|admin|ho-so/);
+  console.log('OK: public canonical URLs, Vietnamese share preview and sitemap excludes private/draft records.');
+  await page.setViewportSize({ width: 390, height: 1000 });
+  for (const route of ['/', '/tim-san', '/san/san-cau-giay']) {
+    await page.goto(origin + route); await page.locator('h1').first().waitFor();
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+    await page.evaluate(() => document.fonts.ready);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${route}: readable at 200% text size on mobile`);
+    if (route === '/') {
+      const header = page.locator('header').first();
+      const brand = await header.getByRole('link', { name: 'Sân Ngon', exact: true }).boundingBox();
+      const signIn = await header.getByRole('link', { name: 'Đăng nhập', exact: true }).boundingBox();
+      assert(brand.x + brand.width <= signIn.x || brand.y + brand.height <= signIn.y, 'Large header logo and sign-in do not overlap');
+      const slide = page.locator('[aria-roledescription="slide"][aria-hidden="false"]');
+      const title = await slide.locator('h2').boundingBox();
+      const cta = await slide.locator('a').boundingBox();
+      assert(title.x >= 0 && title.x + title.width <= 391, 'Large hero text is not hidden by overflow');
+      assert(cta.x >= 0 && cta.x + cta.width <= 391, 'Large hero CTA remains in view');
+    }
+    if (route === '/tim-san') {
+      const date = await page.getByLabel('Ngày chơi', { exact: true }).boundingBox();
+      assert(date.width >= 200, 'Native date input has room at 200% text size');
+    }
+    if (route === '/san/san-cau-giay') {
+      await page.getByRole('button', { name: 'Chọn giờ sớm nhất · 10:00', exact: true }).click();
+      assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Selected schedule fits with large text');
+      await page.getByRole('complementary', { name: 'Tóm tắt đặt sân' }).getByRole('button', { name: 'Tiếp tục đặt sân', exact: true }).click();
+      await page.getByLabel('Tên người đặt', { exact: true }).fill('Người chơi kiểm tra chữ lớn');
+      await page.getByLabel('Số điện thoại', { exact: true }).fill('0912345678');
+      assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Booking review fits with large text');
+      assert.equal(await page.getByLabel('Tên người đặt', { exact: true }).inputValue(), 'Người chơi kiểm tra chữ lớn');
+    }
+    if (output) await page.screenshot({ path: `${output}/large-text-${route.replace(/[^a-z0-9]/gi, '-')}-390.png`, fullPage: true });
+  }
   const quiet = await browser.newContext({ javaScriptEnabled: false });
   const fallback = await quiet.newPage();
   await fallback.goto(origin);

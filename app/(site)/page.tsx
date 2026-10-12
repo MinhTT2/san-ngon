@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import { publicMetadata } from '@/lib/public-metadata';
 import Link from 'next/link';
 import { QueryError } from '@/components/query-error';
 import { HeroCarousel, type FeaturedVenuePhoto } from '@/components/hero-carousel';
@@ -14,17 +14,11 @@ import type { Slot } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Sân Ngon — Đặt sân thể thao ở Hà Nội',
-  description:
-    'Tìm sân bóng, cầu lông, pickleball còn chỗ ở Hà Nội. Xem lịch, biết giá, đặt cọc dễ dàng bằng chuyển khoản.',
-  openGraph: {
-    title: 'Tối nay chơi gì? Chọn sân, hẹn bạn, lên đường',
-    description: 'Chọn sân gần bạn, giữ giờ đẹp, cọc 100% qua QR, thanh toán trọn tiền sân khi đặt.',
-    locale: 'vi_VN',
-    type: 'website',
-  },
-};
+export const metadata = publicMetadata(
+  'Sân Ngon — Đặt sân thể thao ở Hà Nội',
+  'Tìm sân bóng, cầu lông, pickleball còn chỗ ở Hà Nội. Xem lịch, biết giá và thanh toán trọn tiền sân khi đặt.',
+  '/',
+);
 
 /** Lưới hero chỉ vừa 2 sân × 6 khung giờ — rộng hơn là chữ bé không đọc được. */
 const HERO_COURTS = 2;
@@ -242,7 +236,7 @@ function ForOwners() {
   return (
     <section className="mx-auto max-w-7xl px-5 pt-16 lg:px-16 lg:pt-24">
       <div className="relative grid min-h-[400px] pb-6 lg:pb-0 overflow-hidden rounded-[28px] bg-pitch lg:min-h-[400px] lg:grid-cols-2">
-        <AmbientVideo />
+        <AmbientVideo scene="court" />
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-pitch via-pitch/80 to-pitch/30" />
         <div className="relative z-10 flex flex-col justify-center p-7 text-white sm:p-10 lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Dành cho chủ sân</p>

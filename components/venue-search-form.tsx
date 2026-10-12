@@ -18,7 +18,7 @@ export function VenueSearchForm({ children, queryKey }: { children: ReactNode; q
     results?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }, [pending, queryKey]);
   return <form action="/tim-san#ket-qua" aria-label="Tìm và lọc sân" aria-busy={pending} data-unsaved-busy={pending}
-    className="relative grid grid-cols-2 gap-3 rounded-[20px] border border-hairline bg-card p-4 sm:p-5 lg:grid-cols-1 lg:gap-4"
+    className="pf-search-fields relative grid grid-cols-2 gap-3 rounded-[20px] border border-hairline bg-card p-4 sm:p-5 lg:grid-cols-1 lg:gap-4"
     onSubmit={event => {
       event.preventDefault();
       if (pending) return;

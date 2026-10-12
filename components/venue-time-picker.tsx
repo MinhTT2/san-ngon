@@ -127,7 +127,7 @@ export function VenueTimePicker({
         <div className="space-y-5">
         {sessions.map(session => <section key={session.key} aria-label={session.label}>
           <div className="mb-2.5 flex items-center justify-between gap-3"><h4 className="text-xs font-semibold text-pitch">{session.label}</h4><span className="text-xs text-ink-secondary">{session.times.filter(time => time.choices.length).length} giờ còn sân</span></div>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="pf-slot-grid grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
           {session.times.map(({ startsAt, choices }) => {
             const best = choices[0];
             const selected = selection?.startsAt === startsAt;
@@ -188,7 +188,7 @@ export function VenueTimePicker({
           </div>
         )}
       </aside>
-      {selection && <section aria-label="Lựa chọn nhanh trên điện thoại" className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-strong bg-card px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] text-pitch lg:hidden"><div className="min-w-0"><p className="mb-1 truncate text-xs font-semibold">{selection.courtName}</p><p className="text-xs font-semibold tabular-nums">{hhmm(selection.startsAt)}–{hhmm(selection.endsAt)} · {duration} phút</p><p className="mt-1 font-display text-lg font-bold tabular-nums">{vnd(selection.total)}</p></div><button type="button" onClick={onConfirm} className="min-h-11 shrink-0 rounded-control bg-pitch px-3 text-sm font-semibold text-pitch-ink">Tiếp tục →</button></section>}
+      {selection && <section aria-label="Lựa chọn nhanh trên điện thoại" className="fixed inset-x-0 bottom-0 z-30 flex flex-wrap items-center justify-between gap-3 border-t border-strong bg-card px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] text-pitch lg:hidden"><div className="min-w-0 flex-1 basis-32"><p className="mb-1 truncate text-xs font-semibold">{selection.courtName}</p><p className="text-xs font-semibold tabular-nums">{hhmm(selection.startsAt)}–{hhmm(selection.endsAt)} · {duration} phút</p><p className="mt-1 font-display text-lg font-bold tabular-nums">{vnd(selection.total)}</p></div><button type="button" onClick={onConfirm} className="min-h-11 shrink-0 rounded-control bg-pitch px-3 text-sm font-semibold text-pitch-ink">Tiếp tục →</button></section>}
     </div>
   );
 }

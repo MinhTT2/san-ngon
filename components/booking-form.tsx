@@ -132,8 +132,8 @@ export function BookingForm({
       </ol>
       <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-secondary">Bước 2 · Thông tin đặt sân</p><h2 className="mt-2 font-display text-xl font-bold text-pitch">Kiểm tra trước khi giữ chỗ</h2></div>
       <div className="flex flex-col gap-3 rounded-control border border-hairline bg-page p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-1">
             <span className="font-display text-lg font-extrabold text-pitch">{selection.courtName}</span>
             <span className="text-sm font-semibold text-pitch">{dayLabel(new Date(selection.startsAt))}</span>
             <span className="text-sm text-ink-secondary">
@@ -221,7 +221,7 @@ export function BookingForm({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between">
+    <div className="flex flex-wrap justify-between gap-2">
       <span className="text-ink-secondary">{label}</span>
       <span className="font-semibold">{value}</span>
     </div>

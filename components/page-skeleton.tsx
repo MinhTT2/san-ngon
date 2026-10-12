@@ -15,15 +15,11 @@ export function ScheduleSkeleton() {
   </div>;
 }
 
-export function PageSkeleton({ kind }: { kind: 'discovery' | 'venue' | 'dashboard' }) {
+export function PageSkeleton({ kind }: { kind: 'venue' | 'dashboard' }) {
   return <main role="status" aria-label="Đang tải nội dung" aria-busy="true" className="mx-auto max-w-7xl px-5 py-8 lg:px-12">
-    <span className="sr-only">Đang tải {kind === 'discovery' ? 'danh sách sân' : kind === 'venue' ? 'thông tin và lịch sân' : 'tổng quan sân'}…</span>
+    <span className="sr-only">Đang tải {kind === 'venue' ? 'thông tin và lịch sân' : 'tổng quan sân'}…</span>
     <Bone className="h-4 w-36" /><Bone className="mt-4 h-12 w-96 max-w-full" /><Bone className="mt-4 h-5 w-[28rem] max-w-full" />
     {kind === 'venue' ? <><Bone className="my-6 aspect-[16/7] w-full" /><ScheduleSkeleton /></>
-      : kind === 'discovery' ? <div className="mt-8 grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <div className="grid grid-cols-2 gap-4 rounded-card border border-hairline bg-card p-5 lg:grid-cols-1">{Array.from({ length: 6 }, (_, i) => <Bone key={i} className="h-12" />)}</div>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, i) => <div key={i} className="overflow-hidden rounded-card border border-hairline bg-card"><Bone className="aspect-[16/10] rounded-none" /><div className="p-5"><Bone className="h-6" /><Bone className="mt-4 h-4 w-3/4" /><Bone className="mt-6 h-11" /></div></div>)}</div>
-        </div>
       : <><div className="my-8 grid gap-4 sm:grid-cols-3">{Array.from({ length: 3 }, (_, i) => <Bone key={i} className="h-28" />)}</div><Bone className="h-64 w-full" /><Bone className="mt-6 h-80 w-full" /></>}
   </main>;
 }
