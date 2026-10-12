@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
   const entries: MetadataRoute.Sitemap = [
-    '/', '/tim-san', '/giai-dau', '/ket-noi', '/lien-he', '/chinh-sach-huy', '/tro-giup',
+    '/', '/tim-san', '/giai-dau', '/ket-noi', '/lien-he', '/chinh-sach-huy', '/tro-giup', '/quyen-rieng-tu', '/dieu-khoan-su-dung',
   ].map(path => ({ url: siteUrl(path).href }));
 
   for (let offset = 0; ; offset += 1000) {

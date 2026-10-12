@@ -111,6 +111,21 @@ const server = createServer(async (req, res) => {
       if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
       send(adminBookingFixture(args,bookings,people[1],ownerHistory,includeRefund));return;
     }
+    if (name === 'get_incoming_transfer_page') {
+      let rows = Array.from({ length: 41 }, (_, i) => ({
+        id: `f1030000-0000-4000-8000-${String(i+1).padStart(12,'0')}`, bank:'mbbank',account_number:'1234567890',bank_tx_id:String(970001+i),
+        amount:i===0 ? 60000 : 100000, ref_codes:i===0 ? ['SANABC234'] : i===1 ? ['SANDEF567','PHIABCDEF12'] : [],
+        booking_id:i===0 ? 'booking-1' : null,source:i===0 ? 'booking' : 'unknown',expected_amount:i===0 ? 100000 : null,
+        outcome:i===0 ? 'underpaid' : i===1 ? 'ambiguous' : i===2 ? 'exact' : 'unmatched',reason:'FIXTURE',needs_review:i!==2,
+        payload_conflicts:i===3 ? 1 : 0,created_at:created,updated_at:created,booking_received:i===0 ? 160000 : null,
+        notes:i===0 ? [{ note:'Đã kiểm tra sao kê, chờ liên hệ người gửi.',created_at:created }] : [],
+      }));
+      const received_amount=rows.reduce((sum,row)=>sum+row.amount,0),review_count=rows.filter(row=>row.needs_review).length;
+      rows=rows.filter(row=>(args.p_filter==='all' || (args.p_filter==='exact' ? !row.needs_review : row.needs_review)) &&
+        (!args.p_query || (row.ref_codes.join(' ')+' '+row.bank_tx_id).includes(args.p_query.toUpperCase())));
+      const total=rows.length,pages=Math.max(1,Math.ceil(total/30)),page=Math.max(1,Math.min(args.p_page||1,pages));
+      send({total,page,pages,received_amount,review_count,rows:rows.slice((page-1)*30,page*30)});return;
+    }
     if (name === 'search_my_bookings') {
       if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
       const now = Date.now();

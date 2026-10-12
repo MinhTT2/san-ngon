@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      incoming_transfer_notes: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          note: string
+          transfer_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id: string
+          note: string
+          transfer_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string
+          transfer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_transfer_notes_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfer_notes_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "incoming_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incoming_transfers: {
+        Row: {
+          account_number: string
+          amount: number
+          bank: string
+          bank_tx_id: string
+          booking_id: string | null
+          connection_id: string | null
+          created_at: string
+          expected_amount: number | null
+          id: string
+          needs_review: boolean
+          outcome: string
+          payload_conflicts: number
+          raw: Json
+          reason: string | null
+          receiver_owner_id: string | null
+          ref_codes: string[]
+          result: Json | null
+          source: string
+          transaction_key: string
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          amount: number
+          bank: string
+          bank_tx_id: string
+          booking_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          needs_review?: boolean
+          outcome?: string
+          payload_conflicts?: number
+          raw: Json
+          reason?: string | null
+          receiver_owner_id?: string | null
+          ref_codes?: string[]
+          result?: Json | null
+          source?: string
+          transaction_key: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          amount?: number
+          bank?: string
+          bank_tx_id?: string
+          booking_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          needs_review?: boolean
+          outcome?: string
+          payload_conflicts?: number
+          raw?: Json
+          reason?: string | null
+          receiver_owner_id?: string | null
+          ref_codes?: string[]
+          result?: Json | null
+          source?: string
+          transaction_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_transfers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfers_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfers_receiver_owner_id_fkey"
+            columns: ["receiver_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       court_closures: {
         Row: {
           court_id: string
@@ -1574,6 +1704,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      process_incoming_transfer: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_codes: string[]
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+        }
+        Returns: Json
+      }
+      get_incoming_transfer_page: {
+        Args: { p_filter?: string; p_page?: number; p_query?: string }
+        Returns: Json
+      }
+      note_incoming_transfer: {
+        Args: {
+          p_id: string
+          p_note: string
+          p_note_id: string
+          p_updated_at: string
+        }
+        Returns: undefined
+      }
       admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       search_my_bookings: {
         Args: {

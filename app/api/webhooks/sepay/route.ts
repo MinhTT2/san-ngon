@@ -10,8 +10,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const IncomingTransfer = z.object({
-  id: z.union([z.number().int().positive().safe(), z.string().regex(/^[1-9]\d*$/)]),
-  gateway: z.string().trim().min(1),
+  id: z.union([z.number().int().positive().safe(), z.string().max(50).regex(/^[1-9]\d*$/)]),
+  gateway: z.string().trim().min(1).max(100),
   accountNumber: z.string().trim().regex(/^\d{6,30}$/),
   transferType: z.literal('in'),
   transferAmount: z.number().int().positive().max(2147483647),
@@ -80,53 +80,16 @@ export async function POST(req: NextRequest) {
   const refCode = bookingCodes[0];
 
   const subscriptionCodes = extractSubscriptionCodes(body);
-  const subscriptionCode = subscriptionCodes[0];
   const tournamentCodes = extractTournamentCodes(body);
-  if (bookingCodes.length + subscriptionCodes.length + tournamentCodes.length > 1) return NextResponse.json({ success: true, skipped: 'ambiguous_ref_code' });
-  if (tournamentCodes[0]) {
-    const { data, error } = await supabase.rpc('confirm_tournament_payment', {
-      p_ref_code: tournamentCodes[0], p_amount: amount, p_bank_tx_id: bankTxId, p_raw: body,
-      p_connection_id: connectionId, p_receiver_bank: body.gateway, p_receiver_account: body.accountNumber,
-    });
-    if (error) {
-      console.error('[sepay] tournament payment failed', error.message);
-      return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
-    }
-    return NextResponse.json({ success: true, reason: data.reason });
-  }
-  if (subscriptionCode) {
-    const { data, error } = await supabase.rpc('confirm_subscription_payment', {
-      p_ref_code: subscriptionCode, p_amount: amount, p_bank_tx_id: bankTxId, p_raw: body,
-      p_connection_id: connectionId, p_receiver_bank: body.gateway, p_receiver_account: body.accountNumber,
-    });
-    if (error) {
-      console.error('[sepay] subscription payment failed', error.message);
-      return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
-    }
-    return NextResponse.json({ success: true, reason: data.reason });
-  }
-
-  if (!refCode) {
-    return NextResponse.json({ success: true, ok: true, skipped: 'no_ref_code' });
-  }
-
-  if (connectionId) {
-    const { error } = await supabase.from('sepay_connections').update({ last_webhook_at: new Date().toISOString() }).eq('id', connectionId);
-    if (error) return NextResponse.json({ success: false, error: 'database_error' }, { status: 500 });
-  }
-  const { data, error } = await supabase.rpc('confirm_payment', {
-    p_ref_code: refCode,
-    p_amount: amount,
-    p_bank_tx_id: bankTxId,
-    p_raw: body,
-    p_connection_id: connectionId,
-    p_receiver_bank: body.gateway,
-    p_receiver_account: body.accountNumber,
+  const { data, error } = await supabase.rpc('process_incoming_transfer', {
+    p_codes: [...bookingCodes, ...subscriptionCodes, ...tournamentCodes],
+    p_amount: amount, p_bank_tx_id: bankTxId, p_raw: body,
+    p_connection_id: connectionId, p_receiver_bank: body.gateway, p_receiver_account: body.accountNumber,
   });
 
   if (error) {
-    console.error('[sepay] confirm_payment lỗi', refCode, error.message);
-    return NextResponse.json({ success: false, ok: false, error: error.message }, { status: 500 });
+    console.error('[sepay] processing failed', error.code ?? 'DATABASE_ERROR');
+    return NextResponse.json({ success: false, ok: false, error: 'database_error' }, { status: 500 });
   }
 
   const result = data as ConfirmPaymentResult;

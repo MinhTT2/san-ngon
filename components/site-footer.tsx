@@ -12,7 +12,7 @@ export function SiteFooter() {
         <nav aria-label="Liên kết cuối trang" className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3">
           <FooterGroup title="Người chơi" links={[["Tìm sân", '/tim-san'], ['Giải đấu', '/giai-dau'], ['Kết nối', '/ket-noi'], ['Đơn của tôi', '/don-cua-toi'], ['Sân yêu thích', '/san-yeu-thich']]} />
           <FooterGroup title="Chủ sân" links={[["Đăng ký chủ sân", '/dang-ky-san'], ['Trang quản lý', '/chu-san'], ['Tài khoản', '/tai-khoan']]} />
-          <FooterGroup title="Hỗ trợ" links={[["Cách đặt sân", '/#cach-hoat-dong'], ['Trung tâm trợ giúp', '/tro-giup'], ['Góp ý / báo lỗi', '/gop-y'], ['Chính sách hủy', '/chinh-sach-huy'], ['Liên hệ', '/lien-he'], ['Nguồn hình ảnh', '/nguon-hinh-anh']]} />
+          <FooterGroup title="Hỗ trợ" links={[["Cách đặt sân", '/#cach-hoat-dong'], ['Trung tâm trợ giúp', '/tro-giup'], ['Góp ý / báo lỗi', '/gop-y'], ['Chính sách hủy', '/chinh-sach-huy'], ['Quyền riêng tư', '/quyen-rieng-tu'], ['Điều khoản sử dụng', '/dieu-khoan-su-dung'], ['Liên hệ', '/lien-he'], ['Nguồn hình ảnh', '/nguon-hinh-anh']]} />
         </nav>
       </div>
       <p className="border-t border-hairline py-5 text-[11px] text-ink-secondary">© 2026 Sân Ngon · Hà Nội</p>

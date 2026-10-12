@@ -28,15 +28,42 @@ npx supabase db query --linked --file scripts/check-booking-holds.sql
 npm run check:ui -- --only=check-booking-policy-browser,check-booking-polish,check-player-booking-search,check-checkout-ux
 ```
 
+## A03 — sổ tiền vào theo tài khoản nhận
+
+- `/chu-san/tien-vao` và `/admin/tien-vao` phân trang 30 giao dịch, tìm mã sân/giải/phí hoặc mã ngân hàng, lọc cần đối soát/đã khớp/tất cả. Số thực nhận tách khỏi cọc/phí theo mã; không gắn nhãn doanh thu hoặc khoản còn phải hoàn.
+- Webhook đã xác thực lưu cả giao dịch không mã, nhiều mã, mã không tồn tại, thiếu/thừa, chuyển thêm và muộn qua `process_incoming_transfer`. RPC gọi các hàm xác nhận hiện tại trong cùng transaction, giữ chống dùng lại giao dịch giữa sân/giải/phí. Hai khoản thiếu không tự cộng để xác nhận; retry không gửi lại thông báo xác nhận.
+- Số tiền, ngân hàng, tài khoản, mã giao dịch, mã nội dung và payload ban đầu được giữ nguyên bằng trigger. Retry đổi số tiền/mã/kết nối chỉ tăng cờ xung đột, không ghi đè giao dịch gốc hoặc tự gán tiền. Giấy tờ/payload/kết quả SQL không nằm trong projection đọc của trình duyệt.
+- Các bảng sổ/ghi chú không mở quyền đọc/ghi trực tiếp cho browser. RPC kiểm tra tài khoản đang hoạt động và người nhận tiền hoặc admin; người đóng phí không được xem sổ của người nhận chỉ vì họ là người trả.
+- Ghi chú 10–1.000 ký tự, lưu người/thời điểm, idempotent theo request UUID, kiểm tra cập nhật đồng thời. Ghi chú không xóa cờ cần đối soát, không phải chứng từ hoàn và không tự gán tiền vào đơn. Mất mạng/lưu lỗi giữ nội dung; bản gửi lại giữ UUID.
+- Backfill chỉ các giao dịch cũ thực sự tồn tại ở sổ sân/giải/phí. Sổ SAN cũ không lưu outcome gốc nên ghi `historical`; không suy đoán đã khớp từ trạng thái đơn hiện nay. Không thể phục hồi những khoản không mã/mơ hồ đã bị bỏ qua trước đây.
+- Luồng checkout vẫn dùng realtime, không thêm polling. Sổ tiền vào tải lại qua phiên người dùng khi quay lại/nối mạng và cơ chế refresh read view; bảng raw không được công khai cho realtime.
+
+Kiểm tra đạt: SQL ứng viên rollback và SQL sau triển khai cho exact/short/two-short/short-then-full/over/duplicate/late/manual/no-code/ambiguous/unknown/conflict, cross-flow claims, OAuth/người nhận khác, giới hạn trang và tìm literal, quyền/ban và notes retry/stale. API mocks kiểm tra auth, SAN/PHI/GIAI, HTTP 200/401/500, che lỗi DB, không gửi thông báo lần hai và note validation. Build production cô lập có lint/typecheck; UI 390/1440 cho sổ và ghi chú đạt. Hồi quy origin, checkout 320–1440 và dashboard đạt. Bài browser đầu chọn nhầm control vì nhãn bọc textarea làm accessible name chứa nội dung; đã tách label/control, chặn nhập trước hydration và chạy lại đạt. Không dùng giao dịch/người nhận thật trong tests.
+
+Migration `20261012000200_incoming_transfer_ledger.sql` đã áp dụng. **A03 đã có sổ nhận và đường đối soát; A10 chứng từ/số thực hoàn chưa hoàn thành.** Sổ này không cung cấp nút “đã giải quyết” thay cho nghiệp vụ hoàn tiền.
+
+```sh
+npx supabase db query --linked --file scripts/check-incoming-transfers.sql
+node scripts/check-incoming-transfer-api.mjs
+npm run check:ui -- --only=check-incoming-transfers-browser,check-policy-pages-browser
+```
+
+## A17 — quyền riêng tư và điều khoản
+
+- Bổ sung `/quyen-rieng-tu` và `/dieu-khoan-su-dung`, liên kết footer/sitemap. Nêu tài khoản/đơn/giấy tờ/giao dịch/chứng từ/giải/Kết nối; ai xem, lựa chọn công khai từng kênh, nhà cung cấp, cookie phiên và hỗ trợ.
+- Hướng dẫn sửa/ẩn ngay trên website và gửi yêu cầu xem/sửa/xóa qua hỗ trợ có phiên hoặc email đã công bố. Không dựng nút xóa dữ liệu tài chính tự động, không hứa một thời hạn lưu/xóa chưa có quy trình. Nêu rõ đối soát/hoàn/tranh chấp còn mở cần được kiểm tra trước khi xử lý dữ liệu.
+- Điều khoản khớp 15 phút giữ chỗ, 100% cọc đơn mới, người nhận theo đơn, hủy sân 2 giờ/giải 24 giờ và phí 299.000đ. Trách nhiệm sân/giải và hoàn thủ công được giải thích riêng.
+- UI 390/1440, anonymous và no-JS, đường hỗ trợ/email và sitemap không thêm route riêng tư: đạt. Nội dung cần người vận hành rà soát và chốt thời hạn giữ dữ liệu thực tế; **A17 chưa phải nghiệm thu vận hành/chính sách hoàn tất**.
+
 ## Bảng công việc còn lại sau rà soát
 
 | Mục | Trạng thái và phần cần làm |
 | --- | --- |
 | A02/A09/A12/A13/A15/A16 | Code đã bàn giao; giữ các kiểm tra hồi quy và biên bản tương ứng. |
 | A04 | Snapshot đã bàn giao đợt này; nghiệm thu trách nhiệm/hoàn tiền thật nằm trong A05/A10. |
-| A03/A10 | Ưu tiên tiếp: sổ tiền vào thiếu/thừa/trùng/muộn/không mã và ghi hoàn với số thực tế, tham chiếu, người/thời điểm. CSV nghĩa vụ và form gửi biên lai hiện có chưa thay hai mục này. |
+| A03/A10 | Sổ tiền vào A03 đã bàn giao. A10 tiếp tục cần ghi hoàn với số thực tế, tham chiếu, người/thời điểm; sổ nhận/CSV nghĩa vụ/biên lai hỗ trợ chưa thay chứng từ hoàn. |
 | A11/A14 | Hàng đợi gửi bền vững, retry/timeout và nhật ký thao tác/cảnh báo cần phát triển; không coi log hoặc inbox hiện tại là đã đủ. |
-| A17/A18 | Trang riêng tư/điều khoản, yêu cầu dữ liệu và báo cáo nội dung công khai/ẩn nội dung có lịch sử cần hoàn thiện. |
+| A17/A18 | Trang riêng tư/điều khoản và đường yêu cầu dữ liệu đã bổ sung; cần chốt quy trình/thời hạn lưu. Báo cáo đối tượng và ẩn nội dung có lịch sử A18 còn mở. |
 | A07 | Runtime đã vá; công cụ phát triển còn advisory phải rà tính tương thích và ghi ngoại lệ. |
 | A23 | SQL test đã có; chưa có môi trường DB thử riêng cho CI, không tự chạy CI lên project thật. |
 | A24/A25 | Chưa có bằng chứng đo p75 hiệu năng và hành trình đủ trên domain thật. Kiểm kê cấu hình trước khi thêm công cụ. |
