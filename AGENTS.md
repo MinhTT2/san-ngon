@@ -223,7 +223,11 @@ Hạn nhận/duyệt đăng ký và hạn thanh toán giải tách riêng; SQL �
 cọc từng suất, mặc định 24 giờ sau duyệt và không vượt hạn cuối của giải.
 Cron `tournament-deadlines` dọn suất hết hạn và hoàn tất giải, nhưng kiểm tra
 quy mô/nhận tiền không phụ thuộc cron. Đăng ký lại tạo bản ghi và mã mới.
-Người đề xuất sửa/gửi lại giải chờ hoặc bị từ chối, không sửa giải công khai.
+Người đề xuất sửa/gửi lại giải chờ hoặc bị từ chối. Giải công khai chưa bắt đầu
+được sửa thông tin, ảnh bìa, quy mô và gia hạn đăng ký. Chủ sân tự tổ chức
+được đổi lịch/sân/môn/lệ phí khi chưa có đăng ký; có đăng ký hoặc admin đã
+bố trí sân thì khóa các mục này. RPC giữ nguyên snapshot từng suất và gửi
+thông báo cập nhật.
 
 Chính sách giải mới đã chốt: tự hủy trước ít nhất 24 giờ hoàn toàn bộ cọc,
 muộn hơn không hoàn; ban tổ chức hủy suất/giải hoàn toàn bộ. Giải cũ giữ

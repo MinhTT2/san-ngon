@@ -53,6 +53,7 @@ export function tournamentValidationErrors(issues: z.ZodIssue[]): Record<string,
   return errors;
 }
 export const tournamentErrorFields: Record<string, string> = {
+  TOURNAMENT_CAPACITY_TOO_SMALL: 'capacity', TOURNAMENT_DEADLINES_LOCKED: 'registration_deadline',
   TOURNAMENT_IMAGE_INVALID: 'cover_path',
   TOURNAMENT_START_PAST: 'starts_at', TOURNAMENT_REGISTRATION_PAST: 'registration_deadline',
   TOURNAMENT_END_INVALID: 'ends_at', TOURNAMENT_PAYMENT_INVALID: 'payment_deadline',
@@ -63,7 +64,10 @@ export function tournamentError(code: string) {
     TOURNAMENT_IMAGE_INVALID: 'Ảnh bìa chưa hợp lệ. Chọn lại ảnh JPG, PNG hoặc WebP tối đa 5 MB của bạn.',
     TERMS_REQUIRED: 'Nhập tiền thuê sân, nội dung thỏa thuận và xác nhận hai bên đã đồng ý.',
     TERMS_ALREADY_FIXED: 'Thỏa thuận đã được chốt, không thể ghi đè.',
-    TOURNAMENT_NOT_EDITABLE: 'Chỉ sửa đề xuất đang chờ hoặc bị từ chối.',
+    TOURNAMENT_NOT_EDITABLE: 'Chỉ sửa đề xuất đang chờ, bị từ chối hoặc giải đã công khai chưa bắt đầu.',
+    TOURNAMENT_DETAILS_LOCKED: 'Lịch, sân, môn và lệ phí đã được chốt khi có đăng ký hoặc admin bố trí sân. Bạn vẫn có thể sửa thông tin, ảnh bìa, quy mô và gia hạn đăng ký.',
+    TOURNAMENT_DEADLINES_LOCKED: 'Chỉ được gia hạn đăng ký và đóng cọc sau khi có đăng ký hoặc admin duyệt. Hạn cọc của từng suất đã duyệt được giữ nguyên.',
+    TOURNAMENT_CAPACITY_TOO_SMALL: 'Quy mô không được thấp hơn tổng số suất đang chờ và đã duyệt. Xử lý các suất trước khi giảm quy mô.',
     TOURNAMENT_NOT_FOUND: 'Giải đấu đã được xóa hoặc không còn tồn tại. Tải lại danh sách giải.',
     TOURNAMENT_HAS_FINANCIAL_HISTORY: 'Giải đã có thông tin chuyển cọc, giao dịch hoặc thỏa thuận tiền thuê. Cần giữ hồ sơ để đối soát; dùng Hủy giải nếu giải còn diễn ra.',
     RECEIPT_REQUIRED: 'Nhập mã giao dịch hoặc ghi chú chứng từ (ít nhất 3 ký tự).',

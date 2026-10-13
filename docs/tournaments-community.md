@@ -9,7 +9,7 @@ bộ hành trình từ tạo giải đến hoàn tiền/quyết toán và cách 
 
 - `/giai-dau`: xem, lọc môn, phân trang, theo dõi các giải đã đề xuất và đăng ký.
 - `/giai-dau/tao`: chủ sân phải chọn sân của mình để công khai ngay, không cần admin duyệt; người chơi mô tả địa điểm mong muốn để admin bố trí và duyệt. Công khai và khóa lịch là một giao dịch SQL, vẫn kiểm tra đúng môn, lịch trống và điều kiện nhận cọc.
-- Tạo/sửa đề xuất có một ảnh bìa tùy chọn, xem trước và bỏ/đổi ảnh. JPG/PNG/WebP tối đa 5 MiB, bucket công khai riêng `tournament-photos`; SQL kiểm tra file của người tổ chức rồi lưu `tournaments.cover_path` cùng giao dịch gửi giải. Ảnh hiện ở danh sách và chi tiết. Không đổi ảnh của giải đã công khai. Storage không cho ghi đè hoặc xóa ảnh còn được giải sử dụng; ảnh cũ chỉ được dọn sau khi sửa giải thành công.
+- Tạo/sửa đề xuất có một ảnh bìa tùy chọn, xem trước và bỏ/đổi ảnh. JPG/PNG/WebP tối đa 5 MiB, bucket công khai riêng `tournament-photos`; SQL kiểm tra file của người tổ chức rồi lưu `tournaments.cover_path` cùng giao dịch gửi giải. Ảnh hiện ở danh sách và chi tiết. Giải đã công khai chưa bắt đầu cũng được đổi ảnh bìa qua RPC có kiểm tra quyền. Storage không cho ghi đè hoặc xóa ảnh còn được giải sử dụng; ảnh cũ chỉ được dọn sau khi sửa giải thành công.
 - `/admin/giai-dau`: admin mở đề xuất, chọn sân đúng môn, duyệt hoặc từ chối kèm lý do. Duyệt khóa lịch sân bằng `court_closures`; không thể duyệt trùng đơn đặt hoặc khung đã khóa. Người đề xuất nhận quyền quản lý giải, không được đổi role tài khoản.
 - `/chu-san/giai-dau`: chủ sân thấy giải ở sân mình và giải mình đề xuất. Trang chi tiết dùng chung cho chủ sân, người tổ chức, admin và người tham gia; SQL quyết định quyền.
 - Mỗi tài khoản đăng ký một suất, có họ tên, điện thoại, địa chỉ, tên đội và ghi chú. Thể lệ ghi rõ suất là một người hay một đội. Duyệt đăng ký giữ suất đến hạn cọc riêng; hết hạn chưa trả tiền sẽ trả suất. Số suất còn hiệu lực không vượt quy mô.
@@ -163,3 +163,16 @@ Không dùng `app/(site)/loading.tsx` bọc toàn bộ website: Next.js 15 có l
 - Chỉ tạo phần tử video/tải file sau khi người dùng bấm xem; có controls, tua/phát lại, đóng/Escape, trả focus và dừng khi ẩn tab. Không tự tải video khi mới vào trang, kể cả mobile/tiết kiệm dữ liệu. Khi lỗi có thử lại và ba bước bằng văn bản; không có JavaScript thì vẫn có liên kết mở video. Không thêm thư viện video/animation vào ứng dụng.
 - Dựng lại video bằng `PLAYWRIGHT_MODULE=/duong-dan/playwright/index.mjs node scripts/generate-tournament-guide.mjs http://localhost:3112` trên app local đang chạy. Dùng canvas/MediaRecorder trong Chromium headless và hai font hiện có; script thêm metadata thời lượng để trình duyệt hiển thị thanh tua 18 giây. Không cần ffmpeg, footage tải về hay dependency runtime mới.
 - Kiểm tra: `PLAYWRIGHT_MODULE=/duong-dan/playwright/index.mjs node scripts/check-tournament-media.mjs http://localhost:3112`. Chỉ đọc dữ liệu công khai, không đăng nhập hoặc đổi ảnh trong database. Kiểm tra tải theo yêu cầu, phát/tua/đóng và phục hồi lỗi video, ảnh sân dự phòng, thư viện ảnh, layout 320–1440px và chế độ giảm chuyển động/không JavaScript.
+
+## Sửa giải sau khi công khai (13/10/2026)
+
+Người tổ chức mở chi tiết giải → **Chỉnh sửa giải đấu** → **Lưu thay đổi**.
+Giải tiếp tục công khai, giữ nguyên ID, đăng ký và hồ sơ quyết toán.
+
+- Trước khi có bất kỳ đăng ký nào, chủ sân tự tổ chức được đổi lịch, sân, môn, lệ phí và cọc. SQL khóa sân, kiểm tra đơn đặt, cập nhật khóa lịch bằng cùng giao dịch; trùng lịch thì giữ toàn bộ thông tin cũ.
+- Có đăng ký (kể cả lịch sử đã hủy) hoặc admin đã bố trí sân: chỉ sửa tên, mô tả/liên hệ, ảnh bìa, quy mô và gia hạn đăng ký/hạn cọc chung. Không rút ngắn hạn đã công bố. Quy mô không thấp hơn tổng suất đang chờ và đã duyệt còn hiệu lực.
+- Snapshot tiền cọc, hạn thanh toán, hạn hoàn và người nhận của từng suất không đổi. Người đang đăng ký và chủ sân nhận thông báo trong inbox khi có cập nhật.
+- Chỉ người tổ chức được sửa, trước giờ bắt đầu; tài khoản khóa và người ngoài không được gọi RPC sửa.
+
+Kiểm tra nghiệp vụ bằng `npx supabase db query --linked --file scripts/check-published-tournament-edit.sql` (fixture được rollback).
+Kiểm tra form và API trên bản production local bằng `RUN_TOURNAMENT_E2E=1 node scripts/check-published-tournament-edit.mjs http://localhost:3138`. Script dùng Chromium headless, phiên riêng và tự dọn tài khoản/giải thử; ảnh desktop/mobile ở `output/published-tournament-edit`.

@@ -9,6 +9,7 @@ const id = z.string().uuid();
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('submit'), data: tournamentSchema }),
   z.object({ action: z.literal('resubmit'), id, data: tournamentSchema }),
+  z.object({ action: z.literal('update'), id, data: tournamentSchema }),
   z.object({ action: z.literal('terms'), id, venue_fee: z.coerce.number().int().min(0).max(100000000), cancellation_venue_fee: z.coerce.number().int().min(0).max(100000000), terms_note: z.string().trim().min(10).max(1000) }),
   z.object({ action: z.literal('balance'), id, refund: approve, receipt: z.string().trim().min(3).max(300) }),
   z.object({ action: z.literal('waive_balance'), id, note: z.string().trim().min(3).max(300) }),
@@ -34,12 +35,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: Object.values(fieldErrors)[0] ?? 'Kiểm tra các trường thông tin đã nhập.', fieldErrors }, { status: 400 });
   }
   const body = parsed.data;
-  const previousCover = body.action === 'resubmit'
+  const previousCover = body.action === 'resubmit' || body.action === 'update'
     ? (await db.from('tournaments').select('cover_path').eq('id', body.id).eq('manager_id', user.id).maybeSingle()).data?.cover_path
     : null;
   const result = body.action === 'submit' ? await db.rpc('submit_tournament', { p_data: body.data })
     : body.action === 'review' ? await db.rpc('review_tournament', { p_id: body.id, p_approve: body.approve, p_court_id: body.court_id, p_note: body.note, p_venue_fee: body.venue_fee, p_cancellation_venue_fee: body.cancellation_venue_fee, p_terms_note: body.terms_note, p_terms_confirmed: body.terms_confirmed })
     : body.action === 'resubmit' ? await db.rpc('resubmit_tournament', { p_id: body.id, p_data: body.data })
+    : body.action === 'update' ? await db.rpc('update_published_tournament', { p_id: body.id, p_data: body.data })
     : body.action === 'terms' ? await db.rpc('set_tournament_terms', { p_id: body.id, p_venue_fee: body.venue_fee, p_cancellation_venue_fee: body.cancellation_venue_fee, p_note: body.terms_note })
     : body.action === 'balance' ? await db.rpc('record_tournament_balance', { p_id: body.id, p_refund: body.refund, p_receipt: body.receipt })
     : body.action === 'waive_balance' ? await db.rpc('waive_tournament_balance', { p_id: body.id, p_note: body.note })
@@ -55,10 +57,10 @@ export async function POST(request: Request) {
     console.warn('Tournament action rejected', { action: body.action, code: result.error.code, reason: /^[A-Z_]+$/.test(result.error.message) ? result.error.message : 'DATABASE_ERROR' });
     const error = tournamentError(result.error.message);
     const field = tournamentErrorFields[result.error.message];
-    return NextResponse.json({ error, fieldErrors: field && ['submit', 'resubmit'].includes(body.action) ? { [field]: error } : {} }, { status: 400 });
+    return NextResponse.json({ error, fieldErrors: field && ['submit', 'resubmit', 'update'].includes(body.action) ? { [field]: error } : {} }, { status: 400 });
   }
   // Chỉ dọn ảnh cũ sau khi SQL lưu thành công; RLS giữ file nếu giải khác còn dùng.
-  if (body.action === 'resubmit' && previousCover && previousCover !== body.data.cover_path) {
+  if ((body.action === 'resubmit' || body.action === 'update') && previousCover && previousCover !== body.data.cover_path) {
     await db.storage.from('tournament-photos').remove([previousCover]).catch(() => {});
   }
   return NextResponse.json({ data: result.data });

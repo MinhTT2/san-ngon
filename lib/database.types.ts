@@ -2401,6 +2401,7 @@ export type Database = {
       }
       process_tournament_deadlines: { Args: never; Returns: undefined }
       get_tournament_proposal: { Args: { p_id: string }; Returns: Json }
+      update_published_tournament: { Args: { p_id: string; p_data: Json }; Returns: string }
       get_tournament_registrations: { Args: { p_id: string }; Returns: Json }
       get_my_tournament_registrations: {
         Args: { p_page?: number }
