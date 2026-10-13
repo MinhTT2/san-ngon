@@ -41,6 +41,7 @@ try {
     insert into courts(id,venue_id,name,sport) values(${quote(court)},${quote(venue)},'Sân thử','badminton');
     insert into tournaments(id,manager_id,court_id,title,description,sport,address,starts_at,ends_at,registration_deadline,payment_deadline,capacity,entry_fee,deposit_amount,status)
     values ${[[ownerTournament, users.owner.id, 10], [playerTournament, users.player.id, 11]].map(([id, manager, days]) => `(${quote(id)},${quote(manager)},${quote(court)},${quote(`Giải sửa thử ${run}`)},'Thể lệ kiểm tra đủ dài và liên hệ ban tổ chức','badminton','Địa chỉ kiểm tra Hà Nội',date_trunc('minute',now()+interval '${days} days'),date_trunc('minute',now()+interval '${days} days 2 hours'),date_trunc('minute',now()+interval '8 days'),date_trunc('minute',now()+interval '9 days'),10,0,0,'published')`).join(',')};
+    update tournaments set cancel_window_hours=0 where id=${quote(playerTournament)};
     insert into court_closures(court_id,starts_at,ends_at,reason,tournament_id)
     select court_id,starts_at,ends_at,'Giải đấu test',id from tournaments where id in (${quote(ownerTournament)},${quote(playerTournament)});
     insert into tournament_settlements(tournament_id,owner_id,venue_fee,agreed_at,due_at)
@@ -94,6 +95,7 @@ try {
   await openEditor(player, playerTournament);
   assert.equal(await player.locator('select[name=court_id]').inputValue(), court);
   assert.equal(await player.locator('input[name=address]').inputValue(), 'Địa chỉ kiểm tra Hà Nội');
+  assert.equal(await player.getByText('Tự hủy trước giờ bắt đầu được hoàn toàn bộ cọc;', { exact: false }).count(), 1, 'editor shows legacy policy');
   await player.setViewportSize({ width: 390, height: 844 });
   assert(await player.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile has no horizontal overflow');
   await player.locator('[name=title]').fill('Người đề xuất sửa giải trên mobile');

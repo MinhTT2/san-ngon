@@ -131,6 +131,7 @@ reset role;
 select set_config('request.jwt.claim.sub','',true);
 update profiles set banned_until=null where id='ef130000-0000-4000-8000-000000000001';
 -- Player-managed published tournaments keep the court and rental agreement fixed.
+update tournaments set cancel_window_hours=0 where id=current_setting('test.edit_id')::uuid;
 update tournaments set manager_id='ef130000-0000-4000-8000-000000000003',cover_path=null where id=current_setting('test.edit_id')::uuid;
 select set_config('request.jwt.claim.sub','ef130000-0000-4000-8000-000000000003',true);
 set local role authenticated;
@@ -138,7 +139,7 @@ do $$ declare tid uuid:=current_setting('test.edit_id')::uuid; data jsonb; begin
  data:=get_tournament_proposal(tid);
  assert not (data->>'can_change_structure')::boolean;
  perform update_published_tournament(tid,data||'{"title":"Người đề xuất sửa thông tin"}'::jsonb);
- assert (select status='published' from tournaments where id=tid);
+ assert (select status='published' and cancel_window_hours=0 from tournaments where id=tid),'legacy policy retained';
 end $$;
 reset role;
 update tournaments set starts_at=now()-interval '1 hour',registration_deadline=now()-interval '2 hours',payment_deadline=now()-interval '1 hour' where id=current_setting('test.edit_id')::uuid;
