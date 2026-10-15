@@ -83,10 +83,12 @@ do $$ declare b bookings; r jsonb; n int:=0; name text; amt int; begin
  assert r->>'reason'='PAYMENT_PAYLOAD_CONFLICT';assert (select amount=100000 and payload_conflicts=1 and needs_review from incoming_transfers where bank_tx_id='910001');
  r:=process_incoming_transfer(array[b.code],100000,'920001','{}',null,b.payment_bank,b.payment_account);
  assert r->>'reason'='ALREADY_CONFIRMED';assert (select outcome='duplicate' from incoming_transfers where bank_tx_id='920001');
+ select count(*) into n from notifications where user_id=b.payment_owner_id;
  r:=process_incoming_transfer('{}',12345,'940001','{}',null,b.payment_bank,b.payment_account);assert r->>'reason'='NO_REF_CODE';
  r:=process_incoming_transfer(array[b.code],12345,'940001','{}',null,b.payment_bank,b.payment_account);assert r->>'reason'='PAYMENT_PAYLOAD_CONFLICT','cannot assign unidentified receipt by replay';
  r:=process_incoming_transfer(array[b.code,'PHIABCDEF12'],12345,'940002','{}',null,b.payment_bank,b.payment_account);assert r->>'reason'='AMBIGUOUS_REF_CODE';
  r:=process_incoming_transfer(array['SANZZZ999'],12345,'940003','{}',null,b.payment_bank,b.payment_account);assert r->>'reason'='REF_NOT_FOUND';
+ assert (select count(*) from notifications where user_id=b.payment_owner_id)=n,'personal, unknown and ambiguous transfers must not notify the owner';
  r:=process_incoming_transfer('{}',0,'940004','{}',null,b.payment_bank,b.payment_account);assert r->>'reason'='INVALID_PAYMENT';
  assert not exists(select 1 from incoming_transfers where bank_tx_id='940004');
  begin update incoming_transfers set amount=1 where bank_tx_id='910001';raise exception 'CHECK_FAILED';exception when others then if sqlerrm<>'RECEIPT_IMMUTABLE' then raise;end if;end;
@@ -129,8 +131,57 @@ do $$ declare r jsonb;begin
  r:=process_incoming_transfer('{}',999,'980002','{}','e1030000-0000-4000-8000-000000000600','MBBank','1234567890');assert r->>'reason'='WRONG_RECEIVER';
  assert not exists(select 1 from incoming_transfers where bank_tx_id='980002');
 end $$;
--- Pagination over 30 rows with tied timestamps, isolated receiver and literal search.
-do $$ declare n int;begin for n in 1..35 loop perform process_incoming_transfer('{}',10,(970000+n)::text,'{}',null,'MBBank','1234567890');end loop;end $$;
+-- Revenue is allocated booking money, not the bank ledger or future playing dates.
+select set_config('request.jwt.claim.sub','e1030000-0000-4000-8000-000000000001',true);
+do $$ declare r jsonb;a jsonb;today date:=(now() at time zone 'Asia/Ho_Chi_Minh')::date;v uuid:='e1030000-0000-4000-8000-000000000010';begin
+ r:=get_owner_stats(v,today,today);
+ assert (r->'summary'->>'revenue')::bigint=400000,'four paid booking deposits, excluding excess/duplicates, late receipts, fees, tournaments and personal transfers';
+ assert (r->'summary'->>'paid_bookings')::int=4;
+ assert (r->'summary'->>'bookings')::int=0,'playing dates remain a separate operational measure';
+ assert (r->'daily'->0->>'revenue')::bigint=400000;
+ assert (select sum((x->>'revenue')::bigint) from jsonb_array_elements(r->'courts') x)=400000,'court revenues sum to summary';
+ assert not (r->'summary' ? 'players'),'owner must not receive platform account counts';
+ perform cancel_booking((select code from ledger_cases where name='exact'));
+ assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'exclude refundable cancellation immediately';
+ perform mark_refund_done((select code from ledger_cases where name='exact'));
+ assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'already refunded is also excluded';
+ update bookings set refund_status='none' where id=(select booking_id from ledger_cases where name='exact');
+ assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=400000,'non-refundable paid cancellation retains deposit';
+ update bookings set status='no_show' where id=(select booking_id from ledger_cases where name='exact');
+ assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=400000,'paid no-show retains deposit';
+ update bookings set paid_at=today::timestamp at time zone 'Asia/Ho_Chi_Minh' where id=(select booking_id from ledger_cases where name='exact');
+ update bookings set paid_at=(today::timestamp at time zone 'Asia/Ho_Chi_Minh')-interval '1 second' where id=(select booking_id from ledger_cases where name='short');
+ assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'Vietnam midnight includes boundary, excludes previous day';
+ update bookings set paid_at=now() where id in(select booking_id from ledger_cases where name in ('exact','short'));
+ update venues set status='draft' where id=v;
+ update courts set is_active=false where venue_id=v;
+ assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=400000,'deactivation cannot erase money';
+ perform set_config('request.jwt.claim.sub','e1030000-0000-4000-8000-000000000004',true);
+ a:=get_admin_stats(today,today);
+ assert (a->'summary'->>'revenue')::bigint >= 400000;
+ assert exists(select 1 from jsonb_array_elements(a->'venues') x where x->>'name'='Booking input rollback' and (x->>'revenue')::bigint=400000),'admin includes inactive venue revenue';
+ assert jsonb_array_length(get_admin_period_stats(7)->'daily')=7;
+ update venues set images=array['rollback/1.webp','rollback/2.webp','rollback/3.webp'],status='active' where id=v;
+ update courts set is_active=true where venue_id=v;
+end $$;
+-- Historical partial deposits count the paid amount, never the full booking price.
+insert into bookings(id,code,court_id,user_id,starts_at,ends_at,total_amount,deposit_amount,status,paid_at,customer_phone)
+values('e1030000-0000-4000-8000-000000000800','SANHST234','e1030000-0000-4000-8000-000000000060','e1030000-0000-4000-8000-000000000003',now()+interval '18 days',now()+interval '18 days 1 hour',100000,30000,'completed',now(),'0900000003');
+insert into payments(booking_id,amount,ref_code,status,paid_at)
+values('e1030000-0000-4000-8000-000000000800',30000,'SANHST234','pending',null);
+select set_config('request.jwt.claim.sub','e1030000-0000-4000-8000-000000000001',true);
+do $$ declare today date:=(now() at time zone 'Asia/Ho_Chi_Minh')::date;begin
+ assert (get_owner_stats('e1030000-0000-4000-8000-000000000010',today,today)->'summary'->>'revenue')::bigint=400000,'booking status and timestamp without paid payment are insufficient';
+ update payments set status='paid',paid_at=now() where booking_id='e1030000-0000-4000-8000-000000000800';
+ assert (get_owner_stats('e1030000-0000-4000-8000-000000000010',today,today)->'summary'->>'revenue')::bigint=430000;
+end $$;
+-- Pagination only includes receipts allocated to actual website orders.
+do $$ declare n int;b bookings;begin
+ select * into b from bookings where id=(select booking_id from ledger_cases where name='over');
+ for n in 1..35 loop perform process_incoming_transfer(array[b.code],10,(970000+n)::text,'{}',null,'MBBank','1234567890');end loop;
+end $$;
+select set_config('test.received_amount',(select sum(amount::bigint)::text from incoming_transfers where receiver_owner_id='e1030000-0000-4000-8000-000000000001' and source in ('booking','tournament','subscription') and expected_amount is not null),true);
+select set_config('test.personal_transfer',(select id::text from incoming_transfers where bank_tx_id='940001'),true);
 select set_config('request.jwt.claim.sub','e1030000-0000-4000-8000-000000000001',true);
 set local role authenticated;
 do $$ declare r jsonb;t jsonb;id uuid;stamp timestamptz;note_id uuid:=gen_random_uuid();begin
@@ -139,7 +190,14 @@ do $$ declare r jsonb;t jsonb;id uuid;stamp timestamptz;note_id uuid:=gen_random
  assert not has_table_privilege('anon','incoming_transfers','SELECT');
  assert not has_table_privilege('authenticated','incoming_transfer_notes','INSERT');
  assert not has_function_privilege('anon','get_incoming_transfer_page(text,text,integer)','EXECUTE');
+ assert not has_function_privilege('authenticated','booking_revenue_entries(uuid,date,date)','EXECUTE');
+ assert not has_function_privilege('authenticated','website_booking_stats(uuid,date,date)','EXECUTE');
  r:=get_incoming_transfer_page('', 'all',1);assert jsonb_array_length(r->'rows')=30 and (r->>'pages')::int>1;
+ assert r->>'received_amount'=current_setting('test.received_amount'),'ledger total excludes personal, ambiguous, unknown and wrong-receiver receipts';
+ assert get_incoming_transfer_page('940001','all',1)->>'total'='0','personal transfers hidden even by exact transaction search';
+ assert get_incoming_transfer_page('940002','all',1)->>'total'='0','ambiguous receipts excluded';
+ assert get_incoming_transfer_page('940003','all',1)->>'total'='0','invented SAN code excluded';
+ begin perform note_incoming_transfer(current_setting('test.personal_transfer')::uuid,gen_random_uuid(),'Cannot annotate a private personal transfer.',now());raise exception 'CHECK_FAILED';exception when others then if sqlerrm<>'TRANSFER_NOT_FOUND' then raise;end if;end;
  assert not (r->'rows'->0 ? 'raw') and not (r->'rows'->0 ? 'result');
  assert not exists(select 1 from jsonb_array_elements(r->'rows') x where x->>'account_number'='9876543210');
  t:=r->'rows'->0;id:=(t->>'id')::uuid;stamp:=(t->>'updated_at')::timestamptz;
@@ -157,14 +215,18 @@ reset role;
 select set_config('request.jwt.claim.sub','e1030000-0000-4000-8000-000000000002',true);
 set local role authenticated;
 do $$ begin
- assert (get_incoming_transfer_page('','all',1)->>'total')::int=1,'other owner sees only their receiver ledger, not payments they made';
- assert get_incoming_transfer_page('','all',1)->'rows'->0->>'bank_tx_id'='980001';
+ assert (get_incoming_transfer_page('','all',1)->>'total')::int=0,'personal transfer hidden from its receiver as well';
+ begin perform get_owner_stats('e1030000-0000-4000-8000-000000000010',current_date,current_date);raise exception 'CHECK_FAILED';exception when insufficient_privilege then null;end;
+ begin perform get_admin_period_stats(30);raise exception 'CHECK_FAILED';exception when insufficient_privilege then null;end;
  begin perform note_incoming_transfer(current_setting('test.transfer')::uuid,gen_random_uuid(),'Unauthorized note attempt.',now());raise exception 'CHECK_FAILED';exception when others then if sqlerrm<>'TRANSFER_NOT_FOUND' then raise;end if;end;
 end $$;
 reset role;
 select set_config('request.jwt.claim.sub','e1030000-0000-4000-8000-000000000004',true);
 set local role authenticated;
-do $$ begin assert (get_incoming_transfer_page('910006','all',1)->>'total')::int=1,'admin sees unmatched receiver';end $$;
+do $$ begin
+ assert (get_incoming_transfer_page('910006','all',1)->>'total')::int=0,'wrong receiver is not website income';
+ assert (get_incoming_transfer_page('940001','all',1)->>'total')::int=0,'admin cannot see personal transfers either';
+end $$;
 reset role;
 update profiles set banned_until='infinity' where id='e1030000-0000-4000-8000-000000000004';
 set local role authenticated;
@@ -172,5 +234,5 @@ do $$ begin
  begin perform get_incoming_transfer_page();raise exception 'CHECK_FAILED';exception when insufficient_privilege then assert sqlerrm='FORBIDDEN';end;
 end $$;
 reset role;
-select 'OK: receipt identity, no-code/ambiguous/short/over/late/manual/retry/conflict, fee/tournament/cross-flow claims, bounded private projections and append-only note RPC.';
+select 'OK: booking-only paid revenue, Vietnam receipt dates, partial deposits, refunds, retained deposits, inactive venues, private personal receipts/totals/search/notes/notifications, cross-flow claims and bounded owner/admin projections.';
 rollback;

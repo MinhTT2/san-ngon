@@ -9,7 +9,7 @@ import { AdminVenueAction } from '@/components/admin-venue-action';
 import { AdminDeleteVenueButton } from '@/components/admin-delete-venue-button';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
 import { VENUE_STATUS_LABELS } from '@/lib/constants';
-import { dayLabel, ymd } from '@/lib/format';
+import { dayLabel } from '@/lib/format';
 import type { VenueStatus } from '@/lib/types';
 import { AdminBookings } from './admin-bookings';
 import type { AdminBookingParams } from '@/lib/admin-bookings';
@@ -33,13 +33,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const view = parseView(params.view);
   const period = params.period === '7' || params.period === '90' ? Number(params.period) : 30;
-  const statsTo = new Date();
-  const statsFrom = new Date();
-  statsFrom.setDate(statsFrom.getDate() - period + 1);
   const [{ data: venues, error: venuesError }, { data: ownerProfiles, error: ownersError }, { data: statsData, error: statsError }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
-    supabase.rpc('get_admin_stats', { p_from: ymd(statsFrom), p_to: ymd(statsTo) }),
+    supabase.rpc('get_admin_period_stats', { p_days: period }),
   ]);
   // Only stop views that need these records; other sections can still be used.
   const recordsError = (view === 'overview' || view === 'owners' || view === 'venues') && (venuesError || ownersError);

@@ -12,7 +12,7 @@ const cases = [
   ['owner', '/chu-san', 'refunds', 'Chưa tải được danh sách cần hoàn cọc', [], 'Đơn hôm nay'],
   ['owner', '/chu-san', 'get_owner_period_stats', 'Chưa tải được thống kê', ['Công suất sân'], 'Đơn hôm nay'],
   ['owner', '/chu-san', 'telegram', 'Chưa tải được kết nối Telegram', ['Kết nối Telegram'], 'Đơn hôm nay'],
-  ['admin', '/admin', 'get_admin_stats', 'Chưa tải được thống kê giao dịch', ['Doanh thu theo ngày'], 'Hồ sơ cần xử lý'],
+  ['admin', '/admin', 'get_admin_period_stats', 'Chưa tải được thống kê giao dịch', ['Doanh thu theo ngày'], 'Hồ sơ cần xử lý'],
   ['admin', '/admin?view=owners', 'profiles', 'Chưa tải được hồ sơ sân và tài khoản', ['Không có hồ sơ'], 'Hồ sơ chủ sân'],
   ['admin', '/admin?view=bookings', 'search_admin_bookings', 'Chưa tải được danh sách đơn đặt sân', ['Không có đơn'], 'Đơn đặt sân'],
   ['admin', '/admin?view=users', 'profiles', 'Chưa tải được danh sách tài khoản', ['Chưa có tài khoản'], 'Tài khoản gần đây'],

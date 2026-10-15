@@ -115,9 +115,9 @@ const server = createServer(async (req, res) => {
     if (name === 'get_incoming_transfer_page') {
       let rows = Array.from({ length: 41 }, (_, i) => ({
         id: `f1030000-0000-4000-8000-${String(i+1).padStart(12,'0')}`, bank:'mbbank',account_number:'1234567890',bank_tx_id:String(970001+i),
-        amount:i===0 ? 60000 : 100000, ref_codes:i===0 ? ['SANABC234'] : i===1 ? ['SANDEF567','PHIABCDEF12'] : [],
-        booking_id:i===0 ? 'booking-1' : null,source:i===0 ? 'booking' : 'unknown',expected_amount:i===0 ? 100000 : null,
-        outcome:i===0 ? 'underpaid' : i===1 ? 'ambiguous' : i===2 ? 'exact' : 'unmatched',reason:'FIXTURE',needs_review:i!==2,
+        amount:i===0 ? 60000 : 100000, ref_codes:i===0 ? ['SANABC234'] : [`SAN${String(i).padStart(6,'B')}`],
+        booking_id:'booking-1',source:'booking',expected_amount:100000,
+        outcome:i===0 ? 'underpaid' : i===2 ? 'exact' : 'duplicate',reason:'FIXTURE',needs_review:i!==2,
         payload_conflicts:i===3 ? 1 : 0,created_at:created,updated_at:created,booking_received:i===0 ? 160000 : null,
         notes:i===0 ? [{ note:'Đã kiểm tra sao kê, chờ liên hệ người gửi.',created_at:created }] : [],
       }));
@@ -219,7 +219,7 @@ const server = createServer(async (req, res) => {
       ].filter(row => newUx !== 'no-confirmed' || !row.id.startsWith('confirmed'));
       send(name === 'manages_tournament' ? true : name === 'get_tournament_capacity' ? 3 : registrations); return;
     }
-    const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
+    const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     send(rpc[name]); return;
   }

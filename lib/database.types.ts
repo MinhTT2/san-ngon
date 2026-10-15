@@ -1707,6 +1707,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      booking_revenue_entries: {
+        Args: { p_from: string; p_to: string; p_venue_id: string }
+        Returns: {
+          amount: number
+          booking_id: string
+          court_id: string
+          paid_date: string
+          venue_id: string
+        }[]
+      }
+      get_admin_period_stats: { Args: { p_days?: number }; Returns: Json }
       process_incoming_transfer: {
         Args: {
           p_amount: number
@@ -2432,6 +2443,10 @@ export type Database = {
       waive_tournament_balance: {
         Args: { p_id: string; p_note: string }
         Returns: undefined
+      }
+      website_booking_stats: {
+        Args: { p_from: string; p_to: string; p_venue_id: string }
+        Returns: Json
       }
     }
     Enums: {
