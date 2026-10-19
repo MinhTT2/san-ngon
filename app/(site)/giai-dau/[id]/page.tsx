@@ -8,10 +8,12 @@ import { createClient } from '@/lib/supabase/server';
 import { SPORT_LABELS } from '@/lib/constants';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { tournamentLabel, paymentOutcomes, type Registration, type Tournament } from '@/lib/tournaments';
+import { isRegistrationConfirmed } from '@/lib/tournament-status';
 import { TournamentSettlementPanel } from '@/components/tournament-settlement';
 import { TournamentRegistration } from '@/components/tournament-registration';
 import { TournamentParticipants } from '@/components/tournament-participants';
 import { TournamentReviewForm } from '@/components/tournament-review-form';
+import { TournamentDeleteForm } from '@/components/tournament-delete-form';
 import { ActionForm } from '@/components/action-form';
 import { Field, fieldClass } from '@/components/form-field';
 import { TournamentRefresh } from '@/components/tournament-refresh';
@@ -19,6 +21,7 @@ import { TournamentCover } from '@/components/tournament-cover';
 import { TournamentShare } from '@/components/tournament-share';
 import { VenueGallery } from '@/components/venue-gallery';
 import { tournamentCoverSrc, venuePhotoSrc } from '@/lib/image-upload';
+import { DEFAULT_SHARE_IMAGE } from '@/lib/public-metadata';
 import { siteUrl } from '@/lib/site-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -31,7 +34,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = `${SPORT_LABELS[data.sport]} · ${dayLabel(new Date(data.starts_at))}. Xem lịch, thể lệ, lệ phí và đăng ký tham gia.`;
   const image = tournamentCoverSrc(data.cover_path) ?? venuePhotoSrc(data.courts?.venues?.images[0]);
   const url = siteUrl(`/giai-dau/${id}`).href;
-  return { title, description, alternates: { canonical: url }, openGraph: { title, description, url, type: 'website', ...(image ? { images: [{ url: image, alt: data.title }] } : {}) } };
+  const images = image ? [{ url: image, alt: data.title }] : [DEFAULT_SHARE_IMAGE];
+  return { title, description, alternates: { canonical: url },
+    openGraph: { title, description, url, type: 'website', locale: 'vi_VN', siteName: 'Sân Ngon', images },
+    twitter: { card: 'summary_large_image', title, description, images },
+  };
 }
 const dateTime = (value: string) => `${dayLabel(new Date(value))} · ${hhmm(value)}`;
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }) {
@@ -45,7 +52,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   if (!tournament) notFound();
   const [managerResult, adminResult, capacityResult, profileResult] = await Promise.all([
     db.rpc('manages_tournament', { p_id: id }), user ? db.rpc('is_admin') : Promise.resolve({ data: false, error: null }),
-    db.rpc('get_tournament_capacity', { p_id: id }), user ? db.from('profiles').select('full_name,phone').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    db.rpc('get_tournament_capacity', { p_id: id }), user ? db.from('profiles').select('full_name,phone,role').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ]);
   if (managerResult.error || adminResult.error || capacityResult.error || profileResult.error) throw new Error('Chưa tải được trạng thái và quyền tham gia giải.');
   const manager = !!managerResult.data;
@@ -56,9 +63,11 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const { data: registrationData, error: registrationError } = user ? await db.rpc('get_tournament_registrations', { p_id: id }) : { data: [], error: null };
   if (registrationError) throw new Error('Chưa tải được danh sách tham gia.');
   const registrations = (registrationData ?? []) as Registration[];
+  const confirmedCount = registrations.filter(isRegistrationConfirmed).length;
   const own = registrations.find(registration => registration.user_id === user?.id);
   const { data: court, error: courtError } = tournament.court_id ? await db.from('courts').select('name,venues(name,slug,owner_id,images)').eq('id', tournament.court_id).returns<{ name: string; venues: { name: string; slug: string; owner_id: string; images: string[] } }[]>().maybeSingle() : { data: null, error: null };
   if (courtError) throw new Error('Chưa tải được địa điểm giải.');
+  const canDelete = admin || (manager && profile?.role === 'owner' && (tournament.manager_id === user?.id || court?.venues.owner_id === user?.id));
   const { data: courts, error: courtsError } = admin && tournament.status === 'pending' ? await db.from('courts').select('id,name,venues!inner(name,status)').eq('sport', tournament.sport).eq('is_active', true).eq('venues.status', 'active').returns<{ id: string; name: string; venues: { name: string; status: string } }[]>() : { data: [], error: null };
   if (courtsError) throw new Error('Chưa tải được sân để duyệt.');
   const registrationIds = registrations.map(registration => registration.id);
@@ -112,7 +121,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     {!manager && <nav aria-label="Các mục trong trang giải" className="mb-6 flex gap-1 overflow-x-auto border-b border-hairline">{[['#dang-ky', own ? 'Đăng ký của bạn' : 'Tham gia'], ['#lich-thi-dau', 'Lịch & địa điểm'], ['#the-le', 'Thể lệ'], ...(court?.venues.images.length ? [['#anh-san', 'Ảnh sân']] : []), ['#chinh-sach', 'Cọc & hủy']].map(([href, label]) => <a key={href} href={href} className="inline-flex min-h-12 shrink-0 items-center px-4 text-sm font-semibold text-pitch hover:bg-free-fill">{label}</a>)}</nav>}
     {manager && <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-hairline py-4 text-sm"><p><strong>{pendingCount}</strong> chờ duyệt · <strong>{unpaidCount}</strong> chờ cọc · <strong>{refundCount}</strong> giao dịch cần hoàn</p><span className="text-xs text-ink-secondary">{tournament.manager_id === court?.venues.owner_id ? 'Chủ sân tự tổ chức' : 'Người tổ chức và chủ sân cùng quản lý'}</span></div>
-      <nav aria-label="Quản lý giải đấu" className="mb-6 flex flex-wrap border-b border-hairline">{[['overview', 'Tổng quan'], ['participants', `Người tham gia (${registrations.length})`], ['payments', 'Giao dịch & hoàn tiền'], ['settlement', 'Quyết toán']].map(([key, label]) => <Link key={key} href={key === 'overview' ? `/giai-dau/${id}` : `/giai-dau/${id}?view=${key}`} aria-current={view === key ? 'page' : undefined} className={`inline-flex min-h-12 items-center border-b-2 px-3 text-sm ${view === key ? 'border-pitch font-semibold text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>{label}</Link>)}</nav>
+      <nav aria-label="Quản lý giải đấu" className="mb-6 flex flex-wrap border-b border-hairline">{[['overview', 'Tổng quan'], ['participants', `Người tham gia (${confirmedCount})`], ['payments', 'Giao dịch & hoàn tiền'], ['settlement', 'Quyết toán']].map(([key, label]) => <Link key={key} href={key === 'overview' ? `/giai-dau/${id}` : `/giai-dau/${id}?view=${key}`} aria-current={view === key ? 'page' : undefined} className={`inline-flex min-h-12 items-center border-b-2 px-3 text-sm ${view === key ? 'border-pitch font-semibold text-pitch' : 'border-transparent text-ink-secondary hover:text-pitch'}`}>{label}</Link>)}</nav>
     </>}
     {view === 'overview' && <>
       {admin && tournament.status === 'pending' && <section id="duyet-giai" className="mb-6 scroll-mt-28 border-b border-hairline pb-6"><h2 className="mb-3 font-display text-2xl font-bold text-pitch">Duyệt & bố trí sân</h2><p className="mb-5 text-sm leading-7 text-ink-secondary">Chốt thỏa thuận với chủ sân và người tổ chức trước khi công khai. Hệ thống kiểm tra lịch và giữ sân trong toàn bộ thời gian giải; cọc luôn về chủ sân được chọn.</p><TournamentReviewForm id={id} courtId={tournament.court_id} courts={courts ?? []} /></section>}
@@ -142,7 +151,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       {canRegister && manager && <section id={own ? 'dang-ky-lai' : 'dang-ky'} className="mt-2 scroll-mt-28 border-t border-hairline py-6"><details><summary className="min-h-11 cursor-pointer text-sm font-semibold text-pitch">Tôi cũng muốn đăng ký một suất tham gia</summary><div className="mt-5">{registrationForm}</div></details></section>}
       {!canRegister && !own && !manager ? <p id="dang-ky" className="scroll-mt-28 border-t border-hairline py-6 text-sm text-ink-secondary">{closed ? 'Giải chưa mở hoặc đã đóng đăng ký.' : 'Giải đã đủ suất được duyệt.'} <Link href="/giai-dau" className="font-semibold text-pitch underline">Khám phá giải khác</Link></p> : !canRegister && own && canRegisterAgain && <p className="border-t border-hairline py-5 text-sm text-ink-secondary">{closed ? 'Giải đã đóng đăng ký, không thể gửi đăng ký mới.' : 'Giải đã đủ suất được duyệt, chưa thể đăng ký lại.'}</p>}
       {user && tournament.manager_id === user.id && ['pending', 'rejected'].includes(tournament.status) && <Link href={`/giai-dau/tao?edit=${id}`} className="inline-flex min-h-11 items-center gap-2 rounded-control border border-strong px-5 text-sm font-semibold text-pitch">Chỉnh sửa và gửi lại đề xuất<ArrowUpRight size={16} aria-hidden="true" /></Link>}
+      {user && tournament.manager_id === user.id && tournament.status === 'published' && !started && <Link href={`/giai-dau/tao?edit=${id}`} className="inline-flex min-h-11 items-center gap-2 rounded-control border border-strong px-5 text-sm font-semibold text-pitch">Chỉnh sửa giải đấu<ArrowUpRight size={16} aria-hidden="true" /></Link>}
     </>}
+    {canDelete && view === 'overview' && <section className="mt-6 rounded-card border border-danger/30 bg-card p-5"><h2 className="font-display text-xl font-bold text-danger">Xóa giải đấu</h2><p className="mb-4 mt-3 text-sm leading-7 text-ink-secondary">{admin ? 'Admin được xóa cả giải đã có cọc, giao dịch hoặc thỏa thuận tiền thuê. Xóa vĩnh viễn giải, đăng ký, giao dịch cọc và quyết toán; mở lại lịch sân. Hãy đối soát và xử lý tiền còn lại trước khi xóa.' : 'Xóa vĩnh viễn giải, danh sách đăng ký và trả lại lịch sân. Giải đã có thông tin chuyển cọc, giao dịch hoặc thỏa thuận tiền thuê cần giữ hồ sơ để đối soát.'}</p><TournamentDeleteForm id={id} title={tournament.title} admin={admin} successHref={admin ? '/admin/giai-dau' : '/chu-san/giai-dau'} /></section>}
     {view === 'participants' && user && <TournamentParticipants registrations={registrations} closed={closed} started={started} canCancel={canCancel} userId={user.id} admin={admin} />}
     {(view === 'payments' || (!manager && !!payments?.length)) && <section id="giao-dich" className="scroll-mt-28 py-6"><h2 className="font-display text-2xl font-bold text-pitch">Giao dịch cọc & hoàn tiền</h2><p className="mt-3 text-sm leading-7 text-ink-secondary">Hoàn tiền qua ngân hàng trước khi xác nhận tại đây. Tiền thiếu, thừa, trùng hoặc chuyển muộn vẫn được ghi nhận để đối soát.{!!historyPayments?.length && !manager && ' Danh sách bao gồm các lần đăng ký cũ.'}</p>
       {!!payments?.length ? <ul className="mt-5 space-y-3">{payments.map(payment => {

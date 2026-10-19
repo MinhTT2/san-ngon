@@ -67,6 +67,41 @@ try {
   assert(await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), 'Saved form allows unload');
   await page.getByRole('link', { name: '← Quản lý sân', exact: true }).click();
   await page.waitForURL('**/chu-san/quan-ly');
+  // Saving court details must immediately show the acknowledged base price,
+  // including when reopening the editor without reloading the page.
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${origin}/chu-san/quan-ly`);
+    let attempts = 0;
+    await page.route(`**/api/courts/${court}`, route => {
+      const body = route.request().postDataJSON();
+      assert.equal(body.name, 'Sân giá mới');
+      assert.equal(body.price_per_hour, 175500);
+      attempts++;
+      if (attempts === 1) return json(route, { error: 'Chưa lưu được giá. Thử lại.' }, 503);
+      return json(route, { court: { ...body, id: court } });
+    });
+    await page.getByRole('button', { name: /^(Sửa|Đổi tên \/ sửa)$/ }).click();
+    const editor = page.getByRole('dialog', { name: 'Sửa sân con', exact: true });
+    await editor.getByLabel(/^Tên sân/).fill('Sân giá mới');
+    const price = editor.getByLabel('Giá chung / giờ (đ)', { exact: true });
+    assert.equal(await price.inputValue(), '100000');
+    await price.fill('175500');
+    await editor.getByRole('button', { name: 'Lưu sân', exact: true }).click();
+    await editor.locator('[data-owner-save-error]').waitFor();
+    assert.equal(await price.inputValue(), '175500', 'Failed save retains the new price for retry');
+    await editor.getByRole('button', { name: 'Lưu sân', exact: true }).click();
+    await editor.waitFor({ state: 'detached' });
+    await page.getByText('175.500đ/giờ', { exact: width === 1440 }).filter({ visible: true }).waitFor();
+    await page.getByRole('button', { name: /^(Sửa|Đổi tên \/ sửa)$/ }).click();
+    assert.equal(await price.inputValue(), '175500', 'Reopening uses the saved price');
+    assert.equal(await editor.getByLabel(/^Tên sân/).inputValue(), 'Sân giá mới');
+    await shot(page, 'court-price-saved');
+    await editor.getByRole('button', { name: 'Hủy', exact: true }).click();
+    await page.unroute(`**/api/courts/${court}`);
+  }
+  await page.goto(`${origin}/chu-san/quan-ly`);
+  console.log('OK: court details and base price save together, retain values on failure, update the list and survive reopening on mobile/desktop.');
   const create = page.getByRole('button', { name: '+ Tạo cụm sân', exact: true });
   await create.click();
   let modal = page.getByRole('dialog', { name: 'Tạo cụm sân mới', exact: true });

@@ -1,33 +1,50 @@
 'use client';
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { registrationLabel } from '@/lib/tournament-status';
+import { isRegistrationConfirmed, registrationLabel } from '@/lib/tournament-status';
 import type { Registration } from '@/lib/tournaments';
 import { dayLabel, hhmm, vnd } from '@/lib/format';
 import { ActionForm } from './action-form';
 import { Field, fieldClass } from './form-field';
 import { TournamentReviewRegistration } from './tournament-review-registration';
 
+const FILTERS = [
+  ['confirmed', 'Đã xác nhận tham gia'], ['pending', 'Chờ duyệt'], ['unpaid', 'Chờ đóng cọc'],
+  ['expired', 'Hết hạn'], ['rejected', 'Không được duyệt'], ['cancelled', 'Đã hủy'], ['all', 'Tất cả đăng ký & lịch sử'],
+] as const;
+type Category = typeof FILTERS[number][0];
+const categoryOf = (registration: Registration): string => registration.status === 'approved'
+  ? isRegistrationConfirmed(registration) ? 'confirmed' : 'unpaid' : registration.status;
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLocaleLowerCase('vi');
 
 export function TournamentParticipants({ registrations, closed, started, canCancel, userId, admin }: {
   registrations: Registration[]; closed: boolean; started: boolean; canCancel: boolean; userId: string; admin: boolean;
 }) {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState<Category>('confirmed');
+  const counts = Object.fromEntries(FILTERS.map(([value]) => [value, value === 'all' ? registrations.length : registrations.filter(registration => categoryOf(registration) === value).length])) as Record<Category, number>;
+  const filtered = search.trim().length > 0;
+  function chooseFilter(value: Category) { setFilter(value); }
   const matching = registrations.filter(registration => {
-    const category = registration.status === 'approved' ? registration.paid_at || registration.deposit_amount === 0 ? 'confirmed' : 'unpaid' : registration.status;
+    const category = categoryOf(registration);
     return (filter === 'all' || category === filter) && normalize(`${registration.full_name} ${registration.team_name ?? ''} ${registration.phone}`).includes(normalize(search.trim()));
   });
   return <section id="nguoi-tham-gia" className="scroll-mt-28 py-6">
-    <h2 className="font-display text-2xl font-bold text-pitch">Người tham gia</h2>
+    <h2 className="font-display text-2xl font-bold text-pitch">{filter === 'confirmed' ? 'Người tham gia đã xác nhận' : 'Quản lý đăng ký'}</h2>
+    <p className="mt-3 text-sm leading-7 text-ink-secondary">Danh sách tham gia chỉ gồm suất đã nhận đủ cọc hoặc được duyệt không yêu cầu cọc. Chọn trạng thái khác để duyệt đăng ký, theo dõi cọc hoặc xem lịch sử.</p>
+    <nav aria-label="Xử lý đăng ký" className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      {FILTERS.slice(0, 3).map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => chooseFilter(value)} className={`pf-action flex min-h-12 min-w-0 items-center justify-between gap-3 rounded-control border px-4 py-3 text-left text-sm font-semibold ${filter === value ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline bg-card text-pitch hover:bg-free-fill'}`}><span>{label}</span><span className="tabular-nums">{counts[value]}</span></button>)}
+    </nav>
     <div className="my-5 grid items-end gap-4 sm:grid-cols-[1fr_240px]">
-      <Field label="Tìm người hoặc đội"><span className="relative"><Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input className={`${fieldClass} pl-10`} type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Họ tên, tên đội, số điện thoại" /></span></Field>
-      <Field label="Trạng thái đăng ký"><select className={fieldClass} value={filter} onChange={event => setFilter(event.target.value)}>{[['all', 'Tất cả'], ['pending', 'Chờ duyệt'], ['unpaid', 'Chờ đóng cọc'], ['confirmed', 'Đã xác nhận tham gia'], ['expired', 'Hết hạn'], ['rejected', 'Không được duyệt'], ['cancelled', 'Đã hủy']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+      <Field label="Tìm người hoặc đội"><span className="relative"><Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-ink-secondary" /><input className={`${fieldClass} pl-10`} type="search" maxLength={100} value={search} onChange={event => setSearch(event.target.value)} placeholder="Họ tên, tên đội, số điện thoại" /></span></Field>
+      <Field label="Trạng thái đăng ký"><select className={fieldClass} value={filter} onChange={event => chooseFilter(event.target.value as Category)}>{FILTERS.map(([value, label]) => <option key={value} value={value}>{label} ({counts[value]})</option>)}</select></Field>
     </div>
-    <p role="status" className="mb-4 text-xs text-ink-secondary">{matching.length} / {registrations.length} đăng ký</p>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <p role="status" className="text-xs leading-6 text-ink-secondary">{matching.length} / {counts[filter]} {filter === 'confirmed' ? 'suất đã xác nhận' : 'đăng ký trong trạng thái đã chọn'}</p>
+      {filtered && <button type="button" onClick={() => setSearch('')} className="pf-action min-h-11 px-2 text-xs font-semibold text-pitch underline underline-offset-4">Xóa tìm kiếm</button>}
+    </div>
     <div className="space-y-3">{matching.map(registration => {
-      const confirmed = registration.status === 'approved' && (registration.paid_at || registration.deposit_amount === 0);
+      const confirmed = isRegistrationConfirmed(registration);
       const canHandleMoney = admin || registration.payment_owner_id === userId;
       const self = registration.user_id === userId;
       return <details key={registration.id} open={registration.status === 'pending'} className="rounded-card border border-hairline bg-card">
@@ -56,6 +73,11 @@ export function TournamentParticipants({ registrations, closed, started, canCanc
         </div>
       </details>;
     })}</div>
-    {!matching.length && <p className="border-y border-hairline py-8 text-sm text-ink-secondary">{registrations.length ? 'Không có đăng ký khớp bộ lọc.' : 'Chưa có người đăng ký tham gia.'}</p>}
+    {!matching.length && <div className="rounded-card border border-hairline bg-page p-5 sm:p-7">
+      <p className="font-semibold text-pitch">{filtered ? 'Không có đăng ký khớp tìm kiếm.' : filter === 'confirmed' ? 'Chưa có suất nào được xác nhận tham gia.' : counts.all ? 'Chưa có đăng ký trong trạng thái này.' : 'Chưa có người đăng ký tham gia.'}</p>
+      <p className="mt-2 text-sm leading-7 text-ink-secondary">{filtered ? 'Thử tên ngắn hơn, tên đội hoặc số điện thoại; xóa tìm kiếm để xem lại trạng thái đang chọn.' : counts.pending ? `Còn ${counts.pending} đăng ký chờ duyệt. Duyệt đăng ký để người chơi tiếp tục bước đóng cọc.` : counts.unpaid ? `Có ${counts.unpaid} đăng ký đang chờ đóng cọc. Suất sẽ được xác nhận khi nhận đủ cọc.` : 'Đăng ký mới và các thay đổi trạng thái sẽ xuất hiện tại đây.'}</p>
+      {filtered ? <button type="button" onClick={() => setSearch('')} className="pf-action mt-3 min-h-11 rounded-control border border-hairline px-4 text-sm font-semibold text-pitch">Xóa tìm kiếm</button>
+        : (counts.pending > 0 || counts.unpaid > 0) && <button type="button" onClick={() => chooseFilter(counts.pending ? 'pending' : 'unpaid')} className="pf-action mt-3 min-h-11 rounded-control border border-hairline px-4 text-sm font-semibold text-pitch">{counts.pending ? 'Xem đăng ký chờ duyệt' : 'Xem đăng ký chờ đóng cọc'}</button>}
+    </div>}
   </section>;
 }

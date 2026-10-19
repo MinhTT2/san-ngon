@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,700..800&display=swap');
+@import './fonts/fonts.css';
 @import 'tailwindcss';
 
 /*
@@ -232,6 +232,60 @@ button:disabled,
   from { transform: scale(1); }
   to { transform: scale(1.045); }
 }
+@keyframes pf-slide-progress {
+  from { scale: 0 1; }
+  to { scale: 1 1; }
+}
+
+/* A small perspective response; typography and controls keep their natural layout.
+   Artwork is original SVG on flat surfaces, with no canvas or extra downloads. */
+.pf-playground-art {
+  position: relative; isolation: isolate; height: 210px;
+  display: grid; place-items: center; perspective: 800px;
+}
+.pf-playground-board {
+  position: relative; width: min(230px, 80%); aspect-ratio: 8 / 5;
+  border: 1px solid var(--color-free-line); border-radius: 8px;
+  color: var(--color-free-line); background: var(--color-pitch);
+  transform: rotateX(48deg) rotateZ(-24deg);
+}
+.pf-playground-orbit {
+  position: absolute; width: min(240px, 85%); aspect-ratio: 3 / 2;
+  border: 1px solid var(--color-hairline); border-radius: 50%;
+  transform: rotate(-24deg);
+}
+.pf-playground-chip {
+  position: absolute; right: 24px; bottom: 22px;
+  display: inline-flex; align-items: center; gap: 12px;
+  border: 1px solid var(--color-free-line); border-radius: var(--radius-pill);
+  padding: 8px 12px; background: var(--color-free-fill);
+  color: var(--color-pitch); font-size: 11px; font-weight: 600;
+}
+[data-playground='tournaments'] .pf-playground-orbit { background: var(--color-story-lilac); }
+[data-playground='players'] .pf-playground-orbit { background: var(--color-story-teal); }
+.pf-playground-card:focus-visible { border-color: var(--color-pitch); }
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-hero-carousel][data-motion='true'] .pf-hero-progress {
+    animation: pf-slide-progress var(--pf-slide-duration) linear both;
+  }
+  [data-hero-carousel][data-playing='false'] .pf-hero-progress { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .pf-depth-card[data-depth] {
+    transition: transform 320ms cubic-bezier(.16,1,.3,1), border-color 220ms ease;
+  }
+  .pf-depth-card[data-depth][data-depth-active='true'] {
+    transform: perspective(1100px) rotateX(calc(var(--pf-depth-y, 0) * -1.5deg)) rotateY(calc(var(--pf-depth-x, 0) * 1.5deg)) translateY(-3px);
+    border-color: var(--color-free-line);
+  }
+  .pf-playground-board {
+    transition: transform 450ms cubic-bezier(.16,1,.3,1);
+    transform: translate(calc(var(--pf-depth-x, 0) * 7px), calc(var(--pf-depth-y, 0) * 5px)) rotateX(calc(48deg + var(--pf-depth-y, 0) * -5deg)) rotateZ(calc(-24deg + var(--pf-depth-x, 0) * 5deg));
+  }
+  .pf-playground-chip { transition: transform 450ms cubic-bezier(.16,1,.3,1); transform: translate(calc(var(--pf-depth-x, 0) * -5px), calc(var(--pf-depth-y, 0) * -4px)); }
+  .pf-playground-card:hover .pf-arrow { transform: translate(3px, -3px); }
+}
 @keyframes pf-arrive {
   from { transform: translateY(10px); }
   to { transform: none; }
@@ -393,4 +447,24 @@ button:disabled,
     }
     details[open]::details-content { block-size: auto; }
   }
+}
+
+/* Shared reading rhythm and predictable controls, including Vietnamese text. */
+:where(h1, h2, h3) { text-wrap: balance; }
+:where(main p) { overflow-wrap: break-word; }
+:where(input, select, textarea) { min-width: 0; }
+@media (max-width: 639px) {
+  /* Prevent automatic focus zoom in mobile Safari. */
+  main :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: max(16px, 1rem); }
+}
+@keyframes pf-skeleton-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: no-preference) {
+  .pf-skeleton { animation: pf-skeleton-pulse 1.6s ease-in-out infinite; }
+}
+
+/* Filters reflow when larger text leaves too little room for native date/time inputs. */
+@media (max-width: 639px) {
+  .pf-search-fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+  .pf-search-fields .col-span-2 { grid-column: 1 / -1; }
+  .pf-slot-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(100px, 6.25rem)), 1fr)); }
 }

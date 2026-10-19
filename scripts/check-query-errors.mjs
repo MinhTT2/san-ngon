@@ -12,9 +12,9 @@ const cases = [
   ['owner', '/chu-san', 'refunds', 'Chưa tải được danh sách cần hoàn cọc', [], 'Đơn hôm nay'],
   ['owner', '/chu-san', 'get_owner_period_stats', 'Chưa tải được thống kê', ['Công suất sân'], 'Đơn hôm nay'],
   ['owner', '/chu-san', 'telegram', 'Chưa tải được kết nối Telegram', ['Kết nối Telegram'], 'Đơn hôm nay'],
-  ['admin', '/admin', 'get_admin_stats', 'Chưa tải được thống kê giao dịch', ['Doanh thu theo ngày'], 'Hồ sơ cần xử lý'],
+  ['admin', '/admin', 'get_admin_period_stats', 'Chưa tải được thống kê giao dịch', ['Doanh thu theo ngày'], 'Hồ sơ cần xử lý'],
   ['admin', '/admin?view=owners', 'profiles', 'Chưa tải được hồ sơ sân và tài khoản', ['Không có hồ sơ'], 'Hồ sơ chủ sân'],
-  ['admin', '/admin?view=bookings', 'bookings', 'Chưa tải được danh sách đơn đặt sân', ['Không có đơn'], 'Đơn đặt sân'],
+  ['admin', '/admin?view=bookings', 'search_admin_bookings', 'Chưa tải được danh sách đơn đặt sân', ['Không có đơn'], 'Đơn đặt sân'],
   ['admin', '/admin?view=users', 'profiles', 'Chưa tải được danh sách tài khoản', ['Chưa có tài khoản'], 'Tài khoản gần đây'],
   ['owner', '/', 'home-count', 'Chưa tải được số liệu sân', ['sân cho bạn lựa chọn'], 'Tìm sân trống.'],
   ['owner', '/', 'featured', 'Chưa tải được lịch sân', ['Cách đọc lịch sân', 'Minh họa'], 'Tìm sân trống.'],
@@ -39,6 +39,12 @@ try {
       await page.goto(origin + path);
       const alert = page.getByRole('alert').filter({ hasText: title });
       await alert.waitFor();
+      if (role === 'owner' && path === '/chu-san' && ['bookings', 'refunds'].includes(failure)) {
+        const work = page.getByRole('region', { name: 'Việc cần theo dõi', exact: true });
+        const card = work.getByRole('link', { name: failure === 'bookings' ? /Đơn đã xác nhận hôm nay/ : /Cần hoàn tại cụm này/ });
+        assert(await card.getByText('—', { exact: true }).isVisible(), 'Failed reads show unknown counts');
+        assert(await card.getByText('Chưa tải được dữ liệu', { exact: true }).isVisible());
+      }
       for (const text of absent) assert.equal(await page.getByText(text, { exact: true }).count(), 0, `${failure}: no false empty/default content`);
       assert((await page.getByText(retained, { exact: false }).count()) > 0, `${failure}: successful content retained`);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${failure}: no overflow at ${width}`);

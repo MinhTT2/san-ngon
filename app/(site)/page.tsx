@@ -1,7 +1,8 @@
-import type { Metadata } from 'next';
+import { publicMetadata } from '@/lib/public-metadata';
 import Link from 'next/link';
 import { QueryError } from '@/components/query-error';
-import { HeroCarousel } from '@/components/hero-carousel';
+import { HeroCarousel, type FeaturedVenuePhoto } from '@/components/hero-carousel';
+import { PlaygroundDiscovery } from '@/components/playground-discovery';
 import { AmbientVideo } from '@/components/ambient-video';
 import { HeroGrid, HeroGridPlaceholder } from '@/components/hero-grid';
 import { Reveal } from '@/components/reveal';
@@ -13,17 +14,11 @@ import type { Slot } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Sân Ngon — Đặt sân thể thao ở Hà Nội',
-  description:
-    'Tìm sân bóng, cầu lông, pickleball còn chỗ ở Hà Nội. Xem lịch, biết giá, đặt cọc dễ dàng bằng chuyển khoản.',
-  openGraph: {
-    title: 'Tối nay chơi gì? Chọn sân, hẹn bạn, lên đường',
-    description: 'Chọn sân gần bạn, giữ giờ đẹp, cọc 100% qua QR, thanh toán trọn tiền sân khi đặt.',
-    locale: 'vi_VN',
-    type: 'website',
-  },
-};
+export const metadata = publicMetadata(
+  'Sân Ngon — Đặt sân thể thao ở Hà Nội',
+  'Tìm sân bóng, cầu lông, pickleball còn chỗ ở Hà Nội. Xem lịch, biết giá và thanh toán trọn tiền sân khi đặt.',
+  '/',
+);
 
 /** Lưới hero chỉ vừa 2 sân × 6 khung giờ — rộng hơn là chữ bé không đọc được. */
 const HERO_COURTS = 2;
@@ -39,12 +34,13 @@ const HERO_TIMES = 6;
 export default async function Page() {
   const supabase = await createClient();
 
-  const [{ count: venueCount, error: venuesError }, { count: courtCount, error: courtsError }, { data: districts, error: districtsError }, { data: featured, error: featuredError }] =
+  const [{ count: venueCount, error: venuesError }, { count: courtCount, error: courtsError }, { data: districts, error: districtsError }, { data: featured, error: featuredError }, { data: photoVenues }] =
     await Promise.all([
       supabase.from('venues').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('courts').select('id', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('venues').select('district').eq('status', 'active'),
       supabase.from('venues').select('id, slug, name').eq('status', 'active').order('name').limit(1).maybeSingle(),
+      supabase.from('venues').select('name, slug, district, images, courts(sport, is_active)').eq('status', 'active').order('name').limit(12),
     ]);
 
   const districtCount = new Set((districts ?? []).map((d) => d.district)).size;
@@ -56,9 +52,21 @@ export default async function Page() {
     catch { heroUnavailable = true; }
   }
 
+  const photos: Partial<Record<string, FeaturedVenuePhoto>> = {};
+  for (const venue of photoVenues ?? []) {
+    if (!venue.images?.[0]) continue;
+    for (const court of venue.courts) {
+      if (!court.is_active) continue;
+      const key = court.sport.startsWith('football') ? 'football' : court.sport;
+      photos[key] ??= { name: venue.name, slug: venue.slug, district: venue.district,
+        image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${venue.images[0].split('/').map(encodeURIComponent).join('/')}` };
+    }
+  }
+
   return (
     <main>
       <Hero
+        photos={photos}
         grid={
           heroUnavailable ? <QueryError title="Chưa tải được lịch sân" /> : hero && featured ? (
             <HeroGrid
@@ -78,6 +86,7 @@ export default async function Page() {
           <Stats venues={venueCount} courts={courtCount ?? 0} districts={districtCount} />
         </Reveal>
       ) : null}
+      <PlaygroundDiscovery />
       <HowItWorks />
       <Reveal><WhyDeposit /></Reveal>
       <Reveal><ForOwners /></Reveal>
@@ -123,10 +132,10 @@ async function loadHeroSlots(
   return null;
 }
 
-function Hero({ grid }: { grid: React.ReactNode }) {
+function Hero({ grid, photos }: { grid: React.ReactNode; photos: Partial<Record<string, FeaturedVenuePhoto>> }) {
   return (
     <section>
-      <HeroCarousel />
+      <HeroCarousel photos={photos} />
       <div className="border-b border-hairline bg-free-fill">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-16 lg:py-9">
           <div className="flex min-w-0 flex-col gap-4">
@@ -227,7 +236,7 @@ function ForOwners() {
   return (
     <section className="mx-auto max-w-7xl px-5 pt-16 lg:px-16 lg:pt-24">
       <div className="relative grid min-h-[400px] pb-6 lg:pb-0 overflow-hidden rounded-[28px] bg-pitch lg:min-h-[400px] lg:grid-cols-2">
-        <AmbientVideo />
+        <AmbientVideo scene="court" />
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-pitch via-pitch/80 to-pitch/30" />
         <div className="relative z-10 flex flex-col justify-center p-7 text-white sm:p-10 lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-free-line">Dành cho chủ sân</p>

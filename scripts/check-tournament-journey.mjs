@@ -93,9 +93,30 @@ assert.equal(review().props.payload.terms_confirmed, false);
 state = [];
 const reviewRegistration = load('components/tournament-review-registration.tsx', { './form-field': field, './action-form': { ActionForm } });
 const { TournamentParticipants } = load('components/tournament-participants.tsx', { react: hooks, '@/lib/tournament-status': status, '@/lib/format': format, './form-field': field, './action-form': { ActionForm }, './tournament-review-registration': reviewRegistration });
-const registrations = [{ ...registration, id: 'pending', status: 'pending', full_name: 'Chờ duyệt' }, { ...registration, id: 'unpaid', team_name: 'Đội xanh' }, { ...registration, id: 'paid', paid_at: '2030-10-05T09:00:00Z' }];
+const registrations = [
+  { ...registration, id: 'pending', status: 'pending', full_name: 'Chờ duyệt' },
+  { ...registration, id: 'unpaid', team_name: 'Đội xanh' },
+  { ...registration, id: 'paid', paid_at: '2030-10-05T09:00:00Z' },
+  { ...registration, id: 'expired', status: 'expired' },
+  { ...registration, id: 'cancelled-paid', status: 'cancelled', paid_at: '2030-10-05T09:00:00Z' },
+  { ...registration, id: 'rejected-free', status: 'rejected', deposit_amount: 0 },
+  { ...registration, id: 'free', deposit_amount: 0 },
+];
 function participants(started = false) { cursor = 0; return TournamentParticipants({ registrations, closed: false, started, canCancel: true, userId: 'manager', admin: false }); }
-assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 3);
+const visibleIds = () => nodes(participants()).filter(node => node.type === 'details' && node.key).map(node => node.key);
+const filterBy = value => nodes(participants()).find(node => node.type === 'select').props.onChange({ target: { value } });
+assert.deepEqual(visibleIds(), ['paid', 'free'], 'default roster excludes pending, unpaid, expired, cancelled and rejected registrations');
+assert.match(renderToStaticMarkup(participants()), /2 \/ 2 suất đã xác nhận/);
+registrations[1].paid_at = '2030-10-05T09:00:00Z';
+assert.deepEqual(visibleIds(), ['unpaid', 'paid', 'free'], 'receiving the deposit adds the registration to the existing confirmed view');
+registrations[1].paid_at = null;
+filterBy('all');
+assert.equal(visibleIds().length, 7, 'registration history remains available for management');
+assert.match(renderToStaticMarkup(participants()), /Quản lý đăng ký/);
+filterBy('expired');
+assert.deepEqual(visibleIds(), ['expired']);
+filterBy('pending');
+assert.deepEqual(visibleIds(), ['pending']);
 nodes(participants()).find(node => node.type === 'select').props.onChange({ target: { value: 'unpaid' } });
 assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 1);
 nodes(participants()).find(node => node.props?.type === 'search').props.onChange({ target: { value: 'doi xanh' } });
@@ -104,16 +125,24 @@ nodes(participants()).find(node => node.props?.type === 'search').props.onChange
 assert.equal(nodes(participants()).filter(node => node.type === 'details' && node.key).length, 0);
 state = [];
 registrations[1] = { ...registrations[1], user_id: 'manager' };
+filterBy('all');
 const selfCancellation = nodes(participants()).find(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'unpaid');
 assert.match(selfCancellation.props.confirmMessage, /áp dụng chính sách tự hủy/);
 assert.equal(selfCancellation.props.label, 'Hủy đăng ký của bạn');
 assert(!nodes(participants(true)).some(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'unpaid'));
 assert(nodes(participants(true)).some(node => node.props?.payload?.action === 'cancel_registration' && node.props.payload.id === 'paid'));
-console.log('OK: conditional review requirements and participant search/status filters.');
+state = [];
+const noConfirmed = registrations.filter(row => !status.isRegistrationConfirmed(row));
+cursor = 0;
+const emptyRoster = TournamentParticipants({ registrations: noConfirmed, closed: false, started: false, canCancel: true, userId: 'manager', admin: false });
+assert.match(renderToStaticMarkup(emptyRoster), /Chưa có suất nào được xác nhận tham gia/);
+assert.equal(nodes(emptyRoster).filter(node => node.type === 'details' && node.key).length, 0);
+console.log('OK: confirmed-only roster, deposit updates, empty roster, preserved history and participant search/status filters.');
 
 state = [];
 const { TournamentPaymentQr } = load('components/tournament-payment-qr.tsx', { react: hooks,
   'next/image': { default: () => null },
+  './qr-image-actions': { QrImageActions: () => null },
 });
 function qr() { cursor = 0; return TournamentPaymentQr({ src: 'https://test.invalid/qr.png', alt: 'QR cọc' }); }
 nodes(qr()).find(node => typeof node.props?.onError === 'function').props.onError();

@@ -178,9 +178,9 @@ export const VENUE_STATUS_LABELS: Record<string, string> = {
   rejected: 'Bị từ chối',
 };
 
-/** Quận/huyện nội thành, dùng cho ô chọn ở /dang-ky-san và bộ lọc /tim-san. */
+/** Khu vực Hà Nội, dùng chung cho quản lý cụm sân và bộ lọc tìm sân. */
 export const DISTRICTS = [
   'Ba Đình', 'Hoàn Kiếm', 'Tây Hồ', 'Long Biên', 'Cầu Giấy', 'Đống Đa',
   'Hai Bà Trưng', 'Hoàng Mai', 'Thanh Xuân', 'Nam Từ Liêm', 'Bắc Từ Liêm',
-  'Hà Đông', 'Thanh Trì', 'Gia Lâm', 'Đông Anh', 'Hoài Đức',
+  'Hà Đông', 'Thanh Trì', 'Gia Lâm', 'Đông Anh', 'Hoài Đức', 'Thạch Thất', 'Hòa Lạc',
 ];

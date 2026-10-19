@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Expand, Images, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Expand, ImageOff, Images, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { playMotion } from '@/lib/motion';
 
@@ -19,8 +19,7 @@ export function VenueGallery({ images, name, compact = false }: { images: string
         <button key={`${path}-${index}`} type="button" onClick={() => setSelected(index)}
           aria-label={`Mở ảnh ${index + 1} của ${name}`}
           className={`group relative min-h-0 overflow-hidden bg-sunk focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white ${index === 0 || images.length === 2 ? 'row-span-2' : ''} ${index >= 3 ? 'hidden lg:block' : ''}`}>
-          <Image unoptimized fill priority={index === 0} src={photoUrl(path)} alt={`${name} · ảnh ${index + 1}`}
-            className="object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]" />
+          <GalleryPreview path={path} name={name} index={index} />
           {index === 0 && <span className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-pill border border-white/25 bg-ink/80 px-3 py-2 text-xs font-medium text-white sm:bottom-5 sm:left-5"><Expand className="size-4" aria-hidden="true" /><span>Xem ảnh lớn</span></span>}
           {index === 2 && images.length > 3 && <span className={`absolute inset-0 grid place-items-center bg-ink/45 text-lg font-semibold text-white ${images.length >= 5 ? 'lg:hidden' : ''}`}>+{images.length - 3} ảnh</span>}
           {index === 4 && images.length > 5 && <span className="absolute inset-0 grid place-items-center bg-ink/45 text-lg font-semibold text-white">+{images.length - 5} ảnh</span>}
@@ -33,6 +32,15 @@ export function VenueGallery({ images, name, compact = false }: { images: string
     </div>
     {selected !== null && <PhotoViewer images={images} name={name} start={selected} onClose={() => setSelected(null)} />}
   </section>;
+}
+
+function GalleryPreview({ path, name, index }: { path: string; name: string; index: number }) {
+  const [failed, setFailed] = useState(false);
+  return failed
+    ? <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center text-xs text-ink-secondary"><ImageOff className="size-5" aria-hidden="true" />Chưa tải được ảnh · Bấm để mở ảnh gốc</span>
+    : <Image fill priority={index === 0} src={photoUrl(path)} alt={`${name} · ảnh ${index + 1}`}
+        sizes={index === 0 ? '(min-width: 1280px) 600px, (min-width: 1024px) 50vw, 67vw' : '(min-width: 1280px) 300px, 33vw'}
+        onError={() => setFailed(true)} className="object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]" />;
 }
 
 function PhotoViewer({ images, name, start, onClose }: { images: string[]; name: string; start: number; onClose: () => void }) {
@@ -203,7 +211,7 @@ function PhotoViewer({ images, name, start, onClose }: { images: string[]; name:
         {images.length > 1 && <div className="mx-auto mt-3 flex w-fit max-w-full gap-2 overflow-x-auto p-1">
           {images.map((path, index) => <button key={`${path}-${index}`} type="button" aria-label={`Xem ảnh ${index + 1}`} aria-pressed={selected === index} onClick={() => select(index)}
             className={`pf-gallery-thumb relative h-12 w-16 shrink-0 overflow-hidden rounded-control border-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-14 sm:w-20 ${selected === index ? 'border-white' : 'border-transparent opacity-55 hover:opacity-100'}`}>
-            <Image unoptimized fill src={photoUrl(path)} alt="" className="object-cover" />
+            <Image fill sizes="80px" src={photoUrl(path)} alt="" className="object-cover" />
             <span aria-hidden="true" className="absolute bottom-0 left-0 rounded-tr-control bg-ink/80 px-1.5 py-0.5 text-[10px] text-white">{index + 1}</span>
           </button>)}
         </div>}

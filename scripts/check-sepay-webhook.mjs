@@ -13,7 +13,8 @@ const incoming = {
 };
 assert.ok(incoming.gateway && /^\d{6,30}$/.test(incoming.accountNumber ?? '') && !/^0+$/.test(incoming.accountNumber), 'Cần cấu hình ngân hàng và tài khoản hợp lệ để kiểm tra webhook.');
 
-// Chỉ gửi payload bị bỏ qua, không chạm luồng xác nhận thanh toán.
+// Chỉ gửi payload lỗi / tiền ra / sai người nhận. Payload hợp lệ không mã hoặc nhiều mã
+// nay tạo sổ tiền vào, phải kiểm tra riêng với mocks trong check-incoming-transfer-api.mjs.
 for (const { name, auth, body, status, skipped } of [
   { name: 'Sai key', auth: 'Apikey invalid-test-key', body: '{}', status: 401 },
   { name: 'JSON lỗi', auth: `Apikey ${key}`, body: '{', status: 200, skipped: 'bad_json' },
@@ -31,14 +32,6 @@ for (const { name, auth, body, status, skipped } of [
   ].map(({ name, patch }) => ({ name, auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, ...patch }), status: 200, skipped: 'invalid_payload' })),
   { name: 'Sai tài khoản', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, accountNumber: '000000', content: 'SANZZZZZZ' }), status: 200, skipped: 'wrong_receiver' },
   { name: 'Sai ngân hàng', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, gateway: 'wrong-test-bank', content: 'SANZZZZZZ' }), status: 200, skipped: 'wrong_receiver' },
-  { name: 'Lẫn mã phí và mã đơn', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'PHIABCDEF12 SANZZZZZZ' }), status: 200, skipped: 'ambiguous_ref_code' },
-  { name: 'Lẫn mã giải và phí', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'GIAIABCDEF123456 PHIABCDEF12' }), status: 200, skipped: 'ambiguous_ref_code' },
-  { name: 'Lẫn mã giải và sân', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'GIAIABCDEF123456 SANABC234' }), status: 200, skipped: 'ambiguous_ref_code' },
-  { name: 'Hai mã giải', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'GIAIABCDEF123456 GIAI123456ABCDEF' }), status: 200, skipped: 'ambiguous_ref_code' },
-  { name: 'Hai mã phí khác nhau', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'PHIABCDEF12 PHI12345678' }), status: 200, skipped: 'ambiguous_ref_code' },
-  { name: 'Hai mã đơn khác nhau', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'SANABC234 SANDEF567' }), status: 200, skipped: 'ambiguous_ref_code' },
-  { name: 'Mã đơn quá dài', auth: `Apikey ${key}`, body: JSON.stringify({ ...incoming, content: 'SANABC2345' }), status: 200, skipped: 'no_ref_code' },
-  { name: 'Không có mã đơn', auth: `Apikey ${key}`, body: JSON.stringify(incoming), status: 200, skipped: 'no_ref_code' },
 ]) {
   const response = await fetch(endpoint, { method: 'POST', headers: { authorization: auth, 'content-type': 'application/json' }, body });
   assert.equal(response.status, status, name);

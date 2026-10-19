@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { QueryError } from '@/components/query-error';
 import { DashboardPageHeader, DashboardLink } from '@/components/dashboard-page-header';
+import { ArrowUpRight } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge } from '@/components/status-badge';
@@ -83,6 +84,18 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
 
       <OwnerVenuePicker venues={venues} selectedId={venue.id} pathname="/chu-san" query={{ period: String(period) }} />
 
+      <section aria-label="Việc cần theo dõi" className="mt-6 grid gap-3 sm:grid-cols-3">
+        {[
+          { label: 'Đơn đã xác nhận hôm nay', count: bookingsError ? null : today.filter(b => b.status === 'confirmed').length, href: bookingsError ? `/chu-san/don?venue=${venue.id}` : '#bookings', detail: 'Xem giờ chơi và thông tin khách' },
+          { label: 'Chờ cọc trong 7 ngày', count: bookingsError ? null : pendingRows.length, href: pendingRows.length ? '#don-cho-coc' : `/chu-san/don?venue=${venue.id}&status=pending`, detail: 'Chỉ tính đơn còn hạn giữ chỗ' },
+          { label: 'Cần hoàn tại cụm này', count: refundsError ? null : refundRows.length, href: `/chu-san/hoan-coc?venue=${venue.id}`, detail: 'Theo dõi các khoản cần hoàn thủ công' },
+        ].map(item => <Link key={item.label} href={item.href} className="pf-action rounded-card border border-hairline bg-card p-4 hover:border-pitch">
+          <div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold text-ink-secondary">{item.label}</span><ArrowUpRight className="size-4 shrink-0 text-pitch" aria-hidden="true" /></div>
+          <p className="mt-3 font-display text-3xl font-bold tabular-nums text-pitch">{item.count ?? '—'}</p>
+          <p className="mt-2 text-xs leading-5 text-ink-secondary">{item.count === null ? 'Chưa tải được dữ liệu' : item.detail}</p>
+        </Link>)}
+      </section>
+
       <OwnerReadiness venueId={venue.id} />
 
       {venue.status !== 'active' && (
@@ -112,7 +125,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
 
       {!bookingsError && pendingRows.length > 0 && (
         <section className="mt-8 rounded-card border border-hairline bg-card p-4">
-          <h2 className="font-semibold">Đơn chờ chuyển khoản</h2>
+          <h2 id="don-cho-coc" className="scroll-mt-6 font-semibold">Đơn chờ chuyển khoản</h2>
           <p className="mt-1 text-xs text-ink-secondary">Dùng xác nhận tay khi SePay không gửi webhook.</p>
           <ul className="mt-3 flex flex-col divide-y divide-hairline">
             {pendingRows.map((b) => (

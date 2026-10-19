@@ -32,7 +32,7 @@ async function check(path, method, headers, allowed) {
   assert.equal(authCalls - before, allowed ? 1 : 0, 'rejected writes never reach auth or database');
 }
 for (const method of ['POST', 'PATCH', 'PUT', 'DELETE']) {
-  for (const path of ['/api/bookings', '/api/profile', '/api/admin/users', '/api/courts/test', '/auth/dang-xuat', '/new-write-route']) {
+  for (const path of ['/api/bookings', '/api/profile', '/api/admin/users', '/api/courts/test', '/auth/dang-xuat', '/api/admin/users/fixture.png', '/api/venues/fixture.webp', '/auth/dang-xuat/fixture.jpg', '/new-write-route']) {
     await check(path, method, { origin }, true);
     for (const bad of ['https://untrusted.example', 'https://other.san-ngon.example', 'http://san-ngon.example', origin + ':444', 'null', 'bad', origin + '/', origin + '/path', 'https://user:pass@san-ngon.example']) {
       await check(path, method, { origin: bad }, false);

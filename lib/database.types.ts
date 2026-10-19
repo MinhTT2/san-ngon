@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      incoming_transfer_notes: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          note: string
+          transfer_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id: string
+          note: string
+          transfer_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string
+          transfer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_transfer_notes_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfer_notes_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "incoming_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incoming_transfers: {
+        Row: {
+          account_number: string
+          amount: number
+          bank: string
+          bank_tx_id: string
+          booking_id: string | null
+          connection_id: string | null
+          created_at: string
+          expected_amount: number | null
+          id: string
+          needs_review: boolean
+          outcome: string
+          payload_conflicts: number
+          raw: Json
+          reason: string | null
+          receiver_owner_id: string | null
+          ref_codes: string[]
+          result: Json | null
+          source: string
+          transaction_key: string
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          amount: number
+          bank: string
+          bank_tx_id: string
+          booking_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          needs_review?: boolean
+          outcome?: string
+          payload_conflicts?: number
+          raw: Json
+          reason?: string | null
+          receiver_owner_id?: string | null
+          ref_codes?: string[]
+          result?: Json | null
+          source?: string
+          transaction_key: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          amount?: number
+          bank?: string
+          bank_tx_id?: string
+          booking_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          needs_review?: boolean
+          outcome?: string
+          payload_conflicts?: number
+          raw?: Json
+          reason?: string | null
+          receiver_owner_id?: string | null
+          ref_codes?: string[]
+          result?: Json | null
+          source?: string
+          transaction_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_transfers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfers_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfers_receiver_owner_id_fkey"
+            columns: ["receiver_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       court_closures: {
         Row: {
           court_id: string
@@ -127,6 +257,7 @@ export type Database = {
           receipt_path: string | null
           category: string
           created_at: string
+          deleted_booking_code: string | null
           handled_by: string | null
           id: string
           message: string
@@ -142,6 +273,7 @@ export type Database = {
           receipt_path?: string | null
           category: string
           created_at?: string
+          deleted_booking_code?: string | null
           handled_by?: string | null
           id: string
           message: string
@@ -157,6 +289,7 @@ export type Database = {
           receipt_path?: string | null
           category?: string
           created_at?: string
+          deleted_booking_code?: string | null
           handled_by?: string | null
           id?: string
           message?: string
@@ -886,20 +1019,17 @@ export type Database = {
       }
       bookings: {
         Row: {
-          court_name_snapshot: string | null
-          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
-          venue_name_snapshot: string | null
-          venue_address_snapshot: string | null
-          venue_district_snapshot: string | null
-          venue_city_snapshot: string | null
-          details_recorded_at: string | null
+          cancel_window_hours: number
+          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
+          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
+          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
@@ -910,27 +1040,31 @@ export type Database = {
           payment_bank: string | null
           payment_connection_id: string | null
           payment_owner_id: string | null
+          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days: number | null
+          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
+          venue_address_snapshot: string | null
+          venue_city_snapshot: string | null
+          venue_district_snapshot: string | null
+          venue_name_snapshot: string | null
         }
         Insert: {
-          court_name_snapshot?: string | null
-          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
-          venue_name_snapshot?: string | null
-          venue_address_snapshot?: string | null
-          venue_district_snapshot?: string | null
-          venue_city_snapshot?: string | null
-          details_recorded_at?: string | null
+          cancel_window_hours?: number
+          cancellation_policy_version?: string
           cancelled_at?: string | null
           code: string
           court_id: string
+          court_name_snapshot?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone: string
           deposit_amount: number
+          details_recorded_at?: string | null
           ends_at: string
           expires_at?: string
           id?: string
@@ -941,27 +1075,31 @@ export type Database = {
           payment_bank?: string | null
           payment_connection_id?: string | null
           payment_owner_id?: string | null
+          policy_recorded_at?: string
           refund_status?: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days?: number | null
+          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
+          venue_address_snapshot?: string | null
+          venue_city_snapshot?: string | null
+          venue_district_snapshot?: string | null
+          venue_name_snapshot?: string | null
         }
         Update: {
-          court_name_snapshot?: string | null
-          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
-          venue_name_snapshot?: string | null
-          venue_address_snapshot?: string | null
-          venue_district_snapshot?: string | null
-          venue_city_snapshot?: string | null
-          details_recorded_at?: string | null
+          cancel_window_hours?: number
+          cancellation_policy_version?: string
           cancelled_at?: string | null
           code?: string
           court_id?: string
+          court_name_snapshot?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string
           deposit_amount?: number
+          details_recorded_at?: string | null
           ends_at?: string
           expires_at?: string
           id?: string
@@ -972,11 +1110,18 @@ export type Database = {
           payment_bank?: string | null
           payment_connection_id?: string | null
           payment_owner_id?: string | null
+          policy_recorded_at?: string
           refund_status?: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days?: number | null
+          sport_snapshot?: Database["public"]["Enums"]["sport_type"] | null
           starts_at?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_amount?: number
           user_id?: string
+          venue_address_snapshot?: string | null
+          venue_city_snapshot?: string | null
+          venue_district_snapshot?: string | null
+          venue_name_snapshot?: string | null
         }
         Relationships: [
           {
@@ -1562,6 +1707,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      booking_revenue_entries: {
+        Args: { p_from: string; p_to: string; p_venue_id: string }
+        Returns: {
+          amount: number
+          booking_id: string
+          court_id: string
+          paid_date: string
+          venue_id: string
+        }[]
+      }
+      get_admin_period_stats: { Args: { p_days?: number }; Returns: Json }
+      process_incoming_transfer: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_codes: string[]
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+        }
+        Returns: Json
+      }
+      get_incoming_transfer_page: {
+        Args: { p_filter?: string; p_page?: number; p_query?: string }
+        Returns: Json
+      }
+      note_incoming_transfer: {
+        Args: {
+          p_id: string
+          p_note: string
+          p_note_id: string
+          p_updated_at: string
+        }
+        Returns: undefined
+      }
+      admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       search_my_bookings: {
         Args: {
           p_filter?: string
@@ -1573,6 +1755,16 @@ export type Database = {
         Returns: Json
       }
 
+      search_admin_bookings: {
+        Args: {
+          p_filter?: string
+          p_from?: string
+          p_page?: number
+          p_query?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
       search_owner_bookings: {
         Args: {
           p_from?: string
@@ -1779,23 +1971,39 @@ export type Database = {
       cancel_booking: {
         Args: { p_code: string; p_pending_only?: boolean }
         Returns: {
+          cancel_window_hours: number
+          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
+          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
+          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
           note: string | null
           paid_at: string | null
+          payment_account: string | null
+          payment_account_name: string | null
+          payment_bank: string | null
+          payment_connection_id: string | null
+          payment_owner_id: string | null
+          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
+          refund_working_days: number | null
+          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
+          venue_address_snapshot: string | null
+          venue_city_snapshot: string | null
+          venue_district_snapshot: string | null
+          venue_name_snapshot: string | null
         }
         SetofOptions: {
           from: "*"
@@ -2009,6 +2217,7 @@ export type Database = {
         }
       }
       delete_court: { Args: { p_court_id: string }; Returns: undefined }
+      delete_tournament: { Args: { p_id: string }; Returns: undefined }
       delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       expire_pending_bookings: { Args: never; Returns: number }
       gen_booking_code: { Args: never; Returns: string }
@@ -2204,6 +2413,7 @@ export type Database = {
       }
       process_tournament_deadlines: { Args: never; Returns: undefined }
       get_tournament_proposal: { Args: { p_id: string }; Returns: Json }
+      update_published_tournament: { Args: { p_id: string; p_data: Json }; Returns: string }
       get_tournament_registrations: { Args: { p_id: string }; Returns: Json }
       get_my_tournament_registrations: {
         Args: { p_page?: number }
@@ -2234,6 +2444,10 @@ export type Database = {
       waive_tournament_balance: {
         Args: { p_id: string; p_note: string }
         Returns: undefined
+      }
+      website_booking_stats: {
+        Args: { p_from: string; p_to: string; p_venue_id: string }
+        Returns: Json
       }
     }
     Enums: {

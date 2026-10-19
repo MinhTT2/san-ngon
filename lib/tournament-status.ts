@@ -6,9 +6,12 @@ export const tournamentStatuses: Record<string, string> = { pending: 'Chờ admi
 export const registrationStatuses: Record<string, string> = { pending: 'Chờ duyệt', approved: 'Được tham gia', rejected: 'Không được duyệt', cancelled: 'Đã hủy', expired: 'Hết hạn' };
 export const paymentOutcomes: Record<string, string> = { paid: 'Đã nhận đủ cọc', overpaid: 'Chuyển thừa', underpaid: 'Chuyển thiếu', duplicate_payment: 'Chuyển trùng', late_or_cancelled: 'Quá hạn / đăng ký đã hủy' };
 
+export function isRegistrationConfirmed(registration: Pick<Registration, 'status' | 'paid_at' | 'deposit_amount'>) {
+  return registration.status === 'approved' && (registration.paid_at !== null || registration.deposit_amount === 0);
+}
 export function registrationLabel(registration: Pick<Registration, 'status' | 'paid_at' | 'deposit_amount'>) {
   if (registration.status !== 'approved') return registrationStatuses[registration.status] ?? 'Chưa xác định';
-  return registration.paid_at || registration.deposit_amount === 0 ? 'Đã xác nhận tham gia' : 'Chờ đóng cọc';
+  return isRegistrationConfirmed(registration) ? 'Đã xác nhận tham gia' : 'Chờ đóng cọc';
 }
 export function tournamentLabel(tournament: Pick<Tournament, 'status' | 'starts_at' | 'ends_at' | 'registration_deadline'>, now = Date.now()) {
   if (tournament.status !== 'published') return tournamentStatuses[tournament.status];

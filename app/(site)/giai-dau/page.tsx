@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
+import { publicMetadata } from '@/lib/public-metadata';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { NavigationMarker } from '@/components/navigation-marker';
@@ -13,7 +14,11 @@ import { registrationLabel } from '@/lib/tournaments';
 import { TournamentRefresh } from '@/components/tournament-refresh';
 import { dayLabel, hhmm } from '@/lib/format';
 import { ArrowUpRight } from 'lucide-react';
-export const metadata = { title: 'Giải đấu thể thao' };
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const { view } = await searchParams;
+  if (view === 'mine' || view === 'registered') return { title: 'Giải đấu của bạn — Sân Ngon', robots: { index: false, follow: false } };
+  return publicMetadata('Giải đấu thể thao ở Hà Nội — Sân Ngon', 'Khám phá giải bóng đá, cầu lông và pickleball. Xem địa điểm, lịch, thể lệ và thông tin đăng ký.', '/giai-dau');
+}
 export default async function Page({ searchParams }: { searchParams: Promise<{ view?: string; sport?: string; page?: string; status?: string; q?: string; location?: string; sort?: string; layout?: string }> }) {
   const params = await searchParams;
   const view = params.view === 'mine' || params.view === 'registered' ? params.view : 'all';

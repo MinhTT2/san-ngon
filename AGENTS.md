@@ -223,7 +223,11 @@ Hạn nhận/duyệt đăng ký và hạn thanh toán giải tách riêng; SQL �
 cọc từng suất, mặc định 24 giờ sau duyệt và không vượt hạn cuối của giải.
 Cron `tournament-deadlines` dọn suất hết hạn và hoàn tất giải, nhưng kiểm tra
 quy mô/nhận tiền không phụ thuộc cron. Đăng ký lại tạo bản ghi và mã mới.
-Người đề xuất sửa/gửi lại giải chờ hoặc bị từ chối, không sửa giải công khai.
+Người đề xuất sửa/gửi lại giải chờ hoặc bị từ chối. Giải công khai chưa bắt đầu
+được sửa thông tin, ảnh bìa, quy mô và gia hạn đăng ký. Chủ sân tự tổ chức
+được đổi lịch/sân/môn/lệ phí khi chưa có đăng ký; có đăng ký hoặc admin đã
+bố trí sân thì khóa các mục này. RPC giữ nguyên snapshot từng suất và gửi
+thông báo cập nhật.
 
 Chính sách giải mới đã chốt: tự hủy trước ít nhất 24 giờ hoàn toàn bộ cọc,
 muộn hơn không hoàn; ban tổ chức hủy suất/giải hoàn toàn bộ. Giải cũ giữ
@@ -270,6 +274,22 @@ Không cần cron để khóa hết hạn. Giao diện theo dõi realtime và t�
 nối mạng/quay lại tab. Tài khoản đang nhận phí không được ngắt webhook qua
 nút ngắt kết nối; muốn đổi phải đối soát kỳ chờ và cấu hình SQL có kiểm soát.
 Phí dịch vụ không vượt qua cờ nghiệm thu `multi_owner_enabled`.
+
+## Doanh thu đặt sân (15/10/2026)
+
+Dashboard chỉ tính tiền cọc đã xác nhận của **đơn đặt sân trên web**, theo
+`bookings.paid_at` trong múi giờ Việt Nam, có bản ghi `payments` đã trả.
+Mỗi đơn tính một lần, tối đa bằng cọc/giá đơn; đơn cũ cọc một phần không
+được tính toàn bộ giá sân. Loại đơn phải hoàn/đã hoàn; giữ cọc của đơn hủy
+không được hoàn và không đến. Sân ngừng hoạt động không làm mất doanh thu cũ.
+Số đơn/giờ chơi vẫn theo ngày chơi, tách khỏi kỳ nhận tiền.
+
+Sổ tiền vào chỉ công khai giao dịch đã xác định được mã SAN/GIAI/PHI và đúng
+người nhận (`expected_amount is not null`), kể cả giao dịch thiếu/thừa/muộn.
+Khoản chuyển riêng/không mã/mã không tồn tại/nhiều mã/sai người nhận chỉ giữ
+trong sổ riêng phục vụ chống lặp, không vào danh sách/tổng/tìm kiếm/ghi chú
+hay thông báo đối soát trên web. Tiền giải và phí dịch vụ không vào doanh thu
+đặt sân. Không dùng tổng giao dịch ngân hàng để tính doanh thu.
 
 ## Hằng số
 

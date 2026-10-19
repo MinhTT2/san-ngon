@@ -6,11 +6,13 @@ import { DashboardRecords } from '@/components/dashboard-records';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminVenueAction } from '@/components/admin-venue-action';
+import { AdminDeleteVenueButton } from '@/components/admin-delete-venue-button';
 import { AdminOwnerAction } from '@/components/admin-owner-action';
-import { BOOKING_STATUS_LABELS, VENUE_STATUS_LABELS } from '@/lib/constants';
-import { dayLabel, hhmm, vnd, ymd } from '@/lib/format';
-import type { BookingStatus, VenueStatus } from '@/lib/types';
-import { StatusBadge } from '@/components/status-badge';
+import { VENUE_STATUS_LABELS } from '@/lib/constants';
+import { dayLabel } from '@/lib/format';
+import type { VenueStatus } from '@/lib/types';
+import { AdminBookings } from './admin-bookings';
+import type { AdminBookingParams } from '@/lib/admin-bookings';
 import { AdminStatsPanel, PeriodLinks } from '@/components/stats-panels';
 import { parseAdminStats } from '@/lib/stats';
 
@@ -19,7 +21,7 @@ export const metadata = { title: 'Quản trị · Sân Ngon' };
 
 type View = 'overview' | 'owners' | 'venues' | 'bookings' | 'users';
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ view?: string; period?: string; status?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<AdminBookingParams & { view?: string; period?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/admin');
@@ -31,13 +33,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const view = parseView(params.view);
   const period = params.period === '7' || params.period === '90' ? Number(params.period) : 30;
-  const statsTo = new Date();
-  const statsFrom = new Date();
-  statsFrom.setDate(statsFrom.getDate() - period + 1);
   const [{ data: venues, error: venuesError }, { data: ownerProfiles, error: ownersError }, { data: statsData, error: statsError }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
-    supabase.rpc('get_admin_stats', { p_from: ymd(statsFrom), p_to: ymd(statsTo) }),
+    supabase.rpc('get_admin_period_stats', { p_days: period }),
   ]);
   // Only stop views that need these records; other sections can still be used.
   const recordsError = (view === 'overview' || view === 'owners' || view === 'venues') && (venuesError || ownersError);
@@ -48,13 +47,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const profileById = new Map((ownerProfiles ?? []).map((profile) => [profile.id, profile]));
   const stats = statsError || !statsData ? null : parseAdminStats(statsData);
 
-  const bookingsResult = view === 'bookings'
-    ? (await supabase
-      .from('bookings')
-      .select('id, code, starts_at, status, total_amount, customer_name, courts(name, venues(name))')
-      .in('status', params.status === 'pending' ? ['pending'] : Object.keys(BOOKING_STATUS_LABELS))
-      .order('starts_at', { ascending: false }).limit(30))
-    : null;
   const usersResult = view === 'users'
     ? (await supabase.from('profiles').select('id, full_name, phone, role, created_at').order('created_at', { ascending: false }).limit(30))
     : null;
@@ -62,7 +54,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <DashboardPageHeader eyebrow="Quản trị / Vận hành" title={{ overview: 'Tổng quan vận hành', owners: 'Hồ sơ chủ sân', venues: 'Hồ sơ cụm sân', bookings: 'Đơn đặt sân', users: 'Tài khoản gần đây' }[view]}
-        description={{ overview: 'Theo dõi giao dịch và xử lý các hồ sơ đang chờ.', owners: 'Kiểm tra thông tin đại diện và giấy tờ trước khi duyệt tài khoản chủ sân.', venues: 'Theo dõi trạng thái các cụm sân. Hồ sơ chờ từ luồng cũ được duyệt tại đây.', bookings: params.status === 'pending' ? 'Theo dõi 30 đơn chờ cọc gần nhất và thông tin khách.' : 'Xem 30 đơn gần nhất, thông tin khách và trạng thái thanh toán.', users: 'Xem tài khoản mới hoặc mở quản lý người dùng để chỉnh quyền truy cập.' }[view]}
+        description={{ overview: 'Theo dõi giao dịch và xử lý các hồ sơ đang chờ.', owners: 'Kiểm tra thông tin đại diện và giấy tờ trước khi duyệt tài khoản chủ sân.', venues: 'Theo dõi trạng thái các cụm sân. Hồ sơ chờ từ luồng cũ được duyệt tại đây.', bookings: 'Ưu tiên đơn sắp chơi, theo dõi cọc và liên hệ đúng chủ sân khi cần xử lý.', users: 'Xem tài khoản mới hoặc mở quản lý người dùng để chỉnh quyền truy cập.' }[view]}
         actions={view === 'overview' ? <DashboardLink href="/admin?view=owners">Duyệt hồ sơ chủ sân</DashboardLink> : view === 'users' ? <DashboardLink href="/admin/users">Quản lý người dùng</DashboardLink> : undefined} />
       {recordsError && <QueryError className="mt-6" title="Chưa tải được hồ sơ sân và tài khoản" />}
       {view === 'overview' && !recordsError && <>
@@ -79,7 +71,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </>}
       {view === 'owners' && !recordsError && <OwnerTable key={`owners-${params.status ?? ''}`} initialStatus={params.status} owners={(ownerProfiles ?? []).filter((profile) => profile.owner_application_status)} />}
       {view === 'venues' && !recordsError && <VenueTable key={`venues-${params.status ?? ''}`} initialStatus={params.status} venues={venues ?? []} profileById={profileById} />}
-      {view === 'bookings' && (bookingsResult?.error ? <QueryError className="mt-6" title="Chưa tải được danh sách đơn đặt sân" /> : <BookingTable key={`bookings-${params.status ?? ''}`} pendingOnly={params.status === 'pending'} bookings={bookingsResult?.data ?? []} />)}
+      {view === 'bookings' && <AdminBookings params={params} />}
       {view === 'users' && (usersResult?.error ? <QueryError className="mt-6" title="Chưa tải được danh sách tài khoản" /> : <UserTable users={usersResult?.data ?? []} />)}
     </main>
   );
@@ -192,14 +184,13 @@ function VenueTable({ venues, profileById, initialStatus }: { venues: VenueRow[]
       <div key="owner">{profileById.get(venue.owner_id)?.full_name ?? 'Chưa có tên'}<p className="mt-1 text-xs text-ink-secondary">{profileById.get(venue.owner_id)?.phone ?? venue.phone ?? 'Chưa có số điện thoại'}</p></div>,
       venue.district, dayLabel(new Date(venue.created_at)),
       <span key="status" className={`inline-flex rounded-pill px-2.5 py-1.5 text-xs font-semibold ${venue.status === 'active' ? 'bg-free-fill text-pitch' : venue.status === 'pending' ? 'bg-peak-fill text-peak-ink' : 'bg-sunk text-ink-secondary'}`}>{VENUE_STATUS_LABELS[venue.status]}</span>,
-      <div key="action" className="flex flex-wrap gap-2">{venue.status === 'pending' ? <AdminVenueAction venueId={venue.id} /> : venue.status === 'active' ? <Link href={`/san/${venue.slug}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch">Xem sân ↗</Link> : '—'}{venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}</div>,
+      <div key="action" className="grid grid-cols-[4rem_max-content] items-start gap-2">
+        {venue.status === 'active' && <Link href={`/san/${venue.slug}`} className="col-start-1 row-start-1 inline-flex min-h-11 items-center whitespace-nowrap text-xs font-semibold text-pitch">Xem sân ↗</Link>}
+        <div className="col-start-2 row-start-1"><AdminDeleteVenueButton id={venue.id} name={venue.name} /></div>
+        {venue.status === 'pending' && <div className="col-span-2"><AdminVenueAction venueId={venue.id} /></div>}
+        {venue.business_license_path && <a href={`/api/admin/venues/${venue.id}/license`} target="_blank" rel="noreferrer" className="col-span-2 inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Giấy tờ</a>}
+      </div>,
     ] }))} />;
-}
-
-function BookingTable({ bookings, pendingOnly }: { pendingOnly: boolean; bookings: Array<{ id: string; code: string; starts_at: string; status: BookingStatus; total_amount: number; customer_name: string | null; courts: unknown }> }) {
-  return <><div className="mt-6 flex flex-wrap gap-2"><Link href="/admin?view=bookings" aria-current={!pendingOnly ? 'page' : undefined} className={`${pendingOnly ? 'border-hairline text-pitch' : 'border-pitch bg-pitch text-pitch-ink'} pf-action inline-flex min-h-11 items-center rounded-control border px-4 text-sm font-semibold`}>Đơn gần nhất</Link><Link href="/admin?view=bookings&status=pending" aria-current={pendingOnly ? 'page' : undefined} className={`${pendingOnly ? 'border-pitch bg-pitch text-pitch-ink' : 'border-hairline text-pitch'} pf-action inline-flex min-h-11 items-center rounded-control border px-4 text-sm font-semibold`}>Chờ cọc</Link></div><DashboardRecords title="Đơn đặt sân gần đây" description={pendingOnly ? '30 đơn chờ cọc gần nhất theo thời gian chơi.' : '30 đơn gần nhất theo thời gian chơi.'}
-    mobilePrimary={[1, 4]} columns={['Mã đơn', 'Khách', 'Thời gian', 'Giá trị', 'Trạng thái']}
-    records={bookings.map(b => ({ id: b.id, search: `${b.code} ${b.customer_name ?? ''}`, status: b.status, cells: [<strong key="code" className="font-mono text-pitch">{b.code}</strong>, b.customer_name ?? 'Khách đặt sân', `${dayLabel(new Date(b.starts_at))} · ${hhmm(b.starts_at)}`, <span key="amount" className="font-semibold tabular-nums text-pitch">{vnd(b.total_amount)}</span>, <StatusBadge key="status" status={b.status} />] }))} /></>;
 }
 
 function UserTable({ users }: { users: Array<{ id: string; full_name: string | null; phone: string | null; role: string; created_at: string }> }) {

@@ -33,6 +33,24 @@ try {
     }
     console.log(`OK: ${asset} resized, validated by sharp and decoded by Chromium.`);
   }
+  const venuePage = await context.newPage();
+  await venuePage.goto(origin + '/tim-san');
+  const raw = await venuePage.locator('.pf-venue-photo img').first().getAttribute('src');
+  const publicSource = new URL(raw, origin).searchParams.get('url');
+  assert(publicSource?.includes('/storage/v1/object/public/venue-photos/'), 'Venue cards request resized public images');
+  const optimized = await context.request.get(`${origin}/_next/image?url=${encodeURIComponent(publicSource)}&w=640&q=75`);
+  assert.equal(optimized.status(), 200);
+  assert.equal((await sharp(await optimized.body()).metadata()).width, 640);
+  for (const denied of [
+    publicSource.replace('/venue-photos/', '/venue-documents/'),
+    publicSource.replace('/object/public/', '/object/sign/'),
+    publicSource + '?token=private',
+  ]) {
+    const response = await context.request.get(`${origin}/_next/image?url=${encodeURIComponent(denied)}&w=640&q=75`);
+    assert.equal(response.status(), 400, 'Private buckets and signed URLs are not optimized');
+  }
+  await venuePage.close();
+  console.log('OK: public venue photos resized; documents and signed URLs rejected.');
   const external = await context.request.get(`${origin}/_next/image?url=${encodeURIComponent('https://example.invalid/image.webp')}&w=640&q=75`);
   assert.equal(external.status(), 400, 'optimizer still rejects unconfigured remote hosts');
   const svg = await context.request.get(`${origin}/_next/image?url=${encodeURIComponent('/icon.svg')}&w=640&q=75`);

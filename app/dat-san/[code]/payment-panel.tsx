@@ -9,12 +9,14 @@ import { QrImageActions } from '@/components/qr-image-actions';
 import { createClient, subscribeWithSession } from '@/lib/supabase/client';
 import { vietQrUrl } from '@/lib/sepay';
 import { countdown, dayLabel, hhmm, vnd } from '@/lib/format';
-import type { BookingStatus } from '@/lib/types';
+import { BookingPolicySummary } from '@/components/booking-policy-summary';
+import type { BookingPolicy, BookingStatus } from '@/lib/types';
 
 type Connection = 'connecting' | 'live' | 'offline' | 'syncing' | 'disconnected' | 'error';
 
 /** Chỉ nghe trạng thái của đơn này qua realtime, không polling. */
 export function PaymentPanel(p: {
+  policy: BookingPolicy;
   bookingId: string; code: string; status: BookingStatus;
   startsAt: string; endsAt: string; expiresAt: string; initialSeconds: number;
   total: number; deposit: number;
@@ -247,6 +249,7 @@ export function PaymentPanel(p: {
           {!paid && !closed ? <div className="max-w-xl"><p>Về trang chủ vẫn giữ chỗ đến hết thời gian trên. Chưa nhận đủ cọc khi hết hạn, sân sẽ mở lại.</p><div className="mt-1"><CancelBookingButton code={p.code} refundable={false} pending onCancelled={() => setStatus('cancelled')} className="inline-flex min-h-11 items-center" /></div></div> : <p className="flex items-center gap-2"><ShieldCheck size={16} className="text-success" aria-hidden="true" />Giữ mã đơn để tra cứu hoặc liên hệ hỗ trợ.</p>}
           <p className="flex flex-wrap items-center gap-x-2">Cần một tay?<Link href={'/ho-tro-giao-dich?code='+p.code} className="inline-flex min-h-11 items-center gap-1 font-semibold text-pitch underline underline-offset-4">Liên hệ hỗ trợ<ArrowRight size={13} aria-hidden="true" /></Link></p>
         </div>
+        <section aria-label="Chính sách của đơn" className="mt-6 rounded-control border border-hairline bg-card p-4"><h2 className="mb-2 text-sm font-semibold text-pitch">Chính sách của đơn</h2><BookingPolicySummary policy={p.policy} /></section>
       </main>
     </div>
   );

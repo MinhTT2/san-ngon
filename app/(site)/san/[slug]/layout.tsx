@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { DEFAULT_SHARE_IMAGE } from '@/lib/public-metadata';
 import { siteUrl } from '@/lib/site-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -16,11 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const images = venue.images?.length ? [{
     url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${venue.images[0].split('/').map(encodeURIComponent).join('/')}`,
     alt: venue.name,
-  }] : undefined;
+  }] : [DEFAULT_SHARE_IMAGE];
   return {
     title, description, alternates: { canonical: url },
     openGraph: { title, description, url, type: 'website', locale: 'vi_VN', siteName: 'Sân Ngon', images },
-    twitter: { card: images ? 'summary_large_image' : 'summary', title, description, images },
+    twitter: { card: 'summary_large_image', title, description, images },
   };
 }
 

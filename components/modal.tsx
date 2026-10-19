@@ -1,11 +1,21 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { playMotion } from '@/lib/motion';
 import { canCloseUnsavedForm } from '@/lib/use-unsaved-changes';
 
-export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }: { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode; size?: string }) {
+type ModalProps = { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode; size?: string };
+
+export function Modal(props: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  // Keep dialogs above cards and tables, including ancestors with transforms or clipping.
+  return mounted ? createPortal(<ModalContent {...props} />, document.body) : null;
+}
+
+function ModalContent({ title, subtitle, onClose, children, size = 'max-w-3xl' }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -24,7 +34,7 @@ export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }
     const previousOverflow = document.body.style.overflow;
     const dialog = dialogRef.current;
     const controls = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]') ?? []).filter(el => el.getClientRects().length > 0);
-    (dialog?.querySelector<HTMLElement>('input, select, textarea') ?? controls()[0] ?? dialog)?.focus();
+    (dialog?.querySelector<HTMLElement>('[data-modal-initial-focus]') ?? dialog?.querySelector<HTMLElement>('input, select, textarea') ?? controls()[0] ?? dialog)?.focus();
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); if (canCloseUnsavedForm(dialogRef.current)) closeRef.current(); }
       if (event.key === 'Tab') {
@@ -47,7 +57,7 @@ export function Modal({ title, subtitle, onClose, children, size = 'max-w-3xl' }
         <div><h2 id={titleId} className="font-display text-2xl font-bold text-pitch">{title}</h2>{subtitle && <p className="mt-1 text-sm text-ink-secondary">{subtitle}</p>}</div>
         <button type="button" onClick={close} className="pf-action grid size-11 shrink-0 place-items-center rounded-control border border-hairline text-ink-secondary hover:border-strong hover:text-pitch" aria-label="Đóng"><X className="size-5" aria-hidden="true" /></button>
       </header>
-      <div className="overflow-y-auto p-4 sm:p-7">{children}</div>
+      <div className="min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] sm:p-7">{children}</div>
     </section>
   </div>;
 }

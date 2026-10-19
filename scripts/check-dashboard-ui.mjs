@@ -61,7 +61,7 @@ try {
     ['/admin?view=bookings', 'Đơn đặt sân', 'Đơn đặt sân'],
     ['/admin/users', 'Người dùng', 'Người dùng'],
     ['/admin/phi-dich-vu', 'Phí sử dụng của chủ sân', 'Phí chủ sân'],
-    ['/admin/giai-dau', 'Duyệt giải đấu', 'Giải đấu'],
+    ['/admin/giai-dau', 'Quản lý giải đấu', 'Giải đấu'],
     ['/admin/gop-y', 'Góp ý từ người dùng', 'Góp ý người dùng'],
     [`/admin/owners/${ids.owner}`, 'Nguyễn Minh', 'Hồ sơ chủ sân'],
   ]);
@@ -85,11 +85,11 @@ try {
   await page.goto(`${origin}/admin?view=venues&status=pending`);
   assert.equal(await page.getByRole('region', { name: 'Danh sách cụm sân' }).getByRole('combobox').inputValue(), 'pending');
   await page.goto(`${origin}/admin?view=bookings&status=pending`);
-  const pendingBookings = page.getByRole('region', { name: 'Đơn đặt sân gần đây' });
+  const pendingBookings = page.getByRole('region', { name: 'Danh sách đơn đặt sân' });
   assert(await pendingBookings.getByText('SANDEF567', { exact: true }).filter({ visible: true }).count());
   assert.equal(await pendingBookings.getByText('SANABC234', { exact: true }).filter({ visible: true }).count(), 0);
-  await page.getByRole('link', { name: 'Đơn gần nhất', exact: true }).click();
-  await page.waitForURL('**view=bookings');
+  await page.getByRole('navigation', { name: 'Nhóm đơn đặt sân' }).getByRole('link', { name: /^Sắp chơi/ }).click();
+  await page.waitForURL('**filter=upcoming');
   assert(await pendingBookings.getByText('SANABC234', { exact: true }).filter({ visible: true }).count());
   console.log('OK: admin pending links open filtered owner/venue lists and pending orders with a way back to all orders.');
   await page.setViewportSize({ width: 390, height: 1000 });

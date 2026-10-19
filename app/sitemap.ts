@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
   const entries: MetadataRoute.Sitemap = [
-    '/', '/tim-san', '/giai-dau', '/ket-noi', '/lien-he', '/chinh-sach-huy', '/tro-giup',
+    '/', '/tim-san', '/giai-dau', '/ket-noi', '/lien-he', '/chinh-sach-huy', '/tro-giup', '/quyen-rieng-tu', '/dieu-khoan-su-dung',
   ].map(path => ({ url: siteUrl(path).href }));
 
   for (let offset = 0; ; offset += 1000) {
@@ -21,6 +21,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq('status', 'active').order('id').range(offset, offset + 999);
     if (error) throw new Error('Không tải được danh sách sân công khai.');
     entries.push(...data.map(venue => ({ url: siteUrl(`/san/${encodeURIComponent(venue.slug)}`).href })));
+    if (data.length < 1000) break;
+  }
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.from('tournaments').select('id')
+      .in('status', ['published', 'completed']).order('id').range(offset, offset + 999);
+    if (error) throw new Error('Không tải được danh sách giải công khai.');
+    entries.push(...data.map(tournament => ({ url: siteUrl(`/giai-dau/${tournament.id}`).href })));
     if (data.length < 1000) break;
   }
   return entries;

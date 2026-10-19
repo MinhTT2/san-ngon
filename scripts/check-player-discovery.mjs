@@ -79,7 +79,12 @@ try {
   assert(await form.getByRole('button', { name: 'Đang tìm sân…', exact: true }).isDisabled());
   assert.equal(await form.getAttribute('aria-busy'), 'true');
   release(); await searching;
-  await page.waitForURL(url => url.searchParams.get('q') === 'kiểm thử 02');
+  try { await page.waitForURL(url => url.searchParams.get('q') === 'kiểm thử 02'); }
+  catch (error) {
+    console.error('Search navigation diagnostics:', JSON.stringify({ url: page.url(), inputs: await page.locator('main form input').evaluateAll(inputs => inputs.map(input => ({ name: input.name, value: input.value, disabled: input.disabled }))), browserErrors: errors }));
+    if (process.env.UX_SCREENSHOT_DIR) await page.screenshot({ path: process.env.UX_SCREENSHOT_DIR + '/search-navigation-failure.png', fullPage: true });
+    throw error;
+  }
   await page.getByText(/Hiển thị 1–1 \/ 1 cụm sân/).waitFor();
   await page.waitForFunction(() => document.activeElement?.id === 'ket-qua');
   assert.equal(await form.getByLabel('Ngày chơi', { exact: true }).inputValue(), '2026-10-08');

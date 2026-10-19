@@ -52,8 +52,8 @@ export default function Page() {
 
       <div className="mt-9 flex flex-col gap-2 rounded-card border border-strong bg-free-fill p-6">
         <span className="text-sm font-semibold">Nhắn trực tiếp</span>
-        <a href="mailto:hello@sanngon.vn" className="font-display text-xl font-bold text-pitch">
-          hello@sanngon.vn
+        <a href="mailto:sanngon.exe@gmail.com" className="font-display text-xl font-bold text-pitch">
+          sanngon.exe@gmail.com
         </a>
         <span className="text-sm text-ink-secondary">Hà Nội · trả lời trong giờ hành chính</span>
       </div>

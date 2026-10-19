@@ -20,6 +20,9 @@ begin
   delete from tournament_settlements where tournament_id=p_id;
   delete from tournaments where id=p_id;
 end $$;
+
 revoke all on function public.delete_tournament(uuid) from public,anon,authenticated;
+
 grant execute on function public.delete_tournament(uuid) to authenticated;
+
 notify pgrst,'reload schema';

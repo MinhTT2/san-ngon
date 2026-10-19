@@ -29,7 +29,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
   return (
     <header className="border-b border-hairline bg-card">
       <a href="#noi-dung" className="sr-only focus:not-sr-only focus:absolute focus:left-5 focus:top-3 focus:z-50 focus:rounded-control focus:bg-pitch focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-pitch-ink">Bỏ qua điều hướng</a>
-      <div className="mx-auto flex min-h-19 max-w-7xl items-center justify-between gap-5 px-5 lg:px-16">
+      <div className="mx-auto flex min-h-19 max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:flex-nowrap sm:gap-5 sm:py-0 lg:px-16">
         <div className="flex min-w-0 items-center gap-6 lg:gap-11">
           <Link href={admin ? '/admin' : dashboard ? '/chu-san' : '/'} className="flex flex-none items-center gap-2.5">
             <BrandMark />
@@ -43,7 +43,7 @@ export async function SiteHeader({ variant = 'site' }: { variant?: 'site' | 'das
               {admin ? 'Quản trị Sân Ngon' : 'Dashboard chủ sân'}
             </span>
           ) : (
-            <nav className="hidden gap-4 xl:gap-6 md:flex">
+            <nav aria-label="Điều hướng chính" className="hidden gap-4 xl:gap-6 md:flex">
               <NavLink href="/tim-san" label="Tìm sân" />
               <NavLink href="/giai-dau" label="Giải đấu" />
               <NavLink href="/ket-noi" label="Kết nối" />

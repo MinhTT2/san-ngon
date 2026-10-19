@@ -105,6 +105,7 @@ try {
   }
   await register(player);
   await owner.goto(`${detail}?view=participants`);
+  await owner.getByLabel('Trạng thái đăng ký').selectOption('pending');
   await owner.getByLabel('Tìm người hoặc đội').fill('không khớp');
   await owner.getByText('Không có đăng ký khớp bộ lọc.').waitFor();
   await owner.getByLabel('Tìm người hoặc đội').fill('E2E Player');
@@ -143,6 +144,7 @@ try {
   await owner.getByText('Đã lưu.', { exact: true }).waitFor();
   await register(player);
   await owner.goto(`${detail}?view=participants`);
+  await owner.getByLabel('Trạng thái đăng ký').selectOption('pending');
   const pending = owner.locator('details[open]').filter({ hasText: 'E2E Player' }).first();
   await pending.getByText('Từ chối đăng ký', { exact: true }).click();
   await pending.getByLabel('Lý do từ chối').fill('Thiếu thông tin thành viên đội.');
@@ -150,6 +152,7 @@ try {
   await player.getByText('Ghi chú ban tổ chức: Thiếu thông tin thành viên đội.').waitFor();
   await register(player);
   await owner.reload();
+  await owner.getByLabel('Trạng thái đăng ký').selectOption('pending');
   await owner.getByRole('button', { name: 'Duyệt tham gia', exact: true }).click();
   await player.locator('#dang-ky img').waitFor();
   await sql(`update tournament_registrations set payment_expires_at=now()+interval '3 seconds' where tournament_id=${quote(tournamentId)} and user_id=${quote(users.player.id)} and status='approved';`);
@@ -176,6 +179,7 @@ try {
   await admin.getByText('Đã lưu.', { exact: true }).waitFor();
   const proposal = `${origin}/giai-dau/${proposalId}`;
   await manager.goto(`${proposal}?view=participants`);
+  await manager.getByLabel('Trạng thái đăng ký').selectOption('pending');
   await player.goto(proposal);
   await register(player);
   await manager.getByRole('button', { name: 'Duyệt tham gia', exact: true }).click();
