@@ -21,6 +21,7 @@ type Owner = {
   payout_bank: string | null;
   payout_account: string | null;
   created_at: string;
+  owner_application_submitted_at: string | null;
 };
 
 export default async function OwnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,7 +33,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
 
   const { id } = await params;
   const { data: owner } = await supabase.from('profiles')
-    .select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, created_at')
+    .select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, owner_application_submitted_at, created_at')
     .eq('id', id).maybeSingle() as { data: Owner | null };
   if (!owner?.owner_application_status) notFound();
 
@@ -57,7 +58,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
   return (
     <main className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <Link href="/admin?view=owners" className="pf-action mb-4 inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-ink-secondary hover:text-pitch"><ArrowLeft className="size-4" aria-hidden="true" /> Quay lại danh sách hồ sơ</Link>
-      <DashboardPageHeader eyebrow="Quản trị / Hồ sơ chủ sân" title={owner.full_name ?? 'Chưa có tên'} description={`Gửi hồ sơ ngày ${dayLabel(new Date(owner.created_at))}. Kiểm tra thông tin và giấy tờ trước khi duyệt.`}
+      <DashboardPageHeader eyebrow="Quản trị / Hồ sơ chủ sân" title={owner.full_name ?? 'Chưa có tên'} description={`Gửi hồ sơ ngày ${dayLabel(new Date(owner.owner_application_submitted_at ?? owner.created_at))}. Kiểm tra thông tin và giấy tờ trước khi duyệt.`}
         actions={<><OwnerStatus status={owner.owner_application_status} />{owner.owner_application_status === 'pending' && <AdminOwnerAction ownerId={owner.id} />}</>} />
 
       {owner.owner_application_status === 'rejected' && <section className="mt-6 rounded-card border border-hairline bg-card p-5"><h2 className="font-display text-xl font-bold text-pitch">Lý do cần bổ sung</h2><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7">{owner.owner_rejection_reason || 'Hồ sơ được xử lý trước khi có lý do chi tiết.'}</p>{owner.owner_reviewed_at && <p className="mt-3 text-xs text-ink-secondary">Xử lý ngày {dayLabel(new Date(owner.owner_reviewed_at))}</p>}</section>}

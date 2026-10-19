@@ -61,7 +61,6 @@ export const tournamentErrorFields: Record<string, string> = {
 };
 export function tournamentError(code: string) {
   const errors: Record<string, string> = {
-    TOURNAMENT_NOT_FOUND: 'Giải đã bị xóa hoặc không tồn tại. Tải lại danh sách.',
     TOURNAMENT_HAS_REGISTRATIONS: 'Giải đã có đăng ký, không thể xóa hồ sơ. Hãy mở giải và dùng chức năng hủy nếu cần dừng tổ chức.',
     TOURNAMENT_HAS_SETTLEMENT: 'Giải có nghĩa vụ tiền thuê hoặc lịch sử quyết toán, không thể xóa hồ sơ. Hãy mở giải để xử lý hủy và đối soát.',
     TOURNAMENT_IMAGE_INVALID: 'Ảnh bìa chưa hợp lệ. Chọn lại ảnh JPG, PNG hoặc WebP tối đa 5 MB của bạn.',
