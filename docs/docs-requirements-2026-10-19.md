@@ -83,3 +83,31 @@ Kiểm tra sau áp dụng: 18 đơn tổng cộng, 17 đơn mô phỏng, 0 tài 
 được tạo trước ngày tạo tài khoản. RPC thống kê vẫn trả đúng 7/6/4 đơn.
 RPC danh sách quản trị được kiểm tra lại tên khách, sân con và ghi chú.
 Đây là thay đổi dữ liệu và tài liệu/SQL vận hành; không sửa giao diện/schema.
+
+## Kịch bản 17 đơn đã thanh toán (yêu cầu tiếp theo ngày 19/10)
+
+Sau khi được giải thích vì sao doanh thu bằng 0, người dùng yêu cầu coi 17
+đơn này là đơn thật trong kịch bản báo cáo. Đã bổ sung thanh toán mô phỏng
+cho đúng 17 đơn nói trên; các kết quả chưa thanh toán ở các mục trước là
+trạng thái trước yêu cầu này.
+
+- Tổng doanh thu kịch bản: **3.430.000đ**, 17 đơn đã thanh toán.
+- 5 Cửa Ô: 6 đơn / 2.400.000đ; King Club: 7 đơn / 630.000đ;
+  Bao Cấp: 4 đơn / 400.000đ.
+- Mỗi đơn có một `payments` đã trả đúng tiền cọc, `provider = 'simulation'`,
+  metadata `simulation: true`, `bank_transfer: false`, không có mã giao dịch
+  ngân hàng. Giữ nguyên ghi chú mô phỏng trên đơn.
+- Ngày thanh toán mô phỏng bằng ngày tạo cộng 5 phút, trong hạn giữ chỗ
+  và trước giờ chơi. Tiền vẫn được thống kê theo ngày thanh toán, lịch chơi
+  vẫn theo ngày chơi; toàn bộ các ngày nằm trong tuần 12–18/10/2026.
+- Không thay đổi quy tắc tính doanh thu, schema hoặc giao diện. Không gọi
+  webhook, không tạo sự kiện SePay, sổ tiền vào, quyền nhận giao dịch hoặc
+  thông báo. Không sửa đơn hủy, hồ sơ người dùng hay các snapshot của đơn.
+
+Đã sao lưu riêng trước khi áp dụng. Script vận hành
+`scripts/simulate-docs-booking-payments.sql` mặc định rollback, khóa cohort,
+kiểm tra tổng tiền và các bất biến trước khi commit; không chạy tự động.
+Đã chạy thử rollback, áp dụng và đọc lại sau commit: báo cáo admin 30 ngày,
+báo cáo tuần và báo cáo từng chủ sân đều khớp số đơn/tổng tiền. Tổng biểu đồ
+ngày và bảng xếp hạng cụm sân đều bằng 3.430.000đ. Đây là số liệu mô phỏng,
+không chứng minh có tiền chuyển vào ngân hàng.
