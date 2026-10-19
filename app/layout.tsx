@@ -3,6 +3,8 @@ import { Suspense } from 'react';
 import { SiteMotion } from '@/components/site-motion';
 import { siteUrl } from '@/lib/site-url';
 import { DEFAULT_SHARE_IMAGE } from '@/lib/public-metadata';
+import { GoogleAnalytics } from '@/components/google-analytics';
+import { productionAnalyticsId } from '@/lib/analytics';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -14,9 +16,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const analyticsId = productionAnalyticsId(process.env.VERCEL_ENV, process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
   return (
     <html lang="vi">
-      <body className="min-h-dvh"><Suspense fallback={null}><SiteMotion /></Suspense>{children}</body>
+      <body className="min-h-dvh"><Suspense fallback={null}><SiteMotion /></Suspense>{children}
+        {analyticsId && <Suspense fallback={null}><GoogleAnalytics measurementId={analyticsId} /></Suspense>}
+      </body>
     </html>
   );
 }
