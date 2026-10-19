@@ -51,3 +51,35 @@ migration của project, không chạy lại. Migration mới
   ngày gửi và thứ tự trước phân trang.
 - Đọc lại RPC trên project liên kết: các cụm 7/6/4 đơn, các ngày 2/2/1/7/5,
   hai ngày gửi đúng và ba tài khoản nằm giữa danh sách.
+
+## Điều chỉnh dữ liệu theo yêu cầu tiếp theo (19/10)
+
+Người dùng yêu cầu dùng tài khoản người chơi hiện có, xóa tài khoản demo
+và phân bổ các đơn xen kẽ giữa các sân. Đã áp dụng trực tiếp trên project:
+
+- 17 đơn dùng 9 tài khoản người chơi hiện có; tên/số điện thoại trên đơn
+  lấy từ hồ sơ, không sửa hồ sơ thật hoặc tạo số điện thoại giả.
+- Rải giờ chơi và thời điểm tạo đơn, luôn sau khi tài khoản đã được tạo và
+  trước giờ chơi. Thứ tự đơn mới nhất có 13 lần chuyển cụm giữa 17 đơn.
+- King Club phân bổ 3/2/2 đơn trên 3 sân con; Bao Cấp 1/1/1/1 trên 4 sân con;
+  5 Cửa Ô có một sân con, giữ 6 đơn. Không trùng lịch khách/sân hoặc lịch khóa.
+- Giữ nguyên mã đơn, số đơn theo từng cụm/ngày, tổng tiền, người nhận và ghi
+  chú dữ liệu mô phỏng. Đơn hủy có sẵn và dữ liệu người dùng thật giữ nguyên.
+- Xóa 7 tài khoản thử nghiệm có cả tên demo và email `example.invalid`
+  (5 người chơi, 1 chủ sân, 1 admin), cùng 2 cụm demo nháp chưa có lịch sử,
+  thông báo thuộc các tài khoản bị xóa và một bản ghi miễn phí chưa đóng tiền.
+- Không tạo/xóa giao dịch thanh toán, sự kiện SePay hoặc sổ tiền vào;
+  doanh thu vẫn theo khoản tiền đã nhận.
+
+Đã sao lưu riêng bên ngoài repository trước khi thao tác. Script
+`scripts/redistribute-docs-demo-bookings.sql` mặc định rollback, có kiểm tra
+cohort, phụ thuộc, xung đột lịch, giá SQL và các bất biến trước khi commit.
+Không tắt trigger hoặc ràng buộc. Vì snapshot sân không được sửa, chỉ các
+đơn mô phỏng chưa có thanh toán/phụ thuộc được tái tạo trong cùng transaction,
+giữ nguyên ID/mã đơn và đi qua đầy đủ trigger hiện có.
+
+Kiểm tra sau áp dụng: 18 đơn tổng cộng, 17 đơn mô phỏng, 0 tài khoản demo,
+0 cụm nháp demo, 0 tên khách chứa Demo, 0 tên/điện thoại lệch hồ sơ, 0 đơn
+được tạo trước ngày tạo tài khoản. RPC thống kê vẫn trả đúng 7/6/4 đơn.
+RPC danh sách quản trị được kiểm tra lại tên khách, sân con và ghi chú.
+Đây là thay đổi dữ liệu và tài liệu/SQL vận hành; không sửa giao diện/schema.
