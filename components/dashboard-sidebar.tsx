@@ -15,6 +15,7 @@ import {
   WalletCards,
   Trophy,
   MessageSquare,
+  ChartNoAxesCombined,
 } from 'lucide-react';
 
 type DashboardRole = 'owner' | 'admin';
@@ -33,6 +34,7 @@ const OWNER_LINKS = [
 
 const ADMIN_LINKS = [
   { href: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
+  { href: '/admin/thong-ke-truy-cap', label: 'Thống kê truy cập', icon: ChartNoAxesCombined },
   { href: '/admin?view=owners', label: 'Hồ sơ chủ sân', icon: ShieldCheck },
   { href: '/admin?view=venues', label: 'Hồ sơ sân', icon: Building2 },
   { href: '/admin?view=bookings', label: 'Đơn đặt sân', icon: ClipboardList },

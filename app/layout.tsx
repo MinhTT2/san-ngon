@@ -5,6 +5,7 @@ import { siteUrl } from '@/lib/site-url';
 import { DEFAULT_SHARE_IMAGE } from '@/lib/public-metadata';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { productionAnalyticsId } from '@/lib/analytics';
+import { UserActivityTracker } from '@/components/user-activity-tracker';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi">
       <body className="min-h-dvh"><Suspense fallback={null}><SiteMotion /></Suspense>{children}
         {analyticsId && <Suspense fallback={null}><GoogleAnalytics measurementId={analyticsId} /></Suspense>}
+        {process.env.VERCEL_ENV === 'production' && <UserActivityTracker />}
       </body>
     </html>
   );

@@ -30,6 +30,7 @@ export type AdminUser = {
   id: string; full_name: string | null; phone: string | null; email: string | null;
   role: 'player' | 'owner' | 'admin'; created_at: string;
   is_banned: boolean; banned_until: string | null; ban_reason: string | null; banned_at: string | null;
+  usage_seconds: number | null; tracking_started_at: string | null; last_active_at: string | null;
 };
 export type UserList = { users: AdminUser[]; total: number; active: number; banned: number };
 export const ROLE_LABELS = { player: 'Người chơi', owner: 'Chủ sân', admin: 'Quản trị viên' };
