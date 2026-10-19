@@ -35,7 +35,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const period = params.period === '7' || params.period === '90' ? Number(params.period) : 30;
   const [{ data: venues, error: venuesError }, { data: ownerProfiles, error: ownersError }, { data: statsData, error: statsError }] = await Promise.all([
     supabase.from('venues').select('id, name, slug, district, status, owner_id, created_at, phone, business_license_path').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at'),
+    supabase.from('profiles').select('id, full_name, phone, role, owner_application_status, business_license_path, business_license_name, payout_bank, payout_account, created_at, owner_application_submitted_at'),
     supabase.rpc('get_admin_period_stats', { p_days: period }),
   ]);
   // Only stop views that need these records; other sections can still be used.
@@ -128,6 +128,7 @@ type OwnerProfile = {
   payout_bank?: string | null;
   payout_account?: string | null;
   created_at?: string;
+  owner_application_submitted_at?: string | null;
 };
 
 function OwnerRowItem({ owner }: { owner: OwnerProfile }) {
@@ -138,7 +139,7 @@ function OwnerTable({ owners, initialStatus }: { owners: OwnerProfile[]; initial
   const sortedOwners = [...owners].sort((a, b) => {
     if (a.owner_application_status === 'pending' && b.owner_application_status !== 'pending') return -1;
     if (a.owner_application_status !== 'pending' && b.owner_application_status === 'pending') return 1;
-    return (b.created_at ?? '').localeCompare(a.created_at ?? '');
+    return (b.owner_application_submitted_at ?? b.created_at ?? '').localeCompare(a.owner_application_submitted_at ?? a.created_at ?? '');
   });
   return <DashboardRecords initialStatus={initialStatus} title="Danh sách hồ sơ chủ sân" description="Hồ sơ chờ duyệt được xếp trước. Tìm theo tên hoặc số điện thoại."
     mobilePrimary={[4, 5]} columns={['Người đại diện', 'Tài khoản nhận cọc', 'Giấy tờ', 'Ngày gửi', 'Trạng thái', 'Thao tác']}
@@ -147,7 +148,7 @@ function OwnerTable({ owners, initialStatus }: { owners: OwnerProfile[]; initial
       <div key="name"><Link href={`/admin/owners/${owner.id}`} className="font-semibold text-pitch hover:underline">{owner.full_name ?? 'Chưa có tên'}</Link><p className="mt-1 text-xs text-ink-secondary">{owner.phone ?? 'Chưa có số điện thoại'}</p></div>,
       <div key="bank">{owner.payout_bank ?? 'Chưa có ngân hàng'}<p className="mt-1 text-xs tabular-nums text-ink-secondary">{owner.payout_account ?? 'Chưa có số tài khoản'}</p></div>,
       owner.business_license_path ? <a key="license" href={`/api/admin/owners/${owner.id}/license`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Mở giấy tờ ↗</a> : 'Chưa có',
-      owner.created_at ? dayLabel(new Date(owner.created_at)) : '—',
+      (owner.owner_application_submitted_at ?? owner.created_at) ? dayLabel(new Date((owner.owner_application_submitted_at ?? owner.created_at)!)) : '—',
       <OwnerApplicationStatus key="status" status={owner.owner_application_status} />,
       owner.owner_application_status === 'pending' ? <AdminOwnerAction key="action" ownerId={owner.id} /> : <Link key="detail" href={`/admin/owners/${owner.id}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-pitch">Xem hồ sơ ↗</Link>,
     ] }))} />;

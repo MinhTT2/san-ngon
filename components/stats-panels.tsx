@@ -4,6 +4,7 @@ import { vnd } from '@/lib/format';
 import type { AdminStats, OwnerStats, StatsPoint } from '@/lib/stats';
 import { CountUp } from './count-up';
 import { NavigationMarker } from './navigation-marker';
+import { DailyStatsChart } from './daily-stats-chart';
 
 export function PeriodLinks({ path, period }: { path: string; period: number }) {
   return <nav aria-label="Khoảng thời gian thống kê" className="pf-selection-rail relative isolate flex items-center gap-1 rounded-control border border-hairline bg-card p-1 text-xs font-semibold">
@@ -31,7 +32,7 @@ export function OwnerStatsPanel({ stats }: { stats: OwnerStats }) {
 export function AdminStatsPanel({ stats }: { stats: AdminStats }) {
   const s = stats.summary;
   return <section className="pf-stats-container mt-5" aria-labelledby="stats-heading">
-    <StatsHeader eyebrow="Sức khỏe nền tảng" from={stats.from} to={stats.to} suffix="Tính theo ngày nhận tiền, kể cả sân đã ngừng hoạt động" />
+    <StatsHeader eyebrow="Sức khỏe nền tảng" from={stats.from} to={stats.to} suffix="Đơn theo ngày chơi · Doanh thu theo ngày nhận tiền (giờ Việt Nam)" />
     <div data-motion-item className="pf-metric-panel mt-4 overflow-hidden rounded-card border border-pitch bg-pitch text-pitch-ink">
       <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_190px] lg:p-6"><div className="flex min-w-0 flex-col justify-between gap-5"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-strong"><Activity className="size-4" aria-hidden="true" /> Đang hoạt động</div><p className="mt-3 text-xs text-strong">Doanh thu đặt sân qua web</p><p className="mt-1 font-display break-words text-[clamp(1.8rem,4vw,3rem)] font-extrabold tracking-tight"><CountUp to={s.revenue} format="money" duration={1000} /></p><p className="mt-3 max-w-md text-sm leading-6 text-strong">Tiền đặt sân đã xác nhận từ {s.paid_bookings} đơn trên web. Loại khoản phải hoàn hoặc đã hoàn, tiền thừa và chuyển trùng.</p></div><div className="flex flex-wrap gap-2 text-xs"><DarkPill label="Người chơi mới" value={`+${s.new_players}`} /><DarkPill label="Cụm sân" value={s.active_venues} /><DarkPill label="Sân hoạt động" value={s.active_courts} /></div></div><OccupancyRing value={s.occupancy_pct} booked={s.booked_hours} capacity={s.capacity_hours} /></div>
       <div className="grid border-t border-white/15 sm:grid-cols-3"><HeroMetric label="Tỷ lệ lấp đầy" value={`${s.occupancy_pct}%`} icon={Target} /><HeroMetric label="Đơn ghi nhận doanh thu" value={s.paid_bookings} icon={CalendarCheck} /><HeroMetric label="Đang hoạt động" value={`${s.active_venues} cụm`} icon={TrendingUp} /></div>
@@ -44,6 +45,12 @@ export function AdminStatsPanel({ stats }: { stats: AdminStats }) {
         { view: 'bookings', count: s.pending_bookings, label: 'đơn chờ cọc' },
       ].map(item => <Link key={item.view} href={`/admin?view=${item.view}&status=pending`} className="pf-action flex min-h-11 items-center justify-between gap-2 rounded-control border border-peak-line px-3 py-3 text-sm text-peak-ink hover:bg-card"><span><strong>{item.count}</strong> {item.label}</span><ArrowUpRight className="size-4 shrink-0" aria-hidden="true" /></Link>)}</div>
     </section>}
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <ActivityMetric label="Đơn theo ngày chơi" value={s.bookings} />
+      <ActivityMetric label="Đã xác nhận / hoàn tất" value={stats.daily.reduce((total, point) => total + point.playing_bookings, 0)} />
+      <ActivityMetric label="Hủy / không đến" value={s.cancelled} />
+    </div>
+    <div className="pf-stats-grid mt-4"><DailyStatsChart title="Đơn đặt theo ngày chơi" description="Đơn đã xác nhận hoặc hoàn tất, tính theo ngày bắt đầu chơi (giờ Việt Nam)." points={stats.daily.map(point => ({ date: point.date, value: point.playing_bookings }))} /><ActivityVenueRanking venues={stats.activity_venues} /></div>
     <div className="pf-stats-grid mt-4"><RevenueChart points={stats.daily} /><VenueRanking venues={stats.venues} /></div>
   </section>;
 }
@@ -76,9 +83,15 @@ function OwnerActions({ pending, cancelled }: { pending: number; cancelled: numb
 }
 
 function RevenueChart({ points }: { points: StatsPoint[] }) {
-  const peak = Math.max(...points.map(point => point.revenue), 0);
-  const max = Math.max(peak, 1);
-  return <section data-motion-item className="rounded-card border border-hairline bg-card p-5 lg:p-6"><div className="flex items-start justify-between gap-4"><div><div className="flex items-center gap-2"><BarChart3 className="size-4 text-pitch" aria-hidden="true" /><h3 className="font-semibold">Doanh thu theo ngày</h3></div><p className="mt-1 text-xs text-ink-secondary">Tiền đặt sân đã xác nhận theo ngày nhận tiền (giờ Việt Nam).</p></div><span className="rounded-pill bg-free-fill px-2.5 py-1 text-xs font-semibold text-free-ink">Đỉnh {vnd(peak)}</span></div><div className="pf-chart-plot mt-7 flex h-36 items-end gap-1.5 border-b border-hairline">{points.map((point, index) => <div key={point.date} tabIndex={0} aria-label={`${point.date}: ${vnd(point.revenue)}`} className="group relative flex h-full min-w-0 flex-1 items-end" title={`${point.date}: ${vnd(point.revenue)}`}><div className="absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-control bg-ink px-2 py-1 text-[10px] text-pitch-ink group-hover:block group-focus:block">{vnd(point.revenue)}</div><div className="pf-chart-bar w-full rounded-t-slot bg-pitch transition-opacity group-hover:opacity-70" style={{ ['--pf-chart-delay' as string]: `${Math.min(index, 12) * 25}ms`, height: `${Math.max(point.revenue ? 5 : 1, point.revenue / max * 100)}%` }} /></div>)}</div><div className="mt-2 flex justify-between text-[10px] text-ink-secondary"><span>{points[0]?.date ?? '—'}</span><span>{points.at(-1)?.date ?? '—'}</span></div></section>;
+  return <DailyStatsChart title="Doanh thu theo ngày" description="Tiền đặt sân đã xác nhận theo ngày nhận tiền (giờ Việt Nam)." points={points.map(point => ({ date: point.date, value: point.revenue }))} money />;
+}
+
+function ActivityMetric({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-card border border-hairline bg-card p-4"><p className="text-xs text-ink-secondary">{label}</p><p className="mt-2 font-display text-2xl font-bold tabular-nums text-pitch">{value}</p></div>;
+}
+
+function ActivityVenueRanking({ venues }: { venues: AdminStats['activity_venues'] }) {
+  return <section data-motion-item aria-label="Đặt sân theo cụm" className="min-w-0 rounded-card border border-hairline bg-card p-5 lg:p-6"><h3 className="font-semibold">Đặt sân theo cụm</h3><p className="mt-1 text-xs leading-5 text-ink-secondary">Xếp theo đơn đã xác nhận hoặc hoàn tất trong kỳ, theo ngày chơi.</p>{venues.length ? <ol className="mt-4 divide-y divide-hairline">{venues.map(venue => <li key={`${venue.name}-${venue.district}`} className="flex items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{venue.name}</p><p className="mt-1 text-xs text-ink-secondary">{venue.district}</p></div><strong className="shrink-0 text-sm tabular-nums text-pitch">{venue.playing_bookings} đơn</strong></li>)}</ol> : <p className="mt-5 text-sm text-ink-secondary">Chưa có đơn đã xác nhận hoặc hoàn tất trong kỳ.</p>}</section>;
 }
 
 function CourtRanking({ courts }: { courts: OwnerStats['courts'] }) {

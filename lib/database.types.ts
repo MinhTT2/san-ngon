@@ -1403,6 +1403,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_sort_at: string | null
           avatar_url: string | null
           ban_reason: string | null
           banned_at: string | null
@@ -1413,6 +1414,7 @@ export type Database = {
           full_name: string | null
           id: string
           owner_application_status: string | null
+          owner_application_submitted_at: string | null
           owner_rejection_reason: string | null
           owner_reviewed_at: string | null
           owner_reviewed_by: string | null
@@ -1425,6 +1427,7 @@ export type Database = {
           telegram_link_token_hash: string | null
         }
         Insert: {
+          admin_sort_at?: string | null
           avatar_url?: string | null
           ban_reason?: string | null
           banned_at?: string | null
@@ -1435,6 +1438,7 @@ export type Database = {
           full_name?: string | null
           id: string
           owner_application_status?: string | null
+          owner_application_submitted_at?: string | null
           owner_rejection_reason?: string | null
           owner_reviewed_at?: string | null
           owner_reviewed_by?: string | null
@@ -1447,6 +1451,7 @@ export type Database = {
           telegram_link_token_hash?: string | null
         }
         Update: {
+          admin_sort_at?: string | null
           avatar_url?: string | null
           ban_reason?: string | null
           banned_at?: string | null
@@ -1457,6 +1462,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           owner_application_status?: string | null
+          owner_application_submitted_at?: string | null
           owner_rejection_reason?: string | null
           owner_reviewed_at?: string | null
           owner_reviewed_by?: string | null
@@ -2281,6 +2287,7 @@ export type Database = {
           p_phone: string
         }
         Returns: {
+          admin_sort_at: string | null
           avatar_url: string | null
           ban_reason: string | null
           banned_at: string | null
@@ -2291,6 +2298,7 @@ export type Database = {
           full_name: string | null
           id: string
           owner_application_status: string | null
+          owner_application_submitted_at: string | null
           owner_rejection_reason: string | null
           owner_reviewed_at: string | null
           owner_reviewed_by: string | null

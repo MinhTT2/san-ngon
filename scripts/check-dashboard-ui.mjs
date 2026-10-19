@@ -65,19 +65,28 @@ try {
     ['/admin/gop-y', 'Góp ý từ người dùng', 'Góp ý người dùng'],
     [`/admin/owners/${ids.owner}`, 'Nguyễn Minh', 'Hồ sơ chủ sân'],
   ]);
+  await admin.page.goto(`${origin}/admin/owners/${ids.owner}`);
+  await admin.page.getByText(/Gửi hồ sơ ngày.*10\/10/).waitFor();
   const page = admin.page;
   await page.setViewportSize({ width: 1440, height: 700 });
   await page.goto(`${origin}/admin`);
   await page.locator('h1').waitFor(); await page.waitForTimeout(650);
-  const chart = page.locator('.pf-chart-bar').first();
+  const chart = page.getByRole('region', { name: 'Doanh thu theo ngày', exact: true }).locator('.pf-chart-bar').first();
   assert.equal(await chart.evaluate(element => element.closest('section').hasAttribute('data-motion-seen')), false, 'Offscreen charts wait for the scroll');
   await page.getByRole('heading', { name: 'Doanh thu theo ngày' }).scrollIntoViewIfNeeded();
-  await page.waitForFunction(() => document.querySelector('.pf-chart-bar')?.getAnimations().some(animation => animation.playState === 'running'));
+  await page.waitForFunction(() => document.querySelector('[aria-label="Doanh thu theo ngày"] .pf-chart-bar')?.getAnimations().some(animation => animation.playState === 'running'));
   const nav = page.getByRole('navigation', { name: 'Điều hướng admin' });
   const selected = await nav.locator('[aria-current=page]').boundingBox();
   const marker = await nav.locator('.pf-nav-marker').boundingBox();
   assert(Math.abs(selected.x - marker.x) < 2 && Math.abs(selected.y - marker.y) < 2 && Math.abs(selected.width - marker.width) < 2, 'Navigation surface follows the selected item');
   console.log('OK: charts animate when scrolled into view; navigation marker aligns with selection.');
+  const activity = page.getByRole('region', { name: 'Đơn đặt theo ngày chơi', exact: true });
+  await activity.getByText('Xem số liệu từng ngày', { exact: true }).click();
+  const activityTable = activity.getByRole('table');
+  assert.equal(await activityTable.getByRole('row').count(), 31);
+  assert.equal(await activityTable.getByRole('row').filter({ hasText: '04/09/2026' }).innerText(), '04/09/2026\t7 đơn');
+  assert.equal(await page.getByRole('region', { name: 'Đặt sân theo cụm', exact: true }).getByText('17 đơn', { exact: true }).count(), 1);
+  console.log('OK: daily playing activity is distinct from receipts, with an accessible detail table.');
   const pending = page.getByRole('region', { name: 'Cần xử lý', exact: true });
   await pending.getByRole('link', { name: /hồ sơ chủ sân/ }).click();
   await page.waitForURL('**view=owners&status=pending');
