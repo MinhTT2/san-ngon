@@ -31,3 +31,10 @@ Mã đo lường của Sân Ngon: `G-0BN7KY5V59`. Đây là mã công khai, khô
 - Đã kiểm tra chuyển trang thật của Next.js, Back/Forward, reload, query/hash, vào trang riêng tư trước/sau khi SDK tải, quay lại trang công khai, Google bị chặn, hostname local/Preview và môi trường server Preview. Không gửi request thu thập thử đến GA4 thật.
 - Lượt kiểm tra SDK Google thật ban đầu phát hiện `page_referrer` vẫn có query do tính năng tự động của luồng đang hoạt động. Người vận hành đã xác nhận tắt toàn bộ Tính năng đo lường nâng cao. Chạy lại với `GA4_TEST_REAL_SDK=1` đã **đạt**: URL/referrer sạch, không đếm trùng khi đổi query/chuyển trang/quay lại, ngừng thu thập khi vào trang riêng tư. Mọi request thu thập trong kiểm thử đều bị chặn, không gửi dữ liệu thử vào GA4.
 - Đã đặt `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-0BN7KY5V59` cho Vercel Production để bản triển khai tiếp theo kích hoạt đo lường. **Chưa nghiệm thu dữ liệu xuất hiện trong property GA4**: người vận hành cần mở website, xem Báo cáo → Thời gian thực và xác nhận lượt xem.
+
+## Cập nhật ngày 20/10/2026
+
+- Người vận hành xác nhận GA4 đã có dữ liệu thật. Phần gửi lượt xem đã được nghiệm thu theo xác nhận này.
+- Bổ sung ba sự kiện tên cố định trên trang công khai: `discovery_search` (gửi form tìm sân), `discovery_venue_open` (bấm liên kết trang sân), `discovery_booking_continue` (tiếp tục sau chọn giờ). Không đọc/gửi giá trị form, từ khóa, tài khoản, sân con, lịch đã chọn, mã đơn hoặc tiền cọc. SDK chưa sẵn sàng/bị chặn thì bỏ qua, không lưu lịch sử để gửi bù.
+- Không coi các số lần thao tác độc lập là phễu người dùng hoặc tỷ lệ thanh toán; giao dịch và doanh thu vẫn lấy từ SQL. Sự kiện mới chỉ có dữ liệu từ sau triển khai.
+- Báo cáo mở rộng tại `/admin/thong-ke-truy-cap`: xem [hướng dẫn báo cáo](admin-traffic.md). Thu thập lượt xem và quyền đọc Data API là hai cấu hình riêng.

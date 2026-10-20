@@ -1,5 +1,18 @@
 export const ANALYTICS_ORIGIN = 'https://san-ngon.vercel.app';
 
+export const DISCOVERY_EVENTS = {
+  discovery_search: 'Tìm sân',
+  discovery_venue_open: 'Mở trang sân',
+  discovery_booking_continue: 'Tiếp tục sau khi chọn giờ',
+} as const;
+export type DiscoveryEvent = keyof typeof DISCOVERY_EVENTS;
+
+/** Fixed names only: never accept input values, identities or booking/payment data. */
+export function trackDiscoveryEvent(event: DiscoveryEvent) {
+  if (typeof window === 'undefined' || !Object.hasOwn(DISCOVERY_EVENTS, event)) return;
+  window.dispatchEvent(new CustomEvent('san-ngon:discovery', { detail: event }));
+}
+
 const PUBLIC_PAGE_TITLES: Record<string, string> = {
   '/': 'Trang chủ',
   '/tim-san': 'Tìm sân',

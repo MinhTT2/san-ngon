@@ -37,7 +37,8 @@ begin
   exception when raise_exception then if sqlerrm<>'OWNER_SUBSCRIPTION_DUE' then raise; end if; end;
   begin insert into courts(venue_id,name,sport) values(v.id,'Blocked','badminton'); raise exception 'CHECK_FAILED: unpaid court';
   exception when raise_exception then if sqlerrm<>'OWNER_SUBSCRIPTION_DUE' then raise; end if; end;
-  result:=confirm_payment(b.code,30000,'subscription-old-deposit','{}',null,'MBBank','1234567890');
+  -- The existing order keeps its server-frozen deposit, even after the owner fee expires.
+  result:=confirm_payment(b.code,b.deposit_amount,'subscription-old-deposit','{}',null,'MBBank','1234567890');
   assert result->>'reason'='CONFIRMED', 'old deposit is still processed';
   i:=create_subscription_invoice();j:=create_subscription_invoice();assert i.id=j.id and i.amount=299000, 'one pending invoice and server price';
   result:=confirm_subscription_payment(i.code,299000,'fee-wrong','{}',null,'OtherBank','1234567890');assert result->>'reason'='WRONG_RECEIVER';

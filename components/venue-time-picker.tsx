@@ -1,5 +1,7 @@
 'use client';
 
+import { trackDiscoveryEvent } from '@/lib/analytics';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Clock3 } from 'lucide-react';
 import { enterMotion } from '@/lib/motion';
@@ -17,7 +19,7 @@ export function VenueTimePicker({
   initialDuration,
   courts = [],
   depositPct,
-  onConfirm,
+  onConfirm: continueBooking,
 }: {
   availability: ReturnType<typeof useAvailability>;
   initialSport?: Sport;
@@ -27,6 +29,10 @@ export function VenueTimePicker({
   depositPct: number;
   onConfirm: () => void;
 }) {
+  function onConfirm() {
+    trackDiscoveryEvent('discovery_booking_continue');
+    continueBooking();
+  }
   const [chosenSport, setChosenSport] = useState<Sport | null>(a.selection?.slots[0].sport ?? initialSport ?? null);
   const [chosenDuration, setChosenDuration] = useState<number | null>(a.selection?.slots.reduce((sum, slot) => sum + slot.slot_minutes, 0) ?? initialDuration ?? null);
   const sports = [...new Set(a.slots.map((slot) => slot.sport))];

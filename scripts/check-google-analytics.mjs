@@ -118,6 +118,32 @@ try {
     assert.deepEqual(disabled.errors, []);
     console.log('PASS: disabled server configuration loads no Google SDK and sends no events.');
   } else {
+  const discovery = await fixture();
+  await discovery.page.goto(`${discovery.origin}/tim-san`);
+  await waitViews(discovery, 1);
+  const search = discovery.page.locator('form[aria-label="Tìm và lọc sân"]');
+  await search.getByRole('searchbox').fill('private-person@example.com');
+  await search.getByRole('button', { name: 'Tìm sân', exact: true }).click();
+  await assertEventually(() => assert.equal(discovery.hits.filter(hit => new URL(hit.url).searchParams.get('en') === 'discovery_search').length, 1));
+  await discovery.page.goto(`${discovery.origin}/tim-san`);
+  await waitViews(discovery, 2);
+  await discovery.page.locator('main a[href^="/san/san-cau-giay"]').first().click();
+  await waitViews(discovery, 3);
+  assert.equal(discovery.hits.filter(hit => new URL(hit.url).searchParams.get('en') === 'discovery_venue_open').length, 1);
+  // Exercise the fixed event bus without making a booking or depending on a live slot.
+  await discovery.page.evaluate(() => window.dispatchEvent(new CustomEvent('san-ngon:discovery', { detail: 'discovery_booking_continue' })));
+  await assertEventually(() => assert.equal(discovery.hits.filter(hit => new URL(hit.url).searchParams.get('en') === 'discovery_booking_continue').length, 1));
+  await discovery.page.evaluate(() => window.dispatchEvent(new CustomEvent('san-ngon:discovery', { detail: 'private_unknown_event' })));
+  await quiet(discovery.page);
+  assert.equal(discovery.hits.filter(hit => new URL(hit.url).searchParams.get('en') === 'private_unknown_event').length, 0);
+  checkSanitized(discovery.hits);
+  await discovery.page.locator('footer a[href="/tai-khoan"]').click();
+  await discovery.page.waitForURL(url => url.pathname === '/dang-nhap');
+  const beforePrivate = discovery.hits.length;
+  await discovery.page.evaluate(() => window.dispatchEvent(new CustomEvent('san-ngon:discovery', { detail: 'discovery_search' })));
+  await quiet(discovery.page);
+  assert.equal(discovery.hits.length, beforePrivate, 'private page suppresses discovery events');
+  assert.deepEqual(discovery.errors, []);
   const test = await fixture();
   await test.page.goto(`${test.origin}/tro-giup?email=person%40example.com#secret`, { referer: 'https://www.google.com/search?q=private' });
   await waitViews(test, 1);
