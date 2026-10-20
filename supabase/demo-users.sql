@@ -2,6 +2,7 @@
 -- Run: npx supabase db query --linked --file supabase/demo-users.sql
 -- Repeat runs skip existing demo accounts without changing their data.
 -- No password, real contact details, bookings, payments or public community profiles.
+-- Optional follow-ups: demo-user-details.sql then demo-user-activity.sql.
 begin;
 select pg_advisory_xact_lock(20261020, 50);
 create temporary table demo_players on commit drop as
@@ -34,7 +35,9 @@ from unnest(array[
   'ducthanh.vu','quangvinh.dang','thanhbinh.bui','ngocson.do','tuankiet.ngo'
 ]) with ordinality as names(name, handle, n)
 where not exists (select 1 from auth.users u
-  where lower(u.email) = lower(handle) || '@players.san-ngon.invalid');
+  where lower(u.email) = lower(handle) || '@players.san-ngon.invalid'
+    or (u.raw_user_meta_data->>'demo_seed' = 'demo-players-20261020'
+      and u.raw_user_meta_data->>'full_name' = name));
 
 insert into auth.users(id, instance_id, aud, role, email,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
