@@ -21,6 +21,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const [result, realtime] = await Promise.all([getGa4Report(days), getGa4Realtime()]);
   return <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
     <DashboardPageHeader eyebrow="Quản trị / Website" title="Thống kê truy cập" description="Dữ liệu Google Analytics 4 của các trang công khai. Số người truy cập có thể bao gồm khách chưa đăng nhập." />
+    <Link href="/admin/thong-ke-truy-cap/minh-hoa" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline underline-offset-4">Xem số liệu minh họa để trình bày</Link>
     <div className="mt-6 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-pitch">{days} ngày gần nhất, gồm hôm nay</p><PeriodLinks path="/admin/thong-ke-truy-cap" period={days} /></div>
     <RealtimePanel result={realtime} days={days} />
     {result.status === 'ready' ? <TrafficReport report={result.report} days={days} /> : <section className="mt-5 rounded-card border border-hairline bg-card p-6" role="status">
