@@ -13,8 +13,8 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | SQL triển khai và kiểm tra đạt; code chờ deploy |
 | 6 | Đo phễu tìm sân–đặt–trả tiền | SQL và giao diện nhóm đơn tạo→cọc kiểm tra đạt; tìm/mở/chọn giờ đã có GA4, cần quyền đọc thật |
 | 7 | Báo cáo và xử lý nội dung công khai | SQL đã triển khai, build/kiểm tra đạt; code chờ deploy |
-| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Đang phát triển; người dùng giao tự chọn mốc xem xét |
-| 9 | Database thử cho SQL/CI | Chờ; không tự dùng project vận hành làm DB CI |
+| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | SQL triển khai và kiểm tra đạt; 90/180 ngày là mốc rà soát, không tự xóa |
+| 9 | Database thử cho SQL/CI | Đang triển khai stack tạm trên GitHub Actions, không dùng DB vận hành |
 | 10 | Hiệu năng thực và khả năng tiếp cận | Chờ |
 | 11 | SEO sân/giải và kiểm soát URL bộ lọc | Chờ |
 
@@ -137,3 +137,21 @@ Metadata giải ẩn không index, kể cả khi người có quyền xem trang 
 SQL ứng viên/sau triển khai rollback kiểm quyền, CAS, public/own/participant,
 ẩn/khôi phục, chặn cam kết mới và giữ lịch sử tài chính. Build cô lập, browser
 390/1440 cho báo cáo/triage và hồi quy chính sách/các luồng mới ở 5 độ rộng đạt.
+
+## Đợt 8 — dữ liệu cá nhân
+
+Theo người dùng giao tự chọn: 90 ngày từ từ chối hồ sơ gần nhất, 180 ngày từ kết thúc
+hỗ trợ là mốc xem xét. `/admin/du-lieu` không bao gồm hồ sơ đang hoạt động hay hỗ trợ
+có đơn/chứng từ. Người vận hành vẫn phải kiểm tra tiền/tranh chấp/yêu cầu đang mở,
+Storage và backup trước khi xử lý; chưa có tự xóa hoặc lời hứa xóa chứng từ tài chính.
+
+`/tai-khoan/du-lieu` tải JSON riêng của người đăng nhập (không xuất khách của chủ sân,
+khóa, token, raw ngân hàng hoặc tệp riêng). Giới hạn 1.000 bản ghi mỗi nhóm báo cần
+hỗ trợ xuất đầy đủ, không cắt lặng. Yêu cầu xem/sửa/xóa có loại riêng, UUID idempotent,
+rate limit chung hỗ trợ, được theo dõi tại Góp ý của tôi/admin lọc Dữ liệu cá nhân.
+Đóng yêu cầu cần phản hồi tối thiểu 20 ký tự nêu phạm vi xử lý/cần giữ; đổi trạng thái
+không tự xóa dữ liệu. Ghi audit yêu cầu và tiến độ, không ghi nội dung riêng vào audit.
+
+SQL rollback ứng viên/sau migration kiểm dữ liệu tự thân, chủ sân không xuất khách,
+quyền, retry, phản hồi, loại chứng từ khỏi mốc rà soát và giới hạn xuất. Build cô lập,
+browser 390/1440, giữ UUID khi lỗi và hồi quy trang chính sách/no-JS đạt; đã xem ảnh mobile.

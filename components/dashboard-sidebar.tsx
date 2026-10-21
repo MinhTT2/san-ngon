@@ -46,6 +46,7 @@ const ADMIN_LINKS = [
   { href: '/admin/users', label: 'Người dùng', icon: Users },
   { href: '/admin/gop-y', label: 'Góp ý người dùng', icon: MessageSquare },
   { href: '/admin/van-hanh', label: 'Vận hành', icon: ClipboardList },
+  { href: '/admin/du-lieu', label: 'Rà soát dữ liệu', icon: ShieldCheck },
   { href: '/admin/nhat-ky', label: 'Nhật ký thao tác', icon: ClipboardList },
 ] as const;
 

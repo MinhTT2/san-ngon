@@ -389,6 +389,7 @@ export type Database = {
       }
       feedback: {
         Row: {
+          data_request_action: string | null
           booking_id: string | null
           receipt_path: string | null
           category: string
@@ -405,6 +406,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          data_request_action?: string | null
           booking_id?: string | null
           receipt_path?: string | null
           category: string
@@ -421,6 +423,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          data_request_action?: string | null
           booking_id?: string | null
           receipt_path?: string | null
           category?: string
@@ -2017,6 +2020,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_retention_review: { Args: { p_page?: number }; Returns: Json }
+      get_my_data_export: { Args: never; Returns: Json }
+      submit_data_request: {
+        Args: { p_action: string; p_id: string; p_message: string }
+        Returns: string
+      }
       set_content_moderation: {
         Args: {
           p_hidden: boolean
