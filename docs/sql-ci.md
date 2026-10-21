@@ -7,7 +7,7 @@ không tạo Supabase project trả phí, không sao chép database vận hành 
 `node scripts/run-sql-ci.mjs --preflight` kiểm inventory offline. Chạy stack thật chỉ
 được phép trong Linux CI; script không nhận URL database, project ref hoặc `--linked`.
 Nó tạo workdir mới bằng `supabase init`, chỉ chép migrations được Git theo dõi, lọc
-biến môi trường truyền cho CLI và luôn dùng `db query --local`. Không đưa `.temp`
+biến môi trường truyền cho CLI và chạy SQL bằng `psql` trong đúng container database tạm. Không đưa `.temp`
 liên kết project, khóa OAuth, token/Vault, SePay, SMTP hoặc Telegram vào container.
 
 Lần khởi tạo áp dụng toàn bộ lịch sử migrations vào database mới. Sau đó tắt cron
