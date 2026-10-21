@@ -1976,6 +1976,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_booking_conversion: { Args: { p_days?: number }; Returns: Json }
       get_cash_report: {
         Args: {
           p_export?: boolean

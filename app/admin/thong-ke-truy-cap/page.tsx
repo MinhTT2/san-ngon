@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BookingConversion } from '@/components/booking-conversion';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getGa4Report, getGa4Realtime } from '@/lib/ga4-report';
@@ -23,6 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
     <DashboardPageHeader eyebrow="Quản trị / Website" title="Thống kê truy cập" description="Dữ liệu Google Analytics 4 của các trang công khai. Số người truy cập có thể bao gồm khách chưa đăng nhập." />
     <Link href="/admin/thong-ke-truy-cap/minh-hoa" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline underline-offset-4">Xem số liệu minh họa để trình bày</Link>
     <div className="mt-6 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-pitch">{days} ngày gần nhất, gồm hôm nay</p><PeriodLinks path="/admin/thong-ke-truy-cap" period={days} /></div>
+    <BookingConversion days={days} />
     <RealtimePanel result={realtime} days={days} />
     {result.status === 'ready' ? <TrafficReport report={result.report} days={days} /> : <section className="mt-5 rounded-card border border-hairline bg-card p-6" role="status">
       <h2 className="font-display text-xl font-bold text-pitch">{result.status === 'not_configured' ? 'Chưa kết nối báo cáo Google Analytics' : 'Chưa tải được báo cáo truy cập'}</h2>

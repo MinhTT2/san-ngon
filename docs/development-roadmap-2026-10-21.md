@@ -11,8 +11,8 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 3 | Nhật ký thao tác quan trọng | Đã triển khai production và kiểm tra |
 | 4 | Giám sát và cảnh báo vận hành | Đã triển khai production; cron/worker và heartbeat thật đã kiểm tra |
 | 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | SQL triển khai và kiểm tra đạt; code chờ deploy |
-| 6 | Đo phễu tìm sân–đặt–trả tiền | Đang phát triển; số tìm sân GA4 còn phụ thuộc quyền đọc |
-| 7 | Báo cáo và xử lý nội dung công khai | Chờ |
+| 6 | Đo phễu tìm sân–đặt–trả tiền | SQL và giao diện nhóm đơn tạo→cọc kiểm tra đạt; tìm/mở/chọn giờ đã có GA4, cần quyền đọc thật |
+| 7 | Báo cáo và xử lý nội dung công khai | Đang phát triển |
 | 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Chờ; thời hạn lưu cần người vận hành chốt |
 | 9 | Database thử cho SQL/CI | Chờ; không tự dùng project vận hành làm DB CI |
 | 10 | Hiệu năng thực và khả năng tiếp cận | Chờ |
@@ -106,3 +106,17 @@ trên 5.000 dòng báo chọn khoảng nhỏ hơn. CSV escape công thức và c
 SQL rollback trước/sau migration kiểm tổng không nhân dòng, tiền thiếu/thừa,
 ẩn giao dịch riêng/chủ khác, mốc nửa đêm Việt Nam, quyền/bị khóa, phân trang và
 không cắt CSV. Build production cô lập và browser chủ sân/admin 390/1440 đạt.
+
+## Đợt 6 — theo dõi tìm sân đến cọc
+
+Giữ số thao tác tìm/mở/chọn giờ trong GA4 hiện có; không gửi mã đơn, định danh,
+checkout hay dữ liệu thanh toán sang Google. Bổ sung nhóm đơn tạo trong 7/30/90 ngày
+và số chính các đơn đó đã xác nhận cọc (kể cả hủy sau cọc), còn giữ hoặc kết thúc
+chưa cọc, với tỷ lệ và bảng ngày do SQL tính. Loại thanh toán mô phỏng, chỉ admin
+được xem dữ liệu tổng hợp. Hoạt động độc lập khi GA4 chưa kết nối; không chia số đơn
+cho số thao tác GA4 và không gọi đó là phễu cùng người/phiên. Nối toàn hành trình
+cần thiết kế đồng ý đo lường và quyền GA4, chưa tự thêm theo dõi cá nhân.
+
+SQL rollback trước/sau triển khai kiểm quyền, tổng nhóm/bảng ngày, mô phỏng và kỳ.
+Build cô lập và browser 390/1440 (bao gồm GA4 chưa cấu hình) đạt. Kiểm tra GA4 end-to-end
+cần build riêng bật production measurement ID; không thực hiện gửi dữ liệu thật.

@@ -190,6 +190,7 @@ const server = createServer(async (req, res) => {
       send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
     }
     if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_booking_conversion') { send({ from:'2026-10-01', to:'2026-10-21', created:10, paid:4, holding:2, ended:4, conversion_pct:40, daily:[{date:'2026-10-21',created:10,paid:4}] }); return; }
     if (name === 'get_cash_report') {
       send({ from: args.p_from || '2026-10-01', to: args.p_to || '2026-10-21', checked_at: created, total: 2, page: 1, pages: 1, received: 130000, refunded: 40000, review_count: 1, booking_refund_due_now: 90000, legacy_refund_count: 1,
         sources: [{source:'booking',received:130000},{source:'tournament',received:0},{source:'subscription',received:0}], rows: [
