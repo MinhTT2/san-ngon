@@ -7,8 +7,8 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | Thứ tự | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | 1 | Hoàn cọc sân có tham chiếu, số thực hoàn và lịch sử | Đã triển khai SQL, kiểm tra và bàn giao code; chuyển hoàn thật còn nghiệm thu |
-| 2 | Hàng đợi email/Telegram, timeout và retry | Tiếp theo |
-| 3 | Nhật ký thao tác quan trọng | Chờ |
+| 2 | Hàng đợi email/Telegram, timeout và retry | Đã triển khai SQL và kiểm tra code; cấu hình lịch gửi sau khi deploy |
+| 3 | Nhật ký thao tác quan trọng | Đang phát triển |
 | 4 | Giám sát và cảnh báo vận hành | Chờ |
 | 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | Chờ |
 | 6 | Đo phễu tìm sân–đặt–trả tiền | Chờ |

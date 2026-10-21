@@ -416,6 +416,114 @@ export type Database = {
           },
         ]
       }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          available_at: string
+          booking_id: string | null
+          channel: string
+          created_at: string
+          destination: string
+          event_key: string
+          id: string
+          kind: string
+          last_reason: string | null
+          lease_id: string | null
+          lease_until: string | null
+          payload: Json
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          available_at?: string
+          booking_id?: string | null
+          channel: string
+          created_at?: string
+          destination: string
+          event_key: string
+          id?: string
+          kind: string
+          last_reason?: string | null
+          lease_id?: string | null
+          lease_until?: string | null
+          payload: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          available_at?: string
+          booking_id?: string | null
+          channel?: string
+          created_at?: string
+          destination?: string
+          event_key?: string
+          id?: string
+          kind?: string
+          last_reason?: string | null
+          lease_id?: string | null
+          lease_until?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_deliveries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_worker_config: {
+        Row: {
+          activated_at: string
+          endpoint_url: string
+          singleton: boolean
+        }
+        Insert: {
+          activated_at?: string
+          endpoint_url: string
+          singleton?: boolean
+        }
+        Update: {
+          activated_at?: string
+          endpoint_url?: string
+          singleton?: boolean
+        }
+        Relationships: []
+      }
+      notification_worker_requests: {
+        Row: {
+          created_at: string
+          request_id: number
+        }
+        Insert: {
+          created_at?: string
+          request_id: number
+        }
+        Update: {
+          created_at?: string
+          request_id?: number
+        }
+        Relationships: []
+      }
       sepay_transfer_claims: {
         Row: {
           transaction_key: string
@@ -1821,8 +1929,26 @@ export type Database = {
           venue_id: string
         }[]
       }
+      claim_notification_deliveries: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      dispatch_notification_worker: { Args: never; Returns: undefined }
+      finish_notification_delivery: {
+        Args: {
+          p_id: string
+          p_lease_id: string
+          p_ok: boolean
+          p_reason?: string
+        }
+        Returns: boolean
+      }
       get_admin_period_stats: { Args: { p_days?: number }; Returns: Json }
       get_booking_refund: { Args: { p_code: string }; Returns: Json }
+      get_notification_delivery_page: {
+        Args: { p_page?: number }
+        Returns: Json
+      }
       process_incoming_transfer: {
         Args: {
           p_amount: number
@@ -1858,6 +1984,10 @@ export type Database = {
           p_transferred_at: string
         }
         Returns: Json
+      }
+      retry_notification_delivery: {
+        Args: { p_id: string; p_updated_at: string }
+        Returns: undefined
       }
       search_my_bookings: {
         Args: {

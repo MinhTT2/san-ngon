@@ -43,6 +43,7 @@ const ADMIN_LINKS = [
   { href: '/admin/giai-dau', label: 'Giải đấu', icon: Trophy },
   { href: '/admin/users', label: 'Người dùng', icon: Users },
   { href: '/admin/gop-y', label: 'Góp ý người dùng', icon: MessageSquare },
+  { href: '/admin/van-hanh', label: 'Vận hành', icon: ClipboardList },
 ] as const;
 
 export function DashboardSidebar({ role }: { role: DashboardRole }) {

@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { extractBookingCodes, extractSubscriptionCodes, extractTournamentCodes } from '@/lib/sepay';
 import { secretHash } from '@/lib/sepay-crypto';
-import { sendTelegram, ownerBookingMessage } from '@/lib/notify';
 import type { ConfirmPaymentResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -95,30 +94,8 @@ export async function POST(req: NextRequest) {
   const result = data as ConfirmPaymentResult;
   console.log('[sepay]', refCode, amount, result.reason);
 
-  // Báo chủ sân. Gửi hỏng cũng không ảnh hưởng: tiền đã vào, đơn đã xác nhận.
-  if (result.ok && result.reason === 'CONFIRMED') {
-    const sent = await sendTelegram(result.owner_telegram_chat_id, ownerBookingMessage(result));
-    // notifications.user_id là NOT NULL — phải ghi đúng chủ sân, nếu không dòng
-    // báo-lỗi-gửi-tin bị chặn và không ai biết Telegram đã hỏng.
-    //
-    // NOT_CONFIGURED nghĩa là chủ sân chưa nối Telegram bao giờ, không phải
-    // gửi hỏng. Ghi cả trường hợp đó thì mỗi đơn đẻ thêm một dòng cảnh báo vô
-    // nghĩa, lấp mất những lần hỏng thật.
-    if (!sent.ok && sent.reason !== 'NOT_CONFIGURED' && result.owner_id) {
-      const { error: notifError } = await supabase.from('notifications').insert({
-        user_id: result.owner_id,
-        booking_id: result.booking_id ?? null,
-        kind: 'new_booking',
-        channel: 'telegram',
-        title: `Không gửi được Telegram cho đơn ${result.code}`,
-        body: sent.reason,
-        failed_reason: sent.reason,
-      });
-      if (notifError) console.error('[sepay] không ghi được notification', notifError.message);
-    }
-  }
-
-  return NextResponse.json({ success: true, ok: true, result });
+  // Delivery tasks are committed by SQL with the payment; the scheduler sends them.
+  return NextResponse.json({ success: true, ok: true, reason: result.reason });
 }
 
 /** SePay ping GET khi bấm "Kiểm tra" trong dashboard. */

@@ -190,6 +190,14 @@ const server = createServer(async (req, res) => {
       send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
     }
     if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_notification_delivery_page') {
+      send({total:3,page:1,pages:1,pending:1,failed:1,rows:[
+        {id:'11111111-1111-4111-8111-111111111111',kind:'booking',channel:'email',status:'sent',attempts:1,last_reason:null,code:'SANABC234',full_name:'Nguyễn Minh',created_at:created,updated_at:created},
+        {id:'22222222-2222-4222-8222-222222222222',kind:'booking',channel:'telegram',status:'pending',attempts:1,last_reason:'HTTP_429',code:'SANABC234',full_name:'Nguyễn Minh',created_at:created,updated_at:created},
+        {id:'33333333-3333-4333-8333-333333333333',kind:'owner_review',channel:'email',status:'failed',attempts:6,last_reason:'NETWORK',code:null,full_name:'Chủ sân kiểm tra',created_at:created,updated_at:created},
+      ]});return;
+    }
+    if (name === 'retry_notification_delivery') {send(null);return;}
     if (name === 'get_owner_refund_page') {
       const rows=[{id:'refund-1',code:'SANABC234',starts_at:created,ends_at:future,deposit_amount:100000,customer_name:'Lê Hải',customer_phone:base.phone,court_name:court.name,refund_status:'needed'},{id:'refund-2',code:'SANHJK234',starts_at:created,ends_at:future,deposit_amount:100000,customer_name:'Khách đã hoàn',customer_phone:base.phone,court_name:court.name,refund_status:'done'}].filter(row=>(args.p_status==='all'||row.refund_status===args.p_status)&&(!args.p_query || row.code.includes(args.p_query)));
       send({rows,total:rows.length,page:1,pages:1,needed:1,done:1});return;

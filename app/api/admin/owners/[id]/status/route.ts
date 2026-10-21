@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { ownerApplicationEmail, sendEmail } from '@/lib/notify';
 
 const Body = z.discriminatedUnion('status', [
   z.object({ status: z.literal('active') }),
@@ -23,14 +22,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const key = Object.keys(messages).find((item) => error.message.includes(item));
     return NextResponse.json({ error: key ? messages[key] : 'Không lưu được kết quả duyệt. Hãy thử lại.' }, { status: key ? 409 : 500 });
   }
-  const { data: ownerEmail, error: emailLookupError } = await supabase.rpc('get_owner_email', { p_owner_id: id });
-  if (emailLookupError) console.error('[owner-review] không lấy được email chủ sân', emailLookupError.message);
-  let emailSent = false;
-  if (ownerEmail) {
-    const message = ownerApplicationEmail(parsed.data.status, parsed.data.status === 'rejected' ? parsed.data.reason : null);
-    const email = await sendEmail(ownerEmail, message.subject, message.html);
-    emailSent = email.ok;
-    if (!email.ok && email.reason !== 'NOT_CONFIGURED') console.error('[owner-review] không gửi được email', email.reason);
-  }
-  return NextResponse.json({ ok: true, emailSent });
+  // The SQL review inserts its email task in the same transaction.
+  return NextResponse.json({ ok: true });
 }

@@ -26,6 +26,7 @@ jobs:
       - run: node scripts/check-owner-review-reasons.mjs
       - run: node scripts/check-incoming-transfer-api.mjs
       - run: node scripts/check-booking-refund-api.mjs
+      - run: node scripts/check-notification-delivery.mjs
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
