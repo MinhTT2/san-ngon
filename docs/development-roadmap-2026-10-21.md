@@ -12,8 +12,8 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 4 | Giám sát và cảnh báo vận hành | Đã triển khai production; cron/worker và heartbeat thật đã kiểm tra |
 | 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | SQL triển khai và kiểm tra đạt; code chờ deploy |
 | 6 | Đo phễu tìm sân–đặt–trả tiền | SQL và giao diện nhóm đơn tạo→cọc kiểm tra đạt; tìm/mở/chọn giờ đã có GA4, cần quyền đọc thật |
-| 7 | Báo cáo và xử lý nội dung công khai | Đang phát triển |
-| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Chờ; thời hạn lưu cần người vận hành chốt |
+| 7 | Báo cáo và xử lý nội dung công khai | SQL đã triển khai, build/kiểm tra đạt; code chờ deploy |
+| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Đang phát triển; người dùng giao tự chọn mốc xem xét |
 | 9 | Database thử cho SQL/CI | Chờ; không tự dùng project vận hành làm DB CI |
 | 10 | Hiệu năng thực và khả năng tiếp cận | Chờ |
 | 11 | SEO sân/giải và kiểm soát URL bộ lọc | Chờ |
@@ -120,3 +120,20 @@ cần thiết kế đồng ý đo lường và quyền GA4, chưa tự thêm the
 SQL rollback trước/sau triển khai kiểm quyền, tổng nhóm/bảng ngày, mô phỏng và kỳ.
 Build cô lập và browser 390/1440 (bao gồm GA4 chưa cấu hình) đạt. Kiểm tra GA4 end-to-end
 cần build riêng bật production measurement ID; không thực hiện gửi dữ liệu thật.
+
+## Đợt 7 — báo cáo và tạm ẩn nội dung
+
+Link Báo cáo trên hồ sơ/giải mở góp ý riêng tư với đúng đường dẫn và loại báo cáo.
+Admin lọc báo cáo trong hàng đợi hỗ trợ, phản hồi riêng và ẩn/khôi phục ở trang
+chi tiết. SQL yêu cầu admin hoạt động, lý do gửi người đăng và phiên bản trạng thái
+để tránh ghi đè. Lưu trạng thái/lý do riêng tư và audit không có nội dung nhạy cảm.
+
+Hồ sơ ẩn biến mất khỏi tìm kiếm/RPC công khai, người đăng vẫn sửa được và không tự
+bỏ cờ ẩn. Giải ẩn không có trong RLS công khai/sitemap; người quản lý và người đã
+đăng ký vẫn xem để xử lý cọc/hoàn. Chặn đăng ký mới và duyệt mới ngay trong SQL,
+giữ lịch sân, các khoản tiền và đăng ký đã có. Không tự hủy giải hoặc đổi role.
+Metadata giải ẩn không index, kể cả khi người có quyền xem trang riêng.
+
+SQL ứng viên/sau triển khai rollback kiểm quyền, CAS, public/own/participant,
+ẩn/khôi phục, chặn cam kết mới và giữ lịch sử tài chính. Build cô lập, browser
+390/1440 cho báo cáo/triage và hồi quy chính sách/các luồng mới ở 5 độ rộng đạt.

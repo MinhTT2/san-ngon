@@ -86,7 +86,8 @@ export function tournamentError(code: string) {
     COURT_REQUIRED: 'Chủ sân cần chọn sân của mình để công khai giải.',
     COURT_INVALID: 'Chọn sân đang hoạt động và đúng môn thi đấu.', SLOT_TAKEN: 'Khung giờ này đã có đơn đặt sân hoặc đã bị khóa.',
     RECEIVER_NOT_READY: 'Chủ sân chưa sẵn sàng nhận cọc qua SePay. Kiểm tra kết nối, phí dịch vụ và điều kiện mở nhận đơn.',
-    REGISTRATION_CLOSED: 'Giải đã đóng đăng ký hoặc đã hủy.', TOURNAMENT_FULL: 'Giải đã đủ số người / đội được duyệt.',
+    CONTENT_HIDDEN: 'Giải đang tạm ẩn công khai, chưa nhận hoặc duyệt đăng ký mới.',
+  REGISTRATION_CLOSED: 'Giải đã đóng đăng ký hoặc đã hủy.', TOURNAMENT_FULL: 'Giải đã đủ số người / đội được duyệt.',
     ALREADY_REGISTERED: 'Bạn đã gửi đăng ký cho giải này.', REGISTRATION_NOT_PENDING: 'Đăng ký này đã được xử lý.',
     TOURNAMENT_STARTED: 'Đã quá thời hạn được phép hủy. Liên hệ ban tổ chức để được hỗ trợ.', REVIEW_NOTE_REQUIRED: 'Nhập lý do không duyệt.',
   };

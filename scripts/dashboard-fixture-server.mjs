@@ -86,6 +86,9 @@ const server = createServer(async (req, res) => {
   } catch { /* Anonymous requests use only public fixture data. */ }
   const me = role === 'owner' ? people[1] : people[0];
   const send = (data, code = 200) => { res.statusCode = code; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
+  if (url.pathname === '/rest/v1/feedback' && url.searchParams.get('id') === 'eq.f1070000-0000-4000-8000-000000000001') {
+    send({ ...feedback[0], id: 'f1070000-0000-4000-8000-000000000001', category: 'report', title: 'Báo cáo nội dung công khai', page_path: '/ket-noi/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' }); return;
+  }
   const selection = url.searchParams.get('select') || '';
   const failedRead = readFailure && (
     url.pathname === `/rest/v1/rpc/${readFailure}` ||
@@ -190,6 +193,7 @@ const server = createServer(async (req, res) => {
       send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
     }
     if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_content_moderation') { send({ kind:args.p_kind,id:args.p_id,title:'Hồ sơ kiểm tra',hidden:false,reason:null,updated_at:null });return; }
     if (name === 'get_booking_conversion') { send({ from:'2026-10-01', to:'2026-10-21', created:10, paid:4, holding:2, ended:4, conversion_pct:40, daily:[{date:'2026-10-21',created:10,paid:4}] }); return; }
     if (name === 'get_cash_report') {
       send({ from: args.p_from || '2026-10-01', to: args.p_to || '2026-10-21', checked_at: created, total: 2, page: 1, pages: 1, received: 130000, refunded: 40000, review_count: 1, booking_refund_due_now: 90000, legacy_refund_count: 1,

@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      content_moderation: {
+        Row: {
+          actor_id: string
+          content_id: string
+          hidden: boolean
+          kind: string
+          reason: string
+          updated_at: string
+        }
+        Insert: {
+          actor_id: string
+          content_id: string
+          hidden: boolean
+          kind: string
+          reason: string
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string
+          content_id?: string
+          hidden?: boolean
+          kind?: string
+          reason?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_moderation_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_refund_legacy: {
         Row: {
           booking_id: string
@@ -289,6 +324,7 @@ export type Database = {
       }
       community_profiles: {
         Row: {
+          moderation_hidden: boolean
           bio: string
           display_name: string
           facebook_url: string
@@ -306,6 +342,7 @@ export type Database = {
           zalo_phone: string
         }
         Insert: {
+          moderation_hidden?: boolean
           bio?: string
           display_name: string
           facebook_url?: string
@@ -323,6 +360,7 @@ export type Database = {
           zalo_phone?: string
         }
         Update: {
+          moderation_hidden?: boolean
           bio?: string
           display_name?: string
           facebook_url?: string
@@ -790,6 +828,7 @@ export type Database = {
       }
       tournaments: {
         Row: {
+          moderation_hidden: boolean
           address: string
           cancel_window_hours: number
           cancelled_by: string | null
@@ -814,6 +853,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          moderation_hidden?: boolean
           address: string
           cancel_window_hours?: number
           cancelled_by?: string | null
@@ -838,6 +878,7 @@ export type Database = {
           title: string
         }
         Update: {
+          moderation_hidden?: boolean
           address?: string
           cancel_window_hours?: number
           cancelled_by?: string | null
@@ -1976,6 +2017,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      set_content_moderation: {
+        Args: {
+          p_hidden: boolean
+          p_id: string
+          p_kind: string
+          p_reason: string
+          p_updated_at?: string
+        }
+        Returns: undefined
+      }
+      get_content_moderation: {
+        Args: { p_id: string; p_kind: string }
+        Returns: Json
+      }
       get_booking_conversion: { Args: { p_days?: number }; Returns: Json }
       get_cash_report: {
         Args: {

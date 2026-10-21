@@ -1,15 +1,16 @@
 import { z } from 'zod';
 import { safeNext } from './safe-next';
 
-export const FEEDBACK_CATEGORIES = { bug: 'Báo lỗi', idea: 'Đề xuất cải thiện', support: 'Cần hỗ trợ' } as const;
+export const FEEDBACK_CATEGORIES = { bug: 'Báo lỗi', idea: 'Đề xuất cải thiện', support: 'Cần hỗ trợ', report: 'Báo cáo nội dung' } as const;
 export const FEEDBACK_STATUSES = { new: 'Đã tiếp nhận', reviewing: 'Đang xử lý', resolved: 'Đã giải quyết', closed: 'Đã đóng' } as const;
 export const feedbackSearchParams = z.object({
   page: z.coerce.number().int().min(1).max(100000).catch(1),
   status: z.enum(['all','open','done']).catch('all'),
+  loai: z.enum(['report']).optional().catch(undefined),
   trang: z.string().max(300).optional().catch(undefined),
 });
 export const feedbackSchema = z.object({
-  id: z.string().uuid(), category: z.enum(['bug', 'idea', 'support']),
+  id: z.string().uuid(), category: z.enum(['bug', 'idea', 'support', 'report']),
   title: z.string().trim().min(5).max(120), message: z.string().trim().min(20).max(3000),
   page_path: z.string().max(300).refine(value => safeNext(value) === value && !/[?#]/.test(value)).nullable().default(null),
 });

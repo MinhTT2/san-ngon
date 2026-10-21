@@ -11,6 +11,7 @@ export const metadata = { title: 'Nhật ký thao tác · Sân Ngon' };
 type Entry = { id: number; actor_id: string | null; actor_name: string | null; action: string; entity_id: string; entity_code: string | null; details: Record<string, unknown>; created_at: string };
 type Result = { total: number; page: number; pages: number; rows: Entry[] };
 const labels: Record<string, string> = {
+  'content.hidden': 'Tạm ẩn nội dung công khai', 'content.restored': 'Khôi phục nội dung công khai',
   'booking.confirmed': 'Xác nhận đã nhận cọc', 'booking.cancelled': 'Hủy đơn', 'booking.no_show': 'Ghi nhận không đến',
   'booking.refund_recorded': 'Ghi khoản hoàn tiền', 'owner.reviewed': 'Duyệt hồ sơ chủ sân',
   'subscription.fee_changed': 'Đổi chế độ thu phí', 'subscription.period_changed': 'Cập nhật hạn phí',
