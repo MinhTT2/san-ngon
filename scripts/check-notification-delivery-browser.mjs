@@ -16,6 +16,9 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(origin + '/admin/van-hanh');
     await page.getByRole('heading', { name: 'Gửi thông báo', exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'Trạng thái hệ thống', exact: true }).waitFor();
+    await page.getByText('Dọn giữ chỗ hết hạn', { exact: true }).waitFor();
+    await page.getByText('Cần kiểm tra (2)', { exact: true }).waitFor();
     await page.getByText('Chủ sân kiểm tra · Gửi thất bại · 6 lần thử', { exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'Đưa vào hàng đợi lại', exact: true }).count(), 1);
     let requestBody;

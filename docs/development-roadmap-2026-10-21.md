@@ -9,8 +9,8 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 1 | Hoàn cọc sân có tham chiếu, số thực hoàn và lịch sử | Đã triển khai SQL, kiểm tra và bàn giao code; chuyển hoàn thật còn nghiệm thu |
 | 2 | Hàng đợi email/Telegram, timeout và retry | Đã triển khai production; cron mỗi phút và worker HTTP 200 đã kiểm tra |
 | 3 | Nhật ký thao tác quan trọng | SQL đã triển khai; code kiểm tra đạt, chờ cùng đợt deploy tiếp theo |
-| 4 | Giám sát và cảnh báo vận hành | Đang phát triển |
-| 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | Chờ |
+| 4 | Giám sát và cảnh báo vận hành | SQL/cron đã triển khai, kiểm tra đạt; cùng nhật ký trong đợt deploy tiếp theo |
+| 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | Đang phát triển |
 | 6 | Đo phễu tìm sân–đặt–trả tiền | Chờ |
 | 7 | Báo cáo và xử lý nội dung công khai | Chờ |
 | 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Chờ; thời hạn lưu cần người vận hành chốt |
@@ -76,3 +76,17 @@ Không dựng nhật ký cũ. Trang `/admin/nhat-ky` tìm mã/ID và phân trang
 Kiểm tra SQL ứng viên/sau migration bằng rollback: quyền, bất biến, trường riêng tư,
 retry không ghi lặp, các nhánh cập nhật và phân trang. Build production cô lập,
 Chromium 390/1440, giới hạn admin và hồi quy origin/worker đạt.
+
+## Đợt 4 — cảnh báo vận hành
+
+Trang Vận hành đọc projection admin cho cron giữ chỗ/buổi chơi/giải/hàng đợi,
+worker HTTP, tác vụ gửi lỗi/tồn, chủ sân cần nối SePay và giao dịch nhận diện được
+đang gắn cờ trên 24 giờ. Không lộ command, phản hồi thô, Vault hay giao dịch riêng.
+Không suy đoán lỗi webhook khi không có tiền vào. `operational-health` chạy 5 phút,
+chỉ báo inbox admin khi mở/phục hồi sự cố, không lặp khi trạng thái giữ nguyên.
+Trang cũng cảnh báo khi heartbeat giám sát cũ/tắt. Inbox nội bộ vẫn cần admin theo dõi;
+chưa thay thế dịch vụ theo dõi uptime bên ngoài khi app/DB cùng mất kết nối.
+
+Kiểm tra SQL rollback: projection/quyền, bỏ giao dịch riêng, mở/phục hồi/mở lại,
+không báo trùng và không tạo tác vụ gửi tiền/email ngoài. Build cô lập và UI 390/1440
+cùng hồi quy nhật ký/thông báo đạt. Lịch giám sát đã áp dụng trong migration.

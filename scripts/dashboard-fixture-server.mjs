@@ -190,6 +190,12 @@ const server = createServer(async (req, res) => {
       send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
     }
     if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_operational_health') {
+      send({ checked_at: '2026-10-21T03:00:00Z', monitor_active: true, monitor_recent: true, monitor_last_seen_at: '2026-10-21T02:59:00Z', checks: [
+        { key: 'cron:expire-pending-bookings', title: 'Dọn giữ chỗ hết hạn', ok: true, detail: 'Đang chạy đúng lịch', last_run_at: '2026-10-21T02:59:00Z' },
+        { key: 'notifications:failed', title: 'Thông báo gửi thất bại', ok: false, count: 2, detail: 'Kiểm tra cấu hình/kênh nhận rồi đưa lại vào hàng đợi khi phù hợp' },
+      ] }); return;
+    }
     if (name === 'get_operations_audit') {
       const rows=[
         {id:1,actor_id:ownerId,actor_name:'Chủ sân kiểm tra',action:'booking.refund_recorded',entity_id:courtId,entity_code:'SANAUD234',details:{amount:40000},created_at:created},

@@ -24,6 +24,8 @@ try {
     await page.waitForURL(url => url.searchParams.get('q') === 'SANAUD234');
     assert.equal(await page.locator('ol > li').count(), 1);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(900);
     if (process.env.UX_SCREENSHOT_DIR) {
       await mkdir(process.env.UX_SCREENSHOT_DIR, { recursive: true });
       await page.screenshot({ path: `${process.env.UX_SCREENSHOT_DIR}/operations-audit-${width}.png`, fullPage: true });

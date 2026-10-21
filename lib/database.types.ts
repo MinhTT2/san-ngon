@@ -524,6 +524,33 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_alerts: {
+        Row: {
+          check_key: string
+          is_open: boolean
+          last_seen_at: string
+          opened_at: string | null
+          resolved_at: string | null
+          title: string
+        }
+        Insert: {
+          check_key: string
+          is_open: boolean
+          last_seen_at?: string
+          opened_at?: string | null
+          resolved_at?: string | null
+          title: string
+        }
+        Update: {
+          check_key?: string
+          is_open?: boolean
+          last_seen_at?: string
+          opened_at?: string | null
+          resolved_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       operations_audit: {
         Row: {
           action: string
@@ -1949,6 +1976,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      refresh_operational_alerts: { Args: never; Returns: number }
+      operational_health_snapshot: { Args: never; Returns: Json }
+      get_operational_health: { Args: never; Returns: Json }
       booking_revenue_entries: {
         Args: { p_from: string; p_to: string; p_venue_id: string }
         Returns: {

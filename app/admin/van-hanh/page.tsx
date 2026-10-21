@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OperationalHealth } from '@/components/operational-health';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { DashboardPageHeader } from '@/components/dashboard-page-header';
@@ -25,6 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const result = !error && data ? data as unknown as Result : null;
   return <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
     <DashboardPageHeader eyebrow="Quản trị / Vận hành" title="Gửi thông báo" description="Theo dõi email và Telegram cho đơn mới, kết quả duyệt hồ sơ. Tiền và trạng thái đơn đã lưu độc lập với việc gửi tin." />
+    <OperationalHealth />
     {result ? <>
       {!result.worker_configured && <p role="status" className="mt-5 rounded-card border border-hairline bg-card p-4 text-sm leading-6 text-ink-secondary">Chưa bật lịch gửi nền. Thông báo được giữ trong hàng đợi; cần cấu hình worker trước khi có thể gửi.</p>}
       <dl className="my-6 grid grid-cols-2 gap-3"><div className="rounded-card border border-hairline bg-card p-5"><dt className="text-sm text-ink-secondary">Chờ hoặc đang gửi</dt><dd className="mt-2 font-display text-3xl font-bold text-pitch">{result.pending}</dd></div><div className="rounded-card border border-hairline bg-card p-5"><dt className="text-sm text-ink-secondary">Cần kiểm tra lỗi</dt><dd className="mt-2 font-display text-3xl font-bold text-danger">{result.failed}</dd></div></dl>
