@@ -198,7 +198,7 @@ try {
   assert.equal(await page.getByText('Trả tại sân', { exact: true }).count(), 0);
   await screenshot('review-booking-form-1440');
   await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
-  assert.equal(await page.getByRole('button', { name: /^10:00, còn sân/ }).getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.getByRole('button', { name: /^10:00 Còn sân/ }).getAttribute('aria-pressed'), 'true');
   assert.equal(writes.length, ownerWrites, 'Reviewing contact information does not create a booking');
   let bookingAttempts = 0;
   const bookingResponse = async route => {

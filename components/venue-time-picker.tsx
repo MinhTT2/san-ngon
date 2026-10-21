@@ -146,12 +146,12 @@ export function VenueTimePicker({
               : 'border-free-line bg-free-fill text-free-ink hover:border-pitch';
             return (
               <button key={startsAt} type="button" disabled={!best} aria-pressed={selected}
-                aria-label={`${hhmm(startsAt)}, ${best ? `còn sân, từ ${vnd(best.total)} cho ${duration} phút` : unavailableLabel}`}
                 onClick={() => a.choose(best)}
                 className={`pf-slot relative flex min-h-19 flex-col items-start justify-center gap-0.5 rounded-control border px-2 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch ${tone}`}>
                 <span className="text-sm font-semibold tabular-nums">{hhmm(startsAt)}</span>
                 <span className="text-xs">{best ? 'Còn sân' : unavailableLabel}</span>
                 {best && <span className="text-xs font-semibold sm:text-xs">Từ {vnd(best.total)}</span>}
+                <span className="sr-only"> · {duration} phút chơi</span>
                 {selected && <span aria-hidden="true" className="absolute right-2 top-2">✓</span>}
               </button>
             );

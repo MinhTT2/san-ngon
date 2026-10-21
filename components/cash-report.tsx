@@ -19,8 +19,8 @@ export async function CashReport({ searchParams, admin = false }: { searchParams
   return <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
     <DashboardPageHeader eyebrow={`${admin ? 'Quản trị' : 'Chủ sân'} / Báo cáo`} title="Tiền ghi nhận trên website" description="Khoản nhận đã xác định được mã và đúng người nhận, tách đặt sân, giải đấu và phí. Đối chiếu với sao kê trước khi kết luận số tiền thực tế." />
     <form className="my-5 flex flex-wrap items-end gap-3 rounded-card border border-hairline bg-card p-4">
-      <label className="min-w-0 flex-1 text-sm font-semibold">Từ ngày<input name="from" type="date" defaultValue={params.from || report?.from} required className={field} /></label>
-      <label className="min-w-0 flex-1 text-sm font-semibold">Đến hết ngày<input name="to" type="date" defaultValue={params.to || report?.to} required className={field} /></label>
+      <label className="w-full min-w-0 text-sm font-semibold sm:w-auto sm:min-w-44 sm:flex-1">Từ ngày<input name="from" type="date" defaultValue={params.from || report?.from} required className={field} /></label>
+      <label className="w-full min-w-0 text-sm font-semibold sm:w-auto sm:min-w-44 sm:flex-1">Đến hết ngày<input name="to" type="date" defaultValue={params.to || report?.to} required className={field} /></label>
       <button className="min-h-11 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink">Xem báo cáo</button>
     </form>
     {error || !report ? <QueryError title={error?.message === 'INVALID_DATE_RANGE' ? 'Chọn khoảng ngày không quá 93 ngày.' : 'Chưa tải được báo cáo tiền'} /> : <>

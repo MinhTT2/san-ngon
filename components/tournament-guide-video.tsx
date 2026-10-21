@@ -28,7 +28,7 @@ export function TournamentGuideVideo() {
     };
   }, [open]);
   return <>
-    <button ref={trigger} type="button" onClick={() => { setFailed(false); setOpen(true); }} aria-haspopup="dialog" aria-label="Xem video hướng dẫn tham gia giải" className="group relative mt-5 block aspect-video w-full overflow-hidden rounded-control border border-free-line/35 bg-pitch text-left">
+    <button ref={trigger} type="button" onClick={() => { setFailed(false); setOpen(true); }} aria-haspopup="dialog" className="group relative mt-5 block aspect-video w-full overflow-hidden rounded-control border border-free-line/35 bg-pitch text-left">
       <Image src="/media/tournament-guide.webp" alt="" fill sizes="(min-width: 1024px) 256px, 100vw" className="object-cover" />
       <span className="absolute inset-0 bg-pitch/15" />
       <span className="absolute inset-0 grid place-items-center"><span className="pf-action grid size-12 place-items-center rounded-full border border-white/40 bg-card text-pitch group-hover:bg-free-fill"><Play size={20} aria-hidden="true" className="ml-0.5" /></span></span>

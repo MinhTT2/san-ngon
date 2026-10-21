@@ -23,7 +23,8 @@ export function VenueCard({ venue: v, date, signedIn, saved, returnPath, sport, 
   const feedbackId = `favorite-feedback-${v.id}`;
   const src = v.images?.[0] ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/venue-photos/${v.images[0]}` : undefined;
   return <li data-depth="" className="pf-depth-card pf-venue-card pf-card group relative flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-hairline bg-card">
-    <Link href={href + '#lich-san'} aria-label={`Xem lịch ${v.name}`} className="pf-venue-cover relative block">
+    <Link href={href + '#lich-san'} className="pf-venue-cover relative block">
+      <span className="sr-only">Xem lịch </span>
       <VenueCardPhoto src={src} name={v.name} />
       <span className={`absolute bottom-3 left-3 rounded-pill border px-3 py-1.5 text-xs font-semibold ${v.available_slots ? 'border-free-line bg-free-fill text-pitch' : 'border-hairline bg-card text-ink-secondary'}`}>
         {v.available_slots ? `Còn ${v.available_slots} khung trống` : 'Hết giờ trống ngày này'}

@@ -32,7 +32,6 @@ export function HeroGrid({
   return (
     <Link
       href={`/san/${venueSlug}?ngay=${ymd(date)}`}
-      aria-label={`Xem lịch đầy đủ của ${venueName}`}
       className="flex flex-col gap-2.5 rounded-card bg-card p-4 lg:p-5"
     >
       <div className="flex items-baseline justify-between gap-3">

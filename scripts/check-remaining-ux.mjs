@@ -34,8 +34,8 @@ try{
    const href=await schedule.getAttribute('href');assert(href.includes('gio=10%3A00')&&href.includes('phut=120')&&href.endsWith('#lich-san'));
    await schedule.click();await page.getByRole('region',{name:'Thông tin đặt sân'}).waitFor({state:'hidden'});
    await page.getByRole('heading',{name:'Giờ nào còn sân?',exact:true}).waitFor();
-   await page.getByRole('button',{name:/10:00, còn sân/}).waitFor();
-   assert.equal(await page.getByRole('button',{name:/10:00, còn sân/}).getAttribute('aria-pressed'),'true');
+   await page.getByRole('button',{name:/10:00 Còn sân/}).waitFor();
+   assert.equal(await page.getByRole('button',{name:/10:00 Còn sân/}).getAttribute('aria-pressed'),'true');
    assert.equal(await page.locator('#booking-duration').inputValue(),'120');
    assert((await page.getByRole('button',{name:'Chia sẻ'}).count())>0);
    await fit(page,'Venue');await shot(page,'venue',width);
