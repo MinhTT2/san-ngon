@@ -38,7 +38,7 @@ begin
   assert p.payout_account='3333333333', 'resubmit preserves verified connection';
 end $$;
 -- Even with rollout enabled and a pre-existing active venue, an unapproved applicant cannot take bookings.
-update booking_operator set multi_owner_enabled=true;
+insert into booking_operator(owner_id,multi_owner_enabled,accepts_new_bookings) values(auth.uid(),true,false) on conflict(singleton) do update set multi_owner_enabled=true;
 insert into venues(id,owner_id,slug,name,address,district,status) values('b0000000-0000-4000-8000-000000000003',auth.uid(),'check-registration-rollback','Test','Test','Test','active');
 insert into courts(id,venue_id,name,sport) values('b0000000-0000-4000-8000-000000000004','b0000000-0000-4000-8000-000000000003','Test','badminton');
 insert into price_rules(court_id,days,start_time,end_time,price_per_hour) values('b0000000-0000-4000-8000-000000000004','{0,1,2,3,4,5,6}','05:00','23:00',100000);

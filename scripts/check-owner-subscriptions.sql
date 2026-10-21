@@ -4,8 +4,12 @@ insert into auth.users(id) values
  ('c0000000-0000-4000-8000-000000000001'),('c0000000-0000-4000-8000-000000000002'),('c0000000-0000-4000-8000-000000000003');
 update profiles set role='owner',owner_application_status='active',payout_bank='MBBank',payout_account='1234567890' where id='c0000000-0000-4000-8000-000000000001';
 update profiles set role='admin' where id='c0000000-0000-4000-8000-000000000002';
-update booking_operator set owner_id='c0000000-0000-4000-8000-000000000001',bank='MBBank',account_number='1234567890',account_name='TEST ONLY',accepts_new_bookings=true,multi_owner_enabled=false;
-update subscription_receiver set connection_id=null,bank='MBBank',account_number='1234567890',account_name='TEST ONLY';
+insert into booking_operator(owner_id,bank,account_number,account_name,accepts_new_bookings,multi_owner_enabled)
+values('c0000000-0000-4000-8000-000000000001','MBBank','1234567890','TEST ONLY',true,false)
+on conflict(singleton) do update set owner_id=excluded.owner_id,bank=excluded.bank,account_number=excluded.account_number,account_name=excluded.account_name,accepts_new_bookings=true,multi_owner_enabled=false;
+insert into subscription_receiver(connection_id,bank,account_number,account_name)
+values(null,'MBBank','1234567890','TEST ONLY')
+on conflict(singleton) do update set connection_id=null,bank=excluded.bank,account_number=excluded.account_number,account_name=excluded.account_name;
 select set_config('request.jwt.claim.sub','c0000000-0000-4000-8000-000000000001',true);
 do $$
 declare v venues; draft venues; i subscription_invoices; j subscription_invoices; ct uuid; b bookings; result jsonb; until_at timestamptz;

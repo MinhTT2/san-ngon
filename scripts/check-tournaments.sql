@@ -10,7 +10,7 @@ insert into venues(id,owner_id,name,slug,address,district,status,open_time,close
 values('e2900000-0000-4000-8000-000000000010','e2900000-0000-4000-8000-000000000002','Test giải','test-giai-rollback','Địa chỉ kiểm tra','Cầu Giấy','draft','06:00','23:00');
 update venues set status='active', images='{test1,test2,test3}' where id='e2900000-0000-4000-8000-000000000010';
 insert into courts(id,venue_id,name,sport) values('e2900000-0000-4000-8000-000000000011','e2900000-0000-4000-8000-000000000010','Sân test','badminton');
-update booking_operator set multi_owner_enabled=true;
+insert into booking_operator(owner_id,multi_owner_enabled,accepts_new_bookings) values('e2900000-0000-4000-8000-000000000002',true,false) on conflict(singleton) do update set multi_owner_enabled=true;
 insert into sepay_connections(id,owner_id,status,bank,account_number,account_name)
 values('e2900000-0000-4000-8000-000000000020','e2900000-0000-4000-8000-000000000002','ready','TestBank','123456789','Test Owner');
 
