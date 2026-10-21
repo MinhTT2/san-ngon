@@ -14,7 +14,7 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 6 | Đo phễu tìm sân–đặt–trả tiền | SQL và giao diện nhóm đơn tạo→cọc kiểm tra đạt; tìm/mở/chọn giờ đã có GA4, cần quyền đọc thật |
 | 7 | Báo cáo và xử lý nội dung công khai | SQL đã triển khai, build/kiểm tra đạt; code chờ deploy |
 | 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | SQL triển khai và kiểm tra đạt; 90/180 ngày là mốc rà soát, không tự xóa |
-| 9 | Database thử cho SQL/CI | Đang triển khai stack tạm trên GitHub Actions, không dùng DB vận hành |
+| 9 | Database thử cho SQL/CI | Đã cấu hình và kiểm preflight; đang chạy database tạm trên GitHub Actions |
 | 10 | Hiệu năng thực và khả năng tiếp cận | Chờ |
 | 11 | SEO sân/giải và kiểm soát URL bộ lọc | Chờ |
 
@@ -155,3 +155,11 @@ không tự xóa dữ liệu. Ghi audit yêu cầu và tiến độ, không ghi 
 SQL rollback ứng viên/sau migration kiểm dữ liệu tự thân, chủ sân không xuất khách,
 quyền, retry, phản hồi, loại chứng từ khỏi mốc rà soát và giới hạn xuất. Build cô lập,
 browser 390/1440, giữ UUID khi lỗi và hồi quy trang chính sách/no-JS đạt; đã xem ảnh mobile.
+
+## Đợt 9 — SQL CI cô lập
+
+`SQL isolation` tạo stack Supabase local tạm trên GitHub runner, áp dụng toàn bộ
+migrations Git theo dõi, tắt cron thử và chạy 19 bài SQL rollback cùng hai kết nối
+tranh lịch thật. Không nhận URL cloud/`--linked`, không chép `.env`, `.temp` hoặc
+khóa vận hành. `--preflight` và lint script đạt; kết quả thực thi stack trên runner
+sẽ được ghi sau khi workflow hoàn tất. Xem `docs/sql-ci.md`.

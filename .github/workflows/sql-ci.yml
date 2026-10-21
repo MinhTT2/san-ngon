@@ -1,0 +1,35 @@
+name: SQL isolation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check-*.sql'
+      - 'scripts/run-sql-ci.mjs'
+      - 'scripts/check-booking-concurrency.mjs'
+      - '.github/workflows/sql-ci.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check-*.sql'
+      - 'scripts/*sql*ci*'
+      - 'scripts/check-booking-concurrency.mjs'
+      - '.github/workflows/sql-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sql-isolation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: node scripts/run-sql-ci.mjs
