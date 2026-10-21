@@ -141,11 +141,15 @@ do $$ declare r jsonb;a jsonb;today date:=(now() at time zone 'Asia/Ho_Chi_Minh'
  assert (r->'daily'->0->>'revenue')::bigint=400000;
  assert (select sum((x->>'revenue')::bigint) from jsonb_array_elements(r->'courts') x)=400000,'court revenues sum to summary';
  assert not (r->'summary' ? 'players'),'owner must not receive platform account counts';
- perform cancel_booking((select code from ledger_cases where name='exact'));
- assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'exclude refundable cancellation immediately';
- perform mark_refund_done((select code from ledger_cases where name='exact'));
- assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'already refunded is also excluded';
- update bookings set refund_status='none' where id=(select booking_id from ledger_cases where name='exact');
+ -- Roll this branch back before checking the separate retained-deposit outcome.
+ begin
+  perform cancel_booking((select code from ledger_cases where name='exact'));
+  assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'exclude refundable cancellation immediately';
+  perform record_booking_refund((select code from ledger_cases where name='exact'),gen_random_uuid(),100000,'ledger-refund-check',to_char(now() at time zone 'Asia/Ho_Chi_Minh','YYYY-MM-DD"T"HH24:MI'));
+  assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=300000,'already refunded is also excluded';
+  raise sqlstate 'P9999';
+ exception when sqlstate 'P9999' then null; end;
+ update bookings set status='cancelled',refund_status='none' where id=(select booking_id from ledger_cases where name='exact');
  assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=400000,'non-refundable paid cancellation retains deposit';
  update bookings set status='no_show' where id=(select booking_id from ledger_cases where name='exact');
  assert (get_owner_stats(v,today,today)->'summary'->>'revenue')::bigint=400000,'paid no-show retains deposit';
