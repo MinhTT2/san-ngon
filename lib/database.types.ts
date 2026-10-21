@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_refund_legacy: {
+        Row: {
+          booking_id: string
+        }
+        Insert: {
+          booking_id: string
+        }
+        Update: {
+          booking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_refund_legacy_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_refund_retained: {
+        Row: {
+          amount: number
+          booking_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_refund_retained_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_refunds: {
+        Row: {
+          actor_id: string
+          amount: number
+          booking_id: string
+          id: string
+          receiver_owner_id: string
+          recorded_at: string
+          reference: string
+          transferred_at: string
+        }
+        Insert: {
+          actor_id: string
+          amount: number
+          booking_id: string
+          id: string
+          receiver_owner_id: string
+          recorded_at?: string
+          reference: string
+          transferred_at: string
+        }
+        Update: {
+          actor_id?: string
+          amount?: number
+          booking_id?: string
+          id?: string
+          receiver_owner_id?: string
+          recorded_at?: string
+          reference?: string
+          transferred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_refunds_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_refunds_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_refunds_receiver_owner_id_fkey"
+            columns: ["receiver_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incoming_transfer_notes: {
         Row: {
           actor_id: string | null
@@ -1724,6 +1822,7 @@ export type Database = {
         }[]
       }
       get_admin_period_stats: { Args: { p_days?: number }; Returns: Json }
+      get_booking_refund: { Args: { p_code: string }; Returns: Json }
       process_incoming_transfer: {
         Args: {
           p_amount: number
@@ -1750,6 +1849,16 @@ export type Database = {
         Returns: undefined
       }
       admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
+      record_booking_refund: {
+        Args: {
+          p_amount: number
+          p_code: string
+          p_id: string
+          p_reference: string
+          p_transferred_at: string
+        }
+        Returns: Json
+      }
       search_my_bookings: {
         Args: {
           p_filter?: string

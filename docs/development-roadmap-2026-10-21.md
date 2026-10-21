@@ -1,0 +1,66 @@
+# Phát triển tuần tự từ 21/10/2026
+
+Theo yêu cầu làm lần lượt toàn bộ danh sách. Mỗi đợt kiểm tra và bàn giao riêng;
+phần cần người vận hành/tài khoản nhà cung cấp được ghi riêng, không đánh dấu
+hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần nhu cầu và quy tắc tiền.
+
+| Thứ tự | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Hoàn cọc sân có tham chiếu, số thực hoàn và lịch sử | Đã triển khai SQL, kiểm tra và bàn giao code; chuyển hoàn thật còn nghiệm thu |
+| 2 | Hàng đợi email/Telegram, timeout và retry | Tiếp theo |
+| 3 | Nhật ký thao tác quan trọng | Chờ |
+| 4 | Giám sát và cảnh báo vận hành | Chờ |
+| 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | Chờ |
+| 6 | Đo phễu tìm sân–đặt–trả tiền | Chờ |
+| 7 | Báo cáo và xử lý nội dung công khai | Chờ |
+| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Chờ; thời hạn lưu cần người vận hành chốt |
+| 9 | Database thử cho SQL/CI | Chờ; không tự dùng project vận hành làm DB CI |
+| 10 | Hiệu năng thực và khả năng tiếp cận | Chờ |
+| 11 | SEO sân/giải và kiểm soát URL bộ lọc | Chờ |
+
+## Đợt 1 — sổ hoàn cọc sân
+
+- `booking_refunds` giữ số thực chuyển, mã tham chiếu, giờ chuyển theo Việt Nam,
+  người ghi và thời điểm ghi. Bảng riêng tư, chỉ đọc/ghi qua RPC có kiểm tra quyền.
+  Không có thao tác chuyển tiền tự động, sửa hoặc xóa khoản đã ghi.
+- Chủ nhận tiền trên snapshot của đơn ghi từng phần qua `record_booking_refund`.
+  SQL khóa đơn trước kiểm tra số còn phải hoàn; UUID thử lại và tham chiếu duy nhất
+  theo người nhận chặn ghi lặp. Retry sau hoàn tất trả đúng lịch sử, không báo lần hai.
+- Tiền nhận dựa trên các sự kiện SePay đã đối chiếu của đơn và số cọc xác nhận tay;
+  xác nhận tay không cộng thành một giao dịch ngân hàng nữa. Thanh toán mô phỏng
+  không được dùng làm căn cứ chuyển hoàn. Không suy ra số thực nhận từ giá sân.
+- Lưu phần cọc giữ lại khi hủy không được hoàn/không đến; khoản chuyển thêm sau đó
+  không khiến cọc giữ lại thành khoản được hoàn. Đơn chờ đã chuyển thiếu khi hủy
+  được đưa vào danh sách cần hoàn. Ngoại lệ nhiều khoản/xác nhận tay vẫn phải
+  đối soát sao kê; sổ này chỉ ghi số đã có căn cứ, không tự phân bổ tiền không mã.
+- Đơn đã đánh dấu hoàn trước migration giữ trạng thái cũ, không dựng số tiền hay
+  chứng từ lịch sử. Chặn ghi thêm trên nhóm này, yêu cầu đối soát lịch sử riêng.
+- Bỏ đường ghi `refund_status` trực tiếp của trình duyệt và vô hiệu hóa RPC
+  `mark_refund_done(text)` cũ. SQL vẫn cập nhật trạng thái khi đủ số phải hoàn.
+- Chủ sân mở sổ từ tổng quan, đơn và hoàn cọc; người chơi xem lịch sử tại Đơn của tôi.
+  Form giữ cùng nội dung/UUID khi mất phản hồi; thông báo rõ không chuyển tiền lần nữa.
+
+Kiểm tra đạt: API validation/auth/lỗi SQL; migration ứng viên và sau triển khai trong
+transaction rollback (tiền thiếu/thừa, từng phần, UUID/tham chiếu trùng, vượt số còn lại,
+quyền người chơi/chủ sân khác/bị khóa, bất biến, đơn cũ, cọc giữ lại và giờ Việt Nam).
+Hồi quy SQL giữ chỗ/chính sách hủy đạt. Build production cô lập với lint/typecheck;
+Chromium headless/context riêng cho sổ hoàn 390/1440 và hồi quy đặt/hủy/xác nhận tay,
+lịch sử người chơi/hoàn cọc 320–1440 đạt. Đã xem ảnh mobile của dialog.
+
+Migration `20261021000000_booking_refund_receipts.sql` áp dụng qua thư mục migrations
+cô lập; dry-run chỉ liệt kê migration mới. Không gộp thay đổi local ở đăng nhập,
+lịch/hiển thị sân, webhook hoặc các phần types không thuộc đợt này.
+
+## Phụ thuộc ngoài code
+
+- SMTP/domain gửi và nhận OTP/recovery/email thật.
+- QR, OAuth, chuyển khoản, webhook và hoàn cọc thật; đối chiếu cờ nhận đơn/nhiều chủ sân.
+- Quyền GA4 Data API: Property ID và Viewer cho tài khoản dịch vụ.
+- Backup DB/Storage/khóa AES và thử phục hồi trên môi trường riêng.
+- Dữ liệu sân thật, nghiệm thu với chủ sân/người chơi, Safari/ngân hàng và giải toàn vòng.
+
+## Mở rộng có điều kiện
+
+Lịch cố định hằng tuần, đơn ngoài website và nhắc lịch/hạn phí được xem xét sau
+khi có nhu cầu thật, quy tắc hủy/cọc/xung đột và lựa chọn kênh nhận. Chưa mở rộng
+sang app native, ví, hoàn tự động, chat hoặc đặt nhiều sân trong một đơn.
