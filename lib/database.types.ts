@@ -1976,6 +1976,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_cash_report: {
+        Args: {
+          p_export?: boolean
+          p_from?: string
+          p_page?: number
+          p_to?: string
+        }
+        Returns: Json
+      }
       refresh_operational_alerts: { Args: never; Returns: number }
       operational_health_snapshot: { Args: never; Returns: Json }
       get_operational_health: { Args: never; Returns: Json }
