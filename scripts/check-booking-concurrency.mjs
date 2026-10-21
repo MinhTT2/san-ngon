@@ -16,8 +16,9 @@ async function run(file) {
   child.stdin.on('error',reject);child.stdin.end(sql);
  });
 }
-let setup=(await readFile('scripts/check-operations-audit.sql','utf8')).split("select set_config('request.jwt.claim.sub'")[0].replace('begin;','').replaceAll('e023','e029').replaceAll('operations-audit-rollback','booking-race-ci').replaceAll('SANAUD234','SANRAC236');
-await writeFile(join(workspace,'race-setup.sql'),setup);assert.equal((await run(join(workspace,'race-setup.sql'))).code,0);
+let setup=(await readFile('scripts/check-operations-audit.sql','utf8')).split("select set_config('request.jwt.claim.sub'")[0].replaceAll('e023','e029').replaceAll('operations-audit-rollback','booking-race-ci').replaceAll('SANAUD234','SANRAC236');
+await writeFile(join(workspace,'race-setup.sql'),setup+'\ncommit;');
+const setupResult=await run(join(workspace,'race-setup.sql'));assert.equal(setupResult.code,0,setupResult.output);
 for(const [index,code] of ['SANRAC234','SANRAC235'].entries()) {
  const sql=`begin;set local statement_timeout='15s';insert into public.bookings(code,court_id,user_id,starts_at,ends_at,status,total_amount,deposit_amount,customer_phone) values('${code}','e0290000-0000-4000-8000-000000000030','e0290000-0000-4000-8000-000000000003',now()+interval '2 days',now()+interval '2 days 1 hour','pending',100000,100000,'0901111111');select pg_sleep(1);commit;`;
  await writeFile(join(workspace,`race-${index}.sql`),sql);
