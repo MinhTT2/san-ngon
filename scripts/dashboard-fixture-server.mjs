@@ -32,7 +32,7 @@ const checkoutBookings = {
 };
 const subscription = { owner_id: ownerId, full_name: 'Nguyễn Minh', phone: base.phone, fee_required: false, paid_until: future, active: true, amount: 299000 };
 const invoice = { id: 'invoice-1', owner_id: ownerId, code: 'PHI1234ABCD', amount: 299000, status: 'paid', created_at: created, paid_at: created, period_end: future };
-const pendingTournament = { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'Giải cầu lông mùa thu', sport: 'badminton', starts_at: future, ends_at: '2026-12-01T08:00:00Z', registration_deadline: '2026-11-25T03:00:00Z', capacity: 16, entry_fee: 200000, deposit_amount: 100000, address: venues[0].address, status: 'pending', cover_path: null };
+const pendingTournament = { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'Giải cầu lông mùa thu', sport: 'badminton', starts_at: future, ends_at: '2026-12-01T08:00:00Z', registration_deadline: '2026-11-25T03:00:00Z', payment_deadline: '2026-11-26T03:00:00Z', capacity: 16, entry_fee: 200000, deposit_amount: 100000, address: venues[0].address, status: 'pending', cover_path: null };
 const tournaments = [pendingTournament, { ...pendingTournament, id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef', title: 'Cầu lông Hà Nội mở rộng', status: 'published' }, { ...pendingTournament, id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeea', title: 'Pickleball cuối tuần', sport: 'pickleball', entry_fee: 0, deposit_amount: 0, status: 'published' }];
 const summary = { bookings: 18, paid_bookings: 16, revenue: 3200000, deposit: 3200000, cancelled: 1, pending: 2, capacity_hours: 280, booked_hours: 48, occupancy_pct: 17.1, cancellation_pct: 5.6, active_venues: 1, active_courts: 1, players: 23, owners: 1, new_players: 4, pending_bookings: 2, pending_owners: 22, pending_venues: 1 };
 const stats = { from: '2026-09-09', to: '2026-10-08', summary, daily: Array.from({ length: 30 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, revenue: i % 3 ? i * 10000 : 0, bookings: 2, playing_bookings: i === 3 ? 7 : i === 4 ? 10 : 0 })), activity_venues: [{ name: venues[0].name, district: venues[0].district, playing_bookings: 17, bookings: 0, revenue: 0 }], courts: [{ name: court.name, hours: 48, bookings: 18, revenue: 3200000 }], venues: [{ name: venues[0].name, district: 'Cầu Giấy', bookings: 18, revenue: 3200000 }] };
@@ -68,13 +68,14 @@ const server = createServer(async (req, res) => {
   let role = 'admin';
   let readFailure = '';
   let ownerHistory = false, playerHistory = false, bookingSnapshot = false;
-  let manyCourts=false,pendingInvoice=false;
+  let manyCourts=false,pendingInvoice=false,contentHidden=false;
   let applicationState = '', newUx = '';
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
     readFailure = claims.fixture_read_failure || '';
+    contentHidden = !!claims.fixture_content_hidden;
     ownerHistory = !!claims.fixture_owner_history;
     playerHistory = !!claims.fixture_player_history;
     manyCourts=!!claims.fixture_many_courts; pendingInvoice=!!claims.fixture_pending_invoice;
@@ -254,7 +255,7 @@ const server = createServer(async (req, res) => {
       ].filter(row => newUx !== 'no-confirmed' || !row.id.startsWith('confirmed'));
       send(name === 'manages_tournament' ? true : name === 'get_tournament_capacity' ? 3 : registrations); return;
     }
-    const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
+    const rpc = { manages_tournament: false, get_tournament_capacity: 0, get_tournament_registrations: [], is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     send(rpc[name]); return;
   }
@@ -278,6 +279,7 @@ const server = createServer(async (req, res) => {
     rows = rows.filter(row => row.user_id === me.id);
     if (url.searchParams.get('read_at') === 'is.null') rows = rows.filter(row => row.read_at === null);
   }
+  if (table === 'tournaments' && contentHidden) rows=rows.map(row=>({...row,moderation_hidden:true}));
   if (table === 'tournaments') rows=adminTournamentFixture(url,rows,req.headers.authorization,court,people[1]);
   for (const field of ['id', 'owner_id', 'status', 'category', 'refund_status', 'sport', 'slug']) {
     const value = url.searchParams.get(field);

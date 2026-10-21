@@ -15,7 +15,11 @@ import { LivePageRefresh } from '@/components/live-page-refresh';
 import { CalendarDays, MapPin, Search, SlidersHorizontal, X } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-export const metadata = publicMetadata('Tìm sân thể thao ở Hà Nội — Sân Ngon', 'Tìm sân theo môn, khu vực, ngày và giờ chơi. Xem ảnh, giá và lịch trống trước khi đặt.', '/tim-san');
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const metadata = publicMetadata('Tìm sân thể thao ở Hà Nội — Sân Ngon', 'Tìm sân theo môn, khu vực, ngày và giờ chơi. Xem ảnh, giá và lịch trống trước khi đặt.', '/tim-san');
+  if (Object.values(await searchParams).some(value => Array.isArray(value) ? value.some(Boolean) : !!value)) metadata.robots = { index: false, follow: true };
+  return metadata;
+}
 
 /**
  * Danh sách sân. ?sport= và ?q= từ thanh tìm kiếm trang chủ lọc thật:

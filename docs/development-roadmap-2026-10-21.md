@@ -16,7 +16,7 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | SQL triển khai và kiểm tra đạt; 90/180 ngày là mốc rà soát, không tự xóa |
 | 9 | Database thử cho SQL/CI | Đạt trên GitHub Actions: 83 migrations, 19 SQL rollback và hai kết nối tranh lịch |
 | 10 | Hiệu năng thực và khả năng tiếp cận | Đã đo production, sửa mobile/nhãn và tải ảnh hero; axe + hồi quy đạt, chờ đo lại bản deploy |
-| 11 | SEO sân/giải và kiểm soát URL bộ lọc | Chờ |
+| 11 | SEO sân/giải và kiểm soát URL bộ lọc | Metadata/schema và kiểm soát URL đã kiểm tra đạt; chờ deploy cuối |
 
 ## Đợt 1 — sổ hoàn cọc sân
 
@@ -172,3 +172,13 @@ Hồi quy tìm→chọn giờ→giữ thông tin khách, thư viện ảnh, chuy
 ảnh, báo cáo/CSV và nhật ký đạt. Đã đo production bằng trình duyệt mạng/CPU
 giới hạn, xác định ảnh hero là điểm chậm rồi hoãn ảnh slide chưa xem và nén nhẹ.
 Xem `docs/performance-accessibility.md`; chưa nhận kết quả lab là dữ liệu người dùng thật.
+
+## Đợt 11 — SEO và URL
+
+Sân active có metadata/ảnh chia sẻ riêng và schema SportsActivityLocation; giải
+công khai có SportsEvent. Projection chỉ dùng trường công khai, escape script;
+giải ẩn/chưa công khai và view vận hành không phát schema. URL lọc/phân trang
+noindex/follow, canonical về danh sách gốc; view tài khoản nofollow.
+Sửa lỗi bộ lọc giải nhận tham số lặp khiến trang 500. Unit schema/escaping, build,
+browser metadata/canonical, URL lặp và metadata khi người quản lý xem giải ẩn đạt.
+Hồi quy public/sitemap, axe, tìm/đặt và xử lý lỗi truy vấn đạt. Xem `docs/seo.md`.

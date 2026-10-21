@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+import ts from 'typescript';
+const context={exports:{},require(name){
+ if(name==='./site-url')return {siteUrl:path=>new URL(path,'https://example.invalid')};
+ if(name==='./constants')return {SPORT_LABELS:{badminton:'Cầu lông'}};
+ throw new Error(name);
+}};
+vm.runInNewContext(ts.transpileModule(await readFile(new URL('../lib/structured-data.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,context);
+const {venueStructuredData,tournamentStructuredData,serializeStructuredData}=context.exports;
+const hostile='</script><script>alert(1)</script>';
+const venue={name:hostile,address:'123 Cầu Giấy',district:'Cầu Giấy',description:null,owner_id:'SECRET',payout_account:'SECRET',business_license_path:'SECRET'};
+const result=venueStructuredData(venue,'san-kiem-tra');
+assert.equal(result['@type'],'SportsActivityLocation');
+const encoded=serializeStructuredData(result);assert(!encoded.includes('<'));assert(!encoded.includes('SECRET'));assert.equal(JSON.parse(encoded).name,hostile);
+const tournament={id:'public-id',title:hostile,sport:'badminton',status:'published',moderation_hidden:false,starts_at:'2026-12-01T03:00:00Z',ends_at:'2026-12-01T05:00:00Z',address:'Hà Nội',registrations:[{phone:'SECRET'}],bank:'SECRET'};
+const event=tournamentStructuredData(tournament);assert.equal(event.sport,'Cầu lông');assert.equal(event.startDate,tournament.starts_at);
+assert(!serializeStructuredData(event).includes('SECRET'));assert(!serializeStructuredData(event).includes('<'));
+for(const status of ['pending','rejected','cancelled'])assert.equal(tournamentStructuredData({...tournament,status}),null);
+assert.equal(tournamentStructuredData({...tournament,moderation_hidden:true}),null);
+assert(tournamentStructuredData({...tournament,status:'completed'}));
+console.log('OK: public-only schema projection, hidden/draft exclusion and script-closing injection escaping.');

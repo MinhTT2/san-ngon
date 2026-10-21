@@ -1,3 +1,4 @@
+import { serializeStructuredData, tournamentStructuredData } from '@/lib/structured-data';
 export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -24,9 +25,10 @@ import { tournamentCoverSrc, venuePhotoSrc } from '@/lib/image-upload';
 import { DEFAULT_SHARE_IMAGE } from '@/lib/public-metadata';
 import { siteUrl } from '@/lib/site-url';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }): Promise<Metadata> {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return { title: 'Chi tiết giải đấu' };
+  if ((await searchParams).view) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
+  if (!z.string().uuid().safeParse(id).success) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
   const db = await createClient();
   const { data } = await db.from('tournaments').select('title,sport,status,moderation_hidden,cover_path,starts_at,courts(venues(images))').eq('id', id).returns<(Pick<Tournament, 'title' | 'sport' | 'status' | 'moderation_hidden' | 'cover_path' | 'starts_at'> & { courts: { venues: { images: string[] } | null } | null })[]>().maybeSingle();
   if (!data || data.moderation_hidden || !['published', 'completed'].includes(data.status)) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
@@ -98,7 +100,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <label className="flex items-start gap-3 text-sm leading-7"><input type="checkbox" required className="mt-1.5 size-5 shrink-0 accent-pitch" />Tôi đã đọc thể lệ, lệ phí {vnd(tournament.entry_fee)} và chính sách hủy / hoàn cọc của giải.</label>
     </ActionForm> : <Link href={`/dang-nhap?next=${encodeURIComponent(`/giai-dau/${id}#dang-ky`)}`} className="inline-flex min-h-11 items-center gap-2 rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">Đăng nhập để tham gia<ArrowUpRight size={16} aria-hidden="true" /></Link>}
   </>;
-  return <main className="mx-auto max-w-7xl px-5 py-7 lg:px-12 lg:py-10">{tournament.moderation_hidden && <p role="status" className="mb-5 rounded-control border border-hairline bg-card p-4 text-sm leading-6 text-ink-secondary">Giải đang tạm ẩn công khai, chưa nhận/duyệt thêm người mới. Đăng ký và khoản tiền đã có vẫn được xử lý tại đây; liên hệ hỗ trợ để biết thêm.</p>}<Link href={"/gop-y?" + new URLSearchParams({ trang: `/giai-dau/${id}`, loai: "report" })} className="mb-4 inline-flex min-h-11 items-center text-sm text-ink-secondary underline">Báo cáo giải đấu này</Link>
+  const structuredData = !requestedView ? tournamentStructuredData(tournament, tournamentCoverSrc(tournament.cover_path) ?? venuePhotoSrc(court?.venues?.images?.[0])) : null;
+  return <main className="mx-auto max-w-7xl px-5 py-7 lg:px-12 lg:py-10">{structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }} />}{tournament.moderation_hidden && <p role="status" className="mb-5 rounded-control border border-hairline bg-card p-4 text-sm leading-6 text-ink-secondary">Giải đang tạm ẩn công khai, chưa nhận/duyệt thêm người mới. Đăng ký và khoản tiền đã có vẫn được xử lý tại đây; liên hệ hỗ trợ để biết thêm.</p>}<Link href={"/gop-y?" + new URLSearchParams({ trang: `/giai-dau/${id}`, loai: "report" })} className="mb-4 inline-flex min-h-11 items-center text-sm text-ink-secondary underline">Báo cáo giải đấu này</Link>
     <TournamentRefresh id={id} deadlines={[tournament.registration_deadline, tournament.payment_deadline, tournament.starts_at, tournament.ends_at, ...registrations.flatMap(registration => registration.payment_expires_at ? [registration.payment_expires_at] : [])]} />
     <Link href="/giai-dau" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-pitch"><ArrowLeft size={16} aria-hidden="true" />Giải đấu</Link>
     <header className="mb-6 mt-3 overflow-hidden rounded-[20px] border border-strong bg-free-fill">

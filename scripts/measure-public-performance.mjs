@@ -8,7 +8,7 @@ const browser = await chromium.launch({ headless:true,...(process.env.CHROMIUM_E
 const reports=[];
 try {
  const context=await browser.newContext({ viewport:{width:390,height:844},reducedMotion:'reduce',serviceWorkers:'block' });
- await context.route(/google-analytics\.com|googletagmanager\.com|analytics\.google\.com/,route=>route.abort());
+ await context.route(/google-analytics\.com|googletagmanager\.com|analytics\.google\.com|\/api\/activity(?:\?|$)/,route=>route.abort());
  const page=await context.newPage(),cdp=await context.newCDPSession(page);
  await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:93750});await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
  await page.addInitScript(()=>{
