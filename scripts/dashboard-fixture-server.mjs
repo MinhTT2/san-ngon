@@ -287,7 +287,11 @@ const server = createServer(async (req, res) => {
     if (value?.startsWith('in.(') && value.endsWith(')')) rows = rows.filter(row => value.slice(4, -1).split(',').includes(String(row[field])));
   }
   const count = rows.length;
-  if (table === 'tournaments' && url.searchParams.has('offset')) rows=rows.slice(Number(url.searchParams.get('offset')));
+  if (table === 'tournaments' && url.searchParams.has('offset')) {
+    const offset=Number(url.searchParams.get('offset'));
+    if(offset>0 && offset>=count){res.setHeader('Content-Range',`*/${count}`);send({code:'PGRST103',message:'Requested range not satisfiable'},416);return;}
+    rows=rows.slice(offset);
+  }
   const range = req.headers.range?.split('-').map(Number);
   if (range) rows = rows.slice(range[0], range[1] + 1);
   if (url.searchParams.has('limit')) rows = rows.slice(0, Number(url.searchParams.get('limit')));

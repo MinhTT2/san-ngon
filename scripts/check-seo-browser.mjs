@@ -7,11 +7,12 @@ try{
  for(const path of ['/tim-san','/giai-dau']){
   await page.goto(origin+path);assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),origin+path);
   const robots=await page.locator('meta[name=robots]').count()?await page.locator('meta[name=robots]').getAttribute('content'):null;assert(!robots?.includes('noindex'));
-  for(const query of ['?sport=badminton','?page=2','?q=abc&q=def']){
+  for(const query of ['?sport=badminton','?page=2','?q=abc&q=def','?sport=badminton&page=999','?q=khong-co-ket-qua&page=999']){
    const response=await page.goto(origin+path+query);assert.equal(response.status(),200);await page.getByRole('heading',{name:path==='/tim-san'?'Tìm sân ở Hà Nội':'Giải đấu thể thao',exact:true}).waitFor();
    assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),origin+path);
    const value=await page.locator('meta[name=robots]').getAttribute('content');assert(value.includes('noindex')&&!value.includes('nofollow'));
   }
+  if(path==='/giai-dau'){await page.goto(origin+path+'?sport=badminton&page=999');await page.getByRole('heading',{name:'Cầu lông Hà Nội mở rộng',exact:true}).waitFor();}
  }
  await page.goto(origin+'/san/san-cau-giay?ngay=2026-10-08&sport=badminton');
  assert.match(await page.title(),/Sân Cầu Giấy/);
