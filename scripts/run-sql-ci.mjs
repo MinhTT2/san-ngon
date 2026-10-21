@@ -25,6 +25,17 @@ async function run(args, quiet = false) {
     child.once('error', reject); child.once('exit', code => code === 0 ? resolvePromise() : reject(new Error(`${args[0]} failed (${code}): ${output}`)));
   });
 }
+async function query(file) {
+  const sql = await readFile(file, 'utf8');
+  await new Promise((resolvePromise, reject) => {
+    const child = spawn('docker', ['exec', '-i', 'supabase_db_san-ngon-sql-ci', 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], { env, stdio: ['pipe', 'pipe', 'pipe'] });
+    let output = '';
+    for (const stream of [child.stdout, child.stderr]) stream.on('data', chunk => { output = (output + chunk).slice(-20000); });
+    child.once('error', reject);
+    child.once('exit', code => code === 0 ? resolvePromise() : reject(new Error(`SQL failed (${code}): ${output}`)));
+    child.stdin.on('error', reject); child.stdin.end(sql);
+  });
+}
 try {
   await run(['init'], true);
   const config = join(workspace, 'supabase/config.toml');
@@ -38,8 +49,8 @@ try {
   // Background jobs are tested explicitly and cannot dispatch externally in this stack.
   const disable = join(workspace, 'disable-jobs.sql');
   await writeFile(disable, 'select cron.unschedule(jobid) from cron.job;');
-  await run(['db','query','--local','--file',disable], true);
-  for (const name of checks) { console.log(`SQL: ${name}`); await run(['db','query','--local','--file',join(root, `scripts/check-${name}.sql`)], true); }
+  await query(disable);
+  for (const name of checks) { console.log(`SQL: ${name}`); await query(join(root, `scripts/check-${name}.sql`)); }
   await new Promise((resolvePromise, reject) => {
     const child = spawn(process.execPath, [join(root, 'scripts/check-booking-concurrency.mjs'), workspace], { cwd: root, env, stdio: 'inherit' });
     child.once('error', reject); child.once('exit', code => code === 0 ? resolvePromise() : reject(new Error('Booking concurrency check failed')));

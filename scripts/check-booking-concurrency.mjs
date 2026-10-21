@@ -1,18 +1,21 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 const workspace = process.argv[2];
 assert(process.env.CI === 'true' && workspace, 'only the disposable CI stack is allowed');
 assert.equal(await readFile(join(workspace, '.sql-ci-isolated'), 'utf8'), 'LOCAL ONLY');
 const config = await readFile(join(workspace, 'supabase/config.toml'), 'utf8');
 assert(/^project_id = "san-ngon-sql-ci"$/m.test(config));
-const cli = resolve('node_modules/.bin/supabase');
-function run(file) { return new Promise((resolvePromise,reject) => {
- const child=spawn(cli,['db','query','--local','--file',file,'--workdir',workspace],{stdio:['ignore','pipe','pipe']});let output='';
- for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>output+=chunk);
- child.once('error',reject);child.once('exit',code=>resolvePromise({code,output}));
-}); }
+async function run(file) {
+ const sql=await readFile(file,'utf8');
+ return new Promise((resolvePromise,reject) => {
+  const child=spawn('docker',['exec','-i','supabase_db_san-ngon-sql-ci','psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{stdio:['pipe','pipe','pipe']});let output='';
+  for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>output+=chunk);
+  child.once('error',reject);child.once('exit',code=>resolvePromise({code,output}));
+  child.stdin.on('error',reject);child.stdin.end(sql);
+ });
+}
 let setup=(await readFile('scripts/check-operations-audit.sql','utf8')).split("select set_config('request.jwt.claim.sub'")[0].replace('begin;','').replaceAll('e023','e029').replaceAll('operations-audit-rollback','booking-race-ci').replaceAll('SANAUD234','SANRAC236');
 await writeFile(join(workspace,'race-setup.sql'),setup);assert.equal((await run(join(workspace,'race-setup.sql'))).code,0);
 for(const [index,code] of ['SANRAC234','SANRAC235'].entries()) {
