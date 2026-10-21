@@ -13,10 +13,10 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | Đã triển khai production và kiểm tra |
 | 6 | Đo phễu tìm sân–đặt–trả tiền | SQL và giao diện nhóm đơn tạo→cọc kiểm tra đạt; tìm/mở/chọn giờ đã có GA4, cần quyền đọc thật |
 | 7 | Báo cáo và xử lý nội dung công khai | Đã triển khai production; SQL, build và kiểm tra đạt |
-| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | SQL triển khai và kiểm tra đạt; 90/180 ngày là mốc rà soát, không tự xóa |
+| 8 | Yêu cầu dữ liệu cá nhân và thời hạn lưu | Đã triển khai production và kiểm tra; 90/180 ngày là mốc rà soát, không tự xóa |
 | 9 | Database thử cho SQL/CI | Đạt trên GitHub Actions: 83 migrations, 19 SQL rollback và hai kết nối tranh lịch |
-| 10 | Hiệu năng thực và khả năng tiếp cận | Đã đo production, sửa mobile/nhãn và tải ảnh hero; axe + hồi quy đạt, chờ đo lại bản deploy |
-| 11 | SEO sân/giải và kiểm soát URL bộ lọc | Metadata/schema và kiểm soát URL đã kiểm tra đạt; chờ deploy cuối |
+| 10 | Hiệu năng thực và khả năng tiếp cận | Đã triển khai/đo lại production; dung lượng tải trang chủ giảm 15%, axe đạt; LCP mobile còn 3,92–4,31 s |
+| 11 | SEO sân/giải và kiểm soát URL bộ lọc | Đã triển khai production; metadata/schema, URL lọc và phân trang hết dữ liệu đã kiểm tra đạt |
 
 ## Đợt 1 — sổ hoàn cọc sân
 
@@ -161,8 +161,8 @@ browser 390/1440, giữ UUID khi lỗi và hồi quy trang chính sách/no-JS đ
 `SQL isolation` tạo stack Supabase local tạm trên GitHub runner, áp dụng toàn bộ
 migrations Git theo dõi, tắt cron thử và chạy 19 bài SQL rollback cùng hai kết nối
 tranh lịch thật. Không nhận URL cloud/`--linked`, không chép `.env`, `.temp` hoặc
-khóa vận hành. `--preflight` và lint script đạt; Run 39544499450 đã đạt trên runner: 83 migrations, 19 bài SQL và GiST chặn một
-trong hai kết nối tranh lịch. Fixture tự tạo cấu hình, không phụ thuộc dữ liệu vận hành. Xem `docs/sql-ci.md`.
+khóa vận hành. `--preflight` và lint script đạt; [run 39544499450](https://github.com/MinhTT2/san-ngon/actions/runs/39544499450)
+đã đạt trên runner: 83 migrations, 19 bài SQL và GiST chặn một trong hai kết nối tranh lịch. Fixture tự tạo cấu hình, không phụ thuộc dữ liệu vận hành. Xem `docs/sql-ci.md`.
 
 ## Đợt 10 — Mobile, khả năng truy cập và hiệu năng
 
@@ -182,3 +182,26 @@ noindex/follow, canonical về danh sách gốc; view tài khoản nofollow.
 Sửa lỗi bộ lọc giải nhận tham số lặp khiến trang 500. Unit schema/escaping, build,
 browser metadata/canonical, URL lặp và metadata khi người quản lý xem giải ẩn đạt.
 Hồi quy public/sitemap, axe, tìm/đặt và xử lý lỗi truy vấn đạt. Xem `docs/seo.md`.
+
+## Kiểm tra bản production cuối
+
+Bản code `e620df8` đã deploy lên [website](https://san-ngon.vercel.app).
+[CI 39546392688](https://github.com/MinhTT2/san-ngon/actions/runs/39546392688)
+đạt cả job check (lint/typecheck/build, API, schema) và browser đầy đủ.
+SQL CI có bằng chứng riêng ở đợt 9; từ đó đến bản deploy không đổi schema.
+Kiểm tra trực tiếp production:
+
+- Trang chủ/tìm sân/giải/chi tiết sân trả 200; phân trang vượt dữ liệu không gây 500.
+  Fixture cũng trả đúng lỗi PostgREST 416 để kiểm tra đường phục hồi công khai/admin.
+- Canonical/noindex URL lọc, schema sân/giải trong sitemap và view riêng tư đạt.
+  API xuất dữ liệu cá nhân chặn phiên anonymous.
+- Chromium headless cô lập ở 390/1440: axe A/AA và không tràn ngang đạt cho bốn
+  trang công khai; đã xem ảnh trang chủ mobile và sân desktop.
+- Hai lượt lab sau tối ưu ghi tại `docs/performance-accessibility.md`; không gọi
+  kết quả này là Core Web Vitals thực tế hoặc tuyên bố LCP đã đạt 2,5 s.
+
+Cron nghiệp vụ/giám sát và worker thông báo đang hoạt động; lần kiểm tra vận hành
+cuối không có tin gửi lỗi/tồn. Còn một giao dịch đã nhận diện gắn cờ quá 24 giờ,
+cần người vận hành đối soát tại `/admin/tien-vao`; không tự xác nhận tiền/hoàn.
+Không bật cờ nhiều chủ sân trước nghiệm thu chuyển khoản thật. Các phụ thuộc
+ngoài code phía trên vẫn cần thực hiện và ghi bằng chứng riêng.

@@ -20,5 +20,13 @@ không được xem là hiệu năng production, số đo lab không phải p75 
 Trước thay đổi hero, hai lần đo production: LCP trang chủ 4,65–5,02 s,
 CLS khoảng 0,002; tìm sân 1,12–1,23 s, CLS 0,019. JS khoảng 214 kB.
 Ảnh LCP đầu khoảng 120 kB, tranh mạng với ảnh chưa hiện, JS và font.
-Kết quả sau deploy được ghi cùng bàn giao cuối. Cần tiếp tục thu dữ liệu người
-dùng thật để đánh giá mạng/thiết bị khác và tương tác trong phiên đặt sân.
+Sau deploy `0618933`, hai lượt cùng điều kiện: trang chủ LCP 3,92–4,31 s,
+CLS 0,001–0,002; trang tìm sân LCP 1,02–1,35 s, CLS 0,019.
+Tổng resource transfer trang chủ khoảng 618 kB so với 728 kB trước (giảm 15%);
+ảnh LCP khoảng 108 kB thay vì 120 kB. JS gần như giữ nguyên, khoảng 214 kB.
+Ảnh đã thăm tiếp tục dùng bộ nhớ trình duyệt; ảnh chưa xem không tranh tải lúc vào.
+
+LCP mobile trên mạng thử này vẫn vượt mốc 2,5 s, nên chưa đánh dấu hiệu năng
+là đã tối ưu xong. Hai lượt lab chỉ chỉ ra cải thiện, không đủ chứng minh p75.
+Cần tiếp tục thu dữ liệu người dùng thật để đánh giá mạng/thiết bị khác và
+tương tác trong phiên đặt sân.

@@ -23,3 +23,9 @@ vẫn noindex/nofollow. Không chặn robots crawl các URL lọc vì crawler c�
 Sitemap chỉ lấy dữ liệu anonymous qua RLS: sân active, giải công khai;
 không thêm tổ hợp bộ lọc hay trang thao tác. JSON-LD không bảo đảm rich result
 hoặc thứ hạng Google. Nghiệm thu index/Search Console cần tài khoản vận hành.
+
+Kiểm tra production ngày 21/10/2026 trên `e620df8`: canonical/noindex các URL lọc,
+tham số lặp, schema sân/giải trong sitemap và view riêng tư đạt. Phân trang vượt
+kết quả có thể trả PostgREST 416/PGRST103: danh sách công khai tải lại trang đầu,
+admin về trang cuối hợp lệ; không đổi các lỗi DB khác thành danh sách rỗng.
+Fixture trả đúng 416 để kiểm tra hồi quy cả hai đường này.
