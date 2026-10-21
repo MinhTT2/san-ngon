@@ -524,6 +524,36 @@ export type Database = {
         }
         Relationships: []
       }
+      operations_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          entity_code: string | null
+          entity_id: string
+          id: number
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_code?: string | null
+          entity_id: string
+          id?: never
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_code?: string | null
+          entity_id?: string
+          id?: never
+        }
+        Relationships: []
+      }
       sepay_transfer_claims: {
         Row: {
           transaction_key: string
@@ -1947,6 +1977,10 @@ export type Database = {
       get_booking_refund: { Args: { p_code: string }; Returns: Json }
       get_notification_delivery_page: {
         Args: { p_page?: number }
+        Returns: Json
+      }
+      get_operations_audit: {
+        Args: { p_page?: number; p_query?: string }
         Returns: Json
       }
       process_incoming_transfer: {

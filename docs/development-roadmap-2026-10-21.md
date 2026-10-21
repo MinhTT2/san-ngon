@@ -7,9 +7,9 @@ hoàn thành bằng bài giả lập. Các tính năng mở rộng vẫn cần n
 | Thứ tự | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | 1 | Hoàn cọc sân có tham chiếu, số thực hoàn và lịch sử | Đã triển khai SQL, kiểm tra và bàn giao code; chuyển hoàn thật còn nghiệm thu |
-| 2 | Hàng đợi email/Telegram, timeout và retry | Đã triển khai SQL và kiểm tra code; cấu hình lịch gửi sau khi deploy |
-| 3 | Nhật ký thao tác quan trọng | Đang phát triển |
-| 4 | Giám sát và cảnh báo vận hành | Chờ |
+| 2 | Hàng đợi email/Telegram, timeout và retry | Đã triển khai production; cron mỗi phút và worker HTTP 200 đã kiểm tra |
+| 3 | Nhật ký thao tác quan trọng | SQL đã triển khai; code kiểm tra đạt, chờ cùng đợt deploy tiếp theo |
+| 4 | Giám sát và cảnh báo vận hành | Đang phát triển |
 | 5 | Báo cáo thực nhận/thực hoàn/nghĩa vụ và CSV | Chờ |
 | 6 | Đo phễu tìm sân–đặt–trả tiền | Chờ |
 | 7 | Báo cáo và xử lý nội dung công khai | Chờ |
@@ -64,3 +64,15 @@ lịch/hiển thị sân, webhook hoặc các phần types không thuộc đợt
 Lịch cố định hằng tuần, đơn ngoài website và nhắc lịch/hạn phí được xem xét sau
 khi có nhu cầu thật, quy tắc hủy/cọc/xung đột và lựa chọn kênh nhận. Chưa mở rộng
 sang app native, ví, hoàn tự động, chat hoặc đặt nhiều sân trong một đơn.
+
+## Đợt 3 — nhật ký thao tác
+
+SQL ghi nối tiếp khi xác nhận/hủy đơn, ghi hoàn cọc, duyệt hồ sơ, đổi phí,
+trạng thái cụm/kết nối và admin yêu cầu gửi lại thông báo. Trình duyệt không
+đọc trực tiếp hoặc sửa/xóa. RPC admin trả mã, tác nhân và trường đã cho phép;
+không ghi số điện thoại, chứng từ ngân hàng, khóa hoặc payload nhà cung cấp.
+Không dựng nhật ký cũ. Trang `/admin/nhat-ky` tìm mã/ID và phân trang.
+
+Kiểm tra SQL ứng viên/sau migration bằng rollback: quyền, bất biến, trường riêng tư,
+retry không ghi lặp, các nhánh cập nhật và phân trang. Build production cô lập,
+Chromium 390/1440, giới hạn admin và hồi quy origin/worker đạt.

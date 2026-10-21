@@ -190,6 +190,13 @@ const server = createServer(async (req, res) => {
       send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
     }
     if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_operations_audit') {
+      const rows=[
+        {id:1,actor_id:ownerId,actor_name:'Chủ sân kiểm tra',action:'booking.refund_recorded',entity_id:courtId,entity_code:'SANAUD234',details:{amount:40000},created_at:created},
+        {id:2,actor_id:null,actor_name:null,action:'booking.confirmed',entity_id:courtId,entity_code:'SANABC234',details:{from:'pending',to:'confirmed'},created_at:created},
+      ].filter(row=>!args.p_query || row.entity_code.includes(args.p_query));
+      send({total:rows.length,page:1,pages:1,rows});return;
+    }
     if (name === 'get_notification_delivery_page') {
       send({total:3,page:1,pages:1,pending:1,failed:1,rows:[
         {id:'11111111-1111-4111-8111-111111111111',kind:'booking',channel:'email',status:'sent',attempts:1,last_reason:null,code:'SANABC234',full_name:'Nguyễn Minh',created_at:created,updated_at:created},
