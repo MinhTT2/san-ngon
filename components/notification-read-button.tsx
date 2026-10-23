@@ -3,10 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, LoaderCircle } from 'lucide-react';
+import { Check, CheckCheck, LoaderCircle } from 'lucide-react';
+
+type ReadButtonProps = { id: string; title: string } | { all: true };
 
 /** Also works as a regular submit button inside the inbox's server-rendered form. */
-export function NotificationReadButton({ id, title }: { id: string; title: string }) {
+export function NotificationReadButton(props: ReadButtonProps) {
+  const all = 'all' in props;
+  const label = all ? 'Đánh dấu tất cả đã đọc' : 'Đánh dấu đã đọc';
+  const Icon = all ? CheckCheck : Check;
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [error, setError] = useState('');
@@ -16,7 +21,7 @@ export function NotificationReadButton({ id, title }: { id: string; title: strin
     if (state !== 'idle') return;
     setState('busy'); setError(''); setLoginHref('');
     try {
-      const response = await fetch(`/api/notifications/${id}/read`, { method: 'POST', headers: { Accept: 'application/json' } });
+      const response = await fetch(all ? '/api/notifications/read-all' : `/api/notifications/${props.id}/read`, { method: 'POST', headers: { Accept: 'application/json' } });
       if (response.status === 401) {
         setState('idle');
         setError('Phiên đăng nhập đã hết. Đăng nhập lại để lưu trạng thái đã đọc.');
@@ -33,10 +38,10 @@ export function NotificationReadButton({ id, title }: { id: string; title: strin
   }
   return <span className="inline-flex max-w-full flex-col items-start gap-1" data-read-state={state}>
     <button type="submit" aria-disabled={state !== 'idle'} onClick={markRead}
-      aria-label={state === 'done' ? `Đã đọc: ${title}` : `Đánh dấu đã đọc: ${title}`} aria-busy={state === 'busy'}
-      className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control px-2 text-xs font-semibold text-pitch aria-disabled:opacity-70">
-      {state === 'busy' ? <LoaderCircle className="pf-spin size-4 shrink-0" aria-hidden="true" /> : <Check className="size-4 shrink-0" aria-hidden="true" />}
-      {state === 'busy' ? 'Đang lưu…' : state === 'done' ? 'Đã đọc' : 'Đánh dấu đã đọc'}
+      aria-label={all ? state === 'done' ? 'Đã đọc tất cả thông báo' : label : state === 'done' ? `Đã đọc: ${props.title}` : `${label}: ${props.title}`} aria-busy={state === 'busy'}
+      className={`pf-action inline-flex min-h-11 items-center gap-2 rounded-control px-2 text-xs font-semibold text-pitch aria-disabled:opacity-70 ${all ? 'border border-hairline bg-card px-3 hover:bg-sunk' : ''}`}>
+      {state === 'busy' ? <LoaderCircle className="pf-spin size-4 shrink-0" aria-hidden="true" /> : <Icon className="size-4 shrink-0" aria-hidden="true" />}
+      {state === 'busy' ? 'Đang lưu…' : state === 'done' ? all ? 'Đã đọc tất cả' : 'Đã đọc' : label}
     </button>
     {error && <span role="alert" className="max-w-64 text-xs leading-6 text-danger">{error}</span>}
     {loginHref && <Link href={loginHref} className="pf-action inline-flex min-h-11 items-center text-xs font-semibold text-pitch underline underline-offset-4">Đăng nhập lại</Link>}

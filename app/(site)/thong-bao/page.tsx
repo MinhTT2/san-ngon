@@ -58,7 +58,13 @@ export default async function Page({ searchParams }: {
       <div><p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-secondary">Hộp thư của bạn</p>
       <h1 className="font-display text-3xl font-extrabold tracking-tight text-pitch sm:text-4xl">Thông báo</h1>
       <p className="mt-3 text-sm leading-6 text-ink-secondary">Theo dõi đơn đặt sân, giải đấu và hồ sơ chủ sân của bạn.</p>
-      </div>{!failed && <p className="flex items-center gap-2 text-xs font-medium text-pitch"><Bell className="size-4" aria-hidden="true" />{unread.count ? `${unread.count} thông báo chưa đọc` : 'Bạn đã đọc hết thông báo'}</p>}
+      </div>{!failed && <div className="flex flex-col items-start gap-3">
+        <p className="flex items-center gap-2 text-xs font-medium text-pitch"><Bell className="size-4" aria-hidden="true" />{unread.count ? `${unread.count} thông báo chưa đọc` : 'Bạn đã đọc hết thông báo'}</p>
+        {!!unread.count && <form action="/api/notifications/read-all" method="post">
+          <input type="hidden" name="status" value={status} />
+          <NotificationReadButton key={unread.count} all />
+        </form>}
+      </div>}
       </header>
       <nav aria-label="Lọc thông báo" className="pf-tab-rail relative isolate mt-5 flex gap-4 border-b border-hairline">
         <NavigationMarker activeKey={status} variant="underline" />
