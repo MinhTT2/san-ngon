@@ -14,6 +14,7 @@ type Notification = {
   read_at: string | null;
   booking_id: string | null;
   tournament_id: string | null;
+  vip_purchase_id?: string | null;
   timeLabel: string;
 };
 
@@ -108,7 +109,7 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
                   <div className="flex items-start gap-3">
                     {!notification.read_at && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-pitch" aria-label="Chưa đọc" />}
                     <div className="min-w-0 flex-1">
-                      {notification.booking_id || notification.tournament_id ? (
+                      {notification.booking_id || notification.tournament_id || notification.vip_purchase_id ? (
                         // Route mở đơn có cập nhật read_at, không prefetch link này.
                         <a href={`/api/notifications/${notification.id}/open`} className="block rounded-control outline-offset-4 focus-visible:outline-2 focus-visible:outline-pitch">
                           <p className="break-words text-sm font-semibold">{notification.title}</p>

@@ -17,8 +17,17 @@ Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể h�
 - User VIP được giảm **10% khi đặt sân**. Khi triển khai, Postgres kiểm tra
   quyền VIP và tính giá sau giảm trong luồng tạo đơn; đóng băng số tiền vào
   đơn, không nhận mức giảm hoặc số tiền do client tự khai. Không sửa giá đơn cũ.
-  Đây là yêu cầu cần triển khai, không mặc định tính năng đã hoạt động chỉ vì
-  được ghi trong file này. Tiêu chí cấp VIP cần được chốt trước khi triển khai.
+  VIP chỉ chuyển 90% giá sân, không phải trả nốt 10% khi đến sân.
+  Có mục **Mua tài khoản VIP**: người dùng đăng ký, quét QR chuyển khoản cho
+  admin rồi chờ admin đối soát và duyệt trong 30 phút. Không tự cấp VIP khi
+  khách bấm đã chuyển tiền hoặc khi hết 30 phút. Giá gói **49.000đ / một tháng**;
+  QR nhận tiền: **MBBank · 0691920022005 · NGUYEN DANG NGUYEN** (admin).
+  Hạn tháng lịch tính trong SQL theo múi giờ Việt Nam từ lúc duyệt; gia hạn sớm
+  cộng vào hạn còn hiệu lực. `/vip` để mua/theo dõi, `/admin/vip` để đối soát
+  và duyệt bằng ID giao dịch SePay, chống dùng lại giao dịch. Hết hạn tự mất
+  ưu đãi khi SQL tính đơn mới, không phụ thuộc cron. Không đổi giá đơn cũ.
+  Xem [vận hành VIP](docs/vip.md); triển khai bằng migrations
+  `20261025000100`–`20261025000200`. Nghiệm thu chuyển khoản thật và duyệt với admin.
 - Mục tiêu là **đủ 200 user thật trên production**. Chỉ tính tài khoản người
   dùng thật; không tạo tài khoản giả, seed/demo/test hoặc sửa số đếm để đủ 200.
   Khi báo đạt mục tiêu phải kiểm tra dữ liệu production thực tế và nêu căn cứ;

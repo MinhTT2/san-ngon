@@ -81,6 +81,7 @@ export function UserMenu({ name, avatar = null, isOwner, isAdmin = false }: { na
             className="pf-menu absolute right-0 top-13 z-20 flex w-56 flex-col rounded-control border border-hairline bg-card py-1.5"
           >
             <Item href="/tai-khoan" onNavigate={() => setOpen(false)}>Thông tin tài khoản</Item>
+            <Item href="/vip" onNavigate={() => setOpen(false)}>Mua tài khoản VIP</Item>
             <Item href="/don-cua-toi" onNavigate={() => setOpen(false)}>Đơn của tôi</Item>
             <Item href="/san-yeu-thich" onNavigate={() => setOpen(false)}>Sân yêu thích</Item>
             <Item href="/gop-y" onNavigate={() => setOpen(false)}>Góp ý & hỗ trợ</Item>

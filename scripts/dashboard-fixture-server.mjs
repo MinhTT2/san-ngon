@@ -66,6 +66,7 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${fixturePort}`);
   const token = (req.headers.authorization || '').replace(/^Bearer /i, '');
   let role = 'admin';
+  let vipState = '';
   let readFailure = '';
   let ownerHistory = false, playerHistory = false, bookingSnapshot = false;
   let manyCourts=false,pendingInvoice=false,contentHidden=false;
@@ -74,6 +75,7 @@ const server = createServer(async (req, res) => {
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    vipState = claims.fixture_vip || '';
     readFailure = claims.fixture_read_failure || '';
     contentHidden = !!claims.fixture_content_hidden;
     ownerHistory = !!claims.fixture_owner_history;
@@ -112,6 +114,19 @@ const server = createServer(async (req, res) => {
   const args = body ? JSON.parse(body) : {};
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const name = url.pathname.split('/').at(-1);
+    if (name === 'get_booking_quote') {
+      const base = 100000 * (Date.parse(args.p_ends_at)-Date.parse(args.p_starts_at))/3600000;
+      const discount = vipState==='approved' ? Math.floor(base/10) : 0;
+      send({original_amount:base,vip_discount_amount:discount,total_amount:base-discount,deposit_amount:base-discount});return;
+    }
+    if (name === 'get_my_vip') {
+      const status = ['awaiting_payment','pending','approved','rejected'].includes(vipState) ? vipState : null;
+      send({active:status==='approved',paid_until:status==='approved'?future:null,purchases:status?[{
+        id:'f2500000-0000-4000-8000-000000000001',user_id:me.id,code:'VIPABCDEF123456',amount:49000,
+        bank:'MBBank',account_number:'0691920022005',account_name:'NGUYEN DANG NGUYEN',status,
+        created_at:created,submitted_at:created,review_due_at:future,rejection_reason:status==='rejected'?'Chưa nhận được khoản chuyển đúng mã.':null,period_end:status==='approved'?future:null,
+      }]:[]});return;
+    }
     if (name === 'search_admin_bookings') {
       if (args.p_from && args.p_to && args.p_from > args.p_to) { send({ message: 'INVALID_DATE_RANGE' }, 400); return; }
       send(adminBookingFixture(args,bookings,people[1],ownerHistory,includeRefund));return;
@@ -261,6 +276,12 @@ const server = createServer(async (req, res) => {
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture is read-only.' }, 403); return; }
   const table = url.pathname.split('/').at(-1);
+  if (table==='vip_purchases') {
+    res.setHeader('Content-Range','0-0/1');
+    send([{id:'f2500000-0000-4000-8000-000000000001',user_id:ownerId,code:'VIPABCDEF123456',amount:49000,
+      bank:'MBBank',account_number:'0691920022005',account_name:'NGUYEN DANG NGUYEN',status:'pending',
+      created_at:created,submitted_at:created,review_due_at:future,profiles:{full_name:'Người mua VIP kiểm thử',phone:'0901234567'}}]);return;
+  }
   if (table === 'bookings' && url.searchParams.has('code')) {
     const b=checkoutBookings[url.searchParams.get('code').replace(/^eq\./,'')];
     send(b && bookingSnapshot ? {...b,court_name_snapshot:'Sân con lúc đặt',venue_name_snapshot:'Cụm sân lúc đặt',venue_address_snapshot:'12 Địa chỉ lúc đặt',courts:{...b.courts,name:'Sân con mới',venues:{...b.courts.venues,name:'Cụm sân mới',address:'34 Địa chỉ mới'}}} : b ?? null); return;

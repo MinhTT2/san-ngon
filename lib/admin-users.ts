@@ -27,6 +27,7 @@ export function adminUserError(raw: string) {
   return { error: key ? errors[key] : 'Không lưu được tài khoản. Vui lòng thử lại.', status: key === 'FORBIDDEN' || key === 'ACCOUNT_BANNED' ? 403 : key ? 400 : 500 };
 }
 export type AdminUser = {
+  is_vip: boolean;
   booked_minutes: number;
   id: string; full_name: string | null; phone: string | null; email: string | null;
   role: 'player' | 'owner' | 'admin'; created_at: string;

@@ -19,7 +19,7 @@ export function PaymentPanel(p: {
   policy: BookingPolicy;
   bookingId: string; code: string; status: BookingStatus;
   startsAt: string; endsAt: string; expiresAt: string; initialSeconds: number;
-  total: number; deposit: number;
+  total: number; deposit: number; originalAmount?: number; vipDiscountAmount?: number;
   courtName: string; venueName: string; venueAddress: string;
   bank: string; account: string; accountName: string;
 }) {
@@ -146,7 +146,7 @@ export function PaymentPanel(p: {
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-pitch"><span className="flex items-center gap-2"><CalendarDays className="size-4 shrink-0" aria-hidden="true" /><time dateTime={p.startsAt} className="capitalize">{dayLabel(new Date(p.startsAt))}</time></span><strong className="tabular-nums">{hhmm(p.startsAt)}–{hhmm(p.endsAt)}</strong></div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3 text-sm"><span className="text-ink-secondary">{paid ? 'Tiền cọc đã nhận' : closed ? 'Tiền cọc của đơn' : 'Cọc cần chuyển'}</span><strong className="font-display text-xl font-bold tabular-nums text-pitch">{vnd(p.deposit)}</strong></div>
           {fullPayment && <p className="mt-2 text-xs leading-6 text-ink-secondary">{paid ? 'Đã thanh toán đủ tiền sân' : 'Cọc bằng toàn bộ tiền sân'}</p>}
-          <details className="group mt-2 border-t border-hairline"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-pitch [&::-webkit-details-marker]:hidden">Thông tin chi tiết<ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary><dl className="space-y-3 pb-2 text-sm"><div><dt className="text-xs text-ink-secondary">Địa chỉ sân</dt><dd className="mt-1 break-words text-pitch">{p.venueAddress}</dd></div><div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">Tổng tiền sân</dt><dd className="font-semibold tabular-nums">{vnd(p.total)}</dd></div>{!fullPayment && <div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">{completed ? 'Phần thanh toán tại sân' : 'Trả khi đến sân'}</dt><dd className="font-semibold tabular-nums">{vnd(p.total - p.deposit)}</dd></div>}<div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">Mã đặt sân</dt><dd className="font-mono font-semibold">{p.code}</dd></div></dl></details>
+          <details className="group mt-2 border-t border-hairline"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-pitch [&::-webkit-details-marker]:hidden">Thông tin chi tiết<ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary><dl className="space-y-3 pb-2 text-sm"><div><dt className="text-xs text-ink-secondary">Địa chỉ sân</dt><dd className="mt-1 break-words text-pitch">{p.venueAddress}</dd></div><VipPrice original={p.originalAmount} discount={p.vipDiscountAmount} /><div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">Tổng tiền sân</dt><dd className="font-semibold tabular-nums">{vnd(p.total)}</dd></div>{!fullPayment && <div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">{completed ? 'Phần thanh toán tại sân' : 'Trả khi đến sân'}</dt><dd className="font-semibold tabular-nums">{vnd(p.total - p.deposit)}</dd></div>}<div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">Mã đặt sân</dt><dd className="font-mono font-semibold">{p.code}</dd></div></dl></details>
         </section>
 
         <div className="checkout-enter grid overflow-hidden rounded-3xl border border-hairline bg-card lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[370px_minmax(0,1fr)]">
@@ -169,7 +169,7 @@ export function PaymentPanel(p: {
             </div>
             <div className="flex flex-1 flex-col px-6 py-6 sm:px-8">
               <dl className="space-y-4 text-sm">
-                <div className="flex justify-between gap-3"><dt className="text-white/70">Tổng tiền sân</dt><dd className="font-medium tabular-nums">{vnd(p.total)}</dd></div>
+                <VipPrice original={p.originalAmount} discount={p.vipDiscountAmount} /><div className="flex justify-between gap-3"><dt className="text-white/70">Tổng tiền sân</dt><dd className="font-medium tabular-nums">{vnd(p.total)}</dd></div>
                 <div className="flex items-center justify-between gap-3"><dt className="text-white/70">{paid ? 'Tiền cọc đã nhận' : 'Thanh toán cọc'}</dt><dd className="font-display text-2xl font-bold tabular-nums">{vnd(p.deposit)}</dd></div>
                 {!fullPayment && <div className="flex justify-between gap-3 border-t border-dashed border-white/25 pt-4"><dt className="text-white/70">{completed ? 'Phần thanh toán tại sân' : 'Trả khi đến sân'}</dt><dd className="font-medium tabular-nums">{vnd(p.total - p.deposit)}</dd></div>}
               </dl>
@@ -323,4 +323,9 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   }
 
   return <span className="relative shrink-0"><button type="button" onClick={copy} aria-label={`Sao chép ${label}`} title={`Sao chép ${label}`} className="grid size-11 place-items-center rounded-control border border-hairline bg-card text-pitch transition-colors hover:border-pitch hover:bg-free-fill active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch">{feedback === 'Đã sao chép' ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}</button><span role="status" className={feedback ? 'absolute right-0 top-full z-10 mt-1 w-max max-w-52 rounded-control border border-hairline bg-card px-3 py-2 text-xs text-pitch' : 'sr-only'}>{feedback}</span></span>;
+}
+
+function VipPrice({ original, discount }: { original?: number; discount?: number }) {
+  if (!discount) return null;
+  return <><div className="flex flex-wrap justify-between gap-2"><dt>Giá sân trước giảm</dt><dd className="font-semibold tabular-nums">{vnd(original ?? 0)}</dd></div><div className="flex flex-wrap justify-between gap-2"><dt>Ưu đãi VIP 10%</dt><dd className="font-semibold tabular-nums">−{vnd(discount)}</dd></div></>;
 }
