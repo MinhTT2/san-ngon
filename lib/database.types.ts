@@ -1726,6 +1726,7 @@ export type Database = {
       admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
       admin_list_users: {
         Args: {
+          p_sort?: string
           p_page?: number
           p_role?: string
           p_search?: string
