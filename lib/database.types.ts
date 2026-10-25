@@ -10,10 +10,1243 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      content_moderation: {
+        Row: {
+          actor_id: string
+          content_id: string
+          hidden: boolean
+          kind: string
+          reason: string
+          updated_at: string
+        }
+        Insert: {
+          actor_id: string
+          content_id: string
+          hidden: boolean
+          kind: string
+          reason: string
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string
+          content_id?: string
+          hidden?: boolean
+          kind?: string
+          reason?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_moderation_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_refund_legacy: {
+        Row: {
+          booking_id: string
+        }
+        Insert: {
+          booking_id: string
+        }
+        Update: {
+          booking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_refund_legacy_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_refund_retained: {
+        Row: {
+          amount: number
+          booking_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_refund_retained_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_refunds: {
+        Row: {
+          actor_id: string
+          amount: number
+          booking_id: string
+          id: string
+          receiver_owner_id: string
+          recorded_at: string
+          reference: string
+          transferred_at: string
+        }
+        Insert: {
+          actor_id: string
+          amount: number
+          booking_id: string
+          id: string
+          receiver_owner_id: string
+          recorded_at?: string
+          reference: string
+          transferred_at: string
+        }
+        Update: {
+          actor_id?: string
+          amount?: number
+          booking_id?: string
+          id?: string
+          receiver_owner_id?: string
+          recorded_at?: string
+          reference?: string
+          transferred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_refunds_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_refunds_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_refunds_receiver_owner_id_fkey"
+            columns: ["receiver_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incoming_transfer_notes: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          note: string
+          transfer_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id: string
+          note: string
+          transfer_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string
+          transfer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_transfer_notes_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfer_notes_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "incoming_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incoming_transfers: {
+        Row: {
+          account_number: string
+          amount: number
+          bank: string
+          bank_tx_id: string
+          booking_id: string | null
+          connection_id: string | null
+          created_at: string
+          expected_amount: number | null
+          id: string
+          needs_review: boolean
+          outcome: string
+          payload_conflicts: number
+          raw: Json
+          reason: string | null
+          receiver_owner_id: string | null
+          ref_codes: string[]
+          result: Json | null
+          source: string
+          transaction_key: string
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          amount: number
+          bank: string
+          bank_tx_id: string
+          booking_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          needs_review?: boolean
+          outcome?: string
+          payload_conflicts?: number
+          raw: Json
+          reason?: string | null
+          receiver_owner_id?: string | null
+          ref_codes?: string[]
+          result?: Json | null
+          source?: string
+          transaction_key: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          amount?: number
+          bank?: string
+          bank_tx_id?: string
+          booking_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          needs_review?: boolean
+          outcome?: string
+          payload_conflicts?: number
+          raw?: Json
+          reason?: string | null
+          receiver_owner_id?: string | null
+          ref_codes?: string[]
+          result?: Json | null
+          source?: string
+          transaction_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_transfers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfers_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_transfers_receiver_owner_id_fkey"
+            columns: ["receiver_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      court_closures: {
+        Row: {
+          court_id: string
+          created_at: string
+          ends_at: string
+          id: string
+          reason: string | null
+          starts_at: string
+          tournament_id: string | null
+        }
+        Insert: {
+          court_id: string
+          created_at?: string
+          ends_at: string
+          id?: string
+          reason?: string | null
+          starts_at: string
+          tournament_id?: string | null
+        }
+        Update: {
+          court_id?: string
+          created_at?: string
+          ends_at?: string
+          id?: string
+          reason?: string | null
+          starts_at?: string
+          tournament_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_closures_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "court_closures_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: true
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_profiles: {
+        Row: {
+          moderation_hidden: boolean
+          bio: string
+          display_name: string
+          facebook_url: string
+          is_public: boolean
+          location: string
+          phone: string
+          show_facebook: boolean
+          show_phone: boolean
+          show_zalo: boolean
+          skill_level: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          updated_at: string
+          user_id: string
+          usual_play_times: string
+          zalo_phone: string
+        }
+        Insert: {
+          moderation_hidden?: boolean
+          bio?: string
+          display_name: string
+          facebook_url?: string
+          is_public?: boolean
+          location: string
+          phone: string
+          show_facebook?: boolean
+          show_phone?: boolean
+          show_zalo?: boolean
+          skill_level: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          updated_at?: string
+          user_id: string
+          usual_play_times?: string
+          zalo_phone?: string
+        }
+        Update: {
+          moderation_hidden?: boolean
+          bio?: string
+          display_name?: string
+          facebook_url?: string
+          is_public?: boolean
+          location?: string
+          phone?: string
+          show_facebook?: boolean
+          show_phone?: boolean
+          show_zalo?: boolean
+          skill_level?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          updated_at?: string
+          user_id?: string
+          usual_play_times?: string
+          zalo_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          data_request_action: string | null
+          booking_id: string | null
+          receipt_path: string | null
+          category: string
+          created_at: string
+          deleted_booking_code: string | null
+          handled_by: string | null
+          id: string
+          message: string
+          page_path: string | null
+          reply: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data_request_action?: string | null
+          booking_id?: string | null
+          receipt_path?: string | null
+          category: string
+          created_at?: string
+          deleted_booking_code?: string | null
+          handled_by?: string | null
+          id: string
+          message: string
+          page_path?: string | null
+          reply?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data_request_action?: string | null
+          booking_id?: string | null
+          receipt_path?: string | null
+          category?: string
+          created_at?: string
+          deleted_booking_code?: string | null
+          handled_by?: string | null
+          id?: string
+          message?: string
+          page_path?: string | null
+          reply?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          { foreignKeyName: "feedback_booking_id_fkey"; columns: ["booking_id"]; isOneToOne: false; referencedRelation: "bookings"; referencedColumns: ["id"] },
+          {
+            foreignKeyName: "feedback_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          available_at: string
+          booking_id: string | null
+          channel: string
+          created_at: string
+          destination: string
+          event_key: string
+          id: string
+          kind: string
+          last_reason: string | null
+          lease_id: string | null
+          lease_until: string | null
+          payload: Json
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          available_at?: string
+          booking_id?: string | null
+          channel: string
+          created_at?: string
+          destination: string
+          event_key: string
+          id?: string
+          kind: string
+          last_reason?: string | null
+          lease_id?: string | null
+          lease_until?: string | null
+          payload: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          available_at?: string
+          booking_id?: string | null
+          channel?: string
+          created_at?: string
+          destination?: string
+          event_key?: string
+          id?: string
+          kind?: string
+          last_reason?: string | null
+          lease_id?: string | null
+          lease_until?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_deliveries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_worker_config: {
+        Row: {
+          activated_at: string
+          endpoint_url: string
+          singleton: boolean
+        }
+        Insert: {
+          activated_at?: string
+          endpoint_url: string
+          singleton?: boolean
+        }
+        Update: {
+          activated_at?: string
+          endpoint_url?: string
+          singleton?: boolean
+        }
+        Relationships: []
+      }
+      notification_worker_requests: {
+        Row: {
+          created_at: string
+          request_id: number
+        }
+        Insert: {
+          created_at?: string
+          request_id: number
+        }
+        Update: {
+          created_at?: string
+          request_id?: number
+        }
+        Relationships: []
+      }
+      operational_alerts: {
+        Row: {
+          check_key: string
+          is_open: boolean
+          last_seen_at: string
+          opened_at: string | null
+          resolved_at: string | null
+          title: string
+        }
+        Insert: {
+          check_key: string
+          is_open: boolean
+          last_seen_at?: string
+          opened_at?: string | null
+          resolved_at?: string | null
+          title: string
+        }
+        Update: {
+          check_key?: string
+          is_open?: boolean
+          last_seen_at?: string
+          opened_at?: string | null
+          resolved_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      operations_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          entity_code: string | null
+          entity_id: string
+          id: number
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_code?: string | null
+          entity_id: string
+          id?: never
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_code?: string | null
+          entity_id?: string
+          id?: never
+        }
+        Relationships: []
+      }
+      sepay_transfer_claims: {
+        Row: {
+          transaction_key: string
+        }
+        Insert: {
+          transaction_key: string
+        }
+        Update: {
+          transaction_key?: string
+        }
+        Relationships: []
+      }
+      tournament_payment_events: {
+        Row: {
+          amount: number
+          created_at: string
+          outcome: string
+          raw: Json
+          refund_amount: number
+          refund_status: string
+          refunded_amount: number
+          registration_id: string
+          transaction_key: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          outcome?: string
+          raw: Json
+          refund_amount?: number
+          refund_status?: string
+          refunded_amount?: number
+          registration_id: string
+          transaction_key: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          outcome?: string
+          raw?: Json
+          refund_amount?: number
+          refund_status?: string
+          refunded_amount?: number
+          registration_id?: string
+          transaction_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_payment_events_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_registrations: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          address: string
+          balance_receipt: string | null
+          balance_received_at: string | null
+          balance_received_by: string | null
+          balance_refund_due: number
+          balance_refund_receipt: string | null
+          balance_refunded_at: string | null
+          balance_refunded_by: string | null
+          balance_waived_at: string | null
+          bank: string | null
+          cancellation_kind: string | null
+          cancelled_at: string | null
+          code: string
+          connection_id: string | null
+          created_at: string
+          deposit_amount: number
+          entry_fee: number
+          full_name: string
+          id: string
+          note: string
+          paid_at: string | null
+          payment_expires_at: string | null
+          payment_owner_id: string | null
+          phone: string
+          refund_deadline: string | null
+          reminder_sent_at: string | null
+          review_note: string
+          status: string
+          team_name: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          address: string
+          balance_receipt?: string | null
+          balance_received_at?: string | null
+          balance_received_by?: string | null
+          balance_refund_due?: number
+          balance_refund_receipt?: string | null
+          balance_refunded_at?: string | null
+          balance_refunded_by?: string | null
+          balance_waived_at?: string | null
+          bank?: string | null
+          cancellation_kind?: string | null
+          cancelled_at?: string | null
+          code: string
+          connection_id?: string | null
+          created_at?: string
+          deposit_amount: number
+          entry_fee: number
+          full_name: string
+          id?: string
+          note?: string
+          paid_at?: string | null
+          payment_expires_at?: string | null
+          payment_owner_id?: string | null
+          phone: string
+          refund_deadline?: string | null
+          reminder_sent_at?: string | null
+          review_note?: string
+          status?: string
+          team_name?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          address?: string
+          balance_receipt?: string | null
+          balance_received_at?: string | null
+          balance_received_by?: string | null
+          balance_refund_due?: number
+          balance_refund_receipt?: string | null
+          balance_refunded_at?: string | null
+          balance_refunded_by?: string | null
+          balance_waived_at?: string | null
+          bank?: string | null
+          cancellation_kind?: string | null
+          cancelled_at?: string | null
+          code?: string
+          connection_id?: string | null
+          created_at?: string
+          deposit_amount?: number
+          entry_fee?: number
+          full_name?: string
+          id?: string
+          note?: string
+          paid_at?: string | null
+          payment_expires_at?: string | null
+          payment_owner_id?: string | null
+          phone?: string
+          refund_deadline?: string | null
+          reminder_sent_at?: string | null
+          review_note?: string
+          status?: string
+          team_name?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_registrations_balance_received_by_fkey"
+            columns: ["balance_received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_balance_refunded_by_fkey"
+            columns: ["balance_refunded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_payment_owner_id_fkey"
+            columns: ["payment_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          moderation_hidden: boolean
+          address: string
+          cancel_window_hours: number
+          cancelled_by: string | null
+          capacity: number
+          cover_path: string | null
+          court_id: string | null
+          created_at: string
+          deposit_amount: number
+          description: string
+          ends_at: string
+          entry_fee: number
+          id: string
+          manager_id: string
+          payment_deadline: string
+          payment_hold_hours: number
+          registration_deadline: string
+          review_note: string
+          reviewed_by: string | null
+          sport: Database["public"]["Enums"]["sport_type"]
+          starts_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          moderation_hidden?: boolean
+          address: string
+          cancel_window_hours?: number
+          cancelled_by?: string | null
+          capacity: number
+          cover_path?: string | null
+          court_id?: string | null
+          created_at?: string
+          deposit_amount: number
+          description: string
+          ends_at: string
+          entry_fee: number
+          id?: string
+          manager_id: string
+          payment_deadline: string
+          payment_hold_hours?: number
+          registration_deadline: string
+          review_note?: string
+          reviewed_by?: string | null
+          sport: Database["public"]["Enums"]["sport_type"]
+          starts_at: string
+          status?: string
+          title: string
+        }
+        Update: {
+          moderation_hidden?: boolean
+          address?: string
+          cancel_window_hours?: number
+          cancelled_by?: string | null
+          capacity?: number
+          cover_path?: string | null
+          court_id?: string | null
+          created_at?: string
+          deposit_amount?: number
+          description?: string
+          ends_at?: string
+          entry_fee?: number
+          id?: string
+          manager_id?: string
+          payment_deadline?: string
+          payment_hold_hours?: number
+          registration_deadline?: string
+          review_note?: string
+          reviewed_by?: string | null
+          sport?: Database["public"]["Enums"]["sport_type"]
+          starts_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_payment_events: {
+        Row: {
+          amount: number
+          created_at: string
+          invoice_id: string
+          outcome: string
+          raw: Json
+          transaction_key: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          invoice_id: string
+          outcome?: string
+          raw: Json
+          transaction_key: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          invoice_id?: string
+          outcome?: string
+          raw?: Json
+          transaction_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payment_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_invoices: {
+        Row: {
+          account_name: string
+          account_number: string
+          amount: number
+          bank: string
+          code: string
+          connection_id: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          amount?: number
+          bank: string
+          code: string
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          amount?: number
+          bank?: string
+          code?: string
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_invoices_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_invoices_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_receiver: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank: string
+          connection_id: string | null
+          singleton: boolean
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank: string
+          connection_id?: string | null
+          singleton?: boolean
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank?: string
+          connection_id?: string | null
+          singleton?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_receiver_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_subscriptions: {
+        Row: {
+          fee_required: boolean
+          owner_id: string
+          paid_until: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          fee_required?: boolean
+          owner_id: string
+          paid_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          fee_required?: boolean
+          owner_id?: string
+          paid_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_subscriptions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_subscriptions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sepay_events: {
+        Row: {
+          amount: number
+          booking_id: string
+          connection_id: string | null
+          created_at: string
+          raw: Json
+          transaction_key: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          connection_id?: string | null
+          created_at?: string
+          raw: Json
+          transaction_key: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          connection_id?: string | null
+          created_at?: string
+          raw?: Json
+          transaction_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sepay_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sepay_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "sepay_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sepay_oauth_states: {
+        Row: {
+          expires_at: string
+          owner_id: string
+          return_to: string
+          state_hash: string
+        }
+        Insert: {
+          expires_at?: string
+          owner_id: string
+          return_to?: string
+          state_hash: string
+        }
+        Update: {
+          expires_at?: string
+          owner_id?: string
+          return_to?: string
+          state_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sepay_oauth_states_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sepay_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          account_name: string | null
+          account_number: string | null
+          bank: string | null
+          bank_account_id: string | null
+          checked_at: string | null
+          created_at: string
+          id: string
+          last_webhook_at: string | null
+          operation_expires_at: string | null
+          operation_token: string | null
+          owner_id: string
+          refresh_token_encrypted: string | null
+          status: string
+          token_expires_at: string | null
+          webhook_id: string | null
+          webhook_key_encrypted: string | null
+          webhook_key_hash: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          account_name?: string | null
+          account_number?: string | null
+          bank?: string | null
+          bank_account_id?: string | null
+          checked_at?: string | null
+          created_at?: string
+          id?: string
+          last_webhook_at?: string | null
+          operation_expires_at?: string | null
+          operation_token?: string | null
+          owner_id: string
+          refresh_token_encrypted?: string | null
+          status?: string
+          token_expires_at?: string | null
+          webhook_id?: string | null
+          webhook_key_encrypted?: string | null
+          webhook_key_hash?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          account_name?: string | null
+          account_number?: string | null
+          bank?: string | null
+          bank_account_id?: string | null
+          checked_at?: string | null
+          created_at?: string
+          id?: string
+          last_webhook_at?: string | null
+          operation_expires_at?: string | null
+          operation_token?: string | null
+          owner_id?: string
+          refresh_token_encrypted?: string | null
+          status?: string
+          token_expires_at?: string | null
+          webhook_id?: string | null
+          webhook_key_encrypted?: string | null
+          webhook_key_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sepay_connections_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_operator: {
         Row: {
           accepts_new_bookings: boolean
@@ -228,113 +1461,6 @@ export type Database = {
           },
         ]
       }
-      community_profiles: {
-        Row: {
-          bio: string
-          display_name: string
-          facebook_url: string
-          is_public: boolean
-          location: string
-          phone: string
-          show_facebook: boolean
-          show_phone: boolean
-          show_zalo: boolean
-          skill_level: string
-          sport: Database["public"]["Enums"]["sport_type"]
-          updated_at: string
-          user_id: string
-          usual_play_times: string
-          zalo_phone: string
-        }
-        Insert: {
-          bio?: string
-          display_name: string
-          facebook_url?: string
-          is_public?: boolean
-          location: string
-          phone: string
-          show_facebook?: boolean
-          show_phone?: boolean
-          show_zalo?: boolean
-          skill_level: string
-          sport: Database["public"]["Enums"]["sport_type"]
-          updated_at?: string
-          user_id: string
-          usual_play_times?: string
-          zalo_phone?: string
-        }
-        Update: {
-          bio?: string
-          display_name?: string
-          facebook_url?: string
-          is_public?: boolean
-          location?: string
-          phone?: string
-          show_facebook?: boolean
-          show_phone?: boolean
-          show_zalo?: boolean
-          skill_level?: string
-          sport?: Database["public"]["Enums"]["sport_type"]
-          updated_at?: string
-          user_id?: string
-          usual_play_times?: string
-          zalo_phone?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      court_closures: {
-        Row: {
-          court_id: string
-          created_at: string
-          ends_at: string
-          id: string
-          reason: string | null
-          starts_at: string
-          tournament_id: string | null
-        }
-        Insert: {
-          court_id: string
-          created_at?: string
-          ends_at: string
-          id?: string
-          reason?: string | null
-          starts_at: string
-          tournament_id?: string | null
-        }
-        Update: {
-          court_id?: string
-          created_at?: string
-          ends_at?: string
-          id?: string
-          reason?: string | null
-          starts_at?: string
-          tournament_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "court_closures_court_id_fkey"
-            columns: ["court_id"]
-            isOneToOne: false
-            referencedRelation: "courts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "court_closures_tournament_id_fkey"
-            columns: ["tournament_id"]
-            isOneToOne: true
-            referencedRelation: "tournaments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       courts: {
         Row: {
           close_time: string | null
@@ -381,209 +1507,6 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      feedback: {
-        Row: {
-          booking_id: string | null
-          category: string
-          created_at: string
-          deleted_booking_code: string | null
-          handled_by: string | null
-          id: string
-          message: string
-          page_path: string | null
-          receipt_path: string | null
-          reply: string
-          status: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          booking_id?: string | null
-          category: string
-          created_at?: string
-          deleted_booking_code?: string | null
-          handled_by?: string | null
-          id: string
-          message: string
-          page_path?: string | null
-          receipt_path?: string | null
-          reply?: string
-          status?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          booking_id?: string | null
-          category?: string
-          created_at?: string
-          deleted_booking_code?: string | null
-          handled_by?: string | null
-          id?: string
-          message?: string
-          page_path?: string | null
-          receipt_path?: string | null
-          reply?: string
-          status?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feedback_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_handled_by_fkey"
-            columns: ["handled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      incoming_transfer_notes: {
-        Row: {
-          actor_id: string | null
-          created_at: string
-          id: string
-          note: string
-          transfer_id: string
-        }
-        Insert: {
-          actor_id?: string | null
-          created_at?: string
-          id: string
-          note: string
-          transfer_id: string
-        }
-        Update: {
-          actor_id?: string | null
-          created_at?: string
-          id?: string
-          note?: string
-          transfer_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "incoming_transfer_notes_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incoming_transfer_notes_transfer_id_fkey"
-            columns: ["transfer_id"]
-            isOneToOne: false
-            referencedRelation: "incoming_transfers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      incoming_transfers: {
-        Row: {
-          account_number: string
-          amount: number
-          bank: string
-          bank_tx_id: string
-          booking_id: string | null
-          connection_id: string | null
-          created_at: string
-          expected_amount: number | null
-          id: string
-          needs_review: boolean
-          outcome: string
-          payload_conflicts: number
-          raw: Json
-          reason: string | null
-          receiver_owner_id: string | null
-          ref_codes: string[]
-          result: Json | null
-          source: string
-          transaction_key: string
-          updated_at: string
-        }
-        Insert: {
-          account_number: string
-          amount: number
-          bank: string
-          bank_tx_id: string
-          booking_id?: string | null
-          connection_id?: string | null
-          created_at?: string
-          expected_amount?: number | null
-          id?: string
-          needs_review?: boolean
-          outcome?: string
-          payload_conflicts?: number
-          raw: Json
-          reason?: string | null
-          receiver_owner_id?: string | null
-          ref_codes?: string[]
-          result?: Json | null
-          source?: string
-          transaction_key: string
-          updated_at?: string
-        }
-        Update: {
-          account_number?: string
-          amount?: number
-          bank?: string
-          bank_tx_id?: string
-          booking_id?: string | null
-          connection_id?: string | null
-          created_at?: string
-          expected_amount?: number | null
-          id?: string
-          needs_review?: boolean
-          outcome?: string
-          payload_conflicts?: number
-          raw?: Json
-          reason?: string | null
-          receiver_owner_id?: string | null
-          ref_codes?: string[]
-          result?: Json | null
-          source?: string
-          transaction_key?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "incoming_transfers_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incoming_transfers_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "sepay_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incoming_transfers_receiver_owner_id_fkey"
-            columns: ["receiver_owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -649,87 +1572,6 @@ export type Database = {
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      owner_application_reviews: {
-        Row: {
-          created_at: string
-          id: string
-          owner_id: string
-          reason: string | null
-          reviewer_id: string | null
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          owner_id: string
-          reason?: string | null
-          reviewer_id?: string | null
-          status: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          owner_id?: string
-          reason?: string | null
-          reviewer_id?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "owner_application_reviews_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "owner_application_reviews_reviewer_id_fkey"
-            columns: ["reviewer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      owner_subscriptions: {
-        Row: {
-          fee_required: boolean
-          owner_id: string
-          paid_until: string | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          fee_required?: boolean
-          owner_id: string
-          paid_until?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          fee_required?: boolean
-          owner_id?: string
-          paid_until?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "owner_subscriptions_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "owner_subscriptions_updated_by_fkey"
-            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -824,6 +1666,48 @@ export type Database = {
           },
         ]
       }
+      owner_application_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          reason: string | null
+          reviewer_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          reason?: string | null
+          reviewer_id?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          reason?: string | null
+          reviewer_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_application_reviews_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_application_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           admin_sort_at: string | null
@@ -901,699 +1785,6 @@ export type Database = {
           {
             foreignKeyName: "profiles_owner_reviewed_by_fkey"
             columns: ["owner_reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sepay_connections: {
-        Row: {
-          access_token_encrypted: string | null
-          account_name: string | null
-          account_number: string | null
-          bank: string | null
-          bank_account_id: string | null
-          checked_at: string | null
-          created_at: string
-          id: string
-          last_webhook_at: string | null
-          operation_expires_at: string | null
-          operation_token: string | null
-          owner_id: string
-          refresh_token_encrypted: string | null
-          status: string
-          token_expires_at: string | null
-          webhook_id: string | null
-          webhook_key_encrypted: string | null
-          webhook_key_hash: string | null
-        }
-        Insert: {
-          access_token_encrypted?: string | null
-          account_name?: string | null
-          account_number?: string | null
-          bank?: string | null
-          bank_account_id?: string | null
-          checked_at?: string | null
-          created_at?: string
-          id?: string
-          last_webhook_at?: string | null
-          operation_expires_at?: string | null
-          operation_token?: string | null
-          owner_id: string
-          refresh_token_encrypted?: string | null
-          status?: string
-          token_expires_at?: string | null
-          webhook_id?: string | null
-          webhook_key_encrypted?: string | null
-          webhook_key_hash?: string | null
-        }
-        Update: {
-          access_token_encrypted?: string | null
-          account_name?: string | null
-          account_number?: string | null
-          bank?: string | null
-          bank_account_id?: string | null
-          checked_at?: string | null
-          created_at?: string
-          id?: string
-          last_webhook_at?: string | null
-          operation_expires_at?: string | null
-          operation_token?: string | null
-          owner_id?: string
-          refresh_token_encrypted?: string | null
-          status?: string
-          token_expires_at?: string | null
-          webhook_id?: string | null
-          webhook_key_encrypted?: string | null
-          webhook_key_hash?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sepay_connections_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sepay_events: {
-        Row: {
-          amount: number
-          booking_id: string
-          connection_id: string | null
-          created_at: string
-          raw: Json
-          transaction_key: string
-        }
-        Insert: {
-          amount: number
-          booking_id: string
-          connection_id?: string | null
-          created_at?: string
-          raw: Json
-          transaction_key: string
-        }
-        Update: {
-          amount?: number
-          booking_id?: string
-          connection_id?: string | null
-          created_at?: string
-          raw?: Json
-          transaction_key?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sepay_events_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sepay_events_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "sepay_connections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sepay_oauth_states: {
-        Row: {
-          expires_at: string
-          owner_id: string
-          return_to: string
-          state_hash: string
-        }
-        Insert: {
-          expires_at?: string
-          owner_id: string
-          return_to?: string
-          state_hash: string
-        }
-        Update: {
-          expires_at?: string
-          owner_id?: string
-          return_to?: string
-          state_hash?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sepay_oauth_states_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sepay_transfer_claims: {
-        Row: {
-          transaction_key: string
-        }
-        Insert: {
-          transaction_key: string
-        }
-        Update: {
-          transaction_key?: string
-        }
-        Relationships: []
-      }
-      subscription_invoices: {
-        Row: {
-          account_name: string
-          account_number: string
-          amount: number
-          bank: string
-          code: string
-          connection_id: string | null
-          created_at: string
-          id: string
-          owner_id: string
-          paid_at: string | null
-          period_end: string | null
-          period_start: string | null
-          status: string
-        }
-        Insert: {
-          account_name: string
-          account_number: string
-          amount?: number
-          bank: string
-          code: string
-          connection_id?: string | null
-          created_at?: string
-          id?: string
-          owner_id: string
-          paid_at?: string | null
-          period_end?: string | null
-          period_start?: string | null
-          status?: string
-        }
-        Update: {
-          account_name?: string
-          account_number?: string
-          amount?: number
-          bank?: string
-          code?: string
-          connection_id?: string | null
-          created_at?: string
-          id?: string
-          owner_id?: string
-          paid_at?: string | null
-          period_end?: string | null
-          period_start?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_invoices_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "sepay_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subscription_invoices_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_payment_events: {
-        Row: {
-          amount: number
-          created_at: string
-          invoice_id: string
-          outcome: string
-          raw: Json
-          transaction_key: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          invoice_id: string
-          outcome?: string
-          raw: Json
-          transaction_key: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          invoice_id?: string
-          outcome?: string
-          raw?: Json
-          transaction_key?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_payment_events_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_invoices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_receiver: {
-        Row: {
-          account_name: string
-          account_number: string
-          bank: string
-          connection_id: string | null
-          singleton: boolean
-        }
-        Insert: {
-          account_name: string
-          account_number: string
-          bank: string
-          connection_id?: string | null
-          singleton?: boolean
-        }
-        Update: {
-          account_name?: string
-          account_number?: string
-          bank?: string
-          connection_id?: string | null
-          singleton?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_receiver_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "sepay_connections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tournament_payment_events: {
-        Row: {
-          amount: number
-          created_at: string
-          outcome: string
-          raw: Json
-          refund_amount: number
-          refund_status: string
-          refunded_amount: number
-          registration_id: string
-          transaction_key: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          outcome?: string
-          raw: Json
-          refund_amount?: number
-          refund_status?: string
-          refunded_amount?: number
-          registration_id: string
-          transaction_key: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          outcome?: string
-          raw?: Json
-          refund_amount?: number
-          refund_status?: string
-          refunded_amount?: number
-          registration_id?: string
-          transaction_key?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournament_payment_events_registration_id_fkey"
-            columns: ["registration_id"]
-            isOneToOne: false
-            referencedRelation: "tournament_registrations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tournament_registrations: {
-        Row: {
-          account_name: string | null
-          account_number: string | null
-          address: string
-          balance_receipt: string | null
-          balance_received_at: string | null
-          balance_received_by: string | null
-          balance_refund_due: number
-          balance_refund_receipt: string | null
-          balance_refunded_at: string | null
-          balance_refunded_by: string | null
-          balance_waived_at: string | null
-          bank: string | null
-          cancellation_kind: string | null
-          cancelled_at: string | null
-          code: string
-          connection_id: string | null
-          created_at: string
-          deposit_amount: number
-          entry_fee: number
-          full_name: string
-          id: string
-          note: string
-          paid_at: string | null
-          payment_expires_at: string | null
-          payment_owner_id: string | null
-          phone: string
-          refund_deadline: string | null
-          reminder_sent_at: string | null
-          review_note: string
-          status: string
-          team_name: string
-          tournament_id: string
-          user_id: string
-        }
-        Insert: {
-          account_name?: string | null
-          account_number?: string | null
-          address: string
-          balance_receipt?: string | null
-          balance_received_at?: string | null
-          balance_received_by?: string | null
-          balance_refund_due?: number
-          balance_refund_receipt?: string | null
-          balance_refunded_at?: string | null
-          balance_refunded_by?: string | null
-          balance_waived_at?: string | null
-          bank?: string | null
-          cancellation_kind?: string | null
-          cancelled_at?: string | null
-          code: string
-          connection_id?: string | null
-          created_at?: string
-          deposit_amount: number
-          entry_fee: number
-          full_name: string
-          id?: string
-          note?: string
-          paid_at?: string | null
-          payment_expires_at?: string | null
-          payment_owner_id?: string | null
-          phone: string
-          refund_deadline?: string | null
-          reminder_sent_at?: string | null
-          review_note?: string
-          status?: string
-          team_name?: string
-          tournament_id: string
-          user_id: string
-        }
-        Update: {
-          account_name?: string | null
-          account_number?: string | null
-          address?: string
-          balance_receipt?: string | null
-          balance_received_at?: string | null
-          balance_received_by?: string | null
-          balance_refund_due?: number
-          balance_refund_receipt?: string | null
-          balance_refunded_at?: string | null
-          balance_refunded_by?: string | null
-          balance_waived_at?: string | null
-          bank?: string | null
-          cancellation_kind?: string | null
-          cancelled_at?: string | null
-          code?: string
-          connection_id?: string | null
-          created_at?: string
-          deposit_amount?: number
-          entry_fee?: number
-          full_name?: string
-          id?: string
-          note?: string
-          paid_at?: string | null
-          payment_expires_at?: string | null
-          payment_owner_id?: string | null
-          phone?: string
-          refund_deadline?: string | null
-          reminder_sent_at?: string | null
-          review_note?: string
-          status?: string
-          team_name?: string
-          tournament_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournament_registrations_balance_received_by_fkey"
-            columns: ["balance_received_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_registrations_balance_refunded_by_fkey"
-            columns: ["balance_refunded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_registrations_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "sepay_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_registrations_payment_owner_id_fkey"
-            columns: ["payment_owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_registrations_tournament_id_fkey"
-            columns: ["tournament_id"]
-            isOneToOne: false
-            referencedRelation: "tournaments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_registrations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tournament_settlements: {
-        Row: {
-          agreed_at: string | null
-          agreed_by: string | null
-          cancellation_venue_fee: number
-          due_at: string
-          owner_id: string
-          terms_note: string
-          tournament_id: string
-          venue_fee: number | null
-        }
-        Insert: {
-          agreed_at?: string | null
-          agreed_by?: string | null
-          cancellation_venue_fee?: number
-          due_at: string
-          owner_id: string
-          terms_note?: string
-          tournament_id: string
-          venue_fee?: number | null
-        }
-        Update: {
-          agreed_at?: string | null
-          agreed_by?: string | null
-          cancellation_venue_fee?: number
-          due_at?: string
-          owner_id?: string
-          terms_note?: string
-          tournament_id?: string
-          venue_fee?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournament_settlements_agreed_by_fkey"
-            columns: ["agreed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_settlements_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_settlements_tournament_id_fkey"
-            columns: ["tournament_id"]
-            isOneToOne: true
-            referencedRelation: "tournaments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tournament_transfers: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          receipt: string
-          received_at: string | null
-          received_by: string | null
-          recorded_by: string
-          tournament_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          receipt: string
-          received_at?: string | null
-          received_by?: string | null
-          recorded_by: string
-          tournament_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          receipt?: string
-          received_at?: string | null
-          received_by?: string | null
-          recorded_by?: string
-          tournament_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournament_transfers_received_by_fkey"
-            columns: ["received_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_transfers_recorded_by_fkey"
-            columns: ["recorded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournament_transfers_tournament_id_fkey"
-            columns: ["tournament_id"]
-            isOneToOne: false
-            referencedRelation: "tournaments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tournaments: {
-        Row: {
-          address: string
-          cancel_window_hours: number
-          cancelled_by: string | null
-          capacity: number
-          court_id: string | null
-          cover_path: string | null
-          created_at: string
-          deposit_amount: number
-          description: string
-          ends_at: string
-          entry_fee: number
-          id: string
-          manager_id: string
-          payment_deadline: string
-          payment_hold_hours: number
-          registration_deadline: string
-          review_note: string
-          reviewed_by: string | null
-          sport: Database["public"]["Enums"]["sport_type"]
-          starts_at: string
-          status: string
-          title: string
-        }
-        Insert: {
-          address: string
-          cancel_window_hours?: number
-          cancelled_by?: string | null
-          capacity: number
-          court_id?: string | null
-          cover_path?: string | null
-          created_at?: string
-          deposit_amount: number
-          description: string
-          ends_at: string
-          entry_fee: number
-          id?: string
-          manager_id: string
-          payment_deadline: string
-          payment_hold_hours?: number
-          registration_deadline: string
-          review_note?: string
-          reviewed_by?: string | null
-          sport: Database["public"]["Enums"]["sport_type"]
-          starts_at: string
-          status?: string
-          title: string
-        }
-        Update: {
-          address?: string
-          cancel_window_hours?: number
-          cancelled_by?: string | null
-          capacity?: number
-          court_id?: string | null
-          cover_path?: string | null
-          created_at?: string
-          deposit_amount?: number
-          description?: string
-          ends_at?: string
-          entry_fee?: number
-          id?: string
-          manager_id?: string
-          payment_deadline?: string
-          payment_hold_hours?: number
-          registration_deadline?: string
-          review_note?: string
-          reviewed_by?: string | null
-          sport?: Database["public"]["Enums"]["sport_type"]
-          starts_at?: string
-          status?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournaments_cancelled_by_fkey"
-            columns: ["cancelled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournaments_court_id_fkey"
-            columns: ["court_id"]
-            isOneToOne: false
-            referencedRelation: "courts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournaments_manager_id_fkey"
-            columns: ["manager_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tournaments_reviewed_by_fkey"
-            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1713,47 +1904,155 @@ export type Database = {
           },
         ]
       }
+
+      tournament_settlements: {
+        Row: {
+          agreed_at: string | null
+          agreed_by: string | null
+          cancellation_venue_fee: number
+          due_at: string
+          owner_id: string
+          terms_note: string
+          tournament_id: string
+          venue_fee: number | null
+        }
+        Insert: {
+          agreed_at?: string | null
+          agreed_by?: string | null
+          cancellation_venue_fee?: number
+          due_at: string
+          owner_id: string
+          terms_note?: string
+          tournament_id: string
+          venue_fee?: number | null
+        }
+        Update: {
+          agreed_at?: string | null
+          agreed_by?: string | null
+          cancellation_venue_fee?: number
+          due_at?: string
+          owner_id?: string
+          terms_note?: string
+          tournament_id?: string
+          venue_fee?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_settlements_agreed_by_fkey"
+            columns: ["agreed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_settlements_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_settlements_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: true
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          receipt: string
+          received_at: string | null
+          received_by: string | null
+          recorded_by: string
+          tournament_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          receipt: string
+          received_at?: string | null
+          received_by?: string | null
+          recorded_by: string
+          tournament_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          receipt?: string
+          received_at?: string | null
+          received_by?: string | null
+          recorded_by?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_transfers_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_transfers_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_transfers_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      account_active: { Args: never; Returns: boolean }
-      activate_sepay_connection: {
-        Args: { p_operation: string; p_owner_id: string }
+      get_retention_review: { Args: { p_page?: number }; Returns: Json }
+      get_my_data_export: { Args: never; Returns: Json }
+      submit_data_request: {
+        Args: { p_action: string; p_id: string; p_message: string }
+        Returns: string
+      }
+      set_content_moderation: {
+        Args: {
+          p_hidden: boolean
+          p_id: string
+          p_kind: string
+          p_reason: string
+          p_updated_at?: string
+        }
         Returns: undefined
       }
-      admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
-      admin_list_users: {
+      get_content_moderation: {
+        Args: { p_id: string; p_kind: string }
+        Returns: Json
+      }
+      get_booking_conversion: { Args: { p_days?: number }; Returns: Json }
+      get_cash_report: {
         Args: {
-          p_sort?: string
+          p_export?: boolean
+          p_from?: string
           p_page?: number
-          p_role?: string
-          p_search?: string
-          p_status?: string
+          p_to?: string
         }
         Returns: Json
       }
-      admin_save_user: {
-        Args: {
-          p_email?: string
-          p_full_name: string
-          p_id: string
-          p_password?: string
-          p_phone: string
-          p_role: Database["public"]["Enums"]["user_role"]
-        }
-        Returns: string
-      }
-      admin_user_action: {
-        Args: {
-          p_action: string
-          p_days?: number
-          p_id: string
-          p_reason?: string
-        }
-        Returns: undefined
-      }
+      refresh_operational_alerts: { Args: never; Returns: number }
+      operational_health_snapshot: { Args: never; Returns: Json }
+      get_operational_health: { Args: never; Returns: Json }
       booking_revenue_entries: {
         Args: { p_from: string; p_to: string; p_venue_id: string }
         Returns: {
@@ -1763,6 +2062,293 @@ export type Database = {
           paid_date: string
           venue_id: string
         }[]
+      }
+      claim_notification_deliveries: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      dispatch_notification_worker: { Args: never; Returns: undefined }
+      finish_notification_delivery: {
+        Args: {
+          p_id: string
+          p_lease_id: string
+          p_ok: boolean
+          p_reason?: string
+        }
+        Returns: boolean
+      }
+      get_admin_period_stats: { Args: { p_days?: number }; Returns: Json }
+      get_booking_refund: { Args: { p_code: string }; Returns: Json }
+      get_notification_delivery_page: {
+        Args: { p_page?: number }
+        Returns: Json
+      }
+      get_operations_audit: {
+        Args: { p_page?: number; p_query?: string }
+        Returns: Json
+      }
+      process_incoming_transfer: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_codes: string[]
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+        }
+        Returns: Json
+      }
+      get_incoming_transfer_page: {
+        Args: { p_filter?: string; p_page?: number; p_query?: string }
+        Returns: Json
+      }
+      note_incoming_transfer: {
+        Args: {
+          p_id: string
+          p_note: string
+          p_note_id: string
+          p_updated_at: string
+        }
+        Returns: undefined
+      }
+      admin_delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
+      record_booking_refund: {
+        Args: {
+          p_amount: number
+          p_code: string
+          p_id: string
+          p_reference: string
+          p_transferred_at: string
+        }
+        Returns: Json
+      }
+      retry_notification_delivery: {
+        Args: { p_id: string; p_updated_at: string }
+        Returns: undefined
+      }
+      search_my_bookings: {
+        Args: {
+          p_filter?: string
+          p_from?: string
+          p_page?: number
+          p_query?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+
+      search_admin_bookings: {
+        Args: {
+          p_filter?: string
+          p_from?: string
+          p_page?: number
+          p_query?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      search_owner_bookings: {
+        Args: {
+          p_from?: string
+          p_page?: number
+          p_query?: string
+          p_refund_needed?: boolean
+          p_show_history?: boolean
+          p_status?: string
+          p_to?: string
+          p_venue_id: string
+        }
+        Returns: Json
+      }
+
+      cancel_tournament: { Args: { p_id: string }; Returns: undefined }
+      cancel_tournament_registration: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      confirm_tournament_payment: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+          p_ref_code: string
+        }
+        Returns: Json
+      }
+      get_booking_calendar: { Args: { p_code: string }; Returns: Json }
+      get_community_profile: { Args: { p_id: string }; Returns: Json }
+      get_my_favorites: { Args: never; Returns: Json }
+      get_owner_period_stats: {
+        Args: { p_days?: number; p_venue_id: string }
+        Returns: Json
+      }
+      get_tournament_capacity: { Args: { p_id: string }; Returns: number }
+      manages_tournament: { Args: { p_id: string }; Returns: boolean }
+      mark_tournament_refund: {
+        Args: { p_expected_amount: number; p_transaction_key: string }
+        Returns: undefined
+      }
+      register_tournament: {
+        Args: { p_data: Json; p_id: string }
+        Returns: string
+      }
+      review_feedback: {
+        Args: {
+          p_id: string
+          p_reply: string
+          p_status: string
+          p_updated_at: string
+        }
+        Returns: undefined
+      }
+      review_tournament: {
+        Args: {
+          p_approve: boolean
+          p_cancellation_venue_fee?: number
+          p_court_id: string
+          p_id: string
+          p_note?: string
+          p_terms_confirmed?: boolean
+          p_terms_note?: string
+          p_venue_fee?: number
+        }
+        Returns: undefined
+      }
+      review_tournament_registration: {
+        Args: { p_approve: boolean; p_id: string; p_note?: string }
+        Returns: undefined
+      }
+      search_community: {
+        Args: { p_location?: string; p_page?: number; p_sport?: string }
+        Returns: Json
+      }
+      set_community_profile: { Args: { p_data: Json }; Returns: undefined }
+      set_venue_favorite: {
+        Args: { p_saved: boolean; p_venue_id: string }
+        Returns: boolean
+      }
+      submit_payment_support: { Args: { p_id: string; p_code: string; p_message: string; p_receipt_path?: string | null }; Returns: string }
+      submit_feedback: {
+        Args: {
+          p_category: string
+          p_id: string
+          p_message: string
+          p_page_path?: string
+          p_title: string
+        }
+        Returns: string
+      }
+      submit_tournament: { Args: { p_data: Json }; Returns: string }
+      get_admin_subscriptions: {
+        Args: never
+        Returns: {
+          active: boolean
+          fee_required: boolean
+          full_name: string
+          owner_id: string
+          paid_until: string
+          phone: string
+        }[]
+      }
+      confirm_subscription_payment: {
+        Args: {
+          p_amount: number
+          p_bank_tx_id: string
+          p_connection_id: string
+          p_raw: Json
+          p_receiver_account: string
+          p_receiver_bank: string
+          p_ref_code: string
+        }
+        Returns: Json
+      }
+      create_subscription_invoice: {
+        Args: never
+        Returns: {
+          account_name: string
+          account_number: string
+          amount: number
+          bank: string
+          code: string
+          connection_id: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_owner_subscription_fee: {
+        Args: { p_owner_id: string; p_required: boolean }
+        Returns: undefined
+      }
+      get_my_subscription: { Args: never; Returns: Json }
+      owner_subscription_allows: {
+        Args: { p_owner_id: string }
+        Returns: boolean
+      }
+      initialize_legacy_receiver: {
+        Args: { p_account: string; p_bank: string; p_name: string }
+        Returns: undefined
+      }
+      get_my_sepay_connection: { Args: never; Returns: Json }
+      disconnect_sepay_connection: {
+        Args: { p_operation: string; p_owner_id: string }
+        Returns: undefined
+      }
+      claim_sepay_connection: {
+        Args: { p_operation: string; p_owner_id: string }
+        Returns: {
+          access_token_encrypted: string | null
+          account_name: string | null
+          account_number: string | null
+          bank: string | null
+          bank_account_id: string | null
+          checked_at: string | null
+          created_at: string
+          id: string
+          last_webhook_at: string | null
+          operation_expires_at: string | null
+          operation_token: string | null
+          owner_id: string
+          refresh_token_encrypted: string | null
+          status: string
+          token_expires_at: string | null
+          webhook_id: string | null
+          webhook_key_encrypted: string | null
+          webhook_key_hash: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sepay_connections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      activate_sepay_connection: {
+        Args: { p_operation: string; p_owner_id: string }
+        Returns: undefined
+      }
+      venue_accepts_bookings: { Args: { p_venue_id: string }; Returns: boolean }
+      get_admin_stats: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_owner_stats: {
+        Args: { p_from: string; p_to: string; p_venue_id: string }
+        Returns: Json
       }
       cancel_booking: {
         Args: { p_code: string; p_pending_only?: boolean }
@@ -1808,50 +2394,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      cancel_tournament: { Args: { p_id: string }; Returns: undefined }
-      cancel_tournament_registration: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      claim_sepay_connection: {
-        Args: { p_operation: string; p_owner_id: string }
-        Returns: {
-          access_token_encrypted: string | null
-          account_name: string | null
-          account_number: string | null
-          bank: string | null
-          bank_account_id: string | null
-          checked_at: string | null
-          created_at: string
-          id: string
-          last_webhook_at: string | null
-          operation_expires_at: string | null
-          operation_token: string | null
-          owner_id: string
-          refresh_token_encrypted: string | null
-          status: string
-          token_expires_at: string | null
-          webhook_id: string | null
-          webhook_key_encrypted: string | null
-          webhook_key_hash: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "sepay_connections"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      close_court: {
-        Args: {
-          p_court_id: string
-          p_date: string
-          p_end_time?: string
-          p_reason?: string
-          p_start_time?: string
-        }
-        Returns: string
-      }
       complete_past_bookings: { Args: never; Returns: number }
       confirm_payment:
         | {
@@ -1878,39 +2420,23 @@ export type Database = {
       confirm_payment_manual: {
         Args: { p_code: string }
         Returns: {
-          cancel_window_hours: number
-          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
-          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
-          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
           note: string | null
           paid_at: string | null
-          payment_account: string | null
-          payment_account_name: string | null
-          payment_bank: string | null
-          payment_connection_id: string | null
-          payment_owner_id: string | null
-          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
-          refund_working_days: number | null
-          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
-          venue_address_snapshot: string | null
-          venue_city_snapshot: string | null
-          venue_district_snapshot: string | null
-          venue_name_snapshot: string | null
         }
         SetofOptions: {
           from: "*"
@@ -1918,34 +2444,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      confirm_subscription_payment: {
-        Args: {
-          p_amount: number
-          p_bank_tx_id: string
-          p_connection_id: string
-          p_raw: Json
-          p_receiver_account: string
-          p_receiver_bank: string
-          p_ref_code: string
-        }
-        Returns: Json
-      }
-      confirm_tournament_payment: {
-        Args: {
-          p_amount: number
-          p_bank_tx_id: string
-          p_connection_id: string
-          p_raw: Json
-          p_receiver_account: string
-          p_receiver_bank: string
-          p_ref_code: string
-        }
-        Returns: Json
-      }
-      confirm_tournament_transfer: {
-        Args: { p_id: string }
-        Returns: undefined
       }
       connect_telegram: {
         Args: { p_chat_id: string; p_token: string }
@@ -1961,39 +2459,23 @@ export type Database = {
           p_starts_at: string
         }
         Returns: {
-          cancel_window_hours: number
-          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
-          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
-          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
           note: string | null
           paid_at: string | null
-          payment_account: string | null
-          payment_account_name: string | null
-          payment_bank: string | null
-          payment_connection_id: string | null
-          payment_owner_id: string | null
-          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
-          refund_working_days: number | null
-          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
-          venue_address_snapshot: string | null
-          venue_city_snapshot: string | null
-          venue_district_snapshot: string | null
-          venue_name_snapshot: string | null
         }
         SetofOptions: {
           from: "*"
@@ -2013,17 +2495,13 @@ export type Database = {
           p_starts_at: string
         }
         Returns: {
-          cancel_window_hours: number
-          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
-          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
-          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
@@ -2034,18 +2512,11 @@ export type Database = {
           payment_bank: string | null
           payment_connection_id: string | null
           payment_owner_id: string | null
-          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
-          refund_working_days: number | null
-          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
-          venue_address_snapshot: string | null
-          venue_city_snapshot: string | null
-          venue_district_snapshot: string | null
-          venue_name_snapshot: string | null
         }
         SetofOptions: {
           from: "*"
@@ -2086,31 +2557,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      create_subscription_invoice: {
-        Args: never
-        Returns: {
-          account_name: string
-          account_number: string
-          amount: number
-          bank: string
-          code: string
-          connection_id: string | null
-          created_at: string
-          id: string
-          owner_id: string
-          paid_at: string | null
-          period_end: string | null
-          period_start: string | null
-          status: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "subscription_invoices"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      create_tournament_proposal: { Args: { p_data: Json }; Returns: string }
       create_venue: {
         Args: {
           p_address: string
@@ -2153,155 +2599,52 @@ export type Database = {
         }
       }
       delete_court: { Args: { p_court_id: string }; Returns: undefined }
-      delete_price_rule: {
-        Args: { p_court_id: string; p_rule_id: string }
-        Returns: undefined
-      }
       delete_tournament: { Args: { p_id: string }; Returns: undefined }
       delete_venue: { Args: { p_venue_id: string }; Returns: undefined }
-      disconnect_sepay_connection: {
-        Args: { p_operation: string; p_owner_id: string }
-        Returns: undefined
-      }
       expire_pending_bookings: { Args: never; Returns: number }
       gen_booking_code: { Args: never; Returns: string }
-      get_admin_period_stats: { Args: { p_days?: number }; Returns: Json }
-      get_admin_stats: { Args: { p_from: string; p_to: string }; Returns: Json }
-      get_admin_subscriptions: {
-        Args: never
-        Returns: {
-          active: boolean
-          fee_required: boolean
-          full_name: string
-          owner_id: string
-          paid_until: string
-          phone: string
-        }[]
-      }
-      get_booking_calendar: { Args: { p_code: string }; Returns: Json }
-      get_community_profile: { Args: { p_id: string }; Returns: Json }
-      get_incoming_transfer_page: {
-        Args: { p_filter?: string; p_page?: number; p_query?: string }
-        Returns: Json
-      }
-      get_my_favorites: { Args: never; Returns: Json }
-      get_my_sepay_connection: { Args: never; Returns: Json }
-      get_my_subscription: { Args: never; Returns: Json }
-      get_my_tournament_registrations: {
-        Args: { p_page?: number }
-        Returns: Json
-      }
-      get_owner_court_schedule: {
-        Args: { p_court_id: string; p_date?: string }
-        Returns: Json
-      }
+      get_owner_reconciliation_export: { Args: { p_venue_id: string; p_from: string; p_to: string }; Returns: Json }
+      get_owner_operating_calendar: { Args: { p_venue_id: string }; Returns: Json }
+      get_owner_refund_page: { Args: { p_venue_id: string; p_status?: string; p_query?: string; p_page?: number }; Returns: Json }
+      get_owner_price_preview: { Args: { p_court_id: string; p_date?: string | null }; Returns: Json }
+      search_venues_for_time: { Args: { p_query?: string; p_sport?: Database["public"]["Enums"]["sport_type"] | null; p_district?: string; p_date?: string | null; p_indoor?: boolean | null; p_available?: boolean; p_sort?: string; p_page?: number; p_time?: string | null; p_duration?: number | null }; Returns: Json }
       get_owner_email: { Args: { p_owner_id: string }; Returns: string }
-      get_owner_operating_calendar: {
-        Args: { p_venue_id: string }
-        Returns: Json
-      }
-      get_owner_period_stats: {
-        Args: { p_days?: number; p_venue_id: string }
-        Returns: Json
-      }
-      get_owner_price_preview: {
-        Args: { p_court_id: string; p_date?: string }
-        Returns: Json
-      }
-      get_owner_reconciliation_export: {
-        Args: { p_from: string; p_to: string; p_venue_id: string }
-        Returns: Json
-      }
-      get_owner_refund_page: {
-        Args: {
-          p_page?: number
-          p_query?: string
-          p_status?: string
-          p_venue_id: string
-        }
-        Returns: Json
-      }
-      get_owner_stats: {
-        Args: { p_from: string; p_to: string; p_venue_id: string }
-        Returns: Json
-      }
-      get_tournament_capacity: { Args: { p_id: string }; Returns: number }
-      get_tournament_proposal: { Args: { p_id: string }; Returns: Json }
-      get_tournament_registrations: { Args: { p_id: string }; Returns: Json }
-      get_tournament_settlement: { Args: { p_id: string }; Returns: Json }
       get_venue_availability: {
         Args: { p_date: string; p_venue_id: string }
         Returns: {
           court_id: string
           court_name: string
           ends_at: string
-          hold_expires_at: string
           is_available: boolean
+          slot_status: string
+          hold_expires_at: string | null
           price: number
           slot_minutes: number
-          slot_status: string
           sport: Database["public"]["Enums"]["sport_type"]
           starts_at: string
         }[]
       }
-      get_venue_calendar: {
-        Args: { p_date?: string; p_venue_id: string }
-        Returns: Json
-      }
-      get_venue_slot_counts: {
-        Args: {
-          p_date?: string
-          p_sport?: Database["public"]["Enums"]["sport_type"]
-          p_venue_ids: string[]
-        }
-        Returns: {
-          available_date: string
-          available_slots: number
-          venue_id: string
-        }[]
-      }
-      initialize_legacy_receiver: {
-        Args: { p_account: string; p_bank: string; p_name: string }
-        Returns: undefined
-      }
       is_admin: { Args: never; Returns: boolean }
-      manages_tournament: { Args: { p_id: string }; Returns: boolean }
       mark_refund_done: {
         Args: { p_code: string }
         Returns: {
-          cancel_window_hours: number
-          cancellation_policy_version: string
           cancelled_at: string | null
           code: string
           court_id: string
-          court_name_snapshot: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string
           deposit_amount: number
-          details_recorded_at: string | null
           ends_at: string
           expires_at: string
           id: string
           note: string | null
           paid_at: string | null
-          payment_account: string | null
-          payment_account_name: string | null
-          payment_bank: string | null
-          payment_connection_id: string | null
-          payment_owner_id: string | null
-          policy_recorded_at: string
           refund_status: Database["public"]["Enums"]["refund_status"] | null
-          refund_working_days: number | null
-          sport_snapshot: Database["public"]["Enums"]["sport_type"] | null
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total_amount: number
           user_id: string
-          venue_address_snapshot: string | null
-          venue_city_snapshot: string | null
-          venue_district_snapshot: string | null
-          venue_name_snapshot: string | null
         }
         SetofOptions: {
           from: "*"
@@ -2310,46 +2653,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      mark_tournament_refund: {
-        Args: { p_expected_amount: number; p_transaction_key: string }
-        Returns: undefined
-      }
-      note_incoming_transfer: {
-        Args: {
-          p_id: string
-          p_note: string
-          p_note_id: string
-          p_updated_at: string
-        }
-        Returns: undefined
-      }
-      owner_subscription_allows: {
-        Args: { p_owner_id: string }
-        Returns: boolean
-      }
       owns_court: { Args: { p_court_id: string }; Returns: boolean }
-      process_incoming_transfer: {
-        Args: {
-          p_amount: number
-          p_bank_tx_id: string
-          p_codes: string[]
-          p_connection_id: string
-          p_raw: Json
-          p_receiver_account: string
-          p_receiver_bank: string
-        }
-        Returns: Json
-      }
-      process_tournament_deadlines: { Args: never; Returns: undefined }
-      record_tournament_balance: {
-        Args: { p_id: string; p_receipt: string; p_refund: boolean }
-        Returns: undefined
-      }
-      record_tournament_transfer: {
-        Args: { p_expected_balance: number; p_id: string; p_receipt: string }
-        Returns: string
-      }
-      refresh_tournament: { Args: { p_id: string }; Returns: undefined }
       register_owner: {
         Args: {
           p_business_license_name: string
@@ -2390,223 +2694,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      register_tournament: {
-        Args: { p_data: Json; p_id: string }
-        Returns: string
-      }
-      reopen_court: {
-        Args: { p_closure_id: string; p_court_id: string }
-        Returns: undefined
-      }
-      resubmit_tournament: {
-        Args: { p_data: Json; p_id: string }
-        Returns: string
-      }
-      review_feedback: {
-        Args: {
-          p_id: string
-          p_reply: string
-          p_status: string
-          p_updated_at: string
-        }
-        Returns: undefined
-      }
       review_owner: {
         Args: { p_owner_id: string; p_reason?: string; p_status: string }
-        Returns: undefined
-      }
-      review_tournament: {
-        Args: {
-          p_approve: boolean
-          p_cancellation_venue_fee?: number
-          p_court_id: string
-          p_id: string
-          p_note?: string
-          p_terms_confirmed?: boolean
-          p_terms_note?: string
-          p_venue_fee?: number
-        }
-        Returns: undefined
-      }
-      review_tournament_registration: {
-        Args: { p_approve: boolean; p_id: string; p_note?: string }
         Returns: undefined
       }
       review_venue: {
         Args: { p_status: string; p_venue_id: string }
         Returns: undefined
       }
-      save_price_rule: {
-        Args: {
-          p_court_id: string
-          p_days: number[]
-          p_end_time: string
-          p_label: string
-          p_price_per_hour: number
-          p_priority: number
-          p_rule_id: string
-          p_start_time: string
-        }
-        Returns: {
-          court_id: string
-          days: number[]
-          end_time: string
-          id: string
-          label: string | null
-          price_per_hour: number
-          priority: number
-          start_time: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "price_rules"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      search_admin_bookings: {
-        Args: {
-          p_filter?: string
-          p_from?: string
-          p_page?: number
-          p_query?: string
-          p_to?: string
-        }
-        Returns: Json
-      }
-      search_community: {
-        Args: { p_location?: string; p_page?: number; p_sport?: string }
-        Returns: Json
-      }
-      search_my_bookings: {
-        Args: {
-          p_filter?: string
-          p_from?: string
-          p_page?: number
-          p_query?: string
-          p_to?: string
-        }
-        Returns: Json
-      }
-      search_owner_bookings: {
-        Args: {
-          p_from?: string
-          p_page?: number
-          p_query?: string
-          p_refund_needed?: boolean
-          p_show_history?: boolean
-          p_status?: string
-          p_to?: string
-          p_venue_id: string
-        }
-        Returns: Json
-      }
-      search_venues: {
-        Args: {
-          p_available?: boolean
-          p_date?: string
-          p_district?: string
-          p_indoor?: boolean
-          p_page?: number
-          p_query?: string
-          p_sort?: string
-          p_sport?: Database["public"]["Enums"]["sport_type"]
-        }
-        Returns: Json
-      }
-      search_venues_for_time: {
-        Args: {
-          p_available?: boolean
-          p_date?: string
-          p_district?: string
-          p_duration?: number
-          p_indoor?: boolean
-          p_page?: number
-          p_query?: string
-          p_sort?: string
-          p_sport?: Database["public"]["Enums"]["sport_type"]
-          p_time?: string
-        }
-        Returns: Json
-      }
-      set_community_profile: { Args: { p_data: Json }; Returns: undefined }
-      set_court_price_rules: {
-        Args: { p_court_id: string; p_rules: Json }
-        Returns: {
-          court_id: string
-          days: number[]
-          end_time: string
-          id: string
-          label: string | null
-          price_per_hour: number
-          priority: number
-          start_time: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "price_rules"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      set_owner_subscription_fee: {
-        Args: { p_owner_id: string; p_required: boolean }
-        Returns: undefined
-      }
       set_profile_avatar: { Args: { p_path: string }; Returns: Json }
-      set_tournament_terms: {
-        Args: {
-          p_cancellation_venue_fee?: number
-          p_id: string
-          p_note: string
-          p_venue_fee: number
-        }
-        Returns: undefined
-      }
-      set_venue_favorite: {
-        Args: { p_saved: boolean; p_venue_id: string }
-        Returns: boolean
-      }
-      set_venue_images: {
-        Args: { p_expected: string[]; p_images: string[]; p_venue_id: string }
-        Returns: string[]
-      }
       slugify: { Args: { p_text: string }; Returns: string }
-      stats_can_read: { Args: { p_venue_id: string }; Returns: boolean }
-      stats_occupancy_grid: {
-        Args: { p_days?: number; p_venue_id?: string }
-        Returns: {
-          gio: number
-          so_don: number
-          so_luot: number
-          thu: number
-          ty_le: number
-        }[]
-      }
-      submit_feedback: {
-        Args: {
-          p_category: string
-          p_id: string
-          p_message: string
-          p_page_path?: string
-          p_title: string
-        }
-        Returns: string
-      }
-      submit_payment_support: {
-        Args: {
-          p_code: string
-          p_id: string
-          p_message: string
-          p_receipt_path?: string
-        }
-        Returns: string
-      }
-      submit_tournament: { Args: { p_data: Json }; Returns: string }
-      tournament_notice: {
-        Args: { p_body: string; p_id: string; p_title: string; p_user: string }
-        Returns: undefined
-      }
       unaccent_vi: { Args: { p_text: string }; Returns: string }
       update_court: {
         Args: {
@@ -2644,10 +2741,6 @@ export type Database = {
       update_profile: {
         Args: { p_full_name: string; p_phone: string }
         Returns: Json
-      }
-      update_published_tournament: {
-        Args: { p_data: Json; p_id: string }
-        Returns: string
       }
       update_venue: {
         Args: {
@@ -2692,20 +2785,45 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      venue_accepts_bookings: { Args: { p_venue_id: string }; Returns: boolean }
-      venues_free_slots: {
+
+      tournament_notice: {
+        Args: { p_body: string; p_id: string; p_title: string; p_user: string }
+        Returns: undefined
+      }
+      refresh_tournament: { Args: { p_id: string }; Returns: undefined }
+      resubmit_tournament: {
+        Args: { p_data: Json; p_id: string }
+        Returns: string
+      }
+      process_tournament_deadlines: { Args: never; Returns: undefined }
+      get_tournament_proposal: { Args: { p_id: string }; Returns: Json }
+      update_published_tournament: { Args: { p_id: string; p_data: Json }; Returns: string }
+      get_tournament_registrations: { Args: { p_id: string }; Returns: Json }
+      get_my_tournament_registrations: {
+        Args: { p_page?: number }
+        Returns: Json
+      }
+      set_tournament_terms: {
         Args: {
-          p_date: string
-          p_peak_from?: number
-          p_peak_to?: number
-          p_venue_ids: string[]
+          p_cancellation_venue_fee?: number
+          p_id: string
+          p_note: string
+          p_venue_fee: number
         }
-        Returns: {
-          con_trong: number
-          con_trong_gio_vang: number
-          som_nhat: string
-          venue_id: string
-        }[]
+        Returns: undefined
+      }
+      record_tournament_balance: {
+        Args: { p_id: string; p_receipt: string; p_refund: boolean }
+        Returns: undefined
+      }
+      get_tournament_settlement: { Args: { p_id: string }; Returns: Json }
+      record_tournament_transfer: {
+        Args: { p_expected_balance: number; p_id: string; p_receipt: string }
+        Returns: string
+      }
+      confirm_tournament_transfer: {
+        Args: { p_id: string }
+        Returns: undefined
       }
       waive_tournament_balance: {
         Args: { p_id: string; p_note: string }

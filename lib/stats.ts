@@ -1,6 +1,6 @@
-export type StatsPoint = { date: string; bookings: number; revenue: number };
+export type StatsPoint = { date: string; bookings: number; revenue: number; playing_bookings: number };
 export type CourtStat = { name: string; bookings: number; revenue: number; hours: number };
-export type VenueStat = { name: string; district: string; bookings: number; revenue: number };
+export type VenueStat = { name: string; district: string; bookings: number; revenue: number; playing_bookings: number };
 
 export type OwnerStats = {
   from: string;
@@ -36,6 +36,7 @@ export type AdminStats = {
   };
   daily: StatsPoint[];
   venues: VenueStat[];
+  activity_venues: VenueStat[];
 };
 
 const n = (value: unknown) => typeof value === 'number' && Number.isFinite(value) ? value : 0;
@@ -44,7 +45,7 @@ const text = (value: unknown) => typeof value === 'string' ? value : '';
 function points(value: unknown): StatsPoint[] {
   return Array.isArray(value) ? value.map((item) => {
     const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-    return { date: text(row.date), bookings: n(row.bookings), revenue: n(row.revenue) };
+    return { date: text(row.date), bookings: n(row.bookings), revenue: n(row.revenue), playing_bookings: n(row.playing_bookings) };
   }) : [];
 }
 
@@ -77,9 +78,14 @@ export function parseAdminStats(value: unknown): AdminStats {
       active_venues: n(raw.active_venues), active_courts: n(raw.active_courts), players: n(raw.players), owners: n(raw.owners),
       new_players: n(raw.new_players), pending_bookings: n(raw.pending_bookings), pending_owners: n(raw.pending_owners), pending_venues: n(raw.pending_venues),
     },
-    venues: Array.isArray(row.venues) ? row.venues.map((item) => {
-      const venue = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-      return { name: text(venue.name), district: text(venue.district), bookings: n(venue.bookings), revenue: n(venue.revenue) };
-    }) : [],
+    venues: venueRows(row.venues),
+    activity_venues: venueRows(row.activity_venues),
   };
+}
+
+function venueRows(value: unknown): VenueStat[] {
+  return Array.isArray(value) ? value.map((item) => {
+    const venue = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    return { name: text(venue.name), district: text(venue.district), bookings: n(venue.bookings), revenue: n(venue.revenue), playing_bookings: n(venue.playing_bookings) };
+  }) : [];
 }

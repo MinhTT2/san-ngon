@@ -12,7 +12,7 @@ const courtId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const created = '2026-10-01T03:00:00Z';
 const fixturePort = Number(process.env.DASHBOARD_FIXTURE_PORT || 3210);
 const future = '2026-12-01T03:00:00Z';
-const base = { owner_rejection_reason: null, owner_reviewed_at: null, owner_reviewed_by: null, phone: '0901234567', created_at: created, avatar_url: null, banned_until: null, telegram_chat_id: 'fixture', owner_application_status: 'active', business_license_path: 'fixture/license.pdf', business_license_name: 'Giấy đăng ký', payout_bank: 'MB', payout_account: '0123456789' };
+const base = { owner_rejection_reason: null, owner_reviewed_at: null, owner_reviewed_by: null, phone: '0901234567', owner_application_submitted_at: '2026-10-10T03:00:00Z', created_at: created, avatar_url: null, banned_until: null, telegram_chat_id: 'fixture', owner_application_status: 'active', business_license_path: 'fixture/license.pdf', business_license_name: 'Giấy đăng ký', payout_bank: 'MB', payout_account: '0123456789' };
 const people = [{ ...base, id: adminId, full_name: 'Quản trị viên kiểm tra', role: 'admin' }, { ...base, id: ownerId, full_name: 'Nguyễn Minh', role: 'owner' }, ...Array.from({ length: 23 }, (_, i) => ({ ...base, id: `owner-${i}`, full_name: `Chủ sân ${i + 1}`, role: 'player', owner_application_status: i === 22 ? 'rejected' : 'pending' }))];
 const court = { id: courtId, venue_id: venueId, name: 'Cầu lông 01', sport: 'badminton', slot_minutes: 60, surface: 'tham', is_indoor: true, open_time: null, close_time: null, is_active: true, sort_order: 1, price_rules: [{ id: 'price-base', days: [1, 2, 3, 4, 5, 6, 0], priority: 0, price_per_hour: 100000, start_time: '06:00:00', end_time: '23:00:00', label: 'Giá chung' }], venues: { id: venueId, name: 'Sân Cầu Giấy', owner_id: ownerId } };
 const venues = [{ id: venueId, name: 'Sân Cầu Giấy', slug: 'san-cau-giay', address: '123 Cầu Giấy, Hà Nội', district: 'Cầu Giấy', status: 'active', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: null, images: ['fixture1.webp', 'fixture2.webp', 'fixture3.webp'], open_time: '06:00:00', close_time: '23:00:00', deposit_pct: 100, booking_horizon_days: 30, description: 'Sân trong nhà, đủ ánh sáng và có chỗ để xe.', amenities: ['Chỗ để xe'], courts: [court] }, { id: 'venue-pending', name: 'Sân chờ duyệt', slug: 'san-cho-duyet', district: 'Ba Đình', status: 'pending', owner_id: ownerId, created_at: created, phone: base.phone, business_license_path: 'fixture.pdf', courts: [] }];
@@ -32,10 +32,10 @@ const checkoutBookings = {
 };
 const subscription = { owner_id: ownerId, full_name: 'Nguyễn Minh', phone: base.phone, fee_required: false, paid_until: future, active: true, amount: 299000 };
 const invoice = { id: 'invoice-1', owner_id: ownerId, code: 'PHI1234ABCD', amount: 299000, status: 'paid', created_at: created, paid_at: created, period_end: future };
-const pendingTournament = { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'Giải cầu lông mùa thu', sport: 'badminton', starts_at: future, ends_at: '2026-12-01T08:00:00Z', registration_deadline: '2026-11-25T03:00:00Z', capacity: 16, entry_fee: 200000, deposit_amount: 100000, address: venues[0].address, status: 'pending', cover_path: null };
+const pendingTournament = { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'Giải cầu lông mùa thu', sport: 'badminton', starts_at: future, ends_at: '2026-12-01T08:00:00Z', registration_deadline: '2026-11-25T03:00:00Z', payment_deadline: '2026-11-26T03:00:00Z', capacity: 16, entry_fee: 200000, deposit_amount: 100000, address: venues[0].address, status: 'pending', cover_path: null };
 const tournaments = [pendingTournament, { ...pendingTournament, id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef', title: 'Cầu lông Hà Nội mở rộng', status: 'published' }, { ...pendingTournament, id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeea', title: 'Pickleball cuối tuần', sport: 'pickleball', entry_fee: 0, deposit_amount: 0, status: 'published' }];
 const summary = { bookings: 18, paid_bookings: 16, revenue: 3200000, deposit: 3200000, cancelled: 1, pending: 2, capacity_hours: 280, booked_hours: 48, occupancy_pct: 17.1, cancellation_pct: 5.6, active_venues: 1, active_courts: 1, players: 23, owners: 1, new_players: 4, pending_bookings: 2, pending_owners: 22, pending_venues: 1 };
-const stats = { from: '2026-09-09', to: '2026-10-08', summary, daily: Array.from({ length: 30 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, revenue: i % 3 ? i * 10000 : 0, bookings: 2 })), courts: [{ name: court.name, hours: 48, bookings: 18, revenue: 3200000 }], venues: [{ name: venues[0].name, district: 'Cầu Giấy', bookings: 18, revenue: 3200000 }] };
+const stats = { from: '2026-09-09', to: '2026-10-08', summary, daily: Array.from({ length: 30 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, revenue: i % 3 ? i * 10000 : 0, bookings: 2, playing_bookings: i === 3 ? 7 : i === 4 ? 10 : 0 })), activity_venues: [{ name: venues[0].name, district: venues[0].district, playing_bookings: 17, bookings: 0, revenue: 0 }], courts: [{ name: court.name, hours: 48, bookings: 18, revenue: 3200000 }], venues: [{ name: venues[0].name, district: 'Cầu Giấy', bookings: 18, revenue: 3200000 }] };
 const feedback = [{ id: 'feedback-1', category: 'bug', title: 'Cần hỗ trợ chọn lịch', message: 'Tôi muốn xem lịch ở một ngày khác.', page_path: '/tim-san', status: 'new', reply: null, created_at: created, updated_at: created, sender: { full_name: 'Lê Hải' } }];
 const users = people.slice(0, 5).map((p, i) => ({ ...p, email: `test${i}@example.invalid`, is_banned: i === 3, banned_until: i === 3 ? 'infinity' : null, ban_reason: i === 3 ? 'Tài khoản kiểm tra' : null }));
 const publicVenues = [{ ...venues[0], court_count: 3, sports: ['badminton'], available_slots: 18, min_price: 100000, next_slot: future }];
@@ -68,13 +68,14 @@ const server = createServer(async (req, res) => {
   let role = 'admin';
   let readFailure = '';
   let ownerHistory = false, playerHistory = false, bookingSnapshot = false;
-  let manyCourts=false,pendingInvoice=false;
+  let manyCourts=false,pendingInvoice=false,contentHidden=false;
   let applicationState = '', newUx = '';
   let connectionState = 'ready';
   let catalog = 'default', favoriteState = 'default', mixedSports = false, includeRefund = false;
   try {
     const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
     readFailure = claims.fixture_read_failure || '';
+    contentHidden = !!claims.fixture_content_hidden;
     ownerHistory = !!claims.fixture_owner_history;
     playerHistory = !!claims.fixture_player_history;
     manyCourts=!!claims.fixture_many_courts; pendingInvoice=!!claims.fixture_pending_invoice;
@@ -86,6 +87,9 @@ const server = createServer(async (req, res) => {
   } catch { /* Anonymous requests use only public fixture data. */ }
   const me = role === 'owner' ? people[1] : people[0];
   const send = (data, code = 200) => { res.statusCode = code; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
+  if (url.pathname === '/rest/v1/feedback' && url.searchParams.get('id') === 'eq.f1070000-0000-4000-8000-000000000001') {
+    send({ ...feedback[0], id: 'f1070000-0000-4000-8000-000000000001', category: 'report', title: 'Báo cáo nội dung công khai', page_path: '/ket-noi/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' }); return;
+  }
   const selection = url.searchParams.get('select') || '';
   const failedRead = readFailure && (
     url.pathname === `/rest/v1/rpc/${readFailure}` ||
@@ -190,6 +194,38 @@ const server = createServer(async (req, res) => {
       send({today,from:today+'T00:00:00+07:00',until:new Date(Date.now()+7*86400000).toISOString(),days:[today,...Array.from({length:6},(_,i)=>new Date(Date.now()+(i+1)*86400000).toISOString().slice(0,10))]}); return;
     }
     if (name === 'get_owner_price_preview') { const date=args.p_date || '2026-10-09';send({date,rows:[{starts_at:date+'T10:00:00+07:00',ends_at:date+'T11:00:00+07:00',label:'Giá chung',priority:0,price:100000}]});return; }
+    if (name === 'get_my_data_export') { send({ exported_at:created,account:{id:me.id,full_name:me.full_name},bookings:[],requests:[] });return; }
+    if (name === 'get_retention_review') { send({ total:1,page:1,pages:1,rows:[{kind:'support',id:'f1070000-0000-4000-8000-000000000001',label:'Yêu cầu hỗ trợ đã kết thúc',since:created}] });return; }
+    if (name === 'get_content_moderation') { send({ kind:args.p_kind,id:args.p_id,title:'Hồ sơ kiểm tra',hidden:false,reason:null,updated_at:null });return; }
+    if (name === 'get_booking_conversion') { send({ from:'2026-10-01', to:'2026-10-21', created:10, paid:4, holding:2, ended:4, conversion_pct:40, daily:[{date:'2026-10-21',created:10,paid:4}] }); return; }
+    if (name === 'get_cash_report') {
+      send({ from: args.p_from || '2026-10-01', to: args.p_to || '2026-10-21', checked_at: created, total: 2, page: 1, pages: 1, received: 130000, refunded: 40000, review_count: 1, booking_refund_due_now: 90000, legacy_refund_count: 1,
+        sources: [{source:'booking',received:130000},{source:'tournament',received:0},{source:'subscription',received:0}], rows: [
+          {id:'in:1',occurred_at:created,source:'booking',code:'SANCAS234',reference:'=FORMULA',received:130000,refunded:0,needs_review:true},
+          {id:'out:2',occurred_at:created,source:'booking',code:'SANCAS234',reference:'REFUND-40000',received:0,refunded:40000,needs_review:false},
+        ] }); return;
+    }
+    if (name === 'get_operational_health') {
+      send({ checked_at: '2026-10-21T03:00:00Z', monitor_active: true, monitor_recent: true, monitor_last_seen_at: '2026-10-21T02:59:00Z', checks: [
+        { key: 'cron:expire-pending-bookings', title: 'Dọn giữ chỗ hết hạn', ok: true, detail: 'Đang chạy đúng lịch', last_run_at: '2026-10-21T02:59:00Z' },
+        { key: 'notifications:failed', title: 'Thông báo gửi thất bại', ok: false, count: 2, detail: 'Kiểm tra cấu hình/kênh nhận rồi đưa lại vào hàng đợi khi phù hợp' },
+      ] }); return;
+    }
+    if (name === 'get_operations_audit') {
+      const rows=[
+        {id:1,actor_id:ownerId,actor_name:'Chủ sân kiểm tra',action:'booking.refund_recorded',entity_id:courtId,entity_code:'SANAUD234',details:{amount:40000},created_at:created},
+        {id:2,actor_id:null,actor_name:null,action:'booking.confirmed',entity_id:courtId,entity_code:'SANABC234',details:{from:'pending',to:'confirmed'},created_at:created},
+      ].filter(row=>!args.p_query || row.entity_code.includes(args.p_query));
+      send({total:rows.length,page:1,pages:1,rows});return;
+    }
+    if (name === 'get_notification_delivery_page') {
+      send({total:3,page:1,pages:1,pending:1,failed:1,rows:[
+        {id:'11111111-1111-4111-8111-111111111111',kind:'booking',channel:'email',status:'sent',attempts:1,last_reason:null,code:'SANABC234',full_name:'Nguyễn Minh',created_at:created,updated_at:created},
+        {id:'22222222-2222-4222-8222-222222222222',kind:'booking',channel:'telegram',status:'pending',attempts:1,last_reason:'HTTP_429',code:'SANABC234',full_name:'Nguyễn Minh',created_at:created,updated_at:created},
+        {id:'33333333-3333-4333-8333-333333333333',kind:'owner_review',channel:'email',status:'failed',attempts:6,last_reason:'NETWORK',code:null,full_name:'Chủ sân kiểm tra',created_at:created,updated_at:created},
+      ]});return;
+    }
+    if (name === 'retry_notification_delivery') {send(null);return;}
     if (name === 'get_owner_refund_page') {
       const rows=[{id:'refund-1',code:'SANABC234',starts_at:created,ends_at:future,deposit_amount:100000,customer_name:'Lê Hải',customer_phone:base.phone,court_name:court.name,refund_status:'needed'},{id:'refund-2',code:'SANHJK234',starts_at:created,ends_at:future,deposit_amount:100000,customer_name:'Khách đã hoàn',customer_phone:base.phone,court_name:court.name,refund_status:'done'}].filter(row=>(args.p_status==='all'||row.refund_status===args.p_status)&&(!args.p_query || row.code.includes(args.p_query)));
       send({rows,total:rows.length,page:1,pages:1,needed:1,done:1});return;
@@ -219,7 +255,7 @@ const server = createServer(async (req, res) => {
       ].filter(row => newUx !== 'no-confirmed' || !row.id.startsWith('confirmed'));
       send(name === 'manages_tournament' ? true : name === 'get_tournament_capacity' ? 3 : registrations); return;
     }
-    const rpc = { is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
+    const rpc = { manages_tournament: false, get_tournament_capacity: 0, get_tournament_registrations: [], is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     send(rpc[name]); return;
   }
@@ -243,6 +279,7 @@ const server = createServer(async (req, res) => {
     rows = rows.filter(row => row.user_id === me.id);
     if (url.searchParams.get('read_at') === 'is.null') rows = rows.filter(row => row.read_at === null);
   }
+  if (table === 'tournaments' && contentHidden) rows=rows.map(row=>({...row,moderation_hidden:true}));
   if (table === 'tournaments') rows=adminTournamentFixture(url,rows,req.headers.authorization,court,people[1]);
   for (const field of ['id', 'owner_id', 'status', 'category', 'refund_status', 'sport', 'slug']) {
     const value = url.searchParams.get(field);
@@ -250,7 +287,11 @@ const server = createServer(async (req, res) => {
     if (value?.startsWith('in.(') && value.endsWith(')')) rows = rows.filter(row => value.slice(4, -1).split(',').includes(String(row[field])));
   }
   const count = rows.length;
-  if (table === 'tournaments' && url.searchParams.has('offset')) rows=rows.slice(Number(url.searchParams.get('offset')));
+  if (table === 'tournaments' && url.searchParams.has('offset')) {
+    const offset=Number(url.searchParams.get('offset'));
+    if(offset>0 && offset>=count){res.setHeader('Content-Range',`*/${count}`);send({code:'PGRST103',message:'Requested range not satisfiable'},416);return;}
+    rows=rows.slice(offset);
+  }
   const range = req.headers.range?.split('-').map(Number);
   if (range) rows = rows.slice(range[0], range[1] + 1);
   if (url.searchParams.has('limit')) rows = rows.slice(0, Number(url.searchParams.get('limit')));

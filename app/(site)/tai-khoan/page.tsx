@@ -28,6 +28,7 @@ export default async function Page() {
           Chưa tải được thông tin tài khoản. Vui lòng tải lại trang.
         </p>
       ) : <><ProfileForm userId={user.id} fullName={profile.full_name ?? ''} phone={profile.phone ?? ''} email={user.email ?? ''} avatar={profile.avatar_url} role={profile.role} />
+        <Link href="/tai-khoan/du-lieu" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tải và yêu cầu xử lý dữ liệu cá nhân →</Link>
         <aside data-motion-item className="mt-6 flex flex-wrap items-center gap-4 rounded-card border border-hairline bg-card p-5 sm:p-6">
           <UsersRound className="size-6 shrink-0 text-pitch" strokeWidth={1.5} aria-hidden="true" />
           <div className="min-w-0 flex-[1_1_240px]"><h2 className="text-sm font-semibold text-pitch">Muốn tìm người chơi cùng môn?</h2><p className="mt-2 text-xs leading-6 text-ink-secondary">Thiết lập hồ sơ kết nối và chọn thông tin liên hệ muốn công khai. Hồ sơ chỉ hiển thị khi bạn đồng ý.</p></div>

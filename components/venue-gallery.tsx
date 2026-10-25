@@ -17,8 +17,8 @@ export function VenueGallery({ images, name, compact = false }: { images: string
     <div className={`grid grid-rows-2 gap-2 overflow-hidden rounded-[20px] ${compact ? 'h-64 sm:h-[360px]' : 'h-72 sm:h-[460px]'} ${images.length >= 5 ? 'grid-cols-[2fr_1fr] lg:grid-cols-[2fr_1fr_1fr]' : images.length > 1 ? 'grid-cols-[2fr_1fr]' : 'grid-cols-1'}`}>
       {images.slice(0, images.length >= 5 ? 5 : 3).map((path, index) => (
         <button key={`${path}-${index}`} type="button" onClick={() => setSelected(index)}
-          aria-label={`Mở ảnh ${index + 1} của ${name}`}
           className={`group relative min-h-0 overflow-hidden bg-sunk focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white ${index === 0 || images.length === 2 ? 'row-span-2' : ''} ${index >= 3 ? 'hidden lg:block' : ''}`}>
+          <span className="sr-only">Mở ảnh {index + 1} · </span>
           <GalleryPreview path={path} name={name} index={index} />
           {index === 0 && <span className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-pill border border-white/25 bg-ink/80 px-3 py-2 text-xs font-medium text-white sm:bottom-5 sm:left-5"><Expand className="size-4" aria-hidden="true" /><span>Xem ảnh lớn</span></span>}
           {index === 2 && images.length > 3 && <span className={`absolute inset-0 grid place-items-center bg-ink/45 text-lg font-semibold text-white ${images.length >= 5 ? 'lg:hidden' : ''}`}>+{images.length - 3} ảnh</span>}

@@ -43,7 +43,7 @@ for (const method of ['POST', 'PATCH', 'PUT', 'DELETE']) {
   }
 }
 for (const method of ['GET', 'HEAD', 'OPTIONS']) await check('/api/bookings', method, {}, true);
-for (const path of ['/api/webhooks/sepay', '/api/webhooks/telegram']) {
+for (const path of ['/api/webhooks/sepay', '/api/webhooks/telegram', '/api/sepay/notifications']) {
   await check(path, 'POST', {}, true);
   await check(path + '/extra', 'POST', {}, false);
   await check(path, 'DELETE', {}, false);

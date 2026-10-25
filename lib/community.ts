@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { sportSchema } from './tournaments';
 export const skillLabels: Record<string, string> = { beginner: 'Mới chơi', intermediate: 'Trung bình', advanced: 'Nâng cao' };
 export type CommunityProfile = {
+  moderation_hidden?: boolean;
   user_id: string; display_name: string; phone: string; location: string; sport: string; skill_level: string;
   bio: string; facebook_url: string; zalo_phone: string; is_public: boolean; show_phone: boolean; show_zalo: boolean; show_facebook: boolean; usual_play_times: string; avatar_url: string | null;
 };

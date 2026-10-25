@@ -13,7 +13,7 @@ try {
    await page.getByRole('heading',{level:1,name:title,exact:true}).waitFor();
    assert(await page.getByRole('heading',{level:2}).count()>=5);
    assert(await page.getByRole('link',{name:'sanngon.exe@gmail.com',exact:true}).count()>0);
-   assert(await page.locator('a[href^="/gop-y?trang="]').count()>0);
+   assert(await page.locator(path === '/quyen-rieng-tu' ? 'a[href="/tai-khoan/du-lieu"]' : 'a[href^="/gop-y?trang="]').count()>0);
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    if(process.env.UX_SCREENSHOT_DIR){await mkdir(process.env.UX_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:process.env.UX_SCREENSHOT_DIR+`/policy-${path.slice(1)}-${width}.png`,fullPage:true});}
   }

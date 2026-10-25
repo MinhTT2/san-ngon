@@ -5,13 +5,13 @@ export function requestOrigin(request: Request): string {
 }
 
 /** Cookie-authenticated writes must come from the website itself.
- * Webhooks authenticate independently and are exempt only at their exact path.
+ * Webhooks and the scheduler authenticate independently at their exact paths.
  * Never trust Origin-like forwarding headers supplied by the caller.
  */
 export function isAllowedWriteRequest(request: Request): boolean {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return true;
   const path = new URL(request.url).pathname;
-  if (request.method === 'POST' && ['/api/webhooks/sepay', '/api/webhooks/telegram'].includes(path)) return true;
+  if (request.method === 'POST' && ['/api/webhooks/sepay', '/api/webhooks/telegram', '/api/sepay/notifications'].includes(path)) return true;
   const origin = request.headers.get('origin');
   if (!origin || origin === 'null') return false;
   if (request.headers.get('sec-fetch-site') === 'cross-site') return false;

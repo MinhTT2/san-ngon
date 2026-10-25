@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
 import { Modal } from '@/components/modal';
 import { vnd } from '@/lib/format';
+import { BookingRefundHistory } from '@/components/booking-refund-history';
 
 type BookingContext = {
   code: string;
@@ -19,7 +20,7 @@ export function ConfirmPaymentButton(props: BookingContext) {
 }
 
 export function RefundDoneButton(props: BookingContext) {
-  return <OwnerAction {...props} endpoint="refund" />;
+  return <BookingRefundHistory code={props.code} record />;
 }
 
 function OwnerAction({ code, customerName, customerPhone, courtName, depositAmount, endpoint }: BookingContext & { endpoint: 'confirm' | 'refund' }) {

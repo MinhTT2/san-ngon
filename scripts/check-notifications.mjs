@@ -41,6 +41,7 @@ async function load(path) {
 }
 const { default: Page } = await load('../app/(site)/thong-bao/page.tsx');
 const { POST } = await load('../app/api/notifications/[id]/read/route.ts');
+const { POST: readAll } = await load('../app/api/notifications/read-all/route.ts');
 function nodes(tree) { return !tree || typeof tree !== 'object' ? [] : Array.isArray(tree) ? tree.flatMap(nodes) : [tree, ...nodes(tree.props?.children)]; }
 function texts(tree) { return tree == null || typeof tree === 'boolean' ? '' : typeof tree !== 'object' ? String(tree) : Array.isArray(tree) ? tree.map(texts).join(' ') : texts(tree.props?.children); }
 const row = { id: 'notification', title: 'Đã nhận cọc', body: null, created_at: '2026-10-05T11:00:00Z', read_at: null, tournament_id: 'tournament', booking: null };
@@ -102,4 +103,23 @@ assert.equal((await POST(request(null, { origin: 'https://evil.example' }), para
 assert.equal(calls.length, 0);
 reset(); results = [{ error: { message: 'offline' } }];
 assert.equal((await POST(request(null, { accept: 'application/json' }), params)).status, 500);
-console.log('PASS: notification pagination/filter, user scope, links, empty/error states, login return, read return, auth/origin and failure. No database writes.');
+
+reset(); results = [{ error: null }];
+response = await readAll(request(null, { accept: 'application/json' }));
+assert.equal(response.status, 200);
+assert(calls.some(call => call[1] === 'eq' && call[2] === 'user_id' && call[3] === 'player'), 'Bulk read only affects the signed-in user');
+assert(calls.some(call => call[1] === 'is' && call[2] === 'read_at' && call[3] === null), 'Preserve existing read timestamps');
+assert(!calls.some(call => call[1] === 'range' || (call[1] === 'eq' && call[2] === 'id')), 'Bulk read includes notifications outside the current page');
+reset(); results = [{ error: null }];
+response = await readAll(request(new URLSearchParams({ status: 'unread', page: '9' })));
+assert.equal(response.status, 303);
+assert.equal(response.headers.get('location'), origin + '/thong-bao?status=unread&page=1');
+reset(); user = null;
+assert.equal((await readAll(request(null, { accept: 'application/json' }))).status, 401);
+assert.equal(calls.length, 0);
+reset();
+assert.equal((await readAll(request(null, { origin: 'https://evil.example' }))).status, 403);
+assert.equal(calls.length, 0);
+reset(); results = [{ error: { message: 'offline' } }];
+assert.equal((await readAll(request(null, { accept: 'application/json' }))).status, 500);
+console.log('PASS: notification pagination/filter, user scope, links, empty/error states, login return, individual/bulk read, auth/origin and failure. No database writes.');

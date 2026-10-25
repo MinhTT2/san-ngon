@@ -24,7 +24,7 @@ const HISTORY = ['completed','cancelled','rejected'];
 export async function AdminTournamentList({ params }: { params: { page?: string; status?: string; q?: string; sport?: string } }) {
   const status = params.status === '' || params.status === 'all' ? 'all' : params.status === 'history' || Object.hasOwn(tournamentStatuses,params.status ?? '') ? params.status! : 'pending';
   const sport = Object.hasOwn(SPORT_LABELS,params.sport ?? '') ? params.sport! : '';
-  const q = (params.q ?? '').trim().slice(0,100);
+  const q = (typeof params.q === 'string' ? params.q : '').trim().slice(0,100);
   let page = /^\d{1,9}$/.test(params.page ?? '') ? Math.max(1,Number(params.page)) : 1;
   const db = await createClient();
   const countQuery = (group: string) => {
@@ -39,16 +39,24 @@ export async function AdminTournamentList({ params }: { params: { page?: string;
   if (status === 'history') query = query.in('status',HISTORY);
   else if (status !== 'all') query = query.eq('status',status);
   query = status === 'pending' ? query.order('created_at') : status === 'published' ? query.order('starts_at') : query.order('created_at',{ascending:false});
+  query = query.order('id');
   const pageSize = 20;
   const [counts, initialResult] = await Promise.all([
     Promise.all(GROUPS.map(group => countQuery(group.value))),
-    query.order('id').range((page-1)*pageSize,page*pageSize-1).returns<TournamentRow[]>(),
+    query.range((page-1)*pageSize,page*pageSize-1).returns<TournamentRow[]>(),
   ]);
   let result = initialResult;
+  if (result.error?.code === 'PGRST103' && page > 1) {
+    const available = await countQuery(status);
+    if (!available.error) {
+      page = Math.max(1, Math.ceil((available.count ?? 0) / pageSize));
+      result = await query.range((page-1)*pageSize,page*pageSize-1).returns<TournamentRow[]>();
+    }
+  }
   const pages = Math.max(1,Math.ceil((result.count ?? 0)/pageSize));
   if (!result.error && page > pages) {
     page = pages;
-    result = await query.order('id').range((page-1)*pageSize,page*pageSize-1).returns<TournamentRow[]>();
+    result = await query.range((page-1)*pageSize,page*pageSize-1).returns<TournamentRow[]>();
   }
   const failed = result.error || counts.some(count => count.error);
   const rows = result.data ?? [];

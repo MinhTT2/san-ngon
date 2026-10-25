@@ -44,7 +44,7 @@ try {
   const source = '/tim-san?sport=pickleball&ngay=2026-10-09&q=ki%E1%BB%83m+th%E1%BB%AD&sort=price&page=2';
   await page.goto(origin + source);
   await page.getByText(/Hiển thị 10–18 \/ 20 cụm sân/).waitFor();
-  const cover = page.getByRole('link', { name: /^Xem lịch Sân kiểm thử/ }).first();
+  const cover = page.locator('.pf-venue-cover').first();
   const cardQuery = new URL(await cover.getAttribute('href'), origin).searchParams;
   assert.equal(cardQuery.get('sport'), 'pickleball');
   assert.equal(new URL(cardQuery.get('from'), origin).searchParams.get('page'), '2');
@@ -118,7 +118,7 @@ try {
     Storage.prototype.removeItem = function(key) { if (key === 'san-ngon:booking-draft') throw new Error('Storage blocked for fixture'); return remove.call(this, key); };
   });
   await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
-  await page.getByRole('button', { name: /^11:00, còn sân/ }).click();
+  await page.getByRole('button', { name: /^11:00 Còn sân/ }).click();
   summary = page.getByRole('complementary', { name: 'Tóm tắt đặt sân' });
   await summary.getByRole('button', { name: 'Tiếp tục đặt sân', exact: true }).click();
   assert.equal(await page.getByLabel('Tên người đặt', { exact: true }).inputValue(), 'Người chơi kiểm thử');

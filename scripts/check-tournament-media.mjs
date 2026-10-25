@@ -13,7 +13,7 @@ const errors = [];
 let videoRequests = 0;
 page.on('pageerror', error => errors.push(error.message));
 page.on('request', request => { if (request.url().includes('/videos/tournament-guide.webm')) videoRequests++; });
-const trigger = () => page.getByRole('button', { name: 'Xem video hướng dẫn tham gia giải', exact: true });
+const trigger = () => page.getByRole('button', { name: 'Xem cách tham gia giải 18 giây', exact: true });
 const dialog = () => page.getByRole('dialog', { name: 'Từ đăng ký đến ra sân', exact: true });
 const fit = async label => assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${label}: overflow at ${page.viewportSize().width}`);
 try {

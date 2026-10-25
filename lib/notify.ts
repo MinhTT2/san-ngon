@@ -19,14 +19,17 @@ export async function sendTelegram(chatId: string | null | undefined, text: stri
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
-      console.error('[telegram] gửi hỏng', res.status, await res.text());
+      console.error('[telegram] gửi hỏng', res.status);
       return { ok: false, reason: `HTTP_${res.status}` };
     }
+    const body = await res.json().catch(() => null);
+    if (!body?.ok) return { ok: false, reason: 'INVALID_RESPONSE' };
     return { ok: true };
-  } catch (e) {
-    console.error('[telegram] lỗi mạng', e);
+  } catch {
+    console.error('[telegram] lỗi mạng hoặc hết thời gian');
     return { ok: false, reason: 'NETWORK' };
   }
 }
@@ -34,7 +37,7 @@ export async function sendTelegram(chatId: string | null | undefined, text: stri
 /**
  * Email thông báo cho chủ sân. Email OTP do Supabase Auth gửi qua SMTP riêng.
  */
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string, idempotencyKey?: string) {
   const key = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM?.trim();
   if (!key || !from) return { ok: false, reason: 'NOT_CONFIGURED' };
@@ -42,17 +45,19 @@ export async function sendEmail(to: string, subject: string, html: string) {
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
       body: JSON.stringify({ from, to, subject, html }),
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
-      console.error('[email] gửi hỏng', res.status, await res.text());
+      console.error('[email] gửi hỏng', res.status);
       return { ok: false, reason: `HTTP_${res.status}` };
     }
+    const body = await res.json().catch(() => null);
+    if (typeof body?.id !== 'string' || !body.id) return { ok: false, reason: 'INVALID_RESPONSE' };
     return { ok: true };
-  } catch (e) {
-    console.error('[email] lỗi mạng', e);
+  } catch {
+    console.error('[email] lỗi mạng hoặc hết thời gian');
     return { ok: false, reason: 'NETWORK' };
   }
 }

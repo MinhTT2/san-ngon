@@ -38,7 +38,14 @@ export async function TournamentList({ mode = 'public', sport = '', status = '',
   query = sort === 'fee' ? query.order('entry_fee').order('starts_at')
     : sort === 'newest' || (mode !== 'public' && mode !== 'mine') ? query.order('created_at', { ascending: false })
     : query.order('starts_at', { ascending: status !== 'completed' });
-  const { data, count, error } = await query.order('id').range((page - 1) * 12, page * 12 - 1).returns<TournamentCardData[]>();
+  query = query.order('id');
+  let result = await query.range((page - 1) * 12, page * 12 - 1).returns<TournamentCardData[]>();
+  // PostgREST returns 416 when an old/shared URL points beyond the remaining results.
+  if (result.error?.code === 'PGRST103' && page > 1) {
+    page = 1;
+    result = await query.range(0, 11).returns<TournamentCardData[]>();
+  }
+  const { data, count, error } = result;
   if (error) throw new Error('Chưa tải được giải đấu. Vui lòng thử lại.');
   const href = (patch: Record<string, string>) => `?${new URLSearchParams({ view: mode === 'mine' ? 'mine' : 'all', sport, status, q, location, sort, layout, page: String(page), ...patch })}`;
   const filtered = !!sport || !!status || !!q || !!location || page > 1;

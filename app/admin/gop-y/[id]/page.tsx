@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ContentModerationPanel } from '@/components/content-moderation-panel';
 import { notFound, redirect } from 'next/navigation';
 import { z } from 'zod';
 import { ArrowLeft, ExternalLink, Paperclip } from 'lucide-react';
@@ -52,7 +53,9 @@ export default async function Page({ params, searchParams }: {
       <section aria-labelledby="phan-hoi" className="min-w-0 rounded-card border border-hairline bg-card p-5 sm:p-6">
         <h2 id="phan-hoi" className="font-display text-xl font-bold text-pitch">Xử lý và phản hồi</h2>
         <p className="mt-2 text-sm leading-6 text-ink-secondary">Cập nhật tiến độ hoặc ghi kết quả để người gửi theo dõi.</p>
+        {row.category === 'privacy' && <p className="mt-3 rounded-control border border-hairline bg-page p-4 text-sm leading-6 text-ink-secondary">Xác minh phạm vi trước khi xử lý. Khi kết thúc, nêu phần đã cung cấp/sửa/xóa và phần phải giữ cùng lý do; cập nhật trạng thái yêu cầu không tự xóa tài khoản hay giao dịch.</p>}
         <FeedbackReviewForm key={row.updated_at} feedback={row} returnTo={back} />
+        {row.category === 'report' && <ContentModerationPanel path={row.page_path} />}
       </section>
     </div>
   </main>;

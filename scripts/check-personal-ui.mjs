@@ -26,6 +26,14 @@ await page.route('**/api/notifications/*/read', async route => {
   if (mode === 'expired') return route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Bạn cần đăng nhập."}' });
   return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
 });
+await page.route('**/api/notifications/read-all', async route => {
+  assert.equal(route.request().method(), 'POST');
+  writes.push({ type: 'read-all' });
+  await wait(150);
+  if (mode === 'offline') return route.abort('failed');
+  if (mode === 'expired') return route.fulfill({ status: 401, json: { error: 'Bạn cần đăng nhập.' } });
+  return route.fulfill({ json: { ok: true } });
+});
 await page.route('**/api/profile', async route => {
   assert.equal(route.request().method(), 'PATCH');
   writes.push({ type: 'profile', body: route.request().postDataJSON() });
@@ -83,6 +91,31 @@ try {
   assert.equal(returnURL.pathname, '/dang-nhap');
   assert.equal(returnURL.searchParams.get('next'), new URL(page.url()).pathname + new URL(page.url()).search);
 
+  const bulk = page.locator('main').getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true });
+  mode = 'offline';
+  await bulk.click();
+  await bulk.evaluate(button => button.click());
+  await page.locator('main header').getByRole('alert').waitFor();
+  assert.equal(writes.filter(write => write.type === 'read-all').length, 1, 'Bulk read blocks duplicate requests');
+  mode = 'expired';
+  await bulk.click();
+  await page.locator('main header').getByRole('link', { name: 'Đăng nhập lại' }).waitFor();
+  mode = 'success';
+  await bulk.click();
+  await page.locator('main header [data-read-state="done"]').waitFor();
+  assert.equal(writes.filter(write => write.type === 'read-all').length, 3);
+  await bell.click();
+  await popover.waitFor();
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 640 });
+    const bounds = await popover.boundingBox();
+    assert(bounds.y + bounds.height <= 640, 'Popover with bulk action fits short viewports');
+  }
+  await popover.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true }).click();
+  await popover.locator('[data-read-state="done"]').waitFor();
+  if (output) await page.screenshot({ path: `${output}/review-notifications-bulk.png`, fullPage: true });
+  await page.keyboard.press('Escape');
+
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(`${origin}/tai-khoan`);
@@ -127,7 +160,11 @@ try {
   const noJS = await browser.newContext({ javaScriptEnabled: false, storageState: await context.storageState() });
   const staticPage = await noJS.newPage();
   await staticPage.goto(`${origin}/thong-bao?status=unread&page=1`);
-  const form = staticPage.locator('main form').first();
+  const bulkForm = staticPage.locator('main form[action="/api/notifications/read-all"]');
+  assert.equal(await bulkForm.getAttribute('method'), 'post');
+  assert.equal(await bulkForm.locator('input[name=status]').inputValue(), 'unread');
+  assert(await bulkForm.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true }).isEnabled());
+  const form = staticPage.locator('main form[action$="/read"]').first();
   assert.equal(await form.getAttribute('method'), 'post');
   assert.match(await form.getAttribute('action'), /\/api\/notifications\/.*\/read$/);
   assert.equal(await form.locator('input[name=status]').inputValue(), 'unread');

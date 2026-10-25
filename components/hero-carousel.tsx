@@ -37,6 +37,7 @@ export function HeroCarousel({ photos = {} }: { photos?: Partial<Record<string, 
   const ref = useRef<HTMLDivElement>(null);
   const remaining = useRef(INTERVAL);
   const [index, setIndex] = useState(0);
+  const [visited, setVisited] = useState([0]);
   const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -69,7 +70,10 @@ export function HeroCarousel({ photos = {} }: { photos?: Partial<Record<string, 
   useEffect(() => {
     if (!playing) return;
     const started = performance.now();
-    const timer = setTimeout(() => setIndex((i) => (i + 1) % SLIDES.length), remaining.current);
+    const timer = setTimeout(() => {
+      const next = (index + 1) % SLIDES.length;
+      setIndex(next); setVisited(previous => previous.includes(next) ? previous : [...previous, next]);
+    }, remaining.current);
     return () => {
       clearTimeout(timer);
       remaining.current = Math.max(0, remaining.current - (performance.now() - started));
@@ -77,7 +81,8 @@ export function HeroCarousel({ photos = {} }: { photos?: Partial<Record<string, 
   }, [playing, index]);
 
   function select(next: number) {
-    setIndex((next + SLIDES.length) % SLIDES.length);
+    const target = (next + SLIDES.length) % SLIDES.length;
+    setIndex(target); setVisited(previous => previous.includes(target) ? previous : [...previous, target]);
     setPaused(true);
   }
 
@@ -104,7 +109,7 @@ export function HeroCarousel({ photos = {} }: { photos?: Partial<Record<string, 
             aria-hidden={i !== index} inert={i !== index}
             className={`relative col-start-1 row-start-1 flex min-w-0 transition-opacity duration-700 motion-reduce:transition-none ${i === index ? 'z-10 opacity-100' : 'pointer-events-none opacity-0'}`}>
             <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
-              {showPhoto ? <Image src={source} alt="" fill priority={i === 0} sizes="100vw"
+              {showPhoto && visited.includes(i) ? <Image src={source} alt="" fill priority={i === 0} quality={65} sizes="100vw"
                 data-venue-photo={venue ? venue.slug : undefined} onError={() => setFailedPhotos(current => [...current, source])}
                 className="pf-hero-image object-cover object-[65%_center]" /> : <Scene className="pf-hero-image h-full w-full" />}
               <div className="absolute inset-0 bg-gradient-to-r from-pitch/95 via-pitch/75 to-pitch/20" />

@@ -7,6 +7,7 @@ import type { AdminUser, UserList } from '@/lib/admin-users';
 import { ROLE_LABELS } from '@/lib/admin-users';
 import { DashboardPageHeader } from '@/components/dashboard-page-header';
 import { Modal } from '@/components/modal';
+import { usageDuration } from '@/lib/usage-duration';
 
 const INPUT = 'h-11 w-full rounded-control border border-hairline bg-page px-3 text-sm outline-none focus:border-pitch focus:ring-2 focus:ring-strong';
 const roleTone: Record<AdminUser['role'], string> = { player: 'bg-sunk text-ink-secondary', owner: 'bg-free-fill text-free-ink', admin: 'bg-pitch text-pitch-ink' };
@@ -55,6 +56,7 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
       <DashboardPageHeader eyebrow="Quản trị / Tài khoản" title="Người dùng" description="Tìm tài khoản, chỉnh vai trò và quản lý quyền truy cập. Lý do khóa được lưu để đối soát."
         actions={<button type="button" onClick={() => setCreateOpen(true)} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink"><Plus size={16} aria-hidden="true" />Tạo tài khoản</button>} />
       <div className="mt-5 grid gap-3 sm:grid-cols-3"><Stat icon={UserRound} value={data.total} label="Tài khoản phù hợp" /><Stat icon={Check} value={data.active} label="Đang hoạt động" tone="green" /><Stat icon={Ban} value={data.banned} label="Đang bị khóa" tone="danger" /></div>
+      <p className="mt-4 text-xs leading-6 text-ink-secondary">Thời lượng là ước tính từ khi bật ghi nhận: chỉ tính khi tài khoản đăng nhập, tab đang được xem và có tương tác trong 5 phút gần nhất. Nhiều tab không cộng trùng. Thời gian trước đó không được khôi phục.</p>
       {notice && !createOpen && !editing && !banning && !deleting && <p role={notice.error ? 'alert' : 'status'} className={`mt-6 rounded-card border px-4 py-3 text-sm ${notice.error ? 'border-danger bg-danger/5 text-danger' : 'border-free-line bg-free-fill text-free-ink'}`}>{notice.text}</p>}
       {createOpen && <Modal title="Tạo tài khoản" subtitle="Tài khoản được xác nhận email sẵn để dùng ngay." onClose={() => setCreateOpen(false)}>{notice?.error && <p role="alert" className="mb-4 text-sm text-danger">{notice.text}</p>}<CreateForm busy={busy} onCancel={() => setCreateOpen(false)} onCreate={create} /></Modal>}
       {deleting && <Modal title="Xóa tài khoản vĩnh viễn" onClose={() => setDeleting(null)} size="max-w-lg"><p className="text-sm leading-7 text-ink-secondary">Bạn đang xóa {rows.find(row => row.id === deleting)?.full_name || 'tài khoản này'}. Thao tác không thể hoàn tác. Tài khoản có sân, đơn hoặc giấy tờ sẽ được hệ thống giữ lại.</p>{notice?.error && <p role="alert" className="mt-3 text-sm text-danger">{notice.text}</p>}<div className="mt-5 flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => save(deleting, undefined, 'DELETE')} className="pf-action min-h-11 rounded-control bg-danger px-4 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Đang xóa…' : 'Xác nhận xóa'}</button><button type="button" disabled={busy} onClick={() => setDeleting(null)} className="pf-action min-h-11 rounded-control border border-hairline px-4 text-sm font-semibold">Quay lại</button></div></Modal>}
@@ -67,12 +69,23 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
           <button type="submit" className="pf-action min-h-11 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink">Tìm kiếm</button>
           {(filters.q || filters.role !== 'all' || filters.status !== 'all') && <button type="button" onClick={() => { setQuery(''); applyFilters({ q: '', status: 'all', role: 'all', page: '1' }); }} className="pf-action min-h-11 px-2 text-xs font-semibold text-pitch underline underline-offset-4">Xóa bộ lọc</button>}
         </form>
+
         <p className="border-b border-hairline px-5 py-3 text-xs text-ink-secondary">Tổng giờ chơi từ đơn đã xác nhận hoặc hoàn tất; không tính đơn hủy hay hết hạn.</p>
-        {rows.length === 0 ? <p className="p-12 text-center text-sm text-ink-secondary">Không tìm thấy tài khoản phù hợp.</p> : <div className="divide-y divide-hairline">{rows.map((item) => <UserRow key={item.id} user={item} currentId={currentId} editing={editing === item.id} banning={banning === item.id} formError={notice?.error ? notice.text : undefined} busy={busy} onEdit={() => { setEditing(item.id); setBanning(null); }} onBan={() => { setBanning(item.id); setEditing(null); }} onCancel={() => { setEditing(null); setBanning(null); }} onSave={(body) => save(item.id, body)} onAction={(body) => save(item.id, body, 'POST')} onDelete={() => { setNotice(null); setDeleting(item.id); }} />)}</div>}
+
+        {rows.length === 0 ? <p className="p-12 text-center text-sm text-ink-secondary">Không tìm thấy tài khoản phù hợp.</p> : <div className="divide-y divide-hairline">{rows.map((item) => <div key={item.id}><UserRow user={item} currentId={currentId} editing={editing === item.id} banning={banning === item.id} formError={notice?.error ? notice.text : undefined} busy={busy} onEdit={() => { setEditing(item.id); setBanning(null); }} onBan={() => { setBanning(item.id); setEditing(null); }} onCancel={() => { setEditing(null); setBanning(null); }} onSave={(body) => save(item.id, body)} onAction={(body) => save(item.id, body, 'POST')} onDelete={() => { setNotice(null); setDeleting(item.id); }} /><UsageDetails user={item} /></div>)}</div>}
+
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline px-4 py-3 text-sm text-ink-secondary"><span>{data.total} tài khoản</span><div className="flex gap-2"><button type="button" disabled={filters.page <= 1} onClick={() => applyFilters({ page: String(filters.page - 1) })} className="rounded-control border border-hairline grid size-11 place-items-center disabled:opacity-40" aria-label="Trang trước"><ChevronLeft className="size-4" /></button><span className="flex min-w-9 items-center justify-center">{filters.page}</span><button type="button" disabled={rows.length < 20} onClick={() => applyFilters({ page: String(filters.page + 1) })} className="rounded-control border border-hairline grid size-11 place-items-center disabled:opacity-40" aria-label="Trang sau"><ChevronRight className="size-4" /></button></div></div>
       </section>
     </main>
   );
+}
+
+function UsageDetails({ user }: { user: AdminUser }) {
+  const format = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value));
+  return <div className="flex flex-wrap gap-x-6 gap-y-2 px-4 pb-4 text-xs text-ink-secondary lg:px-5" title={user.tracking_started_at ? `Ghi nhận từ ${format(user.tracking_started_at)}` : undefined}>
+    <p>Tổng thời gian sử dụng: <strong className="font-semibold tabular-nums text-pitch">{usageDuration(user.usage_seconds)}</strong></p>
+    <p>Hoạt động gần nhất: {user.last_active_at ? format(user.last_active_at) : 'Chưa ghi nhận'}</p>
+  </div>;
 }
 
 function UserRow({ user, currentId, editing, banning, formError, busy, onEdit, onBan, onCancel, onSave, onAction, onDelete }: { user: AdminUser; currentId: string; editing: boolean; banning: boolean; formError?: string; busy: boolean; onEdit: () => void; onBan: () => void; onCancel: () => void; onSave: (body: unknown) => void; onAction: (body: unknown) => void; onDelete: () => void }) {

@@ -33,7 +33,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
 
   const { id } = await params;
   const { data: owner } = await supabase.from('profiles')
-    .select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, owner_application_submitted_at, created_at')
+    .select('id, full_name, phone, role, owner_application_status, owner_rejection_reason, owner_reviewed_at, business_license_path, business_license_name, payout_bank, payout_account, created_at, owner_application_submitted_at')
     .eq('id', id).maybeSingle() as { data: Owner | null };
   if (!owner?.owner_application_status) notFound();
 

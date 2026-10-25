@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FEEDBACK_CATEGORIES } from '@/lib/feedback';
 
-export function FeedbackForm({ pagePath }: { pagePath: string | null }) {
+export function FeedbackForm({ pagePath, defaultCategory }: { pagePath: string | null; defaultCategory?: 'report' }) {
   const router = useRouter();
   const request = useRef<{ payload: string; id: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,7 +35,7 @@ export function FeedbackForm({ pagePath }: { pagePath: string | null }) {
     <p className="mt-2 text-sm leading-6 text-ink-secondary">Chỉ bạn và quản trị đọc được nội dung. Không gửi mật khẩu, mã OTP hoặc thông tin tài khoản ngân hàng.</p>
     {pagePath && <p className="mt-3 break-all text-xs text-ink-secondary">Trang liên quan: {pagePath}</p>}
     <fieldset disabled={busy} className="mt-5 space-y-4 disabled:opacity-60">
-      <div><label htmlFor="feedback-category" className="block text-sm font-semibold">Loại góp ý</label><select id="feedback-category" name="category" className={`${field} mt-2`}>{Object.entries(FEEDBACK_CATEGORIES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
+      <div><label htmlFor="feedback-category" className="block text-sm font-semibold">Loại góp ý</label><select id="feedback-category" name="category" defaultValue={defaultCategory} className={`${field} mt-2`}>{Object.entries(FEEDBACK_CATEGORIES).filter(([key]) => key !== 'privacy').map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
       <div><label htmlFor="feedback-title" className="block text-sm font-semibold">Tiêu đề</label><input id="feedback-title" name="title" value={title} onChange={event => setTitle(event.target.value)} aria-describedby="feedback-title-hint" className={`${field} mt-2`} required minLength={5} maxLength={120} placeholder="Tóm tắt điều bạn muốn gửi" /><p id="feedback-title-hint" className="mt-2 flex justify-between gap-2 text-xs text-ink-secondary"><span>5–120 ký tự</span><span>{title.length}/120</span></p></div>
       <div><label htmlFor="feedback-message" className="block text-sm font-semibold">Nội dung</label><textarea id="feedback-message" name="message" value={message} onChange={event => setMessage(event.target.value)} aria-describedby="feedback-message-hint" className={`${field} mt-2 min-h-36`} required minLength={20} maxLength={3000} rows={5} placeholder="Các bước bạn đã làm, kết quả mong muốn và điều đang gặp… Nếu cần hỗ trợ đơn, ghi mã đơn." /><p id="feedback-message-hint" className="mt-2 flex justify-between gap-2 text-xs text-ink-secondary"><span>{message.trim().length < 20 ? `Cần thêm ${20 - message.trim().length} ký tự mô tả` : 'Đã đủ độ dài mô tả'}</span><span>{message.length}/3.000</span></p></div>
       <details className="text-xs leading-5 text-ink-secondary"><summary className="min-h-11 py-3">Lưu ý trước khi gửi</summary><p>Tối đa 5 yêu cầu trong 24 giờ và 10 yêu cầu đang chờ xử lý. Góp ý không thay cho nút hủy đơn; việc hoàn tiền vẫn được chủ sân xử lý riêng.</p></details>

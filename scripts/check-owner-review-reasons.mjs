@@ -33,7 +33,7 @@ role='player';assert.equal((await post({status:'rejected',reason:'Bổ sung gi�
 role='admin';
 assert.equal((await post({status:'rejected',reason:'  Bổ sung giấy tờ rõ nét  '})).status,200);
 assert.equal(calls[0].args.p_reason,'Bổ sung giấy tờ rõ nét');
-assert.equal(emails[0][2],calls[0].args.p_reason,'email uses the same normalized reason as SQL/inbox');
+assert.equal(emails.length,0,'SQL commits delivery with the review; API never sends inline');
 fail=true;const sent=emails.length;assert.equal((await post({status:'active'})).status,409);assert.equal(emails.length,sent,'failed/repeated review never sends a success email');fail=false;
 const notify=await load('lib/notify.ts',{'./format':{vnd:()=>''}});
 const html=notify.ownerApplicationEmail('rejected','<script>alert(1)</script> & thông tin\nDòng mới').html;

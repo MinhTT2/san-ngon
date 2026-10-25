@@ -86,7 +86,13 @@ export function NotificationPopover({ notifications, unreadCount, loadError }: {
           </button>
         </div>
 
-        <div className="max-h-[min(26rem,calc(100dvh-16rem))] overflow-y-auto overscroll-contain">
+        {!loadError && unreadCount > 0 && (
+          <form action="/api/notifications/read-all" method="post" className="border-b border-hairline px-5 py-2">
+            <NotificationReadButton key={unreadCount} all />
+          </form>
+        )}
+
+        <div className="max-h-[min(26rem,calc(100dvh-20rem))] overflow-y-auto overscroll-contain">
           {loadError ? (
             <div className="p-6"><p role="alert" className="text-sm leading-6 text-danger">Chưa tải được thông báo.</p><button type="button" onClick={() => router.refresh()} className="pf-action mt-3 min-h-11 rounded-control border border-hairline px-4 text-xs font-semibold text-pitch">Thử lại</button></div>
           ) : notifications.length === 0 ? (

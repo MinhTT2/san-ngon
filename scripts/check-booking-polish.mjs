@@ -115,7 +115,6 @@ try {
   await signIn('owner', true);
   const actions = [
     { opener: 'Đã nhận cọc — xác nhận tay', title: 'Xác nhận đã nhận cọc?', submit: 'Xác nhận đã nhận đủ cọc', busy: 'Đang xác nhận…', done: 'Đã xác nhận nhận cọc', endpoint: 'confirm', code: 'SANDEF567', customer: 'Mai Anh', amount: '120.000' },
-    { opener: 'Đã hoàn — đánh dấu xong', title: 'Đánh dấu đã hoàn cọc?', submit: 'Xác nhận đã hoàn đủ cọc', busy: 'Đang cập nhật…', done: 'Đã đánh dấu hoàn cọc', endpoint: 'refund', code: 'SANABC234', customer: 'Lê Hải', amount: '100.000' },
   ];
   for (const path of ['/chu-san', '/chu-san/don']) {
     for (const width of [320, 390, 768, 1440]) {
@@ -199,7 +198,7 @@ try {
   assert.equal(await page.getByText('Trả tại sân', { exact: true }).count(), 0);
   await screenshot('review-booking-form-1440');
   await page.getByRole('button', { name: 'Chọn lại', exact: true }).click();
-  assert.equal(await page.getByRole('button', { name: /^10:00, còn sân/ }).getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.getByRole('button', { name: /^10:00 Còn sân/ }).getAttribute('aria-pressed'), 'true');
   assert.equal(writes.length, ownerWrites, 'Reviewing contact information does not create a booking');
   let bookingAttempts = 0;
   const bookingResponse = async route => {

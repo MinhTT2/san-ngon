@@ -15,12 +15,15 @@ begin
   end if;
   return new;
 end $$;
+
 revoke all on function public.record_owner_submission_time() from public, anon, authenticated;
+
 create trigger profiles_submission_time before update of owner_application_status on public.profiles
 for each row execute function public.record_owner_submission_time();
 
 -- Neither column is writable by browser clients; existing column grants stay intact.
 comment on column public.profiles.admin_sort_at is 'SQL-managed display ordering only; never an account creation date.';
+
 notify pgrst, 'reload schema';
 
 create or replace function public.admin_list_users(p_search text default '', p_status text default 'all', p_role text default 'all', p_page int default 1)
@@ -46,4 +49,3 @@ begin
     'banned', (select count(*) from filtered where is_banned)) into v_result;
   return v_result;
 end $$;
-

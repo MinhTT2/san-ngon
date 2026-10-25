@@ -69,7 +69,7 @@ try {
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`${origin}/san/san-cau-giay`);
-  const trigger = page.getByRole('button', { name: 'Mở ảnh 1 của Sân Cầu Giấy', exact: true });
+  const trigger = page.getByRole('button', { name: /^Mở ảnh 1 / });
   await trigger.click();
   const viewer = page.getByRole('dialog', { name: 'Ảnh Sân Cầu Giấy', exact: true });
   const image = viewer.locator('[data-gallery-stage] img');
@@ -87,7 +87,7 @@ try {
   const legend = page.getByRole('list', { name: 'Chú giải giờ chơi', exact: true });
   assert(await legend.isVisible());
   assert.match(await legend.innerText(), /Còn sân[\s\S]*Đang chọn[\s\S]*Không thể đặt[\s\S]*Giờ vàng/);
-  const slot = page.getByRole('button', { name: /^10:00, còn sân/ });
+  const slot = page.getByRole('button', { name: /^10:00 Còn sân/ });
   await slot.click();
   const summary = page.getByRole('complementary', { name: 'Tóm tắt đặt sân' });
   await summary.getByRole('button', { name: 'Tiếp tục đặt sân', exact: true }).waitFor();

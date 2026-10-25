@@ -14,7 +14,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const page = params.page;
   const pagePath = params.trang && params.trang.length <= 300 && !/[?#]/.test(params.trang) && safeNext(params.trang) === params.trang ? params.trang : null;
   const status = params.status;
-  const href = (p: number, targetStatus = status) => `/gop-y?${new URLSearchParams({ page: String(p), ...(targetStatus !== 'all' ? { status: targetStatus } : {}), ...(pagePath ? { trang: pagePath } : {}) })}`;
+  const href = (p: number, targetStatus = status) => `/gop-y?${new URLSearchParams({ page: String(p), ...(targetStatus !== 'all' ? { status: targetStatus } : {}), ...(pagePath ? { trang: pagePath } : {}), ...(params.loai ? { loai: params.loai } : {}) })}`;
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect(`/dang-nhap?next=${encodeURIComponent(href(page))}`);
@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <FeedbackList rows={(data ?? []) as Feedback[]} />
         {pages > 1 && <nav aria-label="Phân trang góp ý" className="mt-6 flex items-center justify-center gap-5">{page > 1 && <Link className="min-h-11 py-3 text-sm text-pitch" href={href(page - 1)}>← Trang trước</Link>}<span className="text-sm">{page}/{pages}</span>{page < pages && <Link className="min-h-11 py-3 text-sm text-pitch" href={href(page + 1)}>Trang sau →</Link>}</nav>}
       </section>
-      <aside id="gui-gop-y" className={`min-w-0 scroll-mt-6 ${formFirst ? 'order-1 lg:order-2' : 'order-2'}`}><FeedbackForm pagePath={pagePath} /></aside>
+      <aside id="gui-gop-y" className={`min-w-0 scroll-mt-6 ${formFirst ? 'order-1 lg:order-2' : 'order-2'}`}><FeedbackForm pagePath={pagePath} defaultCategory={params.loai} /></aside>
     </div>
   </main>;
 }

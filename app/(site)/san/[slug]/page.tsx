@@ -1,3 +1,8 @@
+import { cache } from 'react';
+import type { Metadata } from 'next';
+import { publicMetadata } from '@/lib/public-metadata';
+import { venuePhotoSrc } from '@/lib/image-upload';
+import { serializeStructuredData, venueStructuredData } from '@/lib/structured-data';
 import { z } from 'zod';
 import type { VenueCalendar } from '@/lib/types';
 import { notFound } from 'next/navigation';
@@ -11,6 +16,28 @@ import { ArrowDown, ArrowLeft, Check, Clock3, Layers3, MapPin, Phone, ShieldChec
 import { VenueGallery } from '@/components/venue-gallery';
 import { VenueActions } from '@/components/venue-actions';
 
+const getVenue = cache(async (slug: string) => {
+  const db = await createClient();
+  const { data, error } = await db.from('venues')
+    .select('id, name, address, district, phone, description, images, open_time, close_time, deposit_pct, booking_horizon_days, amenities')
+    .eq('slug', slug).eq('status', 'active').maybeSingle();
+  if (error) throw new Error('Chưa tải được thông tin sân.');
+  return data;
+});
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const venue = await getVenue(slug);
+  if (!venue) return { title: 'Thông tin sân', robots: { index: false, follow: false } };
+  const metadata = publicMetadata(`${venue.name} · ${venue.district} — Sân Ngon`,
+    `Xem ảnh, giá và lịch trống tại ${venue.name}, ${venue.address}. Chọn giờ và đặt sân trực tuyến.`, `/san/${encodeURIComponent(slug)}`);
+  const image = venuePhotoSrc(venue.images?.[0]);
+  if (image) {
+    metadata.openGraph = { ...metadata.openGraph, images: [{ url: image, alt: venue.name }] };
+    metadata.twitter = { ...metadata.twitter, card: 'summary_large_image', images: [{ url: image, alt: venue.name }] };
+  }
+  return metadata;
+}
+
 export default async function Page({
   params,
   searchParams,
@@ -21,12 +48,7 @@ export default async function Page({
   const [{ slug }, { ngay, sport, from, gio, phut }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
 
-  const { data: venue } = await supabase
-    .from('venues')
-    .select('id, name, address, district, phone, description, images, open_time, close_time, deposit_pct, booking_horizon_days, amenities')
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
+  const venue = await getVenue(slug);
 
   if (!venue) notFound();
 
@@ -56,6 +78,7 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-12 pt-6 lg:px-16 lg:pt-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeStructuredData(venueStructuredData(venue, slug, venuePhotoSrc(venue.images?.[0]))) }} />
       <nav aria-label="Điều hướng trang sân" className="mb-4 flex flex-wrap items-center gap-2 text-xs text-ink-secondary"><Link href={returnPath} className="pf-action inline-flex min-h-11 items-center gap-2 font-semibold text-pitch"><ArrowLeft size={14} aria-hidden="true" />{returnPath.startsWith('/san-yeu-thich') ? 'Sân yêu thích' : 'Kết quả tìm sân'}</Link><span aria-hidden="true">/</span><span>{venue.district}</span></nav>
       <header className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:flex-wrap">
         <div className="min-w-0 w-full sm:w-auto sm:flex-1"><div className="mb-3 flex flex-wrap gap-2">{sports.map(sport => <span key={sport} className="rounded-pill border border-strong bg-free-fill px-3 py-1 text-xs font-semibold text-pitch">{sport}</span>)}</div>
@@ -66,9 +89,9 @@ export default async function Page({
       </header>
       <VenueActions id={venue.id} name={venue.name} slug={slug} />
       <dl className="my-5 grid grid-cols-1 gap-3 rounded-card border border-hairline bg-card px-4 py-4 sm:grid-cols-3 sm:gap-0">
-        <div className="flex items-center gap-3 sm:pr-4"><Layers3 size={20} className="shrink-0 text-pitch" aria-hidden="true" /><div><dt className="text-[11px] text-ink-secondary">Quy mô cụm sân</dt><dd className="mt-1 text-sm font-semibold text-pitch">{courts?.length ?? 0} sân cho bạn chọn</dd></div></div>
-        <div className="flex items-center gap-3 border-t border-hairline pt-3 sm:border-l sm:border-t-0 sm:px-4 sm:pt-0"><Clock3 size={20} className="shrink-0 text-pitch" aria-hidden="true" /><div><dt className="text-[11px] text-ink-secondary">Giờ mở cửa của cụm</dt><dd className="mt-1 text-sm font-semibold tabular-nums text-pitch">{venue.open_time.slice(0, 5)} – {venue.close_time.slice(0, 5)}</dd></div></div>
-        <div className="flex items-center gap-3 border-t border-hairline pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><ShieldCheck size={20} className="shrink-0 text-pitch" aria-hidden="true" /><div><dt className="text-[11px] text-ink-secondary">Thanh toán khi đặt</dt><dd className="mt-1 text-sm font-semibold text-pitch">Cọc trước {venue.deposit_pct}% qua QR</dd></div></div>
+        <div className="grid grid-cols-[20px_1fr] items-center gap-x-3 sm:pr-4"><dt className="col-span-2 flex items-center gap-3 text-[11px] text-ink-secondary"><Layers3 size={20} className="shrink-0 text-pitch" aria-hidden="true" />Quy mô cụm sân</dt><dd className="col-start-2 mt-1 text-sm font-semibold text-pitch">{courts?.length ?? 0} sân cho bạn chọn</dd></div>
+        <div className="grid grid-cols-[20px_1fr] items-center gap-x-3 border-t border-hairline pt-3 sm:border-l sm:border-t-0 sm:px-4 sm:pt-0"><dt className="col-span-2 flex items-center gap-3 text-[11px] text-ink-secondary"><Clock3 size={20} className="shrink-0 text-pitch" aria-hidden="true" />Giờ mở cửa của cụm</dt><dd className="col-start-2 mt-1 text-sm font-semibold tabular-nums text-pitch">{venue.open_time.slice(0, 5)} – {venue.close_time.slice(0, 5)}</dd></div>
+        <div className="grid grid-cols-[20px_1fr] items-center gap-x-3 border-t border-hairline pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><dt className="col-span-2 flex items-center gap-3 text-[11px] text-ink-secondary"><ShieldCheck size={20} className="shrink-0 text-pitch" aria-hidden="true" />Thanh toán khi đặt</dt><dd className="col-start-2 mt-1 text-sm font-semibold text-pitch">Cọc trước {venue.deposit_pct}% qua QR</dd></div>
       </dl>
       {!!venue.images?.length && <div id="anh-san" className="scroll-mt-24"><VenueGallery images={venue.images} name={venue.name} compact /></div>}
       <nav aria-label="Các mục trong trang sân" className="sticky top-0 z-20 flex gap-1 overflow-x-auto border-y border-hairline bg-page py-1 text-sm font-semibold text-pitch">

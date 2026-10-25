@@ -47,8 +47,8 @@ for (const [content, refs, expected] of [
   assert.deepEqual([...calls.at(-1).args.p_codes], refs); assert.equal(calls.at(-1).args.p_amount, 100000);
   assert.equal(calls.at(-1).args.p_receiver_account, '1234567890'); assert.equal(calls.at(-1).args.p_connection_id, null);
 }
-assert.equal(messages.length, 1, 'only a newly confirmed booking sends a message');
-reason = 'ALREADY_PROCESSED'; await post({ content: 'SANABC234' }); assert.equal(messages.length, 1, 'receipt retry never resends');
+assert.equal(messages.length, 0, 'provider delivery belongs to the committed SQL outbox, not the webhook');
+reason = 'ALREADY_PROCESSED'; await post({ content: 'SANABC234' }); assert.equal(messages.length, 0, 'receipt retry never sends directly');
 reason = 'PAYMENT_PAYLOAD_CONFLICT'; assert.equal((await post()).status, 200);
 const beforeInvalid = calls.length;
 for (const patch of [{ transferType: 'out' }, { transferAmount: -1 }, { id: '9'.repeat(51) }, { gateway: 'other' }, { accountNumber: '9876543210' }]) assert.equal((await post(patch)).status, 200);

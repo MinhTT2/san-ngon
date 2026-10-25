@@ -4,8 +4,12 @@ insert into auth.users(id) values
  ('c0000000-0000-4000-8000-000000000001'),('c0000000-0000-4000-8000-000000000002'),('c0000000-0000-4000-8000-000000000003');
 update profiles set role='owner',owner_application_status='active',payout_bank='MBBank',payout_account='1234567890' where id='c0000000-0000-4000-8000-000000000001';
 update profiles set role='admin' where id='c0000000-0000-4000-8000-000000000002';
-update booking_operator set owner_id='c0000000-0000-4000-8000-000000000001',bank='MBBank',account_number='1234567890',account_name='TEST ONLY',accepts_new_bookings=true,multi_owner_enabled=false;
-update subscription_receiver set connection_id=null,bank='MBBank',account_number='1234567890',account_name='TEST ONLY';
+insert into booking_operator(owner_id,bank,account_number,account_name,accepts_new_bookings,multi_owner_enabled)
+values('c0000000-0000-4000-8000-000000000001','MBBank','1234567890','TEST ONLY',true,false)
+on conflict(singleton) do update set owner_id=excluded.owner_id,bank=excluded.bank,account_number=excluded.account_number,account_name=excluded.account_name,accepts_new_bookings=true,multi_owner_enabled=false;
+insert into subscription_receiver(connection_id,bank,account_number,account_name)
+values(null,'MBBank','1234567890','TEST ONLY')
+on conflict(singleton) do update set connection_id=null,bank=excluded.bank,account_number=excluded.account_number,account_name=excluded.account_name;
 select set_config('request.jwt.claim.sub','c0000000-0000-4000-8000-000000000001',true);
 do $$
 declare v venues; draft venues; i subscription_invoices; j subscription_invoices; ct uuid; b bookings; result jsonb; until_at timestamptz;
@@ -37,7 +41,8 @@ begin
   exception when raise_exception then if sqlerrm<>'OWNER_SUBSCRIPTION_DUE' then raise; end if; end;
   begin insert into courts(venue_id,name,sport) values(v.id,'Blocked','badminton'); raise exception 'CHECK_FAILED: unpaid court';
   exception when raise_exception then if sqlerrm<>'OWNER_SUBSCRIPTION_DUE' then raise; end if; end;
-  result:=confirm_payment(b.code,30000,'subscription-old-deposit','{}',null,'MBBank','1234567890');
+  -- The existing order keeps its server-frozen deposit, even after the owner fee expires.
+  result:=confirm_payment(b.code,b.deposit_amount,'subscription-old-deposit','{}',null,'MBBank','1234567890');
   assert result->>'reason'='CONFIRMED', 'old deposit is still processed';
   i:=create_subscription_invoice();j:=create_subscription_invoice();assert i.id=j.id and i.amount=299000, 'one pending invoice and server price';
   result:=confirm_subscription_payment(i.code,299000,'fee-wrong','{}',null,'OtherBank','1234567890');assert result->>'reason'='WRONG_RECEIVER';

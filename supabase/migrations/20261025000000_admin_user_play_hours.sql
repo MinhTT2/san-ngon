@@ -11,8 +11,9 @@ begin
   ), filtered as (
     select p.id, p.full_name, p.phone, p.role, p.created_at, coalesce(p.admin_sort_at, p.created_at) as sort_at, u.email,
       p.banned_until, p.ban_reason, p.banned_at, coalesce(h.booked_minutes,0) as booked_minutes,
+      floor(a.total_seconds)::bigint as usage_seconds, a.tracking_started_at, a.last_active_at,
       coalesce(p.banned_until > now(), false) as is_banned
-    from profiles p join auth.users u on u.id = p.id left join hours h on h.user_id=p.id
+    from profiles p join auth.users u on u.id = p.id left join hours h on h.user_id=p.id left join user_activity_totals a on a.user_id=p.id
     where (coalesce(p_search, '') = '' or position(lower(trim(p_search)) in lower(concat_ws(' ', p.full_name, p.phone, u.email))) > 0)
       and (p_role = 'all' or p.role::text = p_role)
   ), matched as (

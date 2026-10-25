@@ -39,12 +39,12 @@ export function UserMenu({ name, avatar = null, isOwner, isAdmin = false }: { na
         onKeyDown={event => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); openMenu(event.key === 'ArrowUp' ? 'last' : 'first'); } }}
         aria-controls={open ? menuId : undefined}
         aria-expanded={open}
-        aria-label={`Menu tài khoản: ${name}`}
         aria-haspopup="menu"
         className="pf-action flex h-11 items-center gap-2 rounded-pill border border-hairline pl-4 pr-2 text-sm hover:border-pitch"
       >
-        <span className="hidden max-w-36 truncate sm:inline">{name}</span>
-        <UserAvatar name={name} avatar={avatar} className="size-7 text-xs" />
+        <span className="sr-only">Menu tài khoản: </span>
+        <span className="sr-only sm:not-sr-only sm:max-w-36 sm:truncate">{name}</span>
+        <span aria-hidden="true"><UserAvatar name={name} avatar={avatar} className="size-7 text-xs" /></span>
       </button>
 
       {open && (

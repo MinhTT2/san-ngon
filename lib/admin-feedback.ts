@@ -8,7 +8,7 @@ export const ADMIN_FEEDBACK_PAGE_SIZE = 20;
 export const adminFeedbackSearchParams = z.object({
   q: z.string().trim().max(100).catch(''),
   status: z.enum(['open', 'all', 'done', 'new', 'reviewing', 'resolved', 'closed']).catch('open'),
-  category: z.enum(['all', 'bug', 'idea', 'support']).catch('all'),
+  category: z.enum(['all', 'bug', 'idea', 'support', 'report', 'privacy']).catch('all'),
   sort: z.enum(['oldest', 'newest']).catch('oldest'),
   page: z.coerce.number().int().min(1).max(100000).catch(1),
 });

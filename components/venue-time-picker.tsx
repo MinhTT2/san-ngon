@@ -1,5 +1,7 @@
 'use client';
 
+import { trackDiscoveryEvent } from '@/lib/analytics';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Clock3 } from 'lucide-react';
 import { enterMotion } from '@/lib/motion';
@@ -17,7 +19,7 @@ export function VenueTimePicker({
   initialDuration,
   courts = [],
   depositPct,
-  onConfirm,
+  onConfirm: continueBooking,
 }: {
   availability: ReturnType<typeof useAvailability>;
   initialSport?: Sport;
@@ -27,6 +29,10 @@ export function VenueTimePicker({
   depositPct: number;
   onConfirm: () => void;
 }) {
+  function onConfirm() {
+    trackDiscoveryEvent('discovery_booking_continue');
+    continueBooking();
+  }
   const [chosenSport, setChosenSport] = useState<Sport | null>(a.selection?.slots[0].sport ?? initialSport ?? null);
   const [chosenDuration, setChosenDuration] = useState<number | null>(a.selection?.slots.reduce((sum, slot) => sum + slot.slot_minutes, 0) ?? initialDuration ?? null);
   const sports = [...new Set(a.slots.map((slot) => slot.sport))];
@@ -140,12 +146,12 @@ export function VenueTimePicker({
               : 'border-free-line bg-free-fill text-free-ink hover:border-pitch';
             return (
               <button key={startsAt} type="button" disabled={!best} aria-pressed={selected}
-                aria-label={`${hhmm(startsAt)}, ${best ? `còn sân, từ ${vnd(best.total)} cho ${duration} phút` : unavailableLabel}`}
                 onClick={() => a.choose(best)}
                 className={`pf-slot relative flex min-h-19 flex-col items-start justify-center gap-0.5 rounded-control border px-2 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch ${tone}`}>
                 <span className="text-sm font-semibold tabular-nums">{hhmm(startsAt)}</span>
                 <span className="text-xs">{best ? 'Còn sân' : unavailableLabel}</span>
                 {best && <span className="text-xs font-semibold sm:text-xs">Từ {vnd(best.total)}</span>}
+                <span className="sr-only"> · {duration} phút chơi</span>
                 {selected && <span aria-hidden="true" className="absolute right-2 top-2">✓</span>}
               </button>
             );

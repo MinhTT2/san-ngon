@@ -15,6 +15,7 @@ import {
   WalletCards,
   Trophy,
   MessageSquare,
+  ChartNoAxesCombined,
 } from 'lucide-react';
 
 type DashboardRole = 'owner' | 'admin';
@@ -24,6 +25,7 @@ const OWNER_LINKS = [
   { href: '/chu-san/giai-dau', label: 'Giải đấu', icon: Trophy },
   { href: '/chu-san/lich', label: 'Lịch sân', icon: CalendarDays },
   { href: '/chu-san/don', label: 'Đơn đặt sân', icon: ClipboardList },
+  { href: '/chu-san/bao-cao-tien', label: 'Báo cáo tiền', icon: ChartNoAxesCombined },
   { href: '/chu-san/tien-vao', label: 'Sổ tiền vào', icon: WalletCards },
   { href: '/chu-san/hoan-coc', label: 'Hoàn cọc', icon: WalletCards },
   { href: '/chu-san/quan-ly', label: 'Quản lý sân', icon: Building2 },
@@ -33,14 +35,19 @@ const OWNER_LINKS = [
 
 const ADMIN_LINKS = [
   { href: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
+  { href: '/admin/thong-ke-truy-cap', label: 'Thống kê truy cập', icon: ChartNoAxesCombined },
   { href: '/admin?view=owners', label: 'Hồ sơ chủ sân', icon: ShieldCheck },
   { href: '/admin?view=venues', label: 'Hồ sơ sân', icon: Building2 },
   { href: '/admin?view=bookings', label: 'Đơn đặt sân', icon: ClipboardList },
+  { href: '/admin/bao-cao-tien', label: 'Báo cáo tiền', icon: ChartNoAxesCombined },
   { href: '/admin/tien-vao', label: 'Sổ tiền vào', icon: WalletCards },
   { href: '/admin/phi-dich-vu', label: 'Phí chủ sân', icon: WalletCards },
   { href: '/admin/giai-dau', label: 'Giải đấu', icon: Trophy },
   { href: '/admin/users', label: 'Người dùng', icon: Users },
   { href: '/admin/gop-y', label: 'Góp ý người dùng', icon: MessageSquare },
+  { href: '/admin/van-hanh', label: 'Vận hành', icon: ClipboardList },
+  { href: '/admin/du-lieu', label: 'Rà soát dữ liệu', icon: ShieldCheck },
+  { href: '/admin/nhat-ky', label: 'Nhật ký thao tác', icon: ClipboardList },
 ] as const;
 
 export function DashboardSidebar({ role }: { role: DashboardRole }) {

@@ -1,0 +1,61 @@
+-- No lasting fixtures. Can also be run after a migration inside a rollback preflight.
+begin;
+insert into auth.users(id) values ('e9f10000-0000-4000-8000-000000000001'),('e9f10000-0000-4000-8000-000000000002');
+update profiles set role='admin' where id='e9f10000-0000-4000-8000-000000000002';
+update profiles set full_name='Activity fixture e9f10000' where id='e9f10000-0000-4000-8000-000000000001';
+select set_config('request.jwt.claim.sub','e9f10000-0000-4000-8000-000000000001',true);
+do $$
+declare
+  player uuid := 'e9f10000-0000-4000-8000-000000000001';
+  session_a uuid := 'e9f20000-0000-4000-8000-000000000001';
+  session_b uuid := 'e9f20000-0000-4000-8000-000000000002';
+  before_seconds numeric;
+  result jsonb;
+begin
+  assert not has_table_privilege('authenticated','public.user_activity_totals','SELECT'), 'private totals';
+  assert not has_table_privilege('authenticated','public.user_activity_totals','UPDATE'), 'no direct writes';
+  assert not has_table_privilege('anon','public.user_activity_totals','SELECT'), 'no anonymous reads';
+  assert not has_function_privilege('anon','public.record_user_activity(uuid,boolean)','EXECUTE'), 'no anonymous RPC';
+  perform record_user_activity(session_a,true);
+  assert (select total_seconds=0 from user_activity_totals where user_id=player), 'first heartbeat grants no time';
+  update user_activity_totals set last_heartbeat_at=clock_timestamp()-interval '10 seconds' where user_id=player;
+  perform record_user_activity(session_a,true);
+  assert (select total_seconds between 10 and 11 from user_activity_totals where user_id=player), 'server clock measures interval';
+  select total_seconds into before_seconds from user_activity_totals where user_id=player;
+  perform record_user_activity(session_b,true);
+  perform record_user_activity(session_b,false);
+  assert (select total_seconds=before_seconds and session_id=session_a and is_active from user_activity_totals where user_id=player), 'second tab cannot duplicate or close lease';
+  update user_activity_totals set last_heartbeat_at=clock_timestamp()-interval '5 seconds' where user_id=player;
+  perform record_user_activity(session_a,false);
+  assert (select total_seconds between before_seconds+5 and before_seconds+6 and not is_active from user_activity_totals where user_id=player), 'stop settles final interval';
+  select total_seconds into before_seconds from user_activity_totals where user_id=player;
+  perform record_user_activity(session_a,false);
+  perform record_user_activity(session_b,true);
+  assert (select total_seconds=before_seconds and session_id=session_b and is_active from user_activity_totals where user_id=player), 'idle time is not added on restart';
+  update user_activity_totals set last_heartbeat_at=clock_timestamp()-interval '2 minutes' where user_id=player;
+  perform record_user_activity(session_a,true);
+  assert (select total_seconds=before_seconds and session_id=session_a from user_activity_totals where user_id=player), 'expired lease takeover grants no stale time';
+  update user_activity_totals set last_heartbeat_at=clock_timestamp()-interval '2 minutes' where user_id=player;
+  perform record_user_activity(session_a,true);
+  assert (select total_seconds=before_seconds from user_activity_totals where user_id=player), 'network gap does not inflate time';
+  begin perform admin_list_users(); raise exception 'CHECK_FAILED: player sees other users';
+  exception when raise_exception then if sqlerrm <> 'FORBIDDEN' then raise; end if; end;
+  perform set_config('request.jwt.claim.sub','e9f10000-0000-4000-8000-000000000002',true);
+  result := admin_list_users('Activity fixture e9f10000','all','all',1);
+  assert exists(select 1 from jsonb_array_elements(result->'users') item where item->>'id'=player::text and (item->>'usage_seconds')::numeric=floor(before_seconds) and item->>'tracking_started_at' is not null), 'admin sees measured totals';
+  update profiles set banned_until=now()+interval '1 day' where id=player;
+  perform set_config('request.jwt.claim.sub',player::text,true);
+  begin perform record_user_activity(session_a,true); raise exception 'CHECK_FAILED: banned activity';
+  exception when insufficient_privilege then assert sqlerrm='ACCOUNT_BANNED'; end;
+  assert (select total_seconds=before_seconds from user_activity_totals where user_id=player), 'banned request changes nothing';
+end $$;
+set local role authenticated;
+do $$ begin
+  begin perform * from public.user_activity_totals; raise exception 'CHECK_FAILED: direct totals read';
+  exception when insufficient_privilege then null; end;
+  begin update public.user_activity_totals set total_seconds=999999; raise exception 'CHECK_FAILED: direct totals update';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+rollback;
+select 'PASS: server-measured usage, private totals, account/admin authorization, multi-tab lease, idle/stale/retry and banned requests' as result;

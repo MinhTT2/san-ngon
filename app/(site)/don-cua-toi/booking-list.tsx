@@ -15,6 +15,7 @@ import { BookingPolicySummary } from '@/components/booking-policy-summary';
 import type { Booking, BookingPolicy } from '@/lib/types';
 import { useQueryControls } from '@/lib/use-query-controls';
 import { CopyButton } from '@/components/copy-button';
+import { BookingRefundHistory } from '@/components/booking-refund-history';
 
 export type MyBooking = Pick<Booking, 'id' | 'code' | 'starts_at' | 'ends_at' | 'status' | 'total_amount' | 'deposit_amount' | 'expires_at' | 'paid_at' | 'refund_status'> & BookingPolicy & {
   cancel_refund_deadline: string;
@@ -211,6 +212,7 @@ export function BookingList({ bookings, userId, initialNow, failed = false, summ
                       {(b.status === 'confirmed' || b.status === 'completed' || b.pending) && <p className="mt-1 text-xs leading-5 text-ink-secondary">{b.deposit_amount >= b.total_amount ? b.pending ? 'Cọc bằng toàn bộ tiền sân' : 'Đã thanh toán đủ tiền sân' : <>{b.pending ? 'Sau cọc, trả tại sân' : 'Trả tại sân'} {vnd(b.total_amount - b.deposit_amount)}</>}</p>}
                       {b.refund_status === 'needed' && <p className="mt-1 text-xs font-medium text-peak-ink">Đang chờ hoàn cọc</p>}
                       {b.refund_status === 'done' && <p className="mt-1 text-xs font-medium text-success">Đã hoàn cọc</p>}
+                      {(b.refund_status === 'needed' || b.refund_status === 'done') && <div className="mt-2"><BookingRefundHistory code={b.code} /></div>}
                     </td>
                     <td className="col-span-2 block border-t border-hairline pt-4 lg:table-cell lg:border-0 lg:px-4 lg:py-6">
                       {b.expired || b.status === 'completed' ? <span className="inline-block rounded-pill bg-sunk px-2.5 py-1 text-xs font-medium text-ink-secondary">{b.expired ? 'Hết hạn giữ chỗ' : 'Đã chơi xong'}</span> : <StatusBadge status={b.status} />}
