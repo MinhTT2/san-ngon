@@ -12,6 +12,21 @@ Bối cảnh: một người sáng lập thuê Daniel viết phần kỹ thuật
 
 Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể hỏng" chứ không phải "đúng chuẩn kỹ thuật".
 
+## Yêu cầu đã chốt ngày 25/10/2026
+
+- User VIP được giảm **10% khi đặt sân**. Khi triển khai, Postgres kiểm tra
+  quyền VIP và tính giá sau giảm trong luồng tạo đơn; đóng băng số tiền vào
+  đơn, không nhận mức giảm hoặc số tiền do client tự khai. Không sửa giá đơn cũ.
+  Đây là yêu cầu cần triển khai, không mặc định tính năng đã hoạt động chỉ vì
+  được ghi trong file này. Tiêu chí cấp VIP cần được chốt trước khi triển khai.
+- Mục tiêu là **đủ 200 user thật trên production**. Chỉ tính tài khoản người
+  dùng thật; không tạo tài khoản giả, seed/demo/test hoặc sửa số đếm để đủ 200.
+  Khi báo đạt mục tiêu phải kiểm tra dữ liệu production thực tế và nêu căn cứ;
+  không coi 200 là giới hạn tài khoản hay điều kiện tự động bật ưu đãi VIP.
+- Dữ liệu trên production là dữ liệu thật. Thay đổi database phải giữ dữ liệu
+  hiện có, dùng migration và kiểm tra đúng môi trường; không chạy seed/reset
+  để đáp ứng yêu cầu tăng user. Các prompt sau phải đọc và giữ các yêu cầu này.
+
 ## Sáu nguyên tắc không được phá
 
 1. **Logic nghiệp vụ nằm trong Postgres, không nằm trong TypeScript.** Tính giá, kiểm khung trống, tạo đơn, xác nhận thanh toán đều là hàm SQL. Tầng Next.js chỉ xác thực đầu vào, gọi hàm, dịch lỗi sang tiếng Việt.
