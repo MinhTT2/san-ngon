@@ -15,7 +15,9 @@ begin
     from bookings where user_id=(u->>'id')::uuid and status in ('confirmed','completed')),0)), 'Hours mismatch';
   assert (select count(*)=40 from bookings), 'Expected 40 orders';
   assert not exists(select 1 from payments p join bookings b on b.id=p.booking_id
-    where b.note like '[demo-report-20261025]%' and p.status='paid'), 'Unexpected demo receipt';
+    where (b.note like '[demo-report-20261025]%' or exists(select 1 from operations_audit a
+      where a.entity_id=b.id and a.action='booking.seed_presentation_updated'
+        and a.details->>'original_note' like '[demo-report-20261025]%')) and p.status='paid'), 'Unexpected demo receipt';
 end $$;
 rollback;
 select '40 orders, hours, descending sort and authorization verified' as result;
