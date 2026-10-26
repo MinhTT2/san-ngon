@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { CircleCheck } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { vnd, dayLabel, hhmm } from '@/lib/format';
@@ -30,17 +32,34 @@ export default async function Page() {
         {!open && <div className="mt-6"><VipBuyButton /></div>}
         <Link href="/tim-san" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Tìm sân để chơi →</Link>
       </div>
-      {open && qr ? <div className="rounded-card border border-hairline bg-card p-6"><h2 className="font-display text-xl font-bold text-pitch">{VIP_STATUS[open.status]}</h2>
+      <div className="space-y-6">
+      {vip.active && <div role="status" className="rounded-card border border-pitch/20 bg-pitch/5 p-6">
+        <CircleCheck aria-hidden="true" className="size-10 text-pitch" />
+        <h2 className="mt-4 font-display text-2xl font-bold text-pitch">Đã kích hoạt VIP</h2>
+        <p className="mt-3 text-sm leading-7 text-ink-secondary">Bạn đang được giảm 10% cho các đơn đặt sân mới. Chỉ cần thanh toán 90% giá sân, không phải trả thêm phần đã giảm.</p>
+        {vip.paid_until && <p className="mt-4 text-sm font-semibold text-pitch">Có hiệu lực đến {dayLabel(new Date(vip.paid_until))} · {hhmm(vip.paid_until)}</p>}
+        <Link href="/tim-san" className="mt-5 inline-flex min-h-11 items-center rounded-control bg-pitch px-5 text-sm font-semibold text-pitch-ink">Đặt sân với ưu đãi VIP →</Link>
+      </div>}
+      {open && qr ? <PaymentPanel active={vip.active}><h2 className="font-display text-xl font-bold text-pitch">{vip.active ? `Gia hạn VIP · ${VIP_STATUS[open.status].toLowerCase()}` : VIP_STATUS[open.status]}</h2>
         {open.status === 'awaiting_payment' ? <><p className="mt-3 text-sm leading-7 text-ink-secondary">Quét QR hoặc chuyển đúng số tiền và nội dung dưới đây. Chuyển xong, bấm gửi admin duyệt; chưa chuyển thì chưa cần bấm.</p><div className="mx-auto mt-5 max-w-60">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qr} alt={`QR mua VIP ${open.code}, 49.000đ`} width={240} height={240} className="h-auto w-full rounded-control border border-hairline" />
           <QrImageActions src={qr} filename={open.code} /></div></> : <><p role="status" className="mt-3 text-sm leading-7 text-ink-secondary">Đã gửi admin đối soát. VIP được kích hoạt sau khi duyệt, không tự kích hoạt khi hết 30 phút. Không chuyển thêm lần nữa cho yêu cầu này.</p>{open.review_due_at && <p className="mt-3 text-sm">Dự kiến xử lý trước {hhmm(open.review_due_at)} · {dayLabel(new Date(open.review_due_at))}.</p>}<Link href="/lien-he" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-pitch underline">Liên hệ nếu quá 30 phút chưa được xử lý</Link></>}
         <dl className="mt-5 space-y-3 break-words text-sm"><Detail label="Ngân hàng" value={open.bank} /><Detail label="Số tài khoản" value={open.account_number} /><Detail label="Người nhận" value={open.account_name} /><Detail label="Số tiền" value={vnd(open.amount)} /><Detail label="Nội dung chuyển khoản" value={open.code} /></dl>
         {open.status === 'awaiting_payment' && <div className="mt-6"><VipBuyButton id={open.id} /></div>}
-      </div> : <div className="rounded-card border border-hairline bg-page p-6"><h2 className="font-display text-xl font-bold text-pitch">Ba bước để dùng VIP</h2><ol className="mt-4 list-inside list-decimal space-y-3 text-sm leading-7 text-ink-secondary"><li>Tạo yêu cầu mua VIP để nhận mã chuyển khoản riêng.</li><li>Chuyển 49.000đ qua QR tài khoản admin.</li><li>Gửi duyệt, chờ admin đối soát trong 30 phút.</li></ol></div>}
+      </PaymentPanel> : !vip.active && <div className="rounded-card border border-hairline bg-page p-6"><h2 className="font-display text-xl font-bold text-pitch">Ba bước để dùng VIP</h2><ol className="mt-4 list-inside list-decimal space-y-3 text-sm leading-7 text-ink-secondary"><li>Tạo yêu cầu mua VIP để nhận mã chuyển khoản riêng.</li><li>Chuyển 49.000đ qua QR tài khoản admin.</li><li>Gửi duyệt, chờ admin đối soát trong 30 phút.</li></ol></div>}
+      </div>
     </section>
     <section className="mt-10"><h2 className="font-display text-2xl font-bold text-pitch">Lịch sử mua VIP</h2>{!vip.purchases.length ? <p className="mt-4 text-sm text-ink-secondary">Chưa có yêu cầu mua VIP.</p> : <ul className="mt-5 divide-y divide-hairline rounded-card border border-hairline bg-card">{vip.purchases.map(p => <li key={p.id} className="p-5 text-sm"><div className="flex flex-wrap justify-between gap-3"><strong className="break-all text-pitch">{p.code}</strong><span>{VIP_STATUS[p.status]} · {vnd(p.amount)}</span></div>{p.rejection_reason && <p className="mt-3 leading-7 text-danger">{p.rejection_reason} Nếu đã chuyển tiền, liên hệ hỗ trợ để đối soát trước khi mua lại.</p>}{p.period_end && <p className="mt-3 text-ink-secondary">Gia hạn đến {dayLabel(new Date(p.period_end))} · {hhmm(p.period_end)}</p>}</li>)}</ul>}</section>
   </main>;
+}
+function PaymentPanel({ active, children }: { active: boolean; children: ReactNode }) {
+  const style = 'rounded-card border border-hairline bg-card p-6';
+  return active ? <details className={style}>
+    <summary className="cursor-pointer text-sm font-semibold text-pitch">Xem yêu cầu gia hạn VIP</summary>
+    <p className="mt-3 text-sm leading-7 text-ink-secondary">VIP hiện tại vẫn đang hoạt động. Yêu cầu này dùng để gia hạn thêm một tháng sau khi admin duyệt.</p>
+    <div className="mt-5">{children}</div>
+  </details> : <div className={style}>{children}</div>;
 }
 function Detail({ label, value }: { label: string; value: string }) {
   return <div className="flex flex-wrap justify-between gap-2"><dt className="text-ink-secondary">{label}</dt><dd className="font-semibold text-pitch">{value}</dd></div>;

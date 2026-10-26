@@ -120,8 +120,9 @@ const server = createServer(async (req, res) => {
       send({original_amount:base,vip_discount_amount:discount,total_amount:base-discount,deposit_amount:base-discount});return;
     }
     if (name === 'get_my_vip') {
-      const status = ['awaiting_payment','pending','approved','rejected'].includes(vipState) ? vipState : null;
-      send({active:status==='approved',paid_until:status==='approved'?future:null,purchases:status?[{
+      const status = vipState === 'active_renewal' ? 'awaiting_payment' : ['awaiting_payment','pending','approved','rejected'].includes(vipState) ? vipState : null;
+      const active = status === 'approved' || vipState === 'active_renewal';
+      send({active,paid_until:active?future:null,purchases:status?[{
         id:'f2500000-0000-4000-8000-000000000001',user_id:me.id,code:'VIPABCDEF123456',amount:49000,
         bank:'MBBank',account_number:'0691920022005',account_name:'NGUYEN DANG NGUYEN',status,
         created_at:created,submitted_at:created,review_due_at:future,rejection_reason:status==='rejected'?'Chưa nhận được khoản chuyển đúng mã.':null,period_end:status==='approved'?future:null,
