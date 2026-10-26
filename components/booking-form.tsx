@@ -60,11 +60,35 @@ export function BookingForm({
     setError('Chưa nhận được kết quả tạo đơn. Đơn có thể đã được tạo và đang giữ sân. Hãy kiểm tra Đơn của tôi trước khi đặt lại để tránh tạo thêm đơn.');
   }
 
-  const deposit = Math.min(selection.total, Math.ceil((selection.total * depositPct) / 100 / 1000) * 1000);
+  const [quote, setQuote] = useState<{ original_amount: number; vip_discount_amount: number; total_amount: number; deposit_amount: number } | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteAttempt, setQuoteAttempt] = useState(0);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const controller = new AbortController();
+    async function loadQuote() {
+      setQuote(null); setQuoteError(null);
+      try {
+        const response = await fetch('/api/bookings/quote', {
+          method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ court_id: selection.courtId, starts_at: selection.startsAt, ends_at: selection.endsAt }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.quote) throw new Error(result.error ?? 'Không tải được giá sân.');
+        if (!controller.signal.aborted) setQuote(result.quote);
+      } catch (error) {
+        if (!controller.signal.aborted) setQuoteError(error instanceof Error ? error.message : 'Không tải được giá sân.');
+      }
+    }
+    void loadQuote();
+    return () => controller.abort();
+  }, [isAuthenticated, userId, selection.courtId, selection.startsAt, selection.endsAt, quoteAttempt]);
+  const total = quote?.total_amount ?? selection.total;
+  const deposit = quote?.deposit_amount ?? selection.total;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (submitting.current || uncertain) return;
+    if (submitting.current || uncertain || (isAuthenticated && !quote)) return;
     const normalizedPhone = normalizePhone(phone);
     setPhone(normalizedPhone);
     if (!/^0\d{9}$/.test(normalizedPhone)) {
@@ -188,14 +212,17 @@ export function BookingForm({
       )}
 
       <div className="flex flex-col gap-3 rounded-control border border-free-line bg-free-fill p-4 text-sm">
-        <Row label="Tổng tiền sân" value={vnd(selection.total)} />
+        {quote && quote.vip_discount_amount > 0 && <><Row label="Giá sân trước giảm" value={vnd(quote.original_amount)} /><Row label="Ưu đãi VIP 10%" value={`−${vnd(quote.vip_discount_amount)}`} /></>}
+        <Row label="Tổng tiền sân" value={vnd(total)} />
         <Row label={`Cọc trước ${depositPct}%`} value={vnd(deposit)} />
         <div className="h-px bg-strong" />
-        {deposit >= selection.total
+        {deposit >= total
           ? <p className="text-sm leading-6 text-free-ink">Cọc bằng toàn bộ tiền sân. Sau khi nhận đủ cọc, bạn không cần trả thêm tiền sân khi đến chơi.</p>
-          : <Row label="Trả tại sân" value={vnd(selection.total - deposit)} />}
+          : <Row label="Trả tại sân" value={vnd(total - deposit)} />}
       </div>
 
+      {isAuthenticated && !quote && <p role={quoteError ? 'alert' : 'status'} className="text-sm leading-6 text-ink-secondary">{quoteError ?? 'Đang kiểm tra giá và ưu đãi của bạn…'}{quoteError && <button type="button" onClick={() => setQuoteAttempt(value => value + 1)} className="ml-2 min-h-11 font-semibold text-pitch underline">Thử lại</button>}</p>}
+      {quote && quote.vip_discount_amount > 0 && <p className="text-xs leading-6 text-free-ink">VIP chỉ cần chuyển 90% giá sân. Bạn không phải trả thêm 10% đã được giảm. Số tiền chính thức được chốt khi tạo đơn.</p>}
       <p className="text-xs leading-5 text-ink-secondary">Theo chính sách hiện tại, hủy trước giờ chơi ít nhất {CANCEL_WINDOW_HOURS} tiếng được hoàn cọc; hoàn tiền được xử lý thủ công. <Link href="/chinh-sach-huy" target="_blank" rel="noopener noreferrer" className="font-semibold text-pitch underline underline-offset-2">Xem chính sách (mở tab mới)</Link>.</p>
 
       {error && <p ref={feedback} tabIndex={-1} role="alert" className="rounded-control border border-danger/30 p-3 text-sm leading-6 text-danger">{error}</p>}
@@ -208,7 +235,7 @@ export function BookingForm({
           className="pf-action inline-flex min-h-11 items-center justify-center rounded-control border border-hairline px-4 text-sm font-semibold hover:bg-sunk disabled:opacity-60">
           Chọn lại
         </button>
-        {uncertain ? <Link href="/don-cua-toi?filter=all" className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-3 text-sm font-semibold text-pitch-ink">Kiểm tra Đơn của tôi<ArrowRight className="size-4" aria-hidden="true" /></Link> : <button type="submit" disabled={busy}
+        {uncertain ? <Link href="/don-cua-toi?filter=all" className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-3 text-sm font-semibold text-pitch-ink">Kiểm tra Đơn của tôi<ArrowRight className="size-4" aria-hidden="true" /></Link> : <button type="submit" disabled={busy || (isAuthenticated && !quote)}
           className="pf-action inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-pitch px-4 py-2 text-sm font-semibold text-pitch-ink hover:bg-ink disabled:opacity-60">
           {busy && <span aria-hidden="true" className="pf-spin size-3.5 rounded-full border-2 border-white/40 border-t-white" />}{busy ? (isAuthenticated ? 'Đang tạo đơn…' : 'Đang chuyển…') : isAuthenticated ? 'Giữ chỗ 15 phút' : 'Đăng nhập để tiếp tục'}{!busy && <ArrowRight className="pf-arrow size-4" aria-hidden="true" />}
         </button>}

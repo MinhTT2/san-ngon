@@ -68,7 +68,7 @@ bảng mô phỏng; `admin_list_users` kiểm tra admin trước khi trả dữ 
 Script vận hành `scripts/apply-docs-scenario-20261026.sql` mặc định rollback,
 khóa cohort 21 mã đơn, từ chối xóa khi có bất kỳ phụ thuộc, chặn chạy lặp và
 kiểm tra dữ liệu không thuộc phạm vi. Không chạy trong migration/deploy.
-Migration `20261026000000_user_activity_simulations` đã áp dụng và ghi lịch sử.
+Migrations `20261026000000_user_activity_simulations` và `20261026000200_user_activity_simulation_sort` đã áp dụng và ghi lịch sử. RPC năm tham số giữ nguyên VIP, giờ chơi và thứ tự theo thời lượng đo thực tế.
 Giữ nguyên cờ vận hành, SePay, sổ tiền vào và thông báo; không gọi webhook.
 
 Kiểm tra đã đạt:
@@ -82,3 +82,6 @@ Kiểm tra đã đạt:
   cô lập kiểm tra dashboard ở 320/390/768/1024/1440px, cột biểu đồ và nhãn thời
   lượng mô phỏng; dữ liệu trình duyệt giả lập, không dùng phiên cá nhân.
 - Typecheck workspace đạt; lint không có lỗi, còn 48 cảnh báo ở output local.
+
+Bản cuối đã ghép với main có VIP và sắp xếp thời lượng mới: production build,
+kiểm tra dashboard cùng luồng VIP đạt; lint bản ghép có 0 lỗi, 2 cảnh báo có sẵn.

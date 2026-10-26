@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createRefreshQueue } from '@/lib/refresh-queue';
 
 const TABLES = {
-  admin: ['profiles', 'venues', 'courts', 'bookings', 'tournaments', 'owner_subscriptions', 'subscription_invoices', 'feedback'],
+  admin: ['profiles', 'venues', 'courts', 'bookings', 'tournaments', 'owner_subscriptions', 'subscription_invoices', 'feedback', 'vip_purchases', 'user_vip_memberships'],
+  vip: ['vip_purchases', 'user_vip_memberships'],
   owner: ['venues', 'courts', 'bookings', 'court_closures', 'tournaments', 'owner_subscriptions'],
 };
 

@@ -26,6 +26,10 @@ do $$ declare report jsonb;begin
  report:=admin_list_users('Activity simulation SQL fixture','all','all',1);
  assert (report#>>'{users,0,usage_seconds}')::int=17,'measured seconds stay factual';
  assert (report#>>'{users,0,simulation_usage_seconds}')::int=420,'admin gets separately named simulation';
+ report:=admin_list_users('Activity simulation SQL fixture','all','all',1,'usage_desc');
+ assert (report#>>'{users,0,usage_seconds}')::int=17,'five-argument RPC preserves measured usage';
+ assert (report#>>'{users,0,simulation_usage_seconds}')::int=420,'five-argument RPC includes separate simulation';
+ assert report#>'{users,0}' ? 'is_vip' and report#>'{users,0}' ? 'booked_minutes','VIP and playing-hour fields retained';
 end $$;
 delete from auth.users where id='d0260000-0000-4000-8000-000000000001';
 do $$ begin assert not exists(select 1 from user_activity_simulations where user_id='d0260000-0000-4000-8000-000000000001'),'account deletion cascades';end $$;

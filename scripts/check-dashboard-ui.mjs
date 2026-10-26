@@ -128,7 +128,7 @@ try {
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await page.waitForURL(url => url.searchParams.get('q') === 'Nguyễn');
   await page.getByRole('button', { name: 'Xóa bộ lọc', exact: true }).click();
-  await page.waitForURL(`${origin}/admin/users`);
+  await page.waitForURL(url => url.pathname === '/admin/users' && !url.searchParams.has('q') && !url.searchParams.has('status') && !url.searchParams.has('role'));
   for (const width of [390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     const create = page.getByRole('button', { name: 'Tạo tài khoản', exact: true });
