@@ -95,6 +95,20 @@ thông báo và thời lượng trước commit. Đọc lại sau commit xác nh
 trả đúng tổng 216, số mẫu 40 và nhãn của 20 tài khoản mới; giữ nguyên 44 đơn
 kịch bản và sáu phân bổ theo ảnh. Không đổi schema hoặc giao diện.
 
+## Tài khoản admin kiểm thử
+
+Theo yêu cầu cấp quyền truy cập để kiểm thử, tạo một tài khoản admin riêng
+`admin.test.2610@example.com`, tên **Admin kiểm thử 26/10**. Giữ metadata tài
+khoản thử; không đổi quyền hoặc mật khẩu của admin sẵn có. Mật khẩu ngẫu
+nhiên được lưu riêng với quyền 0600 và cấp trực tiếp cho người yêu cầu,
+không ghi trong repository, migration hoặc tài liệu này. Không gửi email.
+
+Script `scripts/create-test-admin-20261026.sql` yêu cầu mật khẩu từ phiên
+SQL riêng và mặc định rollback. Đã sao lưu, chạy thử rollback, áp dụng và
+kiểm tra đăng nhập email/mật khẩu qua Auth thật, `is_admin` và danh sách
+quản trị bằng phiên mới; đăng xuất phiên kiểm tra sau đó. Đây là quyền
+admin trên production, không phải tài khoản trong môi trường cô lập.
+
 ## Phân bổ đơn cho sáu tài khoản trong ảnh
 
 Theo phản hồi tiếp theo, chuyển sáu đơn đã ghi rõ mô phỏng sang sáu tài
