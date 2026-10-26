@@ -26,6 +26,9 @@ yêu cầu VIP khác không được dùng lại. Duyệt lại cùng yêu cầu
 
 Yêu cầu chưa xác minh được phải ghi lý do để người chơi biết cách bổ sung.
 Kết quả duyệt gửi vào thông báo website. Nhật ký lưu người duyệt và kỳ VIP.
+Tab **Đã mua VIP** tại `/admin/vip` liệt kê riêng các lượt mua/gia hạn đã duyệt,
+kèm tên, số điện thoại, số tiền, ngày xử lý và kỳ VIP (có năm). Bao gồm cả
+các kỳ đã hết hạn; mỗi lượt mua/gia hạn là một dòng, phân trang 20 dòng.
 Admin có thể tắt ưu đãi tại `/admin/users`; việc tắt không thay đổi giá đơn cũ
 và không tự hoàn tiền mua VIP.
 
