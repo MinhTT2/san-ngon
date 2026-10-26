@@ -65,7 +65,7 @@ người dùng thật. Đã bổ sung 20 tên hư cấu với email đúng đị
 được biết trước và không tự ghi nhận thời gian dùng web. Ngày tạo là thời
 điểm chạy thực tế. Email giữ trạng thái chưa xác minh.
 
-Tổng hiện tại là **196 tài khoản: 176 tài khoản sẵn có và 20 tài khoản mô
+Sau lần bổ sung đầu là **196 tài khoản: 176 tài khoản sẵn có và 20 tài khoản mô
 phỏng mới**. Không coi 20 tài khoản này là người dùng thật hoặc dùng để báo
 đạt mục tiêu 200 người dùng thật. Metadata do SQL quản trị ghi
 `account_kind=simulation`, `simulation_batch=docs-20261026-extra-users`;
@@ -79,6 +79,21 @@ chạy lặp hoặc email trùng; kiểm tra giữ nguyên toàn bộ tài kho�
 có, đơn, thanh toán, thông báo và số đo thời lượng. Đã sao lưu riêng và chạy
 thử rollback trước khi áp dụng. Migration `20261026000300` chỉ mở rộng RPC,
 không tạo tài khoản khi triển khai.
+
+Theo yêu cầu bổ sung tiếp 20 user, đã tạo thêm một batch riêng
+`docs-20261026-extra-users-round2`, gồm 20 tên mẫu khác và email
+`*.2610b@example.com`. Tổng sau lần này là **216 tài khoản**, trong đó **40
+tài khoản mô phỏng** và 176 tài khoản sẵn có trước các lần tạo mẫu. Giữ
+nguyên nhãn, metadata nguồn, email chưa xác minh, vai trò người chơi; không
+tạo số điện thoại, thời lượng, đơn hay thông báo. Không tính mẫu vào mục
+tiêu 200 người dùng thật.
+
+Script `scripts/add-docs-demo-users-round2-20261026.sql` có cùng cơ chế
+bảo vệ như batch đầu: sao lưu riêng, chạy thử rollback, từ chối chạy lặp và
+email trùng, kiểm tra giữ nguyên mọi tài khoản/hồ sơ cũ, đơn, thanh toán,
+thông báo và thời lượng trước commit. Đọc lại sau commit xác nhận admin
+trả đúng tổng 216, số mẫu 40 và nhãn của 20 tài khoản mới; giữ nguyên 44 đơn
+kịch bản và sáu phân bổ theo ảnh. Không đổi schema hoặc giao diện.
 
 ## Phân bổ đơn cho sáu tài khoản trong ảnh
 
