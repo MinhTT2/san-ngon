@@ -130,7 +130,14 @@ try {
   assert.equal(await page.getByText('Tài khoản mô phỏng', { exact: true }).count(), 0, 'Account source stays internal; measured and sample duration remain separate');
   assert.equal(await page.getByText('1 tài khoản mô phỏng', { exact: true }).count(), 0);
   const activitySummary = page.getByText(/tài khoản.*đã tạo.*đơn đặt sân/);
-  assert.match(await activitySummary.innerText(), /3 tài khoản.*5 đơn đặt sân.*1 tài khoản/);
+  assert.match(await activitySummary.innerText(), /3 tài khoản.*5 đơn đặt sân/);
+  assert.match(await page.getByText(/Trong nhóm đã đặt sân:/).innerText(), /1 tài khoản.*số đo.*2 tài khoản.*chưa có/);
+  const accountStatus = page.getByRole('combobox', { name: 'Lọc trạng thái', exact: true });
+  await accountStatus.selectOption('booked');
+  await page.waitForURL(url => url.searchParams.get('status') === 'booked');
+  assert.equal(await page.locator('article').count(), 3, 'Only accounts with bookings are shown');
+  await accountStatus.selectOption('all');
+  await page.waitForURL(url => !url.searchParams.has('status'));
   const usageSort = page.getByRole('combobox', { name: 'Sắp xếp người dùng', exact: true });
   await usageSort.selectOption('bookings_desc');
   await page.waitForURL(url => url.searchParams.get('sort') === 'bookings_desc');

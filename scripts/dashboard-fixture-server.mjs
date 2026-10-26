@@ -271,7 +271,7 @@ const server = createServer(async (req, res) => {
       ].filter(row => newUx !== 'no-confirmed' || !row.id.startsWith('confirmed'));
       send(name === 'manages_tournament' ? true : name === 'get_tournament_capacity' ? 3 : registrations); return;
     }
-    const rpc = { manages_tournament: false, get_tournament_capacity: 0, get_tournament_registrations: [], is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'banned') === u.is_banned)), total: users.length, active: 4, banned: 1 } };
+    const rpc = { manages_tournament: false, get_tournament_capacity: 0, get_tournament_registrations: [], is_admin: role === 'admin', get_admin_stats: stats, get_admin_period_stats: stats, get_owner_stats: stats, get_owner_period_stats: stats, get_my_subscription: subscription, get_admin_subscriptions: [subscription, { ...subscription, owner_id: 'owner-22', full_name: 'Trần Hà', fee_required: true, active: false }], get_my_sepay_connection: { status: 'ready', bank: 'MB', account_number: base.payout_account, account_name: 'NGUYEN MINH', bank_account_id: 'fixture-bank', has_authorization: true, rollout_enabled: false, checked_at: created, last_webhook_at: null }, admin_list_users: { users: users.filter(u => (!args.p_search || `${u.full_name} ${u.email}`.toLowerCase().includes(args.p_search.toLowerCase())) && (args.p_role === 'all' || !args.p_role || u.role === args.p_role) && (args.p_status === 'all' || !args.p_status || (args.p_status === 'booked' ? u.booking_count > 0 : (args.p_status === 'banned') === u.is_banned))), total: users.length, active: 4, banned: 1 } };
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     if (name === 'admin_list_users') {
       const list = rpc.admin_list_users;
@@ -279,6 +279,9 @@ const server = createServer(async (req, res) => {
       list.bookers = list.users.filter(user => user.booking_count > 0).length;
       list.booking_total = list.users.reduce((sum,user) => sum + user.booking_count,0);
       list.measured_over_five = list.users.filter(user => user.usage_seconds > 300).length;
+      list.bookers_measured_over_five = list.users.filter(user => user.booking_count > 0 && user.usage_seconds > 300).length;
+      list.bookers_sample_only_over_five = list.users.filter(user => user.booking_count > 0 && (user.usage_seconds ?? 0) <= 300 && user.simulation_usage_seconds > 300).length;
+      list.bookers_without_five_minutes = list.users.filter(user => user.booking_count > 0 && (user.usage_seconds ?? 0) <= 300 && (user.simulation_usage_seconds ?? 0) <= 300).length;
       if (args.p_sort === 'bookings_desc') list.users.sort((a,b) => b.booking_count-a.booking_count);
       if (args.p_sort === 'hours_desc') list.users.sort((a,b) => b.booked_minutes-a.booked_minutes);
     }

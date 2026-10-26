@@ -20,6 +20,12 @@ do $$ declare report jsonb;item jsonb;page_number int;previous_count int:=214748
    previous_count:=actual_count;
   end loop;
  end loop;
+ report:=admin_list_users('','booked','all',1,'bookings_desc');
+ assert (report->>'total')::int=(select count(distinct user_id) from bookings),'booked filter excludes non-booking accounts';
+ assert not exists(select 1 from jsonb_array_elements(report->'users') x where (x->>'booking_count')::int=0),'only bookers returned';
+ assert (report->>'bookers_measured_over_five')::int=(select count(*) from user_activity_totals a where floor(total_seconds)>300 and exists(select 1 from bookings b where b.user_id=a.user_id)),'measured five-minute count is scoped to bookers';
+ assert (report->>'bookers_sample_only_over_five')::int=(select count(*) from user_activity_simulations s left join user_activity_totals a on a.user_id=s.user_id where s.seconds>300 and coalesce(floor(a.total_seconds),0)<=300 and exists(select 1 from bookings b where b.user_id=s.user_id)),'sample count does not double-count measured bookers';
+ assert (report->>'bookers')::int=(report->>'bookers_measured_over_five')::int+(report->>'bookers_sample_only_over_five')::int+(report->>'bookers_without_five_minutes')::int,'duration source counts partition bookers exactly';
  report:=admin_list_users('','all','player',1,'hours_desc');
  assert (report->>'total')::int=(select count(*) from profiles where role='player'),'role filter retained';
  assert (report->>'bookers')::int=(select count(distinct b.user_id) from bookings b join profiles p on p.id=b.user_id where p.role='player'),'summary respects role filter';

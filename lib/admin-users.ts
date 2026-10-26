@@ -37,5 +37,5 @@ export type AdminUser = {
   simulation_usage_seconds?: number | null;
   is_simulated_account?: boolean;
 };
-export type UserList = { users: AdminUser[]; total: number; active: number; banned: number; simulation_total?: number; bookers?: number; booking_total?: number; measured_over_five?: number };
+export type UserList = { users: AdminUser[]; total: number; active: number; banned: number; simulation_total?: number; bookers?: number; booking_total?: number; measured_over_five?: number; bookers_measured_over_five?: number; bookers_sample_only_over_five?: number; bookers_without_five_minutes?: number };
 export const ROLE_LABELS = { player: 'Người chơi', owner: 'Chủ sân', admin: 'Quản trị viên' };

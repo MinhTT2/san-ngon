@@ -250,3 +250,27 @@ Lint đạt với 0 lỗi và 2 cảnh báo có sẵn; typecheck và production 
 Dashboard được kiểm tra ở 320/390/768/1024/1440px, gồm tổng hợp tài khoản/đơn,
 hiển thị riêng giờ sân và thời gian web, sắp xếp theo số đơn/giờ sân, các
 bộ lọc và modal quản trị. Các ảnh mobile/desktop đã được kiểm tra bố cục.
+
+
+### Đối chiếu thời lượng theo đúng người đặt sân
+
+Theo yêu cầu làm khớp với người đặt sân, đối chiếu bằng `bookings.user_id`
+cho đủ 50 tài khoản: 7 có thời gian web đo thực tế trên 5 phút; 43 tài khoản
+còn lại chỉ có thời lượng mô phỏng trên 5 phút. Không tài khoản nào trong
+nhóm bị thiếu cả hai loại thời lượng. Một tài khoản trong nhóm có cả số đo
+trên 5 phút và dữ liệu mô phỏng nên chỉ tính vào nhóm đo thực tế.
+
+Migration `20261026000500_admin_booker_duration_scope` thêm bộ lọc
+`p_status=booked` và ba tổng đối chiếu trong nhóm có đơn: số đo trên 5 phút,
+chỉ có mô phỏng trên 5 phút, và chưa có thời lượng trên 5 phút.
+Các nhóm không giao nhau và cộng lại đúng số người đặt sân; giữ nguyên bộ
+đếm thật và bản thời lượng mẫu. Giao diện có lựa chọn **Đã đặt sân** và
+hiển thị rõ 7/43 theo nguồn, thay cho dùng tổng 14 tài khoản toàn hệ thống
+để so với người đặt sân. Bảy tài khoản khác dùng web trên 5 phút nhưng chưa
+đặt sân vẫn giữ số đo đúng của họ.
+
+Migration đã sao lưu hàm hiện tại, chạy thử rollback, áp dụng và ghi lịch sử
+Supabase. Kiểm tra SQL xác minh phạm vi theo người đặt, không đếm trùng,
+phân nhóm đủ, lọc và phân trang đạt. Lint (0 lỗi, 2 cảnh báo có sẵn),
+typecheck, production build và kiểm tra dashboard 320/390/768/1024/1440px,
+bao gồm lọc đúng người có đơn và sắp xếp, đều đạt.
