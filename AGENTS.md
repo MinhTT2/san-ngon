@@ -394,6 +394,18 @@ và dữ liệu demo theo [docs/dev-setup.md](docs/dev-setup.md).
 
 ## Quy trình giao việc
 
+**Khi được giao tạo user, phải tạo tài khoản dùng được như người dùng thật
+trên production.** Dùng luồng đăng ký/xác thực thật của sản phẩm, có tài
+khoản Supabase Auth và hồ sơ `profiles` tương ứng; hoàn tất xác thực và kiểm
+tra đăng nhập trên website production. Không coi dữ liệu mock, tài khoản
+chỉ có ở local/dev hay một dòng `profiles` chèn bằng SQL là đã hoàn thành.
+
+Thông tin hồ sơ phải hợp lý, đầy đủ theo luồng sản phẩm và đúng vai trò
+được yêu cầu. Nếu tạo chủ sân, đi qua luồng gửi hồ sơ và duyệt hiện có;
+không sửa role/trạng thái trực tiếp để bỏ qua nghiệp vụ. Chỉ báo hoàn tất
+sau khi kiểm tra tài khoản thực sự sử dụng được trên production; nếu thiếu
+email nhận OTP hoặc thông tin bắt buộc thì nêu rõ phần còn thiếu.
+
 Khi kiểm tra giao diện bằng Playwright, dùng Chromium riêng chạy **headless**
 với profile/context cô lập. Không mở hoặc kết nối vào Chrome cá nhân của
 người dùng, không dùng tab, cookie hay phiên đăng nhập đang có của họ.
