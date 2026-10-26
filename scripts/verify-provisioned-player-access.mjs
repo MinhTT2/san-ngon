@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 const file = process.argv[2];
 assert(file, 'Provide the private credential JSON path; never put credentials in Git.');
 const accounts = JSON.parse(await readFile(file, 'utf8'));
-assert.equal(accounts.length, 40);
+assert.equal(accounts.length, Number(process.argv[5] || 40));
 const env = Object.fromEntries((await readFile(process.argv[3] || '.env.local', 'utf8')).split(/\r?\n/).flatMap(line => {
   const match = line.match(/^([A-Z_0-9]+)=(.*)$/);
   if (!match) return [];

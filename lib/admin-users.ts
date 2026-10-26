@@ -29,6 +29,7 @@ export function adminUserError(raw: string) {
 export type AdminUser = {
   is_vip: boolean;
   booked_minutes: number;
+  booking_count?: number;
   id: string; full_name: string | null; phone: string | null; email: string | null;
   role: 'player' | 'owner' | 'admin'; created_at: string;
   is_banned: boolean; banned_until: string | null; ban_reason: string | null; banned_at: string | null;
@@ -36,5 +37,5 @@ export type AdminUser = {
   simulation_usage_seconds?: number | null;
   is_simulated_account?: boolean;
 };
-export type UserList = { users: AdminUser[]; total: number; active: number; banned: number; simulation_total?: number };
+export type UserList = { users: AdminUser[]; total: number; active: number; banned: number; simulation_total?: number; bookers?: number; booking_total?: number; measured_over_five?: number };
 export const ROLE_LABELS = { player: 'Người chơi', owner: 'Chủ sân', admin: 'Quản trị viên' };

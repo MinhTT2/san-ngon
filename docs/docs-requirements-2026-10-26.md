@@ -209,3 +209,44 @@ production và đối chiếu họ tên/email trên trang tài khoản, rồi đ
 Lint 0 lỗi (2 cảnh báo có sẵn), typecheck, production build và kiểm tra
 dashboard ở 320/390/768/1024/1440px đều đạt. Kiểm tra giao diện xác nhận
 không còn nhãn tài khoản mô phỏng, trong khi nhãn thời lượng mẫu vẫn riêng.
+
+
+## Thêm ba tài khoản và đối chiếu hoạt động đặt sân
+
+Theo yêu cầu tiếp theo, đã cấp thêm ba tài khoản người chơi qua
+`admin_save_user`, có Supabase Auth, email identity và hồ sơ tương ứng.
+Batch `users-extra3-20261026` giữ nguồn gốc trong app metadata; không gửi
+email và không xác nhận quyền sở hữu hộp thư. Mật khẩu riêng lưu ngoài
+repository với quyền 0600, tại file vận hành
+`player-access-extra3-20261026.json`. Tài khoản được xác nhận đăng nhập
+website bằng mật khẩu; không có quyền chủ sân hoặc admin.
+
+Đã chạy rollback preflight rồi commit thao tác cấp tài khoản:
+200 → 203 người chơi, tổng tài khoản 217 → 220. Các tài khoản/hồ sơ cũ,
+65 đơn, mọi khoản thanh toán/thông báo và hai bảng thời lượng giữ nguyên.
+Cả 3/3 đăng nhập được bằng Auth, đọc đúng hồ sơ và đã được kiểm tra qua form
+đăng nhập trên website production bằng Chromium headless/context cô lập.
+Tất cả phiên kiểm tra đã đăng xuất.
+
+Đối chiếu hiện có 65 đơn (61 hoàn tất, 4 hủy) thuộc 50 tài khoản,
+không tương đương 65 người chơi hay 65 phiên dùng web trên năm phút.
+Có 14 tài khoản có số đo web trên năm phút và 45 bản thời lượng mẫu riêng.
+Không suy ra hoặc ghi tăng thời gian web từ số đơn.
+
+Migration `20261026000400_admin_user_booking_activity` bổ sung
+`booking_count` và tổng hợp số người đặt/số đơn/số tài khoản được đo web
+trên năm phút vào `admin_list_users`. Số đơn bao gồm lịch sử hủy; giờ sân
+chỉ cộng đơn confirmed/completed. Bộ lọc, phân trang, VIP, nhãn nguồn
+nội bộ và hai loại thời lượng giữ nguyên. Giao diện hiển thị số đơn và giờ
+sân cạnh thời gian web; thêm sắp xếp theo số đơn hoặc giờ sân.
+Migration đã chạy thử rollback, áp dụng và ghi nhận lịch sử Supabase.
+
+Kiểm tra SQL đối chiếu toàn bộ trang, thứ tự số đơn, tổng hợp theo vai trò,
+tìm kiếm rỗng, giờ sân không tính đơn hủy và quyền admin đã đạt.
+Các kiểm tra SQL hiện có về heartbeat, đa tab, thời gian nhàn rỗi, tài khoản
+khóa và tách thời lượng mẫu/số đo thực tế vẫn đạt.
+
+Lint đạt với 0 lỗi và 2 cảnh báo có sẵn; typecheck và production build đạt.
+Dashboard được kiểm tra ở 320/390/768/1024/1440px, gồm tổng hợp tài khoản/đơn,
+hiển thị riêng giờ sân và thời gian web, sắp xếp theo số đơn/giờ sân, các
+bộ lọc và modal quản trị. Các ảnh mobile/desktop đã được kiểm tra bố cục.
