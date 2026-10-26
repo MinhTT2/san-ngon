@@ -79,6 +79,7 @@ function UsageDetails({ user }: { user: AdminUser }) {
   const format = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value));
   return <div className="flex flex-wrap gap-x-6 gap-y-2 px-4 pb-4 text-xs text-ink-secondary lg:px-5" title={user.tracking_started_at ? `Ghi nhận từ ${format(user.tracking_started_at)}` : undefined}>
     <p>Tổng thời gian sử dụng: <strong className="font-semibold tabular-nums text-pitch">{usageDuration(user.usage_seconds)}</strong></p>
+    {user.simulation_usage_seconds != null && <p>Thời lượng mô phỏng: <strong className="font-semibold tabular-nums text-pitch">{usageDuration(user.simulation_usage_seconds)}</strong></p>}
     <p>Hoạt động gần nhất: {user.last_active_at ? format(user.last_active_at) : 'Chưa ghi nhận'}</p>
   </div>;
 }

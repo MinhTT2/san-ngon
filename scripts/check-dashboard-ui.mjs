@@ -122,6 +122,7 @@ try {
   console.log('OK: records search, status, reset, pagination and review error feedback.');
 
   await page.goto(`${origin}/admin/users`);
+  assert.equal(await page.getByText('Thời lượng mô phỏng:', { exact: false }).count(), 1, 'Only seeded accounts show separately labeled simulation time');
   const search = page.getByRole('searchbox', { name: 'Tìm người dùng', exact: true });
   await search.fill('Nguyễn');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();

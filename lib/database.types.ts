@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_activity_simulations: {
+        Row: {
+          batch: string
+          seconds: number
+          user_id: string
+        }
+        Insert: {
+          batch: string
+          seconds: number
+          user_id: string
+        }
+        Update: {
+          batch?: string
+          seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_simulations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_moderation: {
         Row: {
           actor_id: string
