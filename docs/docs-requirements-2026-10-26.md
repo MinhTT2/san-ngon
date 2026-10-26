@@ -80,14 +80,49 @@ có, đơn, thanh toán, thông báo và số đo thời lượng. Đã sao lưu
 thử rollback trước khi áp dụng. Migration `20261026000300` chỉ mở rộng RPC,
 không tạo tài khoản khi triển khai.
 
+## Phân bổ đơn cho sáu tài khoản trong ảnh
+
+Theo phản hồi tiếp theo, chuyển sáu đơn đã ghi rõ mô phỏng sang sáu tài
+khoản được chỉ định; mỗi tài khoản trước đó chưa có đơn và hiện có một đơn.
+Ưu tiên chuyển từ các tên lặp nhiều. Chỉ sửa `user_id`, tên/số điện thoại
+liên hệ và ghi chú nguồn; giữ nguyên mã, sân, lịch, ngày tạo, giá đã chốt,
+chính sách và toàn bộ bản ghi thanh toán. Tổng kịch bản vẫn là 44 đơn tại
+tám cụm, gắn với 44 tài khoản khác nhau.
+
+| Tài khoản | Mã đơn mô phỏng | Ngày chơi tháng 10/2026 |
+| --- | --- | --- |
+| Giang Nguyễn | SANTG97RK | 25 |
+| Hùng Trần | SANHGJLXB | 25 |
+| Khánh đẹp trai | SANRLAWBM | 24 |
+| Vũ | SANGMF7Y9 | 24 |
+| Đỗ Phương | SANE3Z4EU | 24 |
+| Hải Nam Nguyễn | SANYFQR3Z | 23 |
+
+Đối chiếu tài khoản bằng ID và email trong ảnh. Tất cả đơn được tạo sau
+ngày đăng ký cả Auth và hồ sơ; riêng Hùng Trần đăng ký chiều 25/10 nên chỉ
+có một đơn phù hợp. Không bịa số điện thoại cho năm hồ sơ đang thiếu; trường
+liên hệ trên đơn để trống thay vì giữ số của người đặt cũ. Giữ số đã có
+trên hồ sơ Khánh đẹp trai. Không sửa hồ sơ, VIP hoặc thời lượng; sáu người
+đã có số đo thực tế tối thiểu năm phút.
+
+Script `scripts/redistribute-docs-bookers-20261026.sql` mặc định rollback,
+chỉ nhận đơn hoàn tất của batch mô phỏng với đúng một khoản thanh toán mô
+phỏng không có mã ngân hàng. Từ chối đơn có phụ thuộc trong luồng khác và
+chạy lặp. Đã sao lưu riêng, chạy thử rollback, áp dụng và kiểm tra sau commit:
+sáu tài khoản đọc được đúng mã đơn qua `search_my_bookings`; biểu đồ/doanh
+thu, mọi khoản thanh toán, đơn ngoài phạm vi, hồ sơ, số đo hoạt động, sổ ngân
+hàng và thông báo giữ nguyên. Không có thay đổi schema hoặc giao diện.
+
 ## Thời lượng và kiểm tra
 
 45 tài khoản từng đặt sân có thời lượng trình bày 300–600 giây ở bảng riêng
 `user_activity_simulations`; quản trị hiển thị **Thời lượng mô phỏng** cạnh
 thời lượng đo thực tế. Sau phản hồi về khả năng nhìn thấy, số mô phỏng được
 đưa lên đầu ô với nhãn **Thời gian sử dụng web (mô phỏng)** và giữ số đo thực
-tế ở dòng riêng; kiểm tra lại RPC production xác nhận đủ 44/44 tài khoản của
-44 đơn trả về 300–600 giây. Không sửa bộ đếm thật, phiên đang hoạt động, thời điểm
+tế ở dòng riêng; trước lần phân bổ sáu tài khoản nói trên, kiểm tra lại RPC
+production xác nhận đủ 44/44 tài khoản của 44 đơn trả về 300–600 giây. Sáu
+tài khoản nhận đơn sau đó dùng số đo thực tế sẵn có, không thêm thời lượng
+mô phỏng mới. Không sửa bộ đếm thật, phiên đang hoạt động, thời điểm
 hoạt động gần nhất hoặc GA4. Trình duyệt không có quyền đọc/ghi trực tiếp
 bảng mô phỏng; `admin_list_users` kiểm tra admin trước khi trả dữ liệu.
 
