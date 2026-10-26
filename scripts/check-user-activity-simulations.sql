@@ -3,7 +3,9 @@ begin;
 insert into auth.users(id) values
  ('d0260000-0000-4000-8000-000000000001'),('d0260000-0000-4000-8000-000000000002');
 update profiles set full_name='Activity simulation SQL fixture' where id='d0260000-0000-4000-8000-000000000001';
-update profiles set role='admin' where id='d0260000-0000-4000-8000-000000000002';
+update auth.users set raw_app_meta_data=jsonb_build_object('account_kind','simulation') where id='d0260000-0000-4000-8000-000000000001';
+update profiles set role='admin',full_name='Activity real metadata SQL fixture' where id='d0260000-0000-4000-8000-000000000002';
+update auth.users set raw_user_meta_data=jsonb_build_object('account_kind','simulation') where id='d0260000-0000-4000-8000-000000000002';
 insert into user_activity_totals(user_id,total_seconds) values('d0260000-0000-4000-8000-000000000001',17);
 insert into user_activity_simulations(user_id,seconds,batch) values('d0260000-0000-4000-8000-000000000001',420,'rollback-fixture');
 select set_config('request.jwt.claim.sub','d0260000-0000-4000-8000-000000000001',true);
@@ -26,10 +28,17 @@ do $$ declare report jsonb;begin
  report:=admin_list_users('Activity simulation SQL fixture','all','all',1);
  assert (report#>>'{users,0,usage_seconds}')::int=17,'measured seconds stay factual';
  assert (report#>>'{users,0,simulation_usage_seconds}')::int=420,'admin gets separately named simulation';
+ assert (report#>>'{users,0,is_simulated_account}')::boolean,'trusted account marker returned';
+ assert (report->>'simulation_total')::int=1,'simulated account count is explicit';
  report:=admin_list_users('Activity simulation SQL fixture','all','all',1,'usage_desc');
  assert (report#>>'{users,0,usage_seconds}')::int=17,'five-argument RPC preserves measured usage';
  assert (report#>>'{users,0,simulation_usage_seconds}')::int=420,'five-argument RPC includes separate simulation';
+ assert (report#>>'{users,0,is_simulated_account}')::boolean,'five-argument RPC returns account marker';
+ assert (report->>'simulation_total')::int=1,'five-argument RPC returns simulation count';
  assert report#>'{users,0}' ? 'is_vip' and report#>'{users,0}' ? 'booked_minutes','VIP and playing-hour fields retained';
+ report:=admin_list_users('Activity real metadata SQL fixture','all','all',1,'newest');
+ assert not (report#>>'{users,0,is_simulated_account}')::boolean,'user-editable metadata cannot classify accounts';
+ assert (report->>'simulation_total')::int=0,'trusted classification controls totals';
 end $$;
 delete from auth.users where id='d0260000-0000-4000-8000-000000000001';
 do $$ begin assert not exists(select 1 from user_activity_simulations where user_id='d0260000-0000-4000-8000-000000000001'),'account deletion cascades';end $$;

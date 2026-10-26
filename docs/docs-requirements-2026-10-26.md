@@ -57,11 +57,37 @@ toán mô phỏng ngày 18/10. Kỳ 30 ngày tại ngày nghiệm thu 26/10 có 
 theo ngày, bảng cụm sân và báo cáo từng chủ sân đã đối chiếu khớp SQL.
 Giữ quy tắc doanh thu theo ngày nhận tiền ở múi giờ Việt Nam.
 
+## Bổ sung tài khoản theo phản hồi
+
+Người dùng xác nhận tạo thêm 20 tài khoản mẫu khi chưa cung cấp danh sách
+người dùng thật. Đã bổ sung 20 tên hư cấu với email đúng định dạng thuộc
+`example.com`, không có số điện thoại, không gửi email, không đặt mật khẩu
+được biết trước và không tự ghi nhận thời gian dùng web. Ngày tạo là thời
+điểm chạy thực tế. Email giữ trạng thái chưa xác minh.
+
+Tổng hiện tại là **196 tài khoản: 176 tài khoản sẵn có và 20 tài khoản mô
+phỏng mới**. Không coi 20 tài khoản này là người dùng thật hoặc dùng để báo
+đạt mục tiêu 200 người dùng thật. Metadata do SQL quản trị ghi
+`account_kind=simulation`, `simulation_batch=docs-20261026-extra-users`;
+RPC trả nhãn tài khoản và số mẫu trong kết quả, cả chữ ký bốn và năm tham số.
+Giao diện admin ghi **Tài khoản mô phỏng** trên từng ô và nêu số mẫu trong
+tổng kết quả. Chỉ đọc metadata ứng dụng đáng tin cậy, không nhận phân loại
+từ metadata người dùng tự sửa.
+
+Script `scripts/add-docs-demo-users-20261026.sql` mặc định rollback, từ chối
+chạy lặp hoặc email trùng; kiểm tra giữ nguyên toàn bộ tài khoản/hồ sơ sẵn
+có, đơn, thanh toán, thông báo và số đo thời lượng. Đã sao lưu riêng và chạy
+thử rollback trước khi áp dụng. Migration `20261026000300` chỉ mở rộng RPC,
+không tạo tài khoản khi triển khai.
+
 ## Thời lượng và kiểm tra
 
 45 tài khoản từng đặt sân có thời lượng trình bày 300–600 giây ở bảng riêng
 `user_activity_simulations`; quản trị hiển thị **Thời lượng mô phỏng** cạnh
-thời lượng đo thực tế. Không sửa bộ đếm thật, phiên đang hoạt động, thời điểm
+thời lượng đo thực tế. Sau phản hồi về khả năng nhìn thấy, số mô phỏng được
+đưa lên đầu ô với nhãn **Thời gian sử dụng web (mô phỏng)** và giữ số đo thực
+tế ở dòng riêng; kiểm tra lại RPC production xác nhận đủ 44/44 tài khoản của
+44 đơn trả về 300–600 giây. Không sửa bộ đếm thật, phiên đang hoạt động, thời điểm
 hoạt động gần nhất hoặc GA4. Trình duyệt không có quyền đọc/ghi trực tiếp
 bảng mô phỏng; `admin_list_users` kiểm tra admin trước khi trả dữ liệu.
 

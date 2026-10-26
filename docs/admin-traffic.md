@@ -8,7 +8,7 @@ Trình duyệt đã đăng nhập gửi trạng thái hoạt động mỗi 30 gi
 
 Chỉ ghi nhận trên Vercel Production, từ lúc triển khai migration `20261019000200_user_activity.sql` và code mới. Không có dữ liệu lịch sử trước đó. Không lưu URL, nội dung nhập hay lịch sử thao tác. Không gửi định danh tài khoản sang GA4. Xóa tài khoản sẽ xóa cả tổng thời gian qua khóa ngoại.
 
-Kịch bản ngày 26/10 lưu thời lượng mẫu 5–10 phút trong `user_activity_simulations`, hiển thị riêng với nhãn **Thời lượng mô phỏng**. Bảng này chỉ được SQL quản trị ghi và RPC có kiểm tra admin đọc; không cộng vào `user_activity_totals`, không sửa hoạt động gần nhất và không gửi sang GA4. Xem [bản áp dụng yêu cầu Google Docs](docs-requirements-2026-10-26.md).
+Kịch bản ngày 26/10 lưu thời lượng mẫu 5–10 phút trong `user_activity_simulations`, hiển thị đầu ô tài khoản với nhãn **Thời gian sử dụng web (mô phỏng)**; **Thời gian đo thực tế** nằm riêng bên cạnh. Sắp xếp theo sử dụng web vẫn dùng số đo thực tế. Bảng mô phỏng chỉ được SQL quản trị ghi và RPC có kiểm tra admin đọc; không cộng vào `user_activity_totals`, không sửa hoạt động gần nhất và không gửi sang GA4. Xem [bản áp dụng yêu cầu Google Docs](docs-requirements-2026-10-26.md).
 
 ## Kết nối báo cáo GA4
 

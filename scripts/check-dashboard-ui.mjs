@@ -122,7 +122,13 @@ try {
   console.log('OK: records search, status, reset, pagination and review error feedback.');
 
   await page.goto(`${origin}/admin/users`);
-  assert.equal(await page.getByText('Thời lượng mô phỏng:', { exact: false }).count(), 1, 'Only seeded accounts show separately labeled simulation time');
+  const simulatedUsage = page.getByText('Thời gian sử dụng web (mô phỏng):', { exact: false });
+  assert.equal(await simulatedUsage.count(), 1, 'Only seeded accounts show separately labeled simulation time');
+  assert.match(await simulatedUsage.innerText(), /7 phút/);
+  assert.match(await simulatedUsage.locator('..').locator('p').first().innerText(), /Thời gian sử dụng web \(mô phỏng\): 7 phút/, 'Simulation duration appears before measured usage');
+  assert.equal(await page.getByText('Thời gian đo thực tế:', { exact: false }).count(), 1, 'Measured usage remains separate');
+  assert.equal(await page.getByText('Tài khoản mô phỏng', { exact: true }).count(), 1, 'Simulated account is labeled separately from duration');
+  await page.getByText('1 tài khoản mô phỏng', { exact: true }).waitFor();
   const search = page.getByRole('searchbox', { name: 'Tìm người dùng', exact: true });
   await search.fill('Nguyễn');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
