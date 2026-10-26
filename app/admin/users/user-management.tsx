@@ -69,7 +69,6 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
       <DashboardPageHeader eyebrow="Quản trị / Tài khoản" title="Người dùng" description="Tìm tài khoản, chỉnh vai trò và quản lý quyền truy cập. Lý do khóa được lưu để đối soát."
         actions={<button type="button" onClick={() => setCreateOpen(true)} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink"><Plus size={16} aria-hidden="true" />Tạo tài khoản</button>} />
       <div className="mt-5 grid gap-3 sm:grid-cols-3"><Stat icon={UserRound} value={data.total} label="Tài khoản phù hợp" /><Stat icon={Check} value={data.active} label="Đang hoạt động" tone="green" /><Stat icon={Ban} value={data.banned} label="Đang bị khóa" tone="danger" /></div>
-      {!!data.simulation_total && <p className="mt-3 text-sm text-ink-secondary">Trong kết quả có <strong>{data.simulation_total} tài khoản mô phỏng</strong>, không tính là người dùng thật.</p>}
       <p className="mt-4 text-xs leading-6 text-ink-secondary">Thời lượng đo thực tế chỉ tính khi tài khoản đăng nhập, tab đang được xem và có tương tác trong 5 phút gần nhất. Nhiều tab không cộng trùng. Thời gian trước đó không được khôi phục. Tài khoản có dữ liệu mô phỏng hiển thị thời lượng đó trước, với nhãn riêng; sắp xếp vẫn theo số đo thực tế.</p>
       {notice && !createOpen && !editing && !banning && !deleting && <p role={notice.error ? 'alert' : 'status'} className={`mt-6 rounded-card border px-4 py-3 text-sm ${notice.error ? 'border-danger bg-danger/5 text-danger' : 'border-free-line bg-free-fill text-free-ink'}`}>{notice.text}</p>}
       {createOpen && <Modal title="Tạo tài khoản" subtitle="Tài khoản được xác nhận email sẵn để dùng ngay." onClose={() => setCreateOpen(false)}>{notice?.error && <p role="alert" className="mb-4 text-sm text-danger">{notice.text}</p>}<CreateForm busy={busy} onCancel={() => setCreateOpen(false)} onCreate={create} /></Modal>}
@@ -97,7 +96,6 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
 function UsageDetails({ user }: { user: AdminUser }) {
   const format = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value));
   return <div className="flex flex-wrap gap-x-6 gap-y-2 px-4 pb-4 text-xs text-ink-secondary lg:px-5" title={user.tracking_started_at ? `Ghi nhận từ ${format(user.tracking_started_at)}` : undefined}>
-    {user.is_simulated_account && <span className="rounded-pill border border-hairline px-2 py-0.5 font-semibold">Tài khoản mô phỏng</span>}
     {user.simulation_usage_seconds != null && <p>Thời gian sử dụng web (mô phỏng): <strong className="font-semibold tabular-nums text-pitch">{usageDuration(user.simulation_usage_seconds)}</strong></p>}
     <p>{user.simulation_usage_seconds != null ? 'Thời gian đo thực tế' : 'Thời gian sử dụng web'}: <strong className="font-semibold tabular-nums text-pitch">{usageDuration(user.usage_seconds)}</strong></p>
   </div>;

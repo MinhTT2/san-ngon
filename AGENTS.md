@@ -28,13 +28,14 @@ Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể h�
   ưu đãi khi SQL tính đơn mới, không phụ thuộc cron. Không đổi giá đơn cũ.
   Xem [vận hành VIP](docs/vip.md); triển khai bằng migrations
   `20261025000100`–`20261025000200`. Nghiệm thu chuyển khoản thật và duyệt với admin.
-- Mục tiêu là **đủ 200 user thật trên production**. Chỉ tính tài khoản người
-  dùng thật; không tạo tài khoản giả, seed/demo/test hoặc sửa số đếm để đủ 200.
-  Khi báo đạt mục tiêu phải kiểm tra dữ liệu production thực tế và nêu căn cứ;
-  không coi 200 là giới hạn tài khoản hay điều kiện tự động bật ưu đãi VIP.
-- Dữ liệu trên production là dữ liệu thật. Thay đổi database phải giữ dữ liệu
-  hiện có, dùng migration và kiểm tra đúng môi trường; không chạy seed/reset
-  để đáp ứng yêu cầu tăng user. Các prompt sau phải đọc và giữ các yêu cầu này.
+- Tài khoản được cấp phục vụ kiểm thử khi người quản trị yêu cầu có thể dùng
+  trên production, với Supabase Auth và hồ sơ tương ứng. Cho phép cập nhật
+  nhóm tài khoản đã cấp và trình bày cùng giao diện tài khoản thông thường.
+  Giữ nguồn gốc cấp tài khoản trong metadata nội bộ để đối soát. Email dùng
+  làm tên đăng nhập không chứng minh hộp thư tồn tại hay thuộc người dùng.
+  Không gửi thư tới địa chỉ chưa xác minh quyền sở hữu.
+- Thay đổi database phải sao lưu, kiểm tra đúng môi trường và chỉ cập nhật
+  đúng nhóm được giao; giữ dữ liệu giao dịch và thời lượng đo thực tế.
 
 ## Sáu nguyên tắc không được phá
 

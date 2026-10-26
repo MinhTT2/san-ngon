@@ -175,3 +175,37 @@ Kiểm tra đã đạt:
 
 Bản cuối đã ghép với main có VIP và sắp xếp thời lượng mới: production build,
 kiểm tra dashboard cùng luồng VIP đạt; lint bản ghép có 0 lỗi, 2 cảnh báo có sẵn.
+
+
+## Cập nhật tài khoản theo yêu cầu quản trị 26/10
+
+Đã cập nhật đúng 40 tài khoản người chơi thuộc hai batch
+`docs-20261026-extra-users` và `docs-20261026-extra-users-round2`:
+đổi hậu tố email từ `example.com` sang `gmail.com`, cấp mật khẩu riêng và
+bật đăng nhập email/mật khẩu trên production. Giữ nguyên ID, họ tên, vai trò
+và hồ sơ. Đây là tên đăng nhập của website; thao tác không tạo hộp thư Gmail
+và không xác minh quyền sở hữu hộp thư. Không gửi email trong quá trình cấp.
+
+Gỡ nhãn tài khoản mô phỏng và dòng tổng phụ khỏi giao diện quản trị theo
+yêu cầu. Giữ `account_kind`, batch nguồn và
+`mailbox_ownership_verified=false` trong metadata chỉ quản trị được sửa.
+Dữ liệu thời lượng mẫu sẵn có vẫn có nhãn riêng, tách số đo thực tế.
+
+Script `refresh-player-access-20261026.sql` mặc định rollback, nhận mật khẩu
+qua setting SQL riêng, kiểm tra chính xác 40 ID/email thuộc hai batch.
+Đã lưu bản sao Auth, identities và profiles riêng ở thư mục vận hành
+ngoài repository. Mật khẩu duy nhất từng tài khoản cũng được lưu riêng với
+quyền 0600; không ghi vào commit hoặc log. Tài khoản admin kiểm thử hiện có
+giữ nguyên thông tin đăng nhập.
+
+Rollback preflight và cập nhật thật đều đạt: tổng 217 tài khoản, chỉ 40
+tài khoản mục tiêu thay đổi Auth/identity. Hồ sơ, tài khoản ngoài nhóm,
+đơn đặt sân, thanh toán, thông báo và hai bảng thời lượng giữ nguyên.
+
+Kiểm tra mới đã đạt: đăng nhập Auth bằng mật khẩu và đọc đúng hồ sơ cho
+40/40 tài khoản; tất cả giữ vai trò người chơi và không có quyền admin.
+Chromium headless dùng context cô lập đã đăng nhập qua form website
+production và đối chiếu họ tên/email trên trang tài khoản, rồi đăng xuất.
+Lint 0 lỗi (2 cảnh báo có sẵn), typecheck, production build và kiểm tra
+dashboard ở 320/390/768/1024/1440px đều đạt. Kiểm tra giao diện xác nhận
+không còn nhãn tài khoản mô phỏng, trong khi nhãn thời lượng mẫu vẫn riêng.
