@@ -11,7 +11,8 @@ biến môi trường truyền cho CLI và chạy SQL bằng `psql` trong đúng
 liên kết project, khóa OAuth, token/Vault, SePay, SMTP hoặc Telegram vào container.
 
 Lần khởi tạo áp dụng toàn bộ lịch sử migrations vào database mới. Sau đó tắt cron
-của stack thử và chạy 19 bài SQL có `BEGIN/ROLLBACK`: giữ chỗ/giá/quyền, thanh toán,
+của stack thử và chạy 23 bài SQL có `BEGIN/ROLLBACK`: quyền RPC/search_path,
+giữ chỗ/giá/quyền, thanh toán,
 giải/hồ sơ, sổ tiền/hoàn, hàng đợi, audit/cảnh báo, báo cáo và dữ liệu cá nhân.
 Cuối cùng hai kết nối đồng thời đặt chồng cùng sân: một commit, một bị GiST chặn.
 Không dùng SELECT-then-INSERT để giả lập chống trùng. Hủy container/volume khi xong;

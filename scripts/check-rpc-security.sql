@@ -6,10 +6,10 @@ set local lock_timeout = '5s';
 do $$ declare fn text; p record; begin
   assert not has_schema_privilege('anon', 'public', 'CREATE');
   assert not has_schema_privilege('authenticated', 'public', 'CREATE');
-  for p in select p.* from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.prokind = 'f'
+  for p in select catalog_fn.* from pg_proc catalog_fn join pg_namespace n on n.oid = catalog_fn.pronamespace
+    where n.nspname = 'public' and catalog_fn.prokind = 'f'
       and not exists (select 1 from pg_depend d
-        where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')
+        where d.classid = 'pg_proc'::regclass and d.objid = catalog_fn.oid and d.deptype = 'e')
   loop
     assert exists(select 1 from unnest(p.proconfig) setting where setting like 'search_path=%'),
       format('Unpinned function: %s', p.oid::regprocedure);
