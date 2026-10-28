@@ -6,7 +6,7 @@ const DateValue = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày không hợp l�
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân không hợp lệ.' }, { status: 400 });
   const date = DateValue.safeParse(new URL(request.url).searchParams.get('date') ?? undefined);
   if (!date.success) return NextResponse.json({ error: date.error.issues[0].message }, { status: 400 });
   const supabase = await createClient();

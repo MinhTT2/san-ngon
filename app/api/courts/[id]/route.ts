@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân con không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân con không hợp lệ.' }, { status: 400 });
   const parsed = CourtManagementBody.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ.', fieldErrors: validationFieldErrors(parsed.error) }, { status: 400 });
   const supabase = await createClient();
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân con không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân con không hợp lệ.' }, { status: 400 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập để xóa sân con.' }, { status: 401 });

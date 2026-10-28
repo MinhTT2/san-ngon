@@ -15,7 +15,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   const { id } = await params;
   const parsed = Body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success || !z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin duyệt hồ sơ không hợp lệ.' }, { status: 400 });
+  if (!parsed.success || !z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin duyệt hồ sơ không hợp lệ.' }, { status: 400 });
   const { error } = await supabase.rpc('review_owner', { p_owner_id: id, p_status: parsed.data.status, p_reason: parsed.data.status === 'rejected' ? parsed.data.reason : undefined });
   if (error) {
     const messages: Record<string, string> = { REJECTION_REASON_REQUIRED: 'Ghi rõ lý do cần bổ sung (10–1.000 ký tự).', OWNER_NOT_FOUND: 'Không tìm thấy hồ sơ chủ sân.', OWNER_ALREADY_REVIEWED: 'Hồ sơ đã được xử lý. Hãy tải lại trang.', REPRESENTATIVE_REQUIRED: 'Hồ sơ thiếu họ tên hoặc số điện thoại.', BUSINESS_LICENSE_MISSING: 'Hồ sơ thiếu giấy tờ kinh doanh.', PAYOUT_REQUIRED: 'Chủ sân chưa bổ sung tài khoản nhận tiền.' };

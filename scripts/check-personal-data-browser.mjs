@@ -19,7 +19,7 @@ try {
   const data=await response.json();assert.equal(data.account.id,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');assert(!JSON.stringify(data).includes('access_token'));
   const attempts=[];await page.route('**/api/privacy/request',route=>{attempts.push(route.request().postDataJSON());return route.fulfill({status:503,json:{error:'Thử lại cùng nội dung.'}});});
   await page.getByLabel('Bạn muốn làm gì?',{exact:true}).selectOption('delete');await page.getByLabel('Phạm vi cần xử lý',{exact:true}).fill('Tôi muốn xóa phần hồ sơ kết nối công khai.');
-  for(let n=0;n<2;n++){await page.getByRole('button',{name:'Gửi yêu cầu dữ liệu',exact:true}).click();await page.getByRole('alert').waitFor();}
+  for(let n=0;n<2;n++){await page.getByRole('button',{name:'Gửi yêu cầu dữ liệu',exact:true}).click();await page.getByRole('alert').filter({hasText:'Thử lại cùng nội dung.'}).waitFor();}
   assert.equal(attempts.length,2);assert.equal(attempts[0].id,attempts[1].id);assert.equal(attempts[0].action,'delete');
   await page.unroute('**/api/privacy/request');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

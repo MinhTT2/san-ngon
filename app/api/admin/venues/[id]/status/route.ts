@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const parsed = Body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success || !z.string().uuid().safeParse(id).success) {
+  if (!parsed.success || !z.guid().safeParse(id).success) {
     return NextResponse.json({ error: 'Thông tin duyệt hồ sơ không hợp lệ.' }, { status: 400 });
   }
   const { error } = await supabase.rpc('review_venue', { p_venue_id: id, p_status: parsed.data.status });

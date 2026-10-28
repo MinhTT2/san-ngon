@@ -5,7 +5,7 @@ import { requestOrigin } from '@/lib/request-origin';
 import { participantSchema, tournamentError, tournamentErrorFields, tournamentSchema, tournamentValidationErrors } from '@/lib/tournaments';
 
 const approve = z.union([z.boolean(), z.enum(['true', 'false']).transform(value => value === 'true')]);
-const id = z.string().uuid();
+const id = z.guid();
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('submit'), data: tournamentSchema }),
   z.object({ action: z.literal('resubmit'), id, data: tournamentSchema }),

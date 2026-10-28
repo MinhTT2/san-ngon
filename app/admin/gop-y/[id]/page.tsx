@@ -26,7 +26,7 @@ export default async function Page({ params, searchParams }: {
   const { data: admin, error: permissionError } = await db.rpc('is_admin');
   if (permissionError) throw new Error('Không kiểm tra được quyền quản trị.');
   if (!admin) redirect('/');
-  if (!z.string().uuid().safeParse(id).success) notFound();
+  if (!z.guid().safeParse(id).success) notFound();
   const { data, error } = await db.from('feedback')
     .select('id,category,title,message,booking_id,receipt_path,page_path,status,reply,created_at,updated_at,sender:profiles!feedback_user_id_fkey(full_name)')
     .eq('id', id).maybeSingle();

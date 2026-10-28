@@ -12,7 +12,7 @@ export async function POST() {
   return NextResponse.json({ ok: true });
 }
 export async function PATCH(request: Request) {
-  const parsed = z.object({ id: z.string().uuid() }).safeParse(await request.json().catch(() => null));
+  const parsed = z.object({ id: z.guid() }).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Mã yêu cầu không hợp lệ.' }, { status: 400 });
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();

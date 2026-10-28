@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = z.object({ updated_at: z.string().datetime({ offset: true }) }).safeParse(await request.json().catch(() => null));
-  if (!z.string().uuid().safeParse(id).success || !body.success) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success || !body.success) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 400 });
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });

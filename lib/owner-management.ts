@@ -32,7 +32,7 @@ export const VenueCreateBody = VenueShape.extend({
 }).superRefine(validateHours);
 
 export const VenueManagementBody = VenueShape.extend({
-  deposit_pct: z.literal(100, { errorMap: () => ({ message: 'Tiền cọc bằng 100% tiền sân.' }) }),
+  deposit_pct: z.literal(100, { error: 'Tiền cọc bằng 100% tiền sân.' }),
   booking_horizon_days: z.number().int().min(1, 'Nhận đặt trước từ 1 đến 180 ngày.').max(180, 'Nhận đặt trước từ 1 đến 180 ngày.'),
 }).superRefine(validateHours);
 
@@ -56,7 +56,7 @@ function validateCourtHours(value: z.infer<typeof CourtManagementShape>, ctx: z.
 }
 
 export const CourtManagementBody = CourtManagementShape.superRefine(validateCourtHours);
-export const CourtCreateBody = CourtManagementShape.extend({ venue_id: z.string().uuid('Thông tin cụm sân không hợp lệ.') }).superRefine(validateCourtHours);
+export const CourtCreateBody = CourtManagementShape.extend({ venue_id: z.guid('Thông tin cụm sân không hợp lệ.') }).superRefine(validateCourtHours);
 
 export function validationFieldErrors(error: z.ZodError): Record<string, string> {
   const fields: Record<string, string> = {};

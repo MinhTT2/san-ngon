@@ -19,7 +19,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run ci
+      - run: node scripts/check-validation-contracts.mjs
+      - run: node scripts/check-request-inputs.mjs
       - run: npm run check:refresh
       - run: node scripts/check-booking-inputs.mjs
       - run: node scripts/check-request-origin.mjs

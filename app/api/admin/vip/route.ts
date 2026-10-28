@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { vipError } from '@/lib/vip';
 
 const Body = z.discriminatedUnion('approve', [
-  z.object({ id: z.string().uuid(), approve: z.literal(true), transaction_id: z.string().trim().regex(/^[1-9]\d{0,29}$/), verified: z.literal(true) }),
-  z.object({ id: z.string().uuid(), approve: z.literal(false), reason: z.string().trim().min(5).max(500) }),
+  z.object({ id: z.guid(), approve: z.literal(true), transaction_id: z.string().trim().regex(/^[1-9]\d{0,29}$/), verified: z.literal(true) }),
+  z.object({ id: z.guid(), approve: z.literal(false), reason: z.string().trim().min(5).max(500) }),
 ]);
 export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));

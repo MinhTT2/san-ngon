@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 
-const Body = z.object({ session_id: z.string().uuid(), active: z.boolean() }).strict();
+const Body = z.object({ session_id: z.guid(), active: z.boolean() }).strict();
 
 export async function POST(request: Request) {
   const db = await createClient();

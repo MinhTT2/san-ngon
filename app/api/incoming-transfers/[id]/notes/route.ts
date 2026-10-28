@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-const schema = z.object({ note_id: z.string().uuid(), note: z.string().trim().min(10).max(1000), updated_at: z.string().datetime({ offset: true }) }).strict();
+const schema = z.object({ note_id: z.guid(), note: z.string().trim().min(10).max(1000), updated_at: z.string().datetime({ offset: true }) }).strict();
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const headers = { 'Cache-Control': 'private, no-store' };
   const { id } = await params;
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!z.string().uuid().safeParse(id).success || !parsed.success) return NextResponse.json({ error: 'Nhập ghi chú từ 10 đến 1.000 ký tự và tải lại giao dịch nếu cần.' }, { status: 400, headers });
+  if (!z.guid().safeParse(id).success || !parsed.success) return NextResponse.json({ error: 'Nhập ghi chú từ 10 đến 1.000 ký tự và tải lại giao dịch nếu cần.' }, { status: 400, headers });
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401, headers });

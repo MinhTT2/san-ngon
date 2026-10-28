@@ -3,10 +3,10 @@ import { z } from 'zod';
 export const PENDING_BOOKING_KEY = 'san-ngon:pending-booking-request';
 export const BOOKING_REQUEST_EVENT = 'san-ngon:booking-request';
 const PendingRequest = z.object({
-  userId: z.string().uuid(),
+  userId: z.guid(),
   body: z.object({
-    request_user_id: z.string().uuid().optional(),
-    request_id: z.string().uuid(), court_id: z.string().uuid(),
+    request_user_id: z.guid().optional(),
+    request_id: z.guid(), court_id: z.guid(),
     starts_at: z.string().datetime({ offset: true }), ends_at: z.string().datetime({ offset: true }),
     customer_name: z.string().max(100).optional(), customer_phone: z.string().regex(/^0[0-9]{9}$/),
     note: z.string().max(500).optional(),

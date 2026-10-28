@@ -6,7 +6,7 @@ import { adminUserError } from '@/lib/admin-users';
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const parsed = z.object({ enabled: z.boolean() }).safeParse(await request.json().catch(() => null));
-  if (!z.string().uuid().safeParse(id).success || !parsed.success) {
+  if (!z.guid().safeParse(id).success || !parsed.success) {
     return NextResponse.json({ error: 'Thông tin VIP không hợp lệ.' }, { status: 400 });
   }
   const supabase = await createClient();

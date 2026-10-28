@@ -6,7 +6,7 @@ import { requestOrigin } from '@/lib/request-origin';
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (request.headers.get('origin') !== requestOrigin(request)) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 403 });
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin cụm sân không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin cụm sân không hợp lệ.' }, { status: 400 });
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });

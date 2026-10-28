@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const connectionId = req.nextUrl.searchParams.get('connection');
   // Validate credentials before opening a privileged database client.
   if (connectionId !== null) {
-    if (!z.string().uuid().safeParse(connectionId).success || !auth.startsWith('Apikey ') || auth.length > 256) {
+    if (!z.guid().safeParse(connectionId).success || !auth.startsWith('Apikey ') || auth.length > 256) {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
   } else if (!process.env.SEPAY_WEBHOOK_API_KEY || auth !== `Apikey ${process.env.SEPAY_WEBHOOK_API_KEY}`) {

@@ -15,6 +15,7 @@ let responseMode = 'error';
 let releaseWrite;
 page.on('pageerror', error => errors.push(error.message));
 await page.route('**/api/bookings/**', async route => {
+  if (new URL(route.request().url()).pathname === '/api/bookings/quote') return route.continue();
   assert.equal(route.request().method(), 'POST');
   writes.push({ url: route.request().url(), body: route.request().postDataJSON() });
   if (responseMode === 'offline') return route.abort('failed');
@@ -223,6 +224,7 @@ try {
       await page.getByLabel('Số điện thoại', { exact: true }).fill('0912345678');
       const create = page.getByRole('button', { name: 'Giữ chỗ 15 phút', exact: true });
       const before = bookingAttempts;
+      await create.click({ trial: true }); // The server quote must arrive before submitting.
       await create.evaluate(button => { button.click(); button.click(); });
       const error = page.getByRole('region', { name: 'Thông tin đặt sân', exact: true }).getByRole('alert');
       await error.waitFor();

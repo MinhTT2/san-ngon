@@ -80,6 +80,7 @@ try {
       await page.getByLabel('Tên người đặt', { exact: true }).fill('Khách đặt sân');
       await page.getByLabel('Số điện thoại', { exact: true }).fill(phone);
       const before = bookingCalls.length;
+      await page.getByRole('button', { name: 'Giữ chỗ 15 phút', exact: true }).click({ trial: true });
       await page.getByLabel('Số điện thoại', { exact: true }).press('Enter');
       const feedback = page.getByRole('region', { name: 'Thông tin đặt sân', exact: true }).getByRole('alert');
       await feedback.waitFor();

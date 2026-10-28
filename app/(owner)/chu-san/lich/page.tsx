@@ -18,7 +18,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
     .eq('venues.owner_id', user.id).order('sort_order').order('name');
   if (error) throw new Error('Không tải được danh sách sân. Vui lòng thử lại.');
   if (!courts?.length) return <Empty />;
-  const id = requestedId && z.string().uuid().safeParse(requestedId).success && courts.some((item) => item.id === requestedId) ? requestedId : courts[0].id;
+  const id = requestedId && z.guid().safeParse(requestedId).success && courts.some((item) => item.id === requestedId) ? requestedId : courts[0].id;
   if (id !== requestedId) redirect(`/chu-san/lich?court=${id}`);
   const court = courts.find((item) => item.id === id)!;
   return <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">

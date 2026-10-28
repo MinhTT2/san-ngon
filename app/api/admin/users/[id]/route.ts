@@ -6,7 +6,7 @@ import { UserBody, UserActionBody, adminUserError } from '@/lib/admin-users';
 type Context = { params: Promise<{ id: string }> };
 async function mutate(request: Request, { params }: Context, action: 'edit' | 'status' | 'delete') {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Mã tài khoản không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Mã tài khoản không hợp lệ.' }, { status: 400 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });

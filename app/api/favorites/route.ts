@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requestOrigin } from '@/lib/request-origin';
 
-const schema = z.object({ venue_id: z.string().uuid(), saved: z.boolean() });
+const schema = z.object({ venue_id: z.guid(), saved: z.boolean() });
 export async function POST(request: Request) {
   if (request.headers.get('origin') !== requestOrigin(request)) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 403 });
   const db = await createClient();

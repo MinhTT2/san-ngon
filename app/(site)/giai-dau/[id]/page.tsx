@@ -28,7 +28,7 @@ import { siteUrl } from '@/lib/site-url';
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }): Promise<Metadata> {
   const { id } = await params;
   if ((await searchParams).view) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
-  if (!z.string().uuid().safeParse(id).success) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
+  if (!z.guid().safeParse(id).success) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
   const db = await createClient();
   const { data } = await db.from('tournaments').select('title,sport,status,moderation_hidden,cover_path,starts_at,courts(venues(images))').eq('id', id).returns<(Pick<Tournament, 'title' | 'sport' | 'status' | 'moderation_hidden' | 'cover_path' | 'starts_at'> & { courts: { venues: { images: string[] } | null } | null })[]>().maybeSingle();
   if (!data || data.moderation_hidden || !['published', 'completed'].includes(data.status)) return { title: 'Chi tiết giải đấu', robots: { index: false, follow: false } };
@@ -45,7 +45,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
 const dateTime = (value: string) => `${dayLabel(new Date(value))} · ${hhmm(value)}`;
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) notFound();
+  if (!z.guid().safeParse(id).success) notFound();
   const { view: requestedView } = await searchParams;
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();

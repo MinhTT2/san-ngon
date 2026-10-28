@@ -23,7 +23,7 @@ async function session(flags) {
   await signIn(context, flags);
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(error.message));
-  await page.route('**/api/**', route => route.request().method() === 'GET' ? route.continue() : json(route, { error: 'Unmocked API write rejected' }, 403));
+  await page.route('**/api/**', route => route.request().method() === 'GET' || new URL(route.request().url()).pathname === '/api/bookings/quote' ? route.continue() : json(route, { error: 'Unmocked API write rejected' }, 403));
   await page.route('**/rest/v1/rpc/**', route => ['get_venue_availability'].includes(new URL(route.request().url()).pathname.split('/').at(-1)) ? route.continue() : json(route, { message: 'Unmocked browser RPC rejected' }, 403));
   return { context, page };
 }

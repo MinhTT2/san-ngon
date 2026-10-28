@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const codeSchema = z.string().regex(/^SAN[A-HJ-NP-Z2-9]{6}$/);
 const schema = z.object({
-  id: z.string().uuid(), amount: z.number().int().positive().max(2147483647),
+  id: z.guid(), amount: z.number().int().positive().max(2147483647),
   reference: z.string().trim().min(3).max(200),
   transferred_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
 });

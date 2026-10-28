@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requestOrigin } from '@/lib/request-origin';
 import { feedbackErrors } from '@/lib/feedback';
-const schema=z.object({id:z.string().uuid(),code:z.string().trim().toUpperCase().regex(/^SAN[A-HJ-NP-Z2-9]{6}$/),message:z.string().trim().min(20).max(3000),receipt_path:z.string().max(100).nullable().default(null)});
+const schema=z.object({id:z.guid(),code:z.string().trim().toUpperCase().regex(/^SAN[A-HJ-NP-Z2-9]{6}$/),message:z.string().trim().min(20).max(3000),receipt_path:z.string().max(100).nullable().default(null)});
 export async function POST(request:Request) {
   if(request.headers.get('origin')!==requestOrigin(request)) return NextResponse.json({error:'Yêu cầu không hợp lệ.'},{status:403});
   const db=await createClient();

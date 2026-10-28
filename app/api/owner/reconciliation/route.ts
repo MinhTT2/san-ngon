@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { reconciliationCsv,type ReconciliationRow } from '@/lib/reconciliation-csv';
-const schema=z.object({venue:z.string().uuid(),from:z.string().date(),to:z.string().date()});
+const schema=z.object({venue:z.guid(),from:z.string().date(),to:z.string().date()});
 export async function GET(request:Request){
  const headers={'Cache-Control':'private, no-store'};
  const parsed=schema.safeParse(Object.fromEntries(new URL(request.url).searchParams));

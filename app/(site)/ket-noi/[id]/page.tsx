@@ -7,7 +7,7 @@ import { SPORT_LABELS } from '@/lib/constants';
 import { skillLabels, type CommunityProfile } from '@/lib/community';
 import { UserAvatar } from '@/components/user-avatar';
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params; if (!z.string().uuid().safeParse(id).success) notFound();
+  const { id } = await params; if (!z.guid().safeParse(id).success) notFound();
   const db = await createClient(); const { data, error } = await db.rpc('get_community_profile',{ p_id: id });
   if (error) throw new Error('Chưa tải được hồ sơ.'); if (!data) notFound(); const p = data as CommunityProfile;
   return <main className="mx-auto max-w-5xl px-5 py-10 lg:py-14"><Link href="/ket-noi" className="inline-flex min-h-11 items-center text-sm font-semibold text-pitch">← Kết nối người chơi</Link>

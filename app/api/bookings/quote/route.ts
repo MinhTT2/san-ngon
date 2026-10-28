@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { bookingErrorMessage } from '@/lib/constants';
 
 const Body = z.object({
-  court_id: z.string().uuid(),
+  court_id: z.guid(),
   starts_at: z.string().datetime({ offset: true }),
   ends_at: z.string().datetime({ offset: true }),
 });

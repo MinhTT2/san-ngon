@@ -16,9 +16,9 @@ export const dynamic = 'force-dynamic';
  * "Invalid datetime" — không ai đặt được sân.
  */
 const Body = z.object({
-  request_id: z.string().uuid('Thông tin lần đặt không hợp lệ.').optional(),
-  request_user_id: z.string().uuid('Thông tin tài khoản không hợp lệ.').optional(),
-  court_id: z.string().uuid('Thông tin sân không hợp lệ.'),
+  request_id: z.guid('Thông tin lần đặt không hợp lệ.').optional(),
+  request_user_id: z.guid('Thông tin tài khoản không hợp lệ.').optional(),
+  court_id: z.guid('Thông tin sân không hợp lệ.'),
   starts_at: z.string().datetime({ offset: true, message: 'Giờ bắt đầu không hợp lệ.' }),
   ends_at: z.string().datetime({ offset: true, message: 'Giờ kết thúc không hợp lệ.' }),
   customer_name: z.string().trim().max(100, 'Tên người đặt không quá 100 ký tự.').optional(),

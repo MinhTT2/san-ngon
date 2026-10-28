@@ -10,12 +10,12 @@ export const feedbackSearchParams = z.object({
   trang: z.string().max(300).optional().catch(undefined),
 });
 export const feedbackSchema = z.object({
-  id: z.string().uuid(), category: z.enum(['bug', 'idea', 'support', 'report']),
+  id: z.guid(), category: z.enum(['bug', 'idea', 'support', 'report']),
   title: z.string().trim().min(5).max(120), message: z.string().trim().min(20).max(3000),
   page_path: z.string().max(300).refine(value => safeNext(value) === value && !/[?#]/.test(value)).nullable().default(null),
 });
 export const feedbackReviewSchema = z.object({
-  id: z.string().uuid(), status: z.enum(['new', 'reviewing', 'resolved', 'closed']),
+  id: z.guid(), status: z.enum(['new', 'reviewing', 'resolved', 'closed']),
   reply: z.string().trim().max(2000), updated_at: z.string().datetime({ offset: true }),
 }).refine(data => !['resolved', 'closed'].includes(data.status) || data.reply.length >= 5);
 export type Feedback = {

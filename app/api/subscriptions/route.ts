@@ -6,7 +6,7 @@ import { requestOrigin } from '@/lib/request-origin';
 
 const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('invoice') }),
-  z.object({ action: z.literal('set_fee'), owner_id: z.string().uuid(), required: z.boolean() }),
+  z.object({ action: z.literal('set_fee'), owner_id: z.guid(), required: z.boolean() }),
 ]);
 export async function POST(req: NextRequest) {
   if (req.headers.get('origin') !== requestOrigin(req)) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 403 });

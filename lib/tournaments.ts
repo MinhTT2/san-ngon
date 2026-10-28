@@ -12,7 +12,7 @@ const localTime = z.string().regex(/^(?!0000)\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3])
 export const tournamentSchema = z.object({
   cover_path: z.union([z.string().regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/), z.literal('')]).default(''),
   title: z.string().trim().min(3).max(150), description: z.string().trim().min(10).max(5000),
-  sport: sportSchema, court_id: z.union([z.string().uuid(), z.literal('')]), address: z.string().trim().min(5).max(300),
+  sport: sportSchema, court_id: z.union([z.guid(), z.literal('')]), address: z.string().trim().min(5).max(300),
   starts_at: localTime, ends_at: localTime, registration_deadline: localTime, payment_deadline: localTime, payment_hold_hours: z.coerce.number().int().min(1).max(72),
   capacity: z.coerce.number().int().min(2).max(1000), entry_fee: z.coerce.number().int().min(0).max(100000000),
   deposit_amount: z.coerce.number().int().min(0).max(100000000),
@@ -44,9 +44,9 @@ export function tournamentValidationErrors(issues: z.ZodIssue[]): Record<string,
     const field = String(issue.path.at(-1) ?? '');
     if (!formLabels[field] || errors[field]) continue;
     const label = formLabels[field];
-    errors[field] = issue.code === 'custom' || (field === 'phone' && issue.code === 'invalid_string') ? `${['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline'].includes(field) ? `${label}: ` : ''}${issue.message}`
-      : issue.code === 'too_small' ? `${label}: ${issue.type === 'string' ? `nhập ít nhất ${issue.minimum} ký tự sau khi bỏ khoảng trắng đầu/cuối` : `nhập số từ ${issue.minimum} trở lên`}.`
-      : issue.code === 'too_big' ? `${label}: ${issue.type === 'string' ? `tối đa ${issue.maximum} ký tự` : `không vượt quá ${issue.maximum}`}.`
+    errors[field] = issue.code === 'custom' || (field === 'phone' && issue.code === 'invalid_format') ? `${['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline'].includes(field) ? `${label}: ` : ''}${issue.message}`
+      : issue.code === 'too_small' ? `${label}: ${issue.origin === 'string' ? `nhập ít nhất ${issue.minimum} ký tự sau khi bỏ khoảng trắng đầu/cuối` : `nhập số từ ${issue.minimum} trở lên`}.`
+      : issue.code === 'too_big' ? `${label}: ${issue.origin === 'string' ? `tối đa ${issue.maximum} ký tự` : `không vượt quá ${issue.maximum}`}.`
       : ['starts_at', 'ends_at', 'registration_deadline', 'payment_deadline'].includes(field) ? `${label}: chọn đầy đủ ngày và giờ.`
       : `${label}: kiểm tra lại giá trị đã nhập.`;
   }

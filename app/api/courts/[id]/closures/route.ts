@@ -17,7 +17,7 @@ async function owner() {
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân không hợp lệ.' }, { status: 400 });
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   const { supabase, user } = await owner();
@@ -32,9 +32,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(id).success) return NextResponse.json({ error: 'Thông tin sân không hợp lệ.' }, { status: 400 });
   const closureId = new URL(request.url).searchParams.get('closure');
-  if (!z.string().uuid().safeParse(closureId).success) return NextResponse.json({ error: 'Thông tin ngày nghỉ không hợp lệ.' }, { status: 400 });
+  if (!z.guid().safeParse(closureId).success) return NextResponse.json({ error: 'Thông tin ngày nghỉ không hợp lệ.' }, { status: 400 });
   const { supabase, user } = await owner();
   if (!user) return NextResponse.json({ error: 'Bạn cần đăng nhập để mở lại lịch.' }, { status: 401 });
   const { error } = await supabase.rpc('reopen_court', { p_court_id: id, p_closure_id: closureId });
