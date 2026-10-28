@@ -18,7 +18,7 @@ if (account && (!/^\d{6,30}$/.test(account) || /^0+$/.test(account))) {
   missing.push('NEXT_PUBLIC_SEPAY_ACCOUNT (không hợp lệ)');
 }
 console.log('Demo chỉ nhận đơn cho một chủ sân trong booking_operator; đối chiếu ngân hàng, số tài khoản và tên người nhận trước khi nhận tiền thật.');
-console.log('NEXT_PUBLIC_SEPAY_BANK phải khớp gateway trong payload SePay. OAuth nhiều chủ sân chỉ triển khai sau khi SePay duyệt ứng dụng.');
+console.log('NEXT_PUBLIC_SEPAY_BANK phải khớp gateway trong payload SePay. SePay đã duyệt OAuth; chỉ mở nhiều chủ sân sau khi nghiệm thu kết nối và chuyển khoản thật.');
 const telegram = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOT_USERNAME', 'TELEGRAM_WEBHOOK_SECRET'];
 const missingTelegram = telegram.filter((name) => !present(name));
 if (missingTelegram.length) console.log(`Telegram chưa sẵn sàng: ${missingTelegram.join(', ')}`);

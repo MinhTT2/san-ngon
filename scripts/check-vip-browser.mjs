@@ -7,10 +7,10 @@ assert(['localhost', '127.0.0.1'].includes(new URL(origin).hostname));
 const output = process.env.UX_SCREENSHOT_DIR;
 if (output) await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_EXECUTABLE ? { executablePath: process.env.CHROMIUM_EXECUTABLE } : {}) });
-async function signIn(context, state, role = 'owner') {
+async function signIn(context, state, role = 'owner', failure = '') {
   const id = role === 'admin' ? 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' : 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   const exp = Math.floor(Date.now() / 1000) + 3600, b64 = v => Buffer.from(JSON.stringify(v)).toString('base64url');
-  const token = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: id, exp, aud: 'authenticated', role: 'authenticated', fixture_role: role, fixture_vip: state })}.fixture`;
+  const token = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: id, exp, aud: 'authenticated', role: 'authenticated', fixture_role: role, fixture_vip: state, fixture_read_failure: failure })}.fixture`;
   await context.addCookies([{ name: 'sb-127-auth-token', url: origin, sameSite: 'Lax', value: `base64-${b64({ access_token: token, refresh_token: 'fixture', expires_at: exp, expires_in: 3600, token_type: 'bearer', user: { id } })}` }]);
 }
 try {
@@ -20,7 +20,7 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     await page.route('https://qr.sepay.vn/**', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="white"/></svg>' }));
     await page.route('**/api/vip', async route => {
-      writes.push({ method: route.request().method(), body: route.request().postDataJSON() });
+      writes.push({ method: route.request().method(), body: route.request().postData() ? route.request().postDataJSON() : null });
       await signIn(context, route.request().method() === 'POST' ? 'awaiting_payment' : 'pending');
       await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
     });
@@ -86,8 +86,36 @@ try {
     await page.getByRole('alert').filter({ hasText: 'Giao dịch đã dùng' }).waitFor();
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     if (output) await page.screenshot({ path: `${output}/vip-admin-${width}.png`, fullPage: true });
+    await page.getByRole('link', { name: 'Đã mua VIP', exact: true }).click();
+    await page.getByText('23 lượt mua / gia hạn đã duyệt', { exact: false }).waitFor();
+    assert.equal(await page.locator('main article').count(), 20);
+    assert.equal(await page.getByText('Đã duyệt · 49.000đ', { exact: true }).count(), 20);
+    assert.match(await page.locator('main').innerText(), /2026-08-01.*2026-09-01/);
+    await page.getByRole('link', { name: 'Trang sau', exact: true }).click();
+    await page.getByRole('link', { name: 'Trang trước', exact: true }).waitFor();
+    assert.equal(await page.locator('main article').count(), 3);
+    for (const status of ['pending', 'approved', 'history']) {
+      const response = await page.goto(`${origin}/admin/vip?status=${status}&page=99999`);
+      assert.equal(response.status(), 200, 'stale VIP ranges recover from PostgREST 416');
+      await page.getByRole('heading', { name: 'Duyệt mua VIP', exact: true }).waitFor();
+      assert.equal(await page.locator('main article').count(), status === 'pending' ? 1 : 20);
+      assert.equal(await page.getByRole('link', { name: 'Trang trước', exact: true }).count(), 0);
+    }
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
+    // Real query/auth failures must reach the retry boundary, never look empty or redirect home.
+    for (const failure of ['vip_purchases', 'is_admin']) {
+      await signIn(context, '', 'admin', failure);
+      await page.goto(`${origin}/admin/vip?status=approved&page=99999`);
+      await page.getByRole('button', { name: 'Thử lại', exact: true }).waitFor();
+      assert.equal(new URL(page.url()).pathname, '/admin/vip');
+      assert.equal(await page.getByText('Chưa có lượt mua VIP được duyệt.', { exact: true }).count(), 0);
+    }
+    await context.clearCookies();
+    await page.goto(`${origin}/vip`);
+    await page.waitForURL(url => url.pathname === '/dang-nhap');
+    assert.equal(new URL(page.url()).searchParams.get('next'), '/vip');
     await context.close();
   }
-  console.log('OK: VIP QR receiver/price, pending review, discounted booking and admin verification on desktop/mobile.');
+  console.log('OK: VIP QR, approval, discount, renewal, history, stale pagination, read/auth failures and anonymous redirect on desktop/mobile.');
 } finally { await browser.close(); }

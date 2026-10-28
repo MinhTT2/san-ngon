@@ -13,7 +13,7 @@ export const MAX_PENDING = 2;
 
 /**
  * Thời hạn báo hủy để được hoàn cọc, tính bằng giờ.
- * TODO ngày 18/09: hỏi ba chủ sân rồi chốt. 2 tiếng chỉ là chỗ giữ tạm.
+ * Chốt ngày 09/10/2026. SQL đóng băng chính sách vào từng đơn mới.
  */
 export const CANCEL_WINDOW_HOURS = 2;
 

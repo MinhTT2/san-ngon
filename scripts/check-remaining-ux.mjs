@@ -12,7 +12,7 @@ async function session(width,extra={}){
  const exp=Math.floor(Date.now()/1000)+3600,b64=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
  const token=b64({alg:'HS256',typ:'JWT'})+'.'+b64({sub:id,exp,aud:'authenticated',role:'authenticated',fixture_role:'owner',...extra})+'.fixture';
  await context.addCookies([{name:'sb-127-auth-token',value:'base64-'+b64({access_token:token,refresh_token:'fixture',expires_at:exp,expires_in:3600,token_type:'bearer',user:{id}}),url:origin,sameSite:'Lax'}]);
- const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
+ const page=await context.newPage();page.on('pageerror',error=>errors.push(`${page.url()}: ${error.message}`));
  return {context,page};
 }
 async function fit(page,label){await page.evaluate(()=>document.fonts.ready);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),label+': no overflow');}

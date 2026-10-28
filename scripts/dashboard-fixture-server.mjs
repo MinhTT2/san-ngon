@@ -59,6 +59,14 @@ const notifications = [adminId, ownerId].flatMap(user_id => [
   { id: `${user_id.slice(0, 8)}-3333-4333-8333-333333333333`, user_id, title: 'Hồ sơ chủ sân đã được duyệt', body: 'Bạn có thể tạo cụm sân và bổ sung ảnh thật để bắt đầu nhận đặt sân.', created_at: '2026-10-01T03:00:00Z', read_at: '2026-10-01T04:00:00Z', booking_id: null, booking: null, tournament_id: null },
 ]);
 const tables = { profiles: people, venues, courts: [court], bookings, subscription_receiver: [{ bank: 'MB', account_number: '0987654321', account_name: 'SAN NGON' }], subscription_invoices: [invoice], subscription_payment_events: [{ transaction_key: 'fixture-tx', invoice_id: invoice.id, amount: 299000, created_at: created, outcome: 'paid', subscription_invoices: { code: invoice.code, owner_id: ownerId } }], feedback, tournaments, notifications, venue_favorites: [] };
+const vipPurchase = { id: 'f2500000-0000-4000-8000-000000000001', user_id: ownerId, code: 'VIPABCDEF123456', amount: 49000,
+  bank: 'MBBank', account_number: '0691920022005', account_name: 'NGUYEN DANG NGUYEN', status: 'pending',
+  created_at: created, submitted_at: created, review_due_at: future, reviewed_at: null, period_start: null, period_end: null,
+  rejection_reason: null, profiles: { full_name: 'Người mua VIP kiểm thử', phone: '0901234567' } };
+tables.vip_purchases = [vipPurchase, ...Array.from({ length: 23 }, (_, i) => ({ ...vipPurchase,
+  id: `f2500000-0000-4000-8000-${String(i + 2).padStart(12, '0')}`, code: `VIP${(i + 1).toString(16).toUpperCase().padStart(12, '0')}`,
+  status: 'approved', reviewed_at: created, period_start: '2026-08-01T03:00:00Z', period_end: '2026-09-01T03:00:00Z',
+})), { ...vipPurchase, id: 'f2500000-0000-4000-8000-000000000099', code: 'VIP000000000099', status: 'rejected', reviewed_at: created, rejection_reason: 'Chưa nhận được khoản chuyển đúng mã.' }];
 const server = createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', '*');
@@ -103,7 +111,7 @@ const server = createServer(async (req, res) => {
     (readFailure === 'home-count' && url.pathname === '/rest/v1/courts' && req.method === 'HEAD') ||
     (readFailure === 'featured' && url.pathname === '/rest/v1/venues' && selection === 'id,slug,name')
   );
-  if (failedRead || (readFailure === 'tournaments' && url.pathname === '/rest/v1/tournaments')) { send({ code: 'FIXTURE_READ_ERROR', message: 'Read interrupted in isolated fixture' }, 503); return; }
+  if (failedRead || (['tournaments', 'vip_purchases'].includes(readFailure) && url.pathname === `/rest/v1/${readFailure}`)) { send({ code: 'FIXTURE_READ_ERROR', message: 'Read interrupted in isolated fixture' }, 503); return; }
   if (url.pathname.startsWith('/storage/')) {
     if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture storage is read-only.' }, 403); return; }
     try { res.setHeader('Content-Type', 'image/webp'); res.end(await readFile(new URL('../public/media/badminton-editorial.webp', import.meta.url))); } catch { res.statusCode = 404; res.end(); }
@@ -292,12 +300,6 @@ const server = createServer(async (req, res) => {
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') { send({ message: 'Fixture is read-only.' }, 403); return; }
   const table = url.pathname.split('/').at(-1);
-  if (table==='vip_purchases') {
-    res.setHeader('Content-Range','0-0/1');
-    send([{id:'f2500000-0000-4000-8000-000000000001',user_id:ownerId,code:'VIPABCDEF123456',amount:49000,
-      bank:'MBBank',account_number:'0691920022005',account_name:'NGUYEN DANG NGUYEN',status:'pending',
-      created_at:created,submitted_at:created,review_due_at:future,profiles:{full_name:'Người mua VIP kiểm thử',phone:'0901234567'}}]);return;
-  }
   if (table === 'bookings' && url.searchParams.has('code')) {
     const b=checkoutBookings[url.searchParams.get('code').replace(/^eq\./,'')];
     send(b && bookingSnapshot ? {...b,court_name_snapshot:'Sân con lúc đặt',venue_name_snapshot:'Cụm sân lúc đặt',venue_address_snapshot:'12 Địa chỉ lúc đặt',courts:{...b.courts,name:'Sân con mới',venues:{...b.courts.venues,name:'Cụm sân mới',address:'34 Địa chỉ mới'}}} : b ?? null); return;
@@ -324,7 +326,7 @@ const server = createServer(async (req, res) => {
     if (value?.startsWith('in.(') && value.endsWith(')')) rows = rows.filter(row => value.slice(4, -1).split(',').includes(String(row[field])));
   }
   const count = rows.length;
-  if (table === 'tournaments' && url.searchParams.has('offset')) {
+  if (['tournaments', 'vip_purchases'].includes(table) && url.searchParams.has('offset')) {
     const offset=Number(url.searchParams.get('offset'));
     if(offset>0 && offset>=count){res.setHeader('Content-Range',`*/${count}`);send({code:'PGRST103',message:'Requested range not satisfiable'},416);return;}
     rows=rows.slice(offset);

@@ -12,14 +12,22 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect('/dang-nhap?next=/admin/vip');
-  const { data: admin } = await db.rpc('is_admin');
+  const { data: admin, error: authError } = await db.rpc('is_admin');
+  if (authError) throw new Error('Không kiểm tra được quyền quản trị. Vui lòng thử lại.');
   if (!admin) redirect('/');
   const params = await searchParams;
   const status = params.status === 'history' || params.status === 'approved' ? params.status : 'pending';
-  const page = Math.max(1, Math.min(100000, Number.parseInt(params.page ?? '1') || 1));
-  const { data, count, error } = await db.from('vip_purchases').select('*,profiles(full_name,phone)', { count: 'exact' })
+  let page = Math.max(1, Math.min(100000, Number.parseInt(params.page ?? '1') || 1));
+  const query = db.from('vip_purchases').select('*,profiles(full_name,phone)', { count: 'exact' })
     .in('status', status === 'pending' ? ['pending'] : status === 'approved' ? ['approved'] : ['approved', 'rejected'])
-    .order(status === 'pending' ? 'submitted_at' : 'reviewed_at', { ascending: status === 'pending' }).order('id').range((page - 1) * 20, page * 20 - 1);
+    .order(status === 'pending' ? 'submitted_at' : 'reviewed_at', { ascending: status === 'pending' }).order('id');
+  let result = await query.range((page - 1) * 20, page * 20 - 1);
+  // A reviewed request can disappear from the queue while an old page URL is open.
+  if (result.error?.code === 'PGRST103' && page > 1) {
+    page = 1;
+    result = await query.range(0, 19);
+  }
+  const { data, count, error } = result;
   if (error) throw new Error('Chưa tải được yêu cầu mua VIP. Vui lòng thử lại.');
   const rows = data as (VipPurchase & { reviewed_at: string | null; period_start: string | null; profiles: { full_name: string | null; phone: string | null } | null })[];
   const href = (p: number) => `/admin/vip?status=${status}&page=${p}`;

@@ -86,7 +86,7 @@ Webhook dùng API key để xác thực. Hệ thống kiểm tra mã đơn `SANx
 
 **Phạm vi demo mặc định chỉ mở nhận đơn cho một chủ sân.** Kết nối OAuth đã có trong code; cờ `multi_owner_enabled` chỉ được bật sau khi nghiệm thu OAuth, QR và chuyển khoản thật. Chủ sân demo tiếp tục dùng cấu hình cũ cho đến khi hoàn tất kết nối OAuth; webhook cũ được giữ để đối soát các đơn cũ. Xem [hướng dẫn SePay hiện hành](docs/sepay-single-owner.md) để cấu hình và chuyển đổi.
 
-Hoàn tiền thực hiện thủ công. Chính sách hiện dùng mốc hủy trước giờ chơi từ **hai giờ** trở lên để xét hoàn cọc; mốc này còn chờ thống nhất với chủ sân. Chủ sân hủy đơn của khách thì khách được hoàn. Về trang chủ hoặc đóng checkout không hủy giữ chỗ; nút hủy giúp trả lịch ngay.
+Hoàn tiền thực hiện thủ công. Chính sách chốt ngày 09/10/2026 dùng mốc hủy trước giờ chơi từ **hai giờ** trở lên để xét hoàn cọc; chủ sân hoàn trong **ba ngày làm việc** sau khi đủ thông tin đối soát. Đơn giữ chính sách đã lưu lúc đặt. Chủ sân hủy đơn của khách thì khách được hoàn. Về trang chủ hoặc đóng checkout không hủy giữ chỗ; nút hủy giúp trả lịch ngay.
 
 ### Phí sử dụng website
 
@@ -183,4 +183,5 @@ Bản đồ, đánh giá sao, tìm đối ghép kèo, ví nội bộ, hoàn ti�
 | [SePay: cấu hình, OAuth và nghiệm thu](docs/sepay-single-owner.md) | Người thiết lập và đối soát thanh toán |
 | [Phí dịch vụ chủ sân](docs/owner-subscriptions.md) | Người vận hành tính năng thu phí tháng |
 | [Checklist nghiệm thu MVP](docs/mvp-acceptance.md) | Người kiểm tra luồng thực tế trước khi đưa vào sử dụng |
+| [Rà soát và phát triển tiếp ngày 28/10](docs/project-review-2026-10-28.md) | Các phát hiện mới, bản vá, hiện trạng production và thứ tự xử lý tiếp |
 | [Nguyên tắc phát triển](AGENTS.md) | Người tiếp tục phát triển hoặc bảo trì dự án |
