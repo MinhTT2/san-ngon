@@ -22,6 +22,11 @@ quản trị: hàm vẫn phải kiểm vai trò ở SQL. Trigger vốn không th
 như hàm SQL thường; bỏ EXECUTE là thu hẹp quyền thừa, không phải khẳng định
 đã có cách gọi trực tiếp để vượt nghiệp vụ.
 
+Khi thêm RPC cần đăng nhập, thu hồi cả PUBLIC **và anon**, rồi cấp EXECUTE
+cho authenticated; chỉ thu hồi PUBLIC chưa đủ nếu anon có grant riêng.
+RPC ghi phải tiếp tục kiểm session/vai trò/phạm vi trong SQL. Thêm chữ ký
+vào bộ kiểm tra quyền theo nhóm; không chỉ dựa vào nút bị ẩn ở giao diện.
+
 ## Kiểm kê và sao lưu
 
 `scripts/inspect-rpc-security.sql` chỉ đọc catalog: chữ ký hàm ứng dụng,

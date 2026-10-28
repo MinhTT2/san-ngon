@@ -40,6 +40,36 @@ phiên bản ở hai phía tại thời điểm đối chiếu.
    hợp đồng schema và tham số URL. Đồng bộ mô tả chính sách hủy đã chốt và
    thông tin OAuth trong tài liệu/công cụ thiết lập.
 
+## Đợt tiếp theo: quyền RPC và search_path
+
+Đã triển khai migration `20261028000200_rpc_security_boundaries.sql` lên
+production sau khi kiểm thử database riêng và đối chiếu đúng project:
+
+- Khóa `search_path = pg_catalog` cho 3 helper; slug gọi rõ
+  `public.unaccent_vi`, giữ kết quả và các grant đang có.
+- Thu hồi quyền anonymous của 8 RPC cần đăng nhập về hồ sơ chủ sân,
+  CRUD cụm/sân con và thống kê. Giữ authenticated và kiểm quyền SQL bên trong.
+- Thu hồi quyền browser của 10 trigger còn mở; trigger Auth, chống ghi
+  khi bị cấm, kiểm sân và thông báo vẫn hoạt động qua luồng nghiệp vụ.
+- Kiểm kê 168 hàm ứng dụng trước/sau: số hàm anon gọi được giảm **33 → 17**;
+  trigger mở browser **10 → 0**; hàm thiếu search_path **3 → 0**. Giữ các
+  RPC công khai, helper RLS, Telegram, webhook và worker theo thiết kế.
+- Sao lưu định nghĩa/ACL đúng **21 hàm** trước áp dụng, lưu riêng ngoài Git
+  tại `~/.local/state/san-ngon/backups/20261028-rpc-security/`. Đối chiếu lại
+  bản sao lưu và 95 phiên bản migration trước khi push DB; sau áp dụng có
+  96 migrations. Không đổi dữ liệu giao dịch hoặc các cờ vận hành.
+- [SQL CI](https://github.com/MinhTT2/san-ngon/actions/runs/40670655046)
+  dựng đủ 96 migrations, chạy **23 bộ SQL rollback và kiểm tra hai kết nối
+  đặt trùng qua GiST**, tất cả đạt. Lượt đầu lỗi alias trong bài kiểm tra,
+  đã sửa trước khi chạy lại và triển khai. Lint/typecheck/build local đạt.
+  Phần kiểm quyền/catalog sau deploy chạy trong transaction read-only đạt;
+  không tạo fixture khách trên production.
+- [CI đợt trước](https://github.com/MinhTT2/san-ngon/actions/runs/40669216543)
+  đã hoàn tất xanh cả code và 40 bộ browser. Đợt này không sửa giao diện.
+
+Xem [phạm vi quyền, sao lưu và kiểm chứng](rpc-security.md). Bản sao lưu
+hàm này không thay thế backup toàn hệ thống hay diễn tập khôi phục.
+
 ## Hiện trạng vận hành đọc lúc khoảng 16:40 ngày 28/10 (giờ Việt Nam)
 
 - Cron giữ chỗ, hoàn tất buổi chơi, hạn giải, gửi thông báo và giám sát đều
@@ -64,7 +94,7 @@ phiên bản ở hai phía tại thời điểm đối chiếu.
 | Ưu tiên | Việc | Tiêu chí hoàn tất |
 | --- | --- | --- |
 | P1 | Xử lý email lỗi và giao dịch tồn | Xác định nguyên nhân nhà cung cấp, nghiệm thu thư thật và đối soát ngân hàng; chỉ retry khi đủ căn cứ |
-| P1 | Kiểm quyền RPC và `search_path` | Phân loại hàm công khai/hàm nội bộ, khóa đường tìm tên của 3 helper, thu hồi quyền thừa qua migration có rollback test; không làm hỏng tìm sân anonymous/Telegram |
+| P1 — đã xử lý một đợt | Kiểm quyền RPC và `search_path` | Đã khóa 3 helper, thu hẹp 8 RPC và 10 trigger; tiếp tục rà nội dung kiểm quyền từng RPC khi thay đổi nghiệp vụ, giữ kiểm tra hồi quy |
 | P1 | Vá công cụ phát triển/triển khai | Audit toàn cây còn 35 cảnh báo sau đợt vá, chủ yếu Vercel CLI và dependency; chọn bản tương thích và kiểm thử CLI, không ép `audit fix --force` |
 | P1 | Backup và diễn tập khôi phục | Khôi phục DB, Storage và khóa AES trên môi trường riêng; ghi thời gian, phạm vi và bằng chứng |
 | P2 | Tối ưu truy vấn/RLS theo số đo | EXPLAIN và đo trước/sau; giữ nguyên phạm vi quyền, không bỏ GiST hay gom logic tiền vào TypeScript |

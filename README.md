@@ -184,4 +184,5 @@ Bản đồ, đánh giá sao, tìm đối ghép kèo, ví nội bộ, hoàn ti�
 | [Phí dịch vụ chủ sân](docs/owner-subscriptions.md) | Người vận hành tính năng thu phí tháng |
 | [Checklist nghiệm thu MVP](docs/mvp-acceptance.md) | Người kiểm tra luồng thực tế trước khi đưa vào sử dụng |
 | [Rà soát và phát triển tiếp ngày 28/10](docs/project-review-2026-10-28.md) | Các phát hiện mới, bản vá, hiện trạng production và thứ tự xử lý tiếp |
+| [Quyền RPC và khôi phục hàm](docs/rpc-security.md) | Ranh giới public/đăng nhập/worker, kiểm kê và bản sao lưu trước migration |
 | [Nguyên tắc phát triển](AGENTS.md) | Người tiếp tục phát triển hoặc bảo trì dự án |
