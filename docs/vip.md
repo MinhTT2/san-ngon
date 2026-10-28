@@ -32,6 +32,24 @@ các kỳ đã hết hạn; mỗi lượt mua/gia hạn là một dòng, phân t
 Admin có thể tắt ưu đãi tại `/admin/users`; việc tắt không thay đổi giá đơn cũ
 và không tự hoàn tiền mua VIP.
 
+Tổng quan `/admin` có mục **Tổng tiền VIP**: tiền và số lượt đã duyệt trong
+kỳ 7/30/90 ngày (theo `reviewed_at` ở giờ Việt Nam), tổng từ trước đến nay,
+và số tài khoản VIP còn hiệu lực tại lúc đọc. Chỉ cộng các lượt có
+`vip_purchases.status = 'approved'`; gia hạn tính một lượt riêng, không cộng yêu cầu chờ/từ chối.
+Kỳ hết hạn hoặc tắt ưu đãi vẫn giữ tiền đã duyệt. Khoản này không cộng vào
+doanh thu đặt sân. Liên kết từ tổng quan mở lịch sử mua hoặc lọc tài khoản
+VIP còn hiệu lực tại `/admin/users?status=vip`.
+
+Mỗi tài khoản có số lượt và tiền VIP đã duyệt từ trước đến nay. Số đơn gồm
+cả lịch sử hủy; số đơn đã xác nhận/hoàn tất và thời lượng sân dùng cùng
+nhóm đơn. SQL tổng hợp mua VIP và đơn riêng, tránh nhân đôi do gia hạn.
+Thời gian web trả thêm `usage_milliseconds` từ số đo `numeric(18,3)` đang
+lưu, giờ sân trả `booked_milliseconds`; giao diện giữ phần giây/mili giây.
+Sắp xếp thời gian và ngưỡng trên 5 phút dùng số chính xác thay vì giây bị
+cắt. Số đo web vẫn là ước lượng bằng heartbeat hiện có; việc hiển thị thêm
+chữ số không khôi phục thời gian chưa được ghi nhận. Không sửa số đo hoặc
+trộn thời lượng mô phỏng vào thời lượng thực tế.
+
 ## Quy tắc dữ liệu
 
 SQL tính tháng lịch trong `Asia/Ho_Chi_Minh` từ lúc duyệt. Gia hạn khi còn hiệu

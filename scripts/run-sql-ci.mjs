@@ -9,7 +9,7 @@ const preflight = process.argv.includes('--preflight');
 if (!preflight && (process.env.CI !== 'true' || process.platform !== 'linux')) throw new Error('SQL stack runs only in isolated Linux CI. Local development stays remote-only.');
 const files = execFileSync('git', ['ls-files', '-z', 'supabase/migrations/*.sql'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
 if (!files.length || files.some(file => !/^supabase\/migrations\/\d+_[a-z0-9_]+\.sql$/.test(file))) throw new Error('Invalid tracked migration inventory');
-const checks = ['vip-booking','booking-holds','booking-input-guards','booking-policy','booking-details-snapshot','booking-refunds','sepay-registration','owner-subscriptions','tournaments','community','profile','owner-review-reasons','incoming-transfers','notification-delivery','operations-audit','operational-health','cash-report','booking-conversion','content-moderation','personal-data','user-activity-simulations'];
+const checks = ['admin-vip-reporting','vip-booking','booking-holds','booking-input-guards','booking-policy','booking-details-snapshot','booking-refunds','sepay-registration','owner-subscriptions','tournaments','community','profile','owner-review-reasons','incoming-transfers','notification-delivery','operations-audit','operational-health','cash-report','booking-conversion','content-moderation','personal-data','user-activity-simulations'];
 for (const name of checks) {
   const sql = await readFile(join(root, `scripts/check-${name}.sql`), 'utf8');
   if (!/\bbegin;/.test(sql) || !/rollback;\s*$/.test(sql)) throw new Error(`Rollback check required: ${name}`);

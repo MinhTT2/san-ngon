@@ -22,6 +22,7 @@ export type OwnerStats = {
 };
 
 export type AdminStats = {
+  vip: { revenue: number; purchases: number; total_revenue: number; total_purchases: number; active_users: number } | null;
   from: string;
   to: string;
   summary: OwnerStats['summary'] & {
@@ -73,6 +74,10 @@ export function parseAdminStats(value: unknown): AdminStats {
   const raw = row.summary && typeof row.summary === 'object' ? row.summary as Record<string, unknown> : {};
   return {
     ...owner,
+    vip: row.vip && typeof row.vip === 'object' ? (() => {
+      const vip = row.vip as Record<string, unknown>;
+      return { revenue: n(vip.revenue), purchases: n(vip.purchases), total_revenue: n(vip.total_revenue), total_purchases: n(vip.total_purchases), active_users: n(vip.active_users) };
+    })() : null,
     summary: {
       ...owner.summary,
       active_venues: n(raw.active_venues), active_courts: n(raw.active_courts), players: n(raw.players), owners: n(raw.owners),

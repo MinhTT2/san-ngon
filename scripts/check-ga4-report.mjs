@@ -103,7 +103,10 @@ try {
   assert.deepEqual(await getGa4Report(90), { status: 'unavailable' });
   assert.deepEqual(await getGa4Realtime(), { status: 'unavailable' });
   assert.equal(usageDuration(null), 'Chưa ghi nhận'); assert.equal(usageDuration(0), '0 giây');
-  assert.equal(usageDuration(125), '2 phút');
+  assert.equal(usageDuration(125), '2 phút 5 giây');
+  assert.equal(usageDuration(300.001), '5 phút 0,001 giây');
+  assert.equal(usageDuration(3599.999), '59 phút 59,999 giây');
+  assert.equal(usageDuration(3600.123), '1 giờ 0 phút 0,123 giây');
   console.log('PASS: GA4 JWT, 7/30/90-day comparison windows, batching/API limits, all breakdowns, realtime, privacy filtering, empty/partial/threshold/quota/permission/malformed/timeout states. No external requests.');
 } finally {
   globalThis.fetch = savedFetch;

@@ -71,6 +71,10 @@ try {
   await page.setViewportSize({ width: 1440, height: 700 });
   await page.goto(`${origin}/admin`);
   await page.locator('h1').waitFor(); await page.waitForTimeout(650);
+  const vipTotals = page.getByRole('region', { name: 'Tổng tiền VIP', exact: true });
+  await vipTotals.getByText('98.000đ', { exact: true }).waitFor();
+  await vipTotals.getByText('147.000đ', { exact: true }).waitFor();
+  assert.equal(await vipTotals.getByRole('link', { name: 'Xem tài khoản VIP', exact: true }).getAttribute('href'), '/admin/users?status=vip');
   const chart = page.getByRole('region', { name: 'Doanh thu theo ngày', exact: true }).locator('.pf-chart-bar').first();
   assert.equal(await chart.evaluate(element => element.closest('section').hasAttribute('data-motion-seen')), false, 'Offscreen charts wait for the scroll');
   await page.getByRole('heading', { name: 'Doanh thu theo ngày' }).scrollIntoViewIfNeeded();
@@ -144,6 +148,14 @@ try {
   assert.match(await page.locator('article').first().innerText(), /Nguyễn Minh/);
   await page.getByText('Đơn đặt sân: 3 đơn', { exact: true }).waitFor();
   await page.getByText('Thời lượng sân đã xác nhận: 3 giờ 0 phút', { exact: true }).waitFor();
+  await page.getByText('Thời gian sử dụng web: 1 phút 30,123 giây', { exact: true }).waitFor();
+  await page.getByText('Đã xác nhận / hoàn tất: 2 đơn', { exact: true }).waitFor();
+  await page.getByText('Tiền mua / gia hạn VIP đã duyệt: 147.000đ · 3 lượt', { exact: true }).waitFor();
+  await accountStatus.selectOption('vip');
+  await page.waitForURL(url => url.searchParams.get('status') === 'vip');
+  assert.equal(await page.locator('article').count(), 1, 'VIP filter shows currently active VIP only');
+  await accountStatus.selectOption('all');
+  await page.waitForURL(url => !url.searchParams.has('status'));
   await usageSort.selectOption('hours_desc');
   await page.waitForURL(url => url.searchParams.get('sort') === 'hours_desc');
   assert.match(await page.locator('article').first().innerText(), /Nguyễn Minh/);

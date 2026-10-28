@@ -37,7 +37,8 @@ const tournaments = [pendingTournament, { ...pendingTournament, id: 'eeeeeeee-ee
 const summary = { bookings: 18, paid_bookings: 16, revenue: 3200000, deposit: 3200000, cancelled: 1, pending: 2, capacity_hours: 280, booked_hours: 48, occupancy_pct: 17.1, cancellation_pct: 5.6, active_venues: 1, active_courts: 1, players: 23, owners: 1, new_players: 4, pending_bookings: 2, pending_owners: 22, pending_venues: 1 };
 const stats = { from: '2026-09-09', to: '2026-10-08', summary, daily: Array.from({ length: 30 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, revenue: i % 3 ? i * 10000 : 0, bookings: 2, playing_bookings: i === 3 ? 7 : i === 4 ? 10 : 0 })), activity_venues: [{ name: venues[0].name, district: venues[0].district, playing_bookings: 17, bookings: 0, revenue: 0 }], courts: [{ name: court.name, hours: 48, bookings: 18, revenue: 3200000 }], venues: [{ name: venues[0].name, district: 'Cầu Giấy', bookings: 18, revenue: 3200000 }] };
 const feedback = [{ id: 'feedback-1', category: 'bug', title: 'Cần hỗ trợ chọn lịch', message: 'Tôi muốn xem lịch ở một ngày khác.', page_path: '/tim-san', status: 'new', reply: null, created_at: created, updated_at: created, sender: { full_name: 'Lê Hải' } }];
-const users = people.slice(0, 5).map((p, i) => ({ ...p, email: `test${i}@example.invalid`, booking_count: [0,3,1,1,0][i], booked_minutes: [0,180,60,0,0][i], usage_seconds: [null,90,420,0,0][i], is_simulated_account: i === 1, simulation_usage_seconds: i === 0 ? 420 : null, is_banned: i === 3, banned_until: i === 3 ? 'infinity' : null, ban_reason: i === 3 ? 'Tài khoản kiểm tra' : null }));
+stats.vip = { revenue: 98000, purchases: 2, total_revenue: 147000, total_purchases: 3, active_users: 1 };
+const users = people.slice(0, 5).map((p, i) => ({ ...p, email: `test${i}@example.invalid`, is_vip: i === 1, vip_purchase_count: i === 1 ? 3 : 0, vip_purchase_total: i === 1 ? 147000 : 0, booking_count: [0,3,1,1,0][i], confirmed_booking_count: [0,2,1,0,0][i], booked_minutes: [0,180,60,0,0][i], booked_milliseconds: [0,10800000,3600000,0,0][i], usage_seconds: [null,90,420,0,0][i], usage_milliseconds: [null,90123,420999,0,0][i], is_simulated_account: i === 1, simulation_usage_seconds: i === 0 ? 420 : null, is_banned: i === 3, banned_until: i === 3 ? 'infinity' : null, ban_reason: i === 3 ? 'Tài khoản kiểm tra' : null }));
 const publicVenues = [{ ...venues[0], court_count: 3, sports: ['badminton'], available_slots: 18, min_price: 100000, next_slot: future }];
 const additionalVenues = Array.from({ length: 20 }, (_, i) => ({
   ...venues[0], id: `cccccccc-cccc-4ccc-8ccc-${String(i + 2).padStart(12, '0')}`,
@@ -275,6 +276,8 @@ const server = createServer(async (req, res) => {
     if (!(name in rpc)) { send({ message: `Fixture rejects unknown RPC ${name}` }, 403); return; }
     if (name === 'admin_list_users') {
       const list = rpc.admin_list_users;
+      if (args.p_status === 'vip') list.users = users.filter(user => user.is_vip);
+      list.total = list.users.length;
       list.simulation_total = list.users.filter(user => user.is_simulated_account).length;
       list.bookers = list.users.filter(user => user.booking_count > 0).length;
       list.booking_total = list.users.reduce((sum,user) => sum + user.booking_count,0);

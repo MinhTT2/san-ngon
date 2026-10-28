@@ -29,6 +29,11 @@ export function adminUserError(raw: string) {
 export type AdminUser = {
   is_vip: boolean;
   booked_minutes: number;
+  booked_milliseconds?: number;
+  confirmed_booking_count?: number;
+  usage_milliseconds?: number | null;
+  vip_purchase_total?: number;
+  vip_purchase_count?: number;
   booking_count?: number;
   id: string; full_name: string | null; phone: string | null; email: string | null;
   role: 'player' | 'owner' | 'admin'; created_at: string;
