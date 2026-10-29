@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { mkdir } from 'node:fs/promises';
 const origin = process.argv[2];
 assert(['localhost', '127.0.0.1'].includes(new URL(origin).hostname));
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_EXECUTABLE ? { executablePath: process.env.CHROMIUM_EXECUTABLE } : {}) });
