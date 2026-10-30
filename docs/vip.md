@@ -7,7 +7,7 @@ Không giảm phí giải đấu hoặc phí website của chủ sân.
 ## Người chơi
 
 Mở **Mua tài khoản VIP** trong menu tài khoản hoặc `/vip`, tạo yêu cầu để
-nhận QR riêng. QR dùng MBBank, số 0691920022005, tên NGUYEN DANG NGUYEN.
+nhận QR riêng. QR dùng TPBank, số 03411092005, tên HOANG DINH LAM.
 Chuyển đúng 49.000đ và nội dung `VIP` + 12 ký tự hex rồi bấm đã chuyển khoản.
 Một người chỉ có một yêu cầu chưa hoàn tất; tải lại/bấm lại không tạo yêu cầu mới.
 

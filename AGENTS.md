@@ -21,7 +21,7 @@ Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể h�
   Có mục **Mua tài khoản VIP**: người dùng đăng ký, quét QR chuyển khoản cho
   admin rồi chờ admin đối soát và duyệt trong 30 phút. Không tự cấp VIP khi
   khách bấm đã chuyển tiền hoặc khi hết 30 phút. Giá gói **49.000đ / một tháng**;
-  QR nhận tiền: **MBBank · 0691920022005 · NGUYEN DANG NGUYEN** (admin).
+  QR nhận tiền: **TPBank · 03411092005 · HOANG DINH LAM** (admin).
   Hạn tháng lịch tính trong SQL theo múi giờ Việt Nam từ lúc duyệt; gia hạn sớm
   cộng vào hạn còn hiệu lực. `/vip` để mua/theo dõi, `/admin/vip` để đối soát
   và duyệt bằng ID giao dịch SePay, chống dùng lại giao dịch. Hết hạn tự mất
