@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Ban, Check, ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2, UserRound } from 'lucide-react';
+import { Ban, Check, ChevronLeft, ChevronRight, Download, Pencil, Plus, Search, Trash2, UserRound } from 'lucide-react';
 import type { AdminUser, UserList } from '@/lib/admin-users';
 import { ROLE_LABELS } from '@/lib/admin-users';
 import { DashboardPageHeader } from '@/components/dashboard-page-header';
@@ -30,6 +30,14 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
     const merged = { sort: filters.sort, q: filters.q, status: filters.status, role: filters.role, page: String(filters.page), ...next };
     Object.entries(merged).forEach(([key, value]) => { if (value && value !== 'all' && value !== '1') params.set(key, value); });
     router.push(`/admin/users${params.toString() ? `?${params}` : ''}`);
+  }
+  function exportCsv() {
+    const header = ['Họ tên', 'Email', 'Số điện thoại', 'Vai trò', 'Trạng thái', 'Thời gian sử dụng web', 'Thời lượng sân đã xác nhận', 'Số đơn đặt sân', 'Ngày tạo tài khoản'];
+    const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value));
+    const csvCell = (value: string | number | null | undefined) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const lines = rows.map((user) => [user.full_name ?? '', user.email ?? '', user.phone ?? '', ROLE_LABELS[user.role], user.is_banned ? 'Đang khóa' : 'Hoạt động', usageDuration(user.usage_milliseconds != null ? user.usage_milliseconds / 1000 : user.usage_seconds), usageDuration(user.booked_milliseconds != null ? user.booked_milliseconds / 1000 : user.booked_minutes * 60), user.booking_count ?? 0, formatDate(user.created_at)].map(csvCell).join(','));
+    const blob = new Blob([`\uFEFF${[header.map(csvCell).join(','), ...lines].join('\n')}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `san-ngon-nguoi-dung-trang-${filters.page}.csv`; link.click(); URL.revokeObjectURL(url);
   }
   async function save(id: string, body: unknown, method = 'PATCH') {
     setBusy(true); setNotice(null);
@@ -68,7 +76,7 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <DashboardPageHeader eyebrow="Quản trị / Tài khoản" title="Người dùng" description="Tìm tài khoản, chỉnh vai trò và quản lý quyền truy cập. Lý do khóa được lưu để đối soát."
-        actions={<button type="button" onClick={() => setCreateOpen(true)} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink"><Plus size={16} aria-hidden="true" />Tạo tài khoản</button>} />
+        actions={<div className="flex flex-wrap gap-2"><button type="button" onClick={exportCsv} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control border border-hairline px-4 text-sm font-semibold text-pitch"><Download size={16} aria-hidden="true" />Xuất CSV</button><button type="button" onClick={() => setCreateOpen(true)} className="pf-action inline-flex min-h-11 items-center gap-2 rounded-control bg-pitch px-4 text-sm font-semibold text-pitch-ink"><Plus size={16} aria-hidden="true" />Tạo tài khoản</button></div>} />
       <div className="mt-5 grid gap-3 sm:grid-cols-3"><Stat icon={UserRound} value={data.total} label="Tài khoản phù hợp" /><Stat icon={Check} value={data.active} label="Đang hoạt động" tone="green" /><Stat icon={Ban} value={data.banned} label="Đang bị khóa" tone="danger" /></div>
       {data.bookers != null && <p className="mt-3 text-sm leading-6 text-ink-secondary"><strong>{data.bookers} tài khoản</strong> đã tạo <strong>{data.booking_total} đơn đặt sân</strong>.</p>}
       {data.bookers_measured_over_five != null && <p className="mt-2 text-sm leading-6 text-ink-secondary">Trong nhóm đã đặt sân: <strong>{data.bookers_measured_over_five} tài khoản</strong> có số đo dùng web trên 5 phút{(data.bookers_sample_only_over_five ?? 0) > 0 && <>; <strong>{data.bookers_sample_only_over_five} tài khoản</strong> chỉ có thời lượng mô phỏng trên 5 phút</>}{(data.bookers_without_five_minutes ?? 0) > 0 && <>; <strong>{data.bookers_without_five_minutes} tài khoản</strong> chưa có thời lượng trên 5 phút</>}.</p>}
