@@ -1,15 +1,9 @@
 /** Ảnh QR VietQR do SePay sinh sẵn. Không cần thư viện QR nào. */
 export function vietQrUrl(refCode: string, amount: number, bank: string, account: string) {
-  // SePay/VietQR nhận mã BIN ngắn; tên hiển thị trong DB vẫn là tên ngân hàng.
+  // VietQR dùng mã ngân hàng ngắn; tên hiển thị trong DB vẫn là tên ngân hàng.
   const bankCode = ({ TPBank: 'TPB', MBBank: 'MB' } as Record<string, string>)[bank] ?? bank;
-  const params = new URLSearchParams({
-    acc: account,
-    bank: bankCode,
-    amount: String(amount),
-    des: refCode,
-    template: 'compact',
-  });
-  return `https://qr.sepay.vn/img?${params}`;
+  const params = new URLSearchParams({ amount: String(amount), addInfo: refCode, accountName: bank === 'TPBank' ? 'HOANG DINH LAM' : '' });
+  return `https://img.vietqr.io/image/${encodeURIComponent(bankCode)}-${encodeURIComponent(account)}-compact2.png?${params}`;
 }
 
 /** Payload SePay gửi khi có tiền vào tài khoản. */
