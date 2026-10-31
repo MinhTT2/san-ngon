@@ -37,7 +37,8 @@ export function UserManagement({ data: initial, currentId, filters }: { data: Us
     if (!response.ok) return;
     const all = (await response.json()).users as AdminUser[];
     const header = ['Họ tên', 'Email', 'Số điện thoại', 'Vai trò', 'Trạng thái', 'Thời gian sử dụng web', 'Thời lượng sân đã xác nhận', 'Số đơn đặt sân', 'Ngày tạo tài khoản'];
-    const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value));
+    // Dấu nháy đầu ép Excel giữ ngày dạng chữ, tránh hiển thị #### khi cột hẹp.
+    const formatDate = (value: string) => `'${new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value))}`;
     const csvCell = (value: string | number | null | undefined) => `"${String(value ?? '').replaceAll('"', '""')}"`;
     const lines = all.map((user) => [user.full_name ?? '', user.email ?? '', user.phone ?? '', ROLE_LABELS[user.role], user.is_banned ? 'Đang khóa' : 'Hoạt động', usageDuration(user.usage_milliseconds != null ? user.usage_milliseconds / 1000 : user.usage_seconds), usageDuration(user.booked_milliseconds != null ? user.booked_milliseconds / 1000 : user.booked_minutes * 60), user.booking_count ?? 0, formatDate(user.created_at)].map(csvCell).join(','));
     const blob = new Blob([`\uFEFF${[header.map(csvCell).join(','), ...lines].join('\n')}`], { type: 'text/csv;charset=utf-8' });
