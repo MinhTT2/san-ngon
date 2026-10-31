@@ -1,8 +1,10 @@
 /** Ảnh QR VietQR do SePay sinh sẵn. Không cần thư viện QR nào. */
 export function vietQrUrl(refCode: string, amount: number, bank: string, account: string) {
+  // SePay/VietQR nhận mã BIN ngắn; tên hiển thị trong DB vẫn là tên ngân hàng.
+  const bankCode = ({ TPBank: 'TPB', MBBank: 'MB' } as Record<string, string>)[bank] ?? bank;
   const params = new URLSearchParams({
     acc: account,
-    bank,
+    bank: bankCode,
     amount: String(amount),
     des: refCode,
     template: 'compact',
