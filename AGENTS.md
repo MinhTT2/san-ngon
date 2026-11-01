@@ -395,6 +395,13 @@ và dữ liệu demo theo [docs/dev-setup.md](docs/dev-setup.md).
 
 ## Quy trình giao việc
 
+**Mọi dữ liệu được thêm vào hệ thống phải là dữ liệu thật do người dùng hoặc
+quản trị viên cung cấp trong luồng sản phẩm thực tế.** Không tạo, seed hoặc
+điền dữ liệu giả, dữ liệu mẫu, dữ liệu placeholder hay dữ liệu mô phỏng để
+thay thế dữ liệu thật trong bất kỳ môi trường nào được dùng để kiểm tra,
+demo hoặc vận hành. Nếu chưa có dữ liệu thật cần thiết, phải dừng ở trạng
+thái chưa có dữ liệu và nêu rõ phần còn thiếu thay vì tự bịa giá trị.
+
 **Khi được giao tạo user, phải tạo tài khoản dùng được như người dùng thật
 trên production.** Dùng luồng đăng ký/xác thực thật của sản phẩm, có tài
 khoản Supabase Auth và hồ sơ `profiles` tương ứng; hoàn tất xác thực và kiểm
