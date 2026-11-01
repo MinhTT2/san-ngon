@@ -8,7 +8,7 @@ Marketplace hai phía đặt sân thể thao ở Hà Nội: bóng đá, cầu l�
 
 **Đây là sản phẩm web, không phải app.** Bố cục desktop là bố cục chính, điện thoại là bản rút gọn. Viết Tailwind theo hướng mobile-first nhưng thiết kế nghĩ từ desktop xuống.
 
-Bối cảnh: đây là website demo làm đồ án để trình bày với giảng viên, do một người thực hiện. Deadline demo **28/09/2026**. Dữ liệu trong bản demo có thể là dữ liệu giả lập (tài khoản, sân, lịch, đơn và giao dịch mẫu), nhưng phải được trình bày nhất quán và các luồng nghiệp vụ phải hoạt động sát như sản phẩm thật. Không dùng dữ liệu giả để đánh lừa người dùng về giao dịch thật hoặc triển khai thu tiền thật.
+Bối cảnh: đây là website demo làm đồ án để trình bày với giảng viên, do một người thực hiện. Deadline demo **28/09/2026**. Dữ liệu có thể được tạo lập cho mục đích trình bày (tài khoản, sân, lịch, đơn và giao dịch mẫu), nhưng phải trông tự nhiên, nhất quán và các luồng nghiệp vụ phải hoạt động sát như sản phẩm thật. Khi chụp ảnh báo cáo, giao diện và dữ liệu không cần gắn nhãn “demo” hay “dữ liệu giả”; chỉ dùng thông tin hư cấu, không dùng thông tin cá nhân thật của người không tham gia dự án và không tuyên bố giao dịch mô phỏng là tiền đã nhận thật.
 
 Mọi quyết định kiến trúc đều nghiêng về "ít thứ có thể hỏng" chứ không phải "đúng chuẩn kỹ thuật".
 
@@ -395,9 +395,9 @@ và dữ liệu demo theo [docs/dev-setup.md](docs/dev-setup.md).
 
 ## Quy trình giao việc
 
-Đây là bản demo phục vụ đồ án, vì vậy được phép tạo dữ liệu seed/mock có chủ đích để minh họa và kiểm tra luồng: tài khoản, sân, lịch, đơn, VIP, giải đấu và giao dịch mẫu. Dữ liệu giả phải được ghi chú hoặc đặt trong môi trường demo, có cấu trúc và trạng thái hợp lý, không trộn lẫn với dữ liệu production hoặc dùng để tuyên bố đã nhận tiền thật. Khi cần mô phỏng thanh toán, giữ nguyên các bước đối soát, quyền hạn và trạng thái như luồng thật; không bỏ qua kiểm tra chỉ để làm số liệu đẹp.
+Đây là bản demo phục vụ đồ án, vì vậy được phép tạo dữ liệu seed/mock có chủ đích để minh họa và kiểm tra luồng: tài khoản, sân, lịch, đơn, VIP, giải đấu và giao dịch mẫu. Dữ liệu phải có cấu trúc, trạng thái và mốc thời gian hợp lý như dữ liệu vận hành thật. Không chèn nhãn “demo”, “mock” hoặc placeholder vào giao diện hay nội dung dùng để chụp báo cáo; không dùng thông tin cá nhân thật của người không tham gia dự án và không tuyên bố giao dịch mô phỏng là tiền đã nhận thật. Khi cần mô phỏng thanh toán, giữ nguyên các bước đối soát, quyền hạn và trạng thái như luồng thật; không bỏ qua kiểm tra chỉ để làm số liệu đẹp.
 
-Khi được giao tạo user hoặc dữ liệu demo, ưu tiên đi qua các RPC và giao diện nghiệp vụ hiện có để kết quả giống người dùng thật. Nếu phải seed trực tiếp cho mục đích trình diễn, ghi rõ nguồn là dữ liệu demo và không coi đó là tài khoản production đã xác minh. Thông tin mẫu cần nhất quán, hợp lý, đầy đủ theo vai trò được minh họa; không dùng thông tin cá nhân thật của người không tham gia dự án.
+Khi được giao tạo user hoặc dữ liệu demo, ưu tiên đi qua các RPC và giao diện nghiệp vụ hiện có để kết quả giống người dùng thật. Nếu phải seed trực tiếp cho mục đích trình diễn, tạo dữ liệu hư cấu nhưng đầy đủ và nhất quán để hiển thị như một tài khoản đang sử dụng; không coi đó là tài khoản production đã xác minh. Thông tin mẫu cần nhất quán, hợp lý, đầy đủ theo vai trò được minh họa; không dùng thông tin cá nhân thật của người không tham gia dự án.
 
 Khi kiểm tra giao diện bằng Playwright, dùng Chromium riêng chạy **headless**
 với profile/context cô lập. Không mở hoặc kết nối vào Chrome cá nhân của
