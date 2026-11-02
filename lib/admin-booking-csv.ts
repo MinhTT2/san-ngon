@@ -21,14 +21,6 @@ function csvValue(value: unknown) {
   return csvCell(value);
 }
 
-// Nhãn nội bộ của đợt dữ liệu mô phỏng ([docs-YYYYMMDD], [docs-bookers-YYYYMMDD]) không
-// dành cho người đọc file xuất, nên ghi chú chỉ có nhãn đó không được đưa vào CSV.
-const INTERNAL_NOTE = /\[docs[-a-z0-9]*\]/i;
-
-function exportNote(note: string | null) {
-  return note && !INTERNAL_NOTE.test(note) ? note : '';
-}
-
 export type AdminBookingExportRow = {
   code: string;
   venue_name: string;
@@ -68,7 +60,7 @@ export function adminBookingCsv(rows: AdminBookingExportRow[]) {
     csvText(row.paid_at ? `${ymd(new Date(row.paid_at))} ${hhmm(row.paid_at)}` : ''),
     row.refund_status === 'done' ? 'Đã hoàn' : row.refund_status === 'needed' ? 'Cần hoàn' : '',
     csvText(`${ymd(new Date(row.created_at))} ${hhmm(row.created_at)}`),
-    exportNote(row.note),
+    row.note,
   ]);
   return '\uFEFF' + [headers, ...values].map((line) => line.map(csvValue).join(',')).join('\r\n');
 }
